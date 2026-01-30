@@ -14,13 +14,14 @@ import FAQSection from "@/components/FAQSection";
 import FeatureSection from "@/components/FeatureSection";
 import WalletDropdown from "@/components/WalletDropdown";
 import WhyChooseStellar from "@/components/WhyChooseStellar";
+import ValueProposition from "@/components/ValueProposition";
 
 export default function Home() {
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
   const walletButtonRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <main className="min-h-screen bg-brand-dark from-blue-50 to-indigo-100">
       {/* Header */}
       {/* <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -84,31 +85,10 @@ export default function Home() {
             on Stellar for fast, low-cost cross-border payments.
           </p>
         </div>
-
-        {/* Highlight Feature Cards - Instant Remittance & Smart Allocation */}
-        <div className="bg-[#0a0a0a] rounded-3xl p-6 mb-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <HighlightCard
-              icon={<Send className="w-6 h-6" />}
-              title="Instant Remittance"
-              description="Send money across borders in seconds with minimal fees. Our Stellar-powered infrastructure ensures your transfers are fast, secure, and transparent."
-            />
-            <HighlightCard
-              icon={<PiggyBank className="w-6 h-6" />}
-              title="Smart Allocation"
-              description="Automatically split remittances into spending, savings, bills, and insurance. Configure once and every transfer follows your rules automatically."
-            />
-          </div>
-        </div>
-
-        {/* Dark Feature Cards */}
-        <FeatureSection />
-
-        {/* Why Choose Stellar Section */}
-        <WhyChooseStellar />
+      
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        {/* <div className="bg-white rounded-xl shadow-lg p-8">
           <h3 className="text-2xl font-bold text-gray-900 mb-6">
             Quick Actions
           </h3>
@@ -141,8 +121,34 @@ export default function Home() {
               </div>
             </Link>
           </div>
-        </div>
+        </div> */}
       </section >
+
+
+        {/* Value Proposition Section */}
+        <ValueProposition />
+        
+        {/* Highlight Feature Cards - Instant Remittance & Smart Allocation */}
+        <div className="max-w-7xl mx-auto bg-[#0a0a0a] rounded-3xl p-6 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <HighlightCard
+              icon={<Send className="w-6 h-6" />}
+              title="Instant Remittance"
+              description="Send money across borders in seconds with minimal fees. Our Stellar-powered infrastructure ensures your transfers are fast, secure, and transparent."
+            />
+            <HighlightCard
+              icon={<PiggyBank className="w-6 h-6" />}
+              title="Smart Allocation"
+              description="Automatically split remittances into spending, savings, bills, and insurance. Configure once and every transfer follows your rules automatically."
+            />
+          </div>
+        </div>
+
+        {/* Dark Feature Cards */}
+        <FeatureSection />
+
+        {/* Why Choose Stellar Section */}
+        <WhyChooseStellar />
 
       {/* FAQ Section */}
       < FAQSection />
