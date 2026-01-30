@@ -4,77 +4,80 @@ import React, { useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Wallet,
   Bell,
   Globe,
   ShieldCheck,
   Info,
-  LogOut,
-  CreditCard,
-  MessageSquare,
   FileText,
-  Lock,
   Clock,
+  Mail,
+  ExternalLink,
+  ChevronDown,
+  ChevronRight,
+  Zap,
+  HelpCircle,
+  DollarSign,
+  Languages,
+  Moon,
+  CheckCircle,
 } from "lucide-react";
 import SettingsSection from "@/components/SettingsSection";
 import SettingsItem from "@/components/SettingsItem";
+import { AccountSection } from "@/components/AccountSection";
 
 export default function SettingsPage() {
-  // Mock state for settings
   const [notifications, setNotifications] = useState({
     billReminders: true,
     paymentConfirmations: true,
-    goalUpdates: false,
+    goalUpdates: true,
+    securityAlerts: true,
   });
 
   const [security, setSecurity] = useState({
-    transactionSigning: true,
+    autoSignTransactions: false,
   });
 
-  const stellarAddress = "GCF2...7P3Q";
-
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-black">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center">
-          <Link
-            href="/dashboard"
-            className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
-          <h1 className="ml-4 text-xl font-bold text-gray-900">Settings</h1>
+      <header className="bg-black sticky top-0 z-10">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Link
+              href="/dashboard"
+              className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-gray-400 hover:text-white rounded-full border border-gray-700/50 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            </Link>
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold text-white">Settings</h1>
+              <p className="text-xs sm:text-sm text-gray-400">Manage your account and preferences</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center relative">
+              <span className="text-white font-bold text-sm">R</span>
+              <span className="absolute top-1.5 right-1.5 w-1 h-1 bg-white rounded-full"></span>
+            </div>
+            <span className="hidden sm:inline text-white font-semibold">RemitWise</span>
+          </div>
         </div>
       </header>
 
-      <div className="max-w-3xl mx-auto py-6">
+      <div className="max-w-3xl mx-auto py-6 px-4 pb-12">
         {/* Account Section */}
-        <SettingsSection title="Account">
-          <SettingsItem
-            icon={<Wallet className="w-5 h-5" />}
-            title="Stellar Address"
-            description="Connected Wallet"
-            type="text"
-            value={stellarAddress}
-          />
-          <SettingsItem
-            icon={<CreditCard className="w-5 h-5" />}
-            title="Wallet Status"
-            description="Connected via Freighter"
-            type="navigation"
-          />
-          <SettingsItem
-            icon={<LogOut className="w-5 h-5 text-red-500" />}
-            title="Change Wallet"
-            onClick={() => console.log("Change wallet")}
-          />
-        </SettingsSection>
+        <div className="mb-8">
+          <AccountSection />
+        </div>
 
         {/* Notifications Section */}
-        <SettingsSection title="Notifications">
+        <SettingsSection 
+          title="Notifications" 
+          subtitle="Manage alert preferences"
+          icon={<Bell className="w-5 h-5" />}
+        >
           <SettingsItem
-            icon={<Bell className="w-5 h-5" />}
+            icon={<FileText className="w-5 h-5" />}
             title="Bill Reminders"
             description="Get notified before bills are due"
             type="toggle"
@@ -84,9 +87,9 @@ export default function SettingsPage() {
             }
           />
           <SettingsItem
-            icon={<Bell className="w-5 h-5" />}
+            icon={<CheckCircle className="w-5 h-5" />}
             title="Payment Confirmations"
-            description="Receive receipt after every transfer"
+            description="Receive transaction confirmations"
             type="toggle"
             enabled={notifications.paymentConfirmations}
             onToggle={(val) =>
@@ -94,80 +97,140 @@ export default function SettingsPage() {
             }
           />
           <SettingsItem
-            icon={<Bell className="w-5 h-5" />}
+            icon={<Zap className="w-5 h-5" />}
             title="Goal Progress Updates"
-            description="Weekly summary of your savings goals"
+            description="Track savings goal milestones"
             type="toggle"
             enabled={notifications.goalUpdates}
             onToggle={(val) =>
               setNotifications({ ...notifications, goalUpdates: val })
             }
           />
+          <SettingsItem
+            icon={<Clock className="w-5 h-5" />}
+            title="Security Alerts"
+            description="Important security notifications"
+            type="toggle"
+            enabled={notifications.securityAlerts}
+            onToggle={(val) =>
+              setNotifications({ ...notifications, securityAlerts: val })
+            }
+          />
         </SettingsSection>
 
         {/* Preferences Section */}
-        <SettingsSection title="Preferences">
+        <SettingsSection 
+          title="Preferences" 
+          subtitle="Customize your experience"
+          icon={<Globe className="w-5 h-5" />}
+        >
           <SettingsItem
-            icon={<Globe className="w-5 h-5" />}
+            icon={<DollarSign className="w-5 h-5" />}
             title="Currency Display"
-            description="Primary currency for dashboard"
-            type="text"
-            value="USD ($)"
+            description="Default currency for amounts"
+            type="dropdown"
+            hasDropdownBar
           />
           <SettingsItem
-            icon={<MessageSquare className="w-5 h-5" />}
+            icon={<Languages className="w-5 h-5" />}
             title="Language"
-            description="Default app language"
-            type="text"
-            value="English"
+            description="App display language"
+            type="dropdown"
+            hasDropdownBar
+            comingSoon
+          />
+          <SettingsItem
+            icon={<Moon className="w-5 h-5" />}
+            title="Theme"
+            description="Visual appearance"
+            type="dropdown"
+            hasDropdownBar
+            comingSoon
           />
         </SettingsSection>
 
         {/* Security Section */}
-        <SettingsSection title="Security">
+        <SettingsSection 
+          title="Security" 
+          subtitle="Protect your account"
+          icon={<ShieldCheck className="w-5 h-5" />}
+        >
           <SettingsItem
-            icon={<Lock className="w-5 h-5" />}
-            title="Transaction Signing"
-            description="Always ask for signature"
+            icon={<Zap className="w-5 h-5" />}
+            title="Auto-sign Transactions"
+            description="Skip confirmation for small amounts"
             type="toggle"
-            enabled={security.transactionSigning}
+            enabled={security.autoSignTransactions}
             onToggle={(val) =>
-              setSecurity({ ...security, transactionSigning: val })
+              setSecurity({ ...security, autoSignTransactions: val })
             }
           />
           <SettingsItem
             icon={<Clock className="w-5 h-5" />}
             title="Session Timeout"
-            description="Automatically log out after inactivity"
-            type="text"
-            value="30 minutes"
+            description="Auto logout after inactivity"
+            type="dropdown"
+            hasDropdownBar
           />
         </SettingsSection>
 
         {/* About Section */}
-        <SettingsSection title="About">
+        <SettingsSection 
+          title="About" 
+          subtitle="App information and support"
+          icon={<Info className="w-5 h-5" />}
+        >
           <SettingsItem
-            icon={<Info className="w-5 h-5" />}
+            icon={<Clock className="w-5 h-5" />}
             title="App Version"
+            description="Current version: 1.0.0"
             type="text"
-            value="v1.0.4-alpha"
+            value="v1.0.0"
+            hasIconBackground
           />
           <SettingsItem
             icon={<FileText className="w-5 h-5" />}
             title="Terms of Service"
+            description="Read our terms and conditions"
             type="navigation"
+            rightIcon={<ExternalLink className="w-4 h-4" />}
+            hasIconBackground
           />
           <SettingsItem
             icon={<ShieldCheck className="w-5 h-5" />}
             title="Privacy Policy"
+            description="How we protect your data"
             type="navigation"
+            rightIcon={<ExternalLink className="w-4 h-4" />}
+            hasIconBackground
           />
           <SettingsItem
-            icon={<MessageSquare className="w-5 h-5" />}
-            title="Support"
+            icon={<HelpCircle className="w-5 h-5" />}
+            title="Help & Support"
+            description="Get help with your account"
             type="navigation"
+            rightIcon={<ChevronRight className="w-4 h-4" />}
+            hasIconBackground
+          />
+          <SettingsItem
+            icon={<Mail className="w-5 h-5" />}
+            title="Contact Us"
+            description="support@remitwise.com"
+            type="navigation"
+            rightIcon={<ExternalLink className="w-4 h-4" />}
+            hasIconBackground
           />
         </SettingsSection>
+
+        {/* Footer */}
+        <div className="mt-12 pt-8 border-t border-gray-800 text-center space-y-1">
+          <p className="text-sm text-gray-500">
+            RemitWise © 2026 - All Rights Reserved
+          </p>
+          <p className="text-xs text-gray-600">
+            Powered by Stellar Blockchain
+          </p>
+        </div>
       </div>
     </main>
   );

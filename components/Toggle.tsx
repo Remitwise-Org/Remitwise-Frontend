@@ -12,8 +12,8 @@ export default function Toggle({ enabled, onChange }: ToggleProps) {
     <button
       onClick={() => onChange(!enabled)}
       className={`${
-        enabled ? "bg-blue-600" : "bg-gray-200"
-      } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+        enabled ? "bg-red-500" : "bg-gray-700"
+      } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900`}
     >
       <span
         className={`${
