@@ -14,6 +14,9 @@ import {
   FileText,
   Lock,
   Clock,
+  CheckCircle,
+  Zap,
+  AlertCircle,
   Languages,
   Moon,
   ChevronDown,
@@ -29,6 +32,7 @@ export default function SettingsPage() {
     billReminders: true,
     paymentConfirmations: true,
     goalUpdates: false,
+    securityAlerts: true,
   });
 
   const [security, setSecurity] = useState({
@@ -67,38 +71,85 @@ export default function SettingsPage() {
         </SettingsSection>
 
         {/* Notifications Section */}
-        <SettingsSection title="Notifications">
-          <SettingsItem
-            icon={<Bell className="w-5 h-5" />}
-            title="Bill Reminders"
-            description="Get notified before bills are due"
-            type="toggle"
-            enabled={notifications.billReminders}
-            onToggle={(val) =>
-              setNotifications({ ...notifications, billReminders: val })
-            }
-          />
-          <SettingsItem
-            icon={<Bell className="w-5 h-5" />}
-            title="Payment Confirmations"
-            description="Receive receipt after every transfer"
-            type="toggle"
-            enabled={notifications.paymentConfirmations}
-            onToggle={(val) =>
-              setNotifications({ ...notifications, paymentConfirmations: val })
-            }
-          />
-          <SettingsItem
-            icon={<Bell className="w-5 h-5" />}
-            title="Goal Progress Updates"
-            description="Weekly summary of your savings goals"
-            type="toggle"
-            enabled={notifications.goalUpdates}
-            onToggle={(val) =>
-              setNotifications({ ...notifications, goalUpdates: val })
-            }
-          />
-        </SettingsSection>
+        <div className="mb-8 bg-[#010101] p-4">
+          {/* Section header (matches your sample UI) */}
+          <div className="px-4 mb-3">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="flex items-center justify-center bg-[#DC262633] w-[40px] h-[40px] rounded-[14px]">
+                <Bell className="w-[20px] h-[20px] text-[#DC2626]" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-[#FFFFFF]">
+                  Notifications
+                </h2>
+                <p className="text-[#FFFFFF80] text-[12px] -mt-1">
+                  Manage alert preferences
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Dark card list */}
+          <SettingsSection title="" variant="dark-card">
+            <SettingsItem
+              variant="notification-row"
+              divider
+              icon={<FileText className="w-5 h-5" />}
+              title="Bill Reminders"
+              description="Get notified before bills are due"
+              type="toggle"
+              enabled={notifications.billReminders}
+              onToggle={(val) =>
+                setNotifications({ ...notifications, billReminders: val })
+              }
+            />
+            <SettingsItem
+              variant="notification-row"
+              divider
+              icon={<CheckCircle className="w-5 h-5" />}
+              title="Payment Confirmations"
+              description="Receive transaction confirmations"
+              type="toggle"
+              enabled={notifications.paymentConfirmations}
+              onToggle={(val) =>
+                setNotifications({
+                  ...notifications,
+                  paymentConfirmations: val,
+                })
+              }
+            />
+            <SettingsItem
+              variant="notification-row"
+              divider
+              icon={<Zap className="w-5 h-5" />}
+              title="Goal Progress Updates"
+              description="Track savings goal milestones"
+              type="toggle"
+              enabled={notifications.goalUpdates}
+              onToggle={(val) =>
+                setNotifications({ ...notifications, goalUpdates: val })
+              }
+            />
+            <SettingsItem
+              variant="notification-row"
+              icon={<AlertCircle className="w-5 h-5" />}
+              title="Security Alerts"
+              description="Important security notifications"
+              type="toggle"
+              enabled={notifications.securityAlerts}
+              onToggle={(val) =>
+                setNotifications({ ...notifications, securityAlerts: val })
+              }
+            />
+          </SettingsSection>
+
+          {/* <div className="px-4 mt-4 text-center">
+            <p className="text-gray-500 text-xs">
+              Notification preferences are saved locally and will persist across
+              sessions.
+            </p>
+          </div> */}
+        </div>
 
         {/* Preferences Section */}
         {/* Preferences Section - Custom Dark Theme Implementation */}
