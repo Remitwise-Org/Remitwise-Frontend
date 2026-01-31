@@ -1,28 +1,34 @@
-
 "use client";
 
-import { usePathname } from 'next/navigation';
+import { usePathname } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/footer";
 import FinalCallToAction from "@/components/FinalCallToAction";
 
-export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
-    const pathname = usePathname();
-    const isExcluded = pathname === '/transactions';
+export default function LayoutWrapper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const excludedRoutes = ["/transactions", "/financial-insights"];
 
-    if (isExcluded) {
-        return <>{children}</>;
-    }
+  const isExcluded =
+    excludedRoutes.includes(pathname) || pathname.startsWith("/dashboard");
 
-    return (
-        <>
-            <Header />
-            {/* Add padding-top to account for fixed header */}
-            <div className="pt-20">
-                {children}
-                <FinalCallToAction />
-                <Footer />
-            </div>
-        </>
-    );
+  if (isExcluded) {
+    return <>{children}</>;
+  }
+
+  return (
+    <>
+      <Header />
+      {/* Add padding-top to account for fixed header */}
+      <div className="pt-20">
+        {children}
+        <FinalCallToAction />
+        <Footer />
+      </div>
+    </>
+  );
 }

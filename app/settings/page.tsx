@@ -3,34 +3,34 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import {
-  Wallet,
+  ArrowLeft,
   Bell,
   Globe,
   ShieldCheck,
   Info,
-  LogOut,
-  CreditCard,
-  MessageSquare,
   FileText,
-  Lock,
   Clock,
-  ExternalLink,
   Mail,
+  ExternalLink,
+  ChevronDown,
   ChevronRight,
-  CheckCircle,
   Zap,
-  AlertCircle,
+  HelpCircle,
+  DollarSign,
   Languages,
   Moon,
-  ChevronDown,
+  CheckCircle,
+  AlertCircle,
+  MessageSquare,
+  Link2,
 } from "lucide-react";
 import SettingsSection from "@/components/SettingsSection";
 import SettingsItem from "@/components/SettingsItem";
+import { AccountSection } from "@/components/AccountSection";
 import SettingsHeader from "@/components/SettingsHeader";
 import PreferencesRow from "@/components/PreferencesRow";
 
 export default function SettingsPage() {
-  // Mock state for settings
   const [notifications, setNotifications] = useState({
     billReminders: true,
     paymentConfirmations: true,
@@ -39,123 +39,71 @@ export default function SettingsPage() {
   });
 
   const [security, setSecurity] = useState({
-    transactionSigning: true,
+    autoSignTransactions: false,
   });
 
   const [currency, setCurrency] = useState("USD");
-
   const stellarAddress = "GCF2...7P3Q";
 
   return (
-<main className="w-full min-h-screen bg-[#0F0F0F] md:px-[171.5px] px-[16px] font-inter">
-  <SettingsHeader />
+    <main className="w-full min-h-screen bg-[#0F0F0F] md:px-[171.5px] px-[16px] font-inter">
+      <SettingsHeader />
 
       <div className="w-full py-6">
         {/* Account Section */}
-        <SettingsSection title="Account">
+        <div className="mb-8">
+          <AccountSection />
+        </div>
+
+        {/* Notifications Section */}
+        <SettingsSection 
+          title="Notifications" 
+          subtitle="Manage alert preferences"
+          icon={<Bell className="w-5 h-5" />}
+        >
           <SettingsItem
-            icon={<Wallet className="w-5 h-5" />}
-            title="Stellar Address"
-            description="Connected Wallet"
-            type="text"
-            value={stellarAddress}
+            icon={<FileText className="w-5 h-5" />}
+            title="Bill Reminders"
+            description="Get notified before bills are due"
+            type="toggle"
+            enabled={notifications.billReminders}
+            onToggle={(val) =>
+              setNotifications({ ...notifications, billReminders: val })
+            }
           />
           <SettingsItem
-            icon={<CreditCard className="w-5 h-5" />}
-            title="Wallet Status"
-            description="Connected via Freighter"
-            type="navigation"
+            icon={<CheckCircle className="w-5 h-5" />}
+            title="Payment Confirmations"
+            description="Receive transaction confirmations"
+            type="toggle"
+            enabled={notifications.paymentConfirmations}
+            onToggle={(val) =>
+              setNotifications({ ...notifications, paymentConfirmations: val })
+            }
           />
           <SettingsItem
-            icon={<LogOut className="w-5 h-5 text-red-500" />}
-            title="Change Wallet"
-            onClick={() => console.log("Change wallet")}
+            icon={<Zap className="w-5 h-5" />}
+            title="Goal Progress Updates"
+            description="Track savings goal milestones"
+            type="toggle"
+            enabled={notifications.goalUpdates}
+            onToggle={(val) =>
+              setNotifications({ ...notifications, goalUpdates: val })
+            }
+          />
+          <SettingsItem
+            icon={<Clock className="w-5 h-5" />}
+            title="Security Alerts"
+            description="Important security notifications"
+            type="toggle"
+            enabled={notifications.securityAlerts}
+            onToggle={(val) =>
+              setNotifications({ ...notifications, securityAlerts: val })
+            }
           />
         </SettingsSection>
 
-        {/* Notifications Section */}
-        <div className="mb-8 bg-[#010101] p-4">
-          {/* Section header (matches your sample UI) */}
-          <div className="px-4 mb-3">
-            <div className="flex items-center gap-3 mb-1">
-              <div className="flex items-center justify-center bg-[#DC262633] w-[40px] h-[40px] rounded-[14px]">
-                <Bell className="w-[20px] h-[20px] text-[#DC2626]" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-[#FFFFFF]">
-                  Notifications
-                </h2>
-                <p className="text-[#FFFFFF80] text-[12px] -mt-1">
-                  Manage alert preferences
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Dark card list */}
-          <SettingsSection title="" variant="dark-card">
-            <SettingsItem
-              variant="notification-row"
-              divider
-              icon={<FileText className="w-5 h-5" />}
-              title="Bill Reminders"
-              description="Get notified before bills are due"
-              type="toggle"
-              enabled={notifications.billReminders}
-              onToggle={(val) =>
-                setNotifications({ ...notifications, billReminders: val })
-              }
-            />
-            <SettingsItem
-              variant="notification-row"
-              divider
-              icon={<CheckCircle className="w-5 h-5" />}
-              title="Payment Confirmations"
-              description="Receive transaction confirmations"
-              type="toggle"
-              enabled={notifications.paymentConfirmations}
-              onToggle={(val) =>
-                setNotifications({
-                  ...notifications,
-                  paymentConfirmations: val,
-                })
-              }
-            />
-            <SettingsItem
-              variant="notification-row"
-              divider
-              icon={<Zap className="w-5 h-5" />}
-              title="Goal Progress Updates"
-              description="Track savings goal milestones"
-              type="toggle"
-              enabled={notifications.goalUpdates}
-              onToggle={(val) =>
-                setNotifications({ ...notifications, goalUpdates: val })
-              }
-            />
-            <SettingsItem
-              variant="notification-row"
-              icon={<AlertCircle className="w-5 h-5" />}
-              title="Security Alerts"
-              description="Important security notifications"
-              type="toggle"
-              enabled={notifications.securityAlerts}
-              onToggle={(val) =>
-                setNotifications({ ...notifications, securityAlerts: val })
-              }
-            />
-          </SettingsSection>
-
-          {/* <div className="px-4 mt-4 text-center">
-            <p className="text-gray-500 text-xs">
-              Notification preferences are saved locally and will persist across
-              sessions.
-            </p>
-          </div> */}
-        </div>
-
         {/* Preferences Section */}
-        {/* Preferences Section - Custom Dark Theme Implementation */}
         <div className="bg-black p-6 mb-8">
           <div className="flex items-center gap-4 mb-6">
             <div className="h-10 w-10 flex items-center justify-center bg-[#DC262633] rounded-xl">
@@ -254,27 +202,31 @@ export default function SettingsPage() {
         </div>
 
         {/* Security Section */}
-        <SettingsSection title="Security">
+        <SettingsSection 
+          title="Security" 
+          subtitle="Protect your account"
+          icon={<ShieldCheck className="w-5 h-5" />}
+        >
           <SettingsItem
-            icon={<Lock className="w-5 h-5" />}
-            title="Transaction Signing"
-            description="Always ask for signature"
+            icon={<Zap className="w-5 h-5" />}
+            title="Auto-sign Transactions"
+            description="Skip confirmation for small amounts"
             type="toggle"
-            enabled={security.transactionSigning}
+            enabled={security.autoSignTransactions}
             onToggle={(val) =>
-              setSecurity({ ...security, transactionSigning: val })
+              setSecurity({ ...security, autoSignTransactions: val })
             }
           />
           <SettingsItem
             icon={<Clock className="w-5 h-5" />}
             title="Session Timeout"
-            description="Automatically log out after inactivity"
-            type="text"
-            value="30 minutes"
+            description="Auto logout after inactivity"
+            type="dropdown"
+            hasDropdownBar
           />
         </SettingsSection>
 
-        {/* About Section (redesigned) */}
+        {/* About Section */}
         <div className="mb-8">
           <div className="px-4 mb-3 flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
@@ -378,6 +330,16 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-12 pt-8 border-t border-gray-800 text-center space-y-1">
+          <p className="text-sm text-gray-500">
+            RemitWise © 2026 - All Rights Reserved
+          </p>
+          <p className="text-xs text-gray-600">
+            Powered by Stellar Blockchain
+          </p>
         </div>
       </div>
     </main>

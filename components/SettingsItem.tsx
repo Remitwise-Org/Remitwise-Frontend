@@ -1,7 +1,7 @@
 "use strict";
 
 import React from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ChevronDown } from "lucide-react";
 import Toggle from "./Toggle";
 
 interface SettingsItemProps {
@@ -9,10 +9,14 @@ interface SettingsItemProps {
   title: string;
   description?: string;
   value?: string;
-  type?: "toggle" | "navigation" | "text";
+  type?: "toggle" | "navigation" | "text" | "dropdown";
   enabled?: boolean;
   onToggle?: (enabled: boolean) => void;
   onClick?: () => void;
+  rightIcon?: React.ReactNode;
+  comingSoon?: boolean;
+  hasDropdownBar?: boolean;
+  hasIconBackground?: boolean;
   /** Styling variants; default preserves existing look. */
   variant?: "default" | "notification-row";
   /** When using notification-row, set true to draw a divider under the row. */
@@ -28,6 +32,10 @@ export default function SettingsItem({
   enabled = false,
   onToggle,
   onClick,
+  rightIcon,
+  comingSoon = false,
+  hasDropdownBar = false,
+  hasIconBackground = false,
   variant = "default",
   divider = false,
 }: SettingsItemProps) {
@@ -71,33 +79,62 @@ export default function SettingsItem({
   }
 
   return (
-    <div
-      className={`flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors cursor-pointer ${
-        onClick ? "active:bg-gray-100" : ""
-      }`}
-      onClick={type !== "toggle" ? onClick : undefined}
-    >
-      <div className="flex items-center space-x-4">
-        {icon && <div className="text-gray-500">{icon}</div>}
-        <div className="flex flex-col">
-          <span className="text-sm font-medium text-gray-900">{title}</span>
-          {description && (
-            <span className="text-xs text-gray-500">{description}</span>
+    <div className="bg-[#0f0f0f]">
+      <div
+        className={`flex items-center justify-between p-4 hover:bg-gray-800/20 transition-colors ${
+          type !== "toggle" && type !== "text" ? "cursor-pointer" : ""
+        } group`}
+        onClick={type !== "toggle" && type !== "text" ? onClick : undefined}
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {icon && (
+            <div className={`flex-shrink-0 ${
+              hasIconBackground 
+                ? "w-9 h-9 rounded-lg bg-[#161616] border border-gray-700/20 flex items-center justify-center text-gray-400"
+                : "text-gray-400"
+            }`}>
+              {icon}
+            </div>
+          )}
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="text-sm font-medium text-white">{title}</span>
+            {description && (
+              <span className="text-xs text-gray-500">{description}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          {comingSoon && (
+            <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-red-500 bg-red-500/10 rounded border border-red-500/20 uppercase tracking-wide">
+              Coming Soon
+            </span>
+          )}
+          {type === "toggle" && onToggle && (
+            <Toggle enabled={enabled} onChange={onToggle} />
+          )}
+          {type === "text" && value && (
+            <span className="text-sm text-gray-500">{value}</span>
+          )}
+          {type === "navigation" && rightIcon && (
+            <div className="text-gray-500">
+              {rightIcon}
+            </div>
+          )}
+          {type === "navigation" && !rightIcon && (
+            <ChevronRight className="w-5 h-5 text-gray-500" />
           )}
         </div>
       </div>
-
-      <div className="flex items-center space-x-2">
-        {type === "toggle" && onToggle && (
-          <Toggle enabled={enabled} onChange={onToggle} />
-        )}
-        {type === "text" && value && (
-          <span className="text-sm text-gray-600 font-mono">{value}</span>
-        )}
-        {type === "navigation" && (
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        )}
-      </div>
+      
+      {/* Dropdown bar for dropdown type items */}
+      {hasDropdownBar && (
+        <div className="px-4 pb-4">
+          <div className="flex items-center gap-2 bg-[#161616] rounded-lg px-3 py-2.5 border border-gray-700/20">
+            <ChevronDown className="w-4 h-4 text-gray-500" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

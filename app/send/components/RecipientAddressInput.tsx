@@ -36,7 +36,7 @@ export default function RecipientAddressInput({
   };
 
   return (
-    <div className="max-w-3xl mx-auto relative overflow-hidden bg-[#0c0c0c] border border-white/5 rounded-[2rem] p-8 sm:p-10 mb-8 shadow-2xl">
+    <div className="mx-auto relative overflow-hidden bg-[#0c0c0c] border border-white/5 rounded-[2rem] p-8 sm:p-10 mb-8 shadow-2xl">
       {/* Subtle Gradient Glow */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-red-900/20 blur-[120px] rounded-full -mr-48 -mt-48 pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-white/[0.02] blur-[100px] rounded-full -ml-32 -mb-32 pointer-events-none" />

@@ -11,7 +11,7 @@ export default function EmergencyTransferCard({
   onAction,
 }: EmergencyTransferCardProps) {
   return (
-    <div className="max-w-3xl mx-auto bg-red-900/10 backdrop-blur-sm border-2 border-red-900/30 rounded-3xl p-8 sm:p-10 mb-8 relative overflow-hidden shadow-2xl">
+    <div className="mx-auto bg-red-900/10 backdrop-blur-sm border-2 border-red-900/30 rounded-3xl p-8 sm:p-10 mb-8 relative overflow-hidden shadow-2xl">
       {/* Background Gradient Glow */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-red-900/10 blur-[120px] rounded-full -mr-48 -mt-48 pointer-events-none" />
 
