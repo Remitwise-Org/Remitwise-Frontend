@@ -14,7 +14,9 @@ import FAQSection from "@/components/FAQSection";
 import FeatureSection from "@/components/FeatureSection";
 import WalletDropdown from "@/components/WalletDropdown";
 import WhyChooseStellar from "@/components/WhyChooseStellar";
+import Hero from "@/components/Hero";
 import ValueProposition from "@/components/ValueProposition";
+
 
 export default function Home() {
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
@@ -75,16 +77,8 @@ export default function Home() {
 
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Smart Remittance & Financial Planning
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Help families save, plan, and protect — not just send money. Built
-            on Stellar for fast, low-cost cross-border payments.
-          </p>
-        </div>
+      <Hero/>
+
       
 
         {/* Quick Actions */}
