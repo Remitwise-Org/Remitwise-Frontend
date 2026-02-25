@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
+import { verifySignature } from '@/lib/webhooks/verify'
 import { withApiLogger } from '@/lib/api-logger-middleware'
 
 export const POST = withApiLogger(async (request) => {
@@ -23,29 +23,21 @@ export const POST = withApiLogger(async (request) => {
       return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
     }
 
-    // 3. Verify Signature using HMAC SHA-256
-    const expectedSignature = crypto
-      .createHmac('sha256', secret)
-      .update(rawBody)
-      .digest('hex')
-
-    // Secure compare to prevent timing attacks
-    const isSignatureValid = crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    )
+    // 3. Verify Signature using shared secret (HMAC SHA-256)
+    const isSignatureValid = verifySignature(rawBody, signature, secret, 'hmac-sha256')
 
     if (!isSignatureValid) {
       console.warn('[Webhook] Invalid webhook signature detected.')
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Invalid webhook signature' },
+        { status: 401 }
+      )
     }
 
     // 4. Parse the trusted payload
     const payload = JSON.parse(rawBody)
 
     // 5. Process the event asynchronously (Fire and forget to return 200 quickly)
-    // Note: If deployed on Vercel, you might need `waitUntil` for background tasks,
-    // but standard async execution works for typical setups.
     handleAnchorEvent(payload).catch(console.error)
 
     // 6. Return 200 quickly to acknowledge receipt

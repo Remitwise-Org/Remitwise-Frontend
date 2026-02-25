@@ -109,6 +109,7 @@ npm run test:e2e
 ```
 remitwise-frontend/
 ├── app/
+│   ├── api/                 # API routes
 │   ├── layout.tsx          # Root layout
 │   ├── page.tsx             # Home page
 │   ├── globals.css          # Global styles
@@ -119,10 +120,22 @@ remitwise-frontend/
 │   ├── bills/               # Bill payments
 │   ├── insurance/           # Insurance policies
 │   └── family/              # Family wallets
-├── components/              # Reusable components (to be added)
+├── components/              # Reusable components
+├── lib/                     # Utilities and helpers
+│   └── auth.ts              # Auth middleware
+├── docs/                    # Documentation
+│   └── API_ROUTES.md        # API routes documentation
 ├── public/                  # Static assets
 └── package.json
 ```
+
+## API Routes
+
+See [API Routes Documentation](./docs/API_ROUTES.md) for details on authentication and available endpoints.
+
+**Quick Reference:**
+- Public routes: `/api/health`, `/api/auth/*`
+- Protected routes: `/api/user/*`, `/api/split`, `/api/goals`, `/api/bills`, `/api/insurance`, `/api/family`, `/api/send`
 
 ## Integration Requirements
 
@@ -142,6 +155,8 @@ remitwise-frontend/
    - Integrate with anchor platform APIs for fiat on/off-ramps
    - Handle deposit/withdrawal flows
    - Process exchange rate quotes
+   - **Environment Setup:** Set `ANCHOR_API_BASE_URL` in your `.env` file (see `.env.example`).
+   - **Frontend API Endpoint:** Use `GET /api/anchor/rates` to fetch cached exchange rates with fallback support.
 
 4. **Transaction Tracking**
    - Display on-chain transaction history
@@ -399,6 +414,16 @@ MIT
 **OpenAPI / API Documentation**
 
 - This repository contains an OpenAPI descriptor for the current v1 API at `openapi.yaml` (root). The `servers` entry points to the `/api/v1` base path. Update `openapi.yaml` as you add endpoints.
+
+**Rate Limiting**
+
+- All `/api/*` routes are protected by a global rate limiter using in-memory `lru-cache`.
+- **Limits (per IP/session):**
+  - **Auth endpoints (`/api/auth/*`)**: 10 requests per minute
+  - **Write endpoints (`POST`, `PUT`, `DELETE`, `PATCH`)**: 50 requests per minute
+  - **General read endpoints (`GET`)**: 100 requests per minute
+- **Whitelisted routes**: `/api/health` is exempt from rate limiting to ensure uptime monitoring is not blocked.
+- **Behavior**: When a limit is exceeded, the server responds with a `429 Too Many Requests` status code and a `Retry-After` header indicating the number of seconds until the rate limit resets. Rate limit information is also provided in the response headers (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`).
 
 **Non-breaking guarantee**
 

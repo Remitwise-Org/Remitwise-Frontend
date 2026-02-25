@@ -1,5 +1,3 @@
-// POST /api/goals - Create a new savings goal
-
 import { NextRequest, NextResponse } from 'next/server';
 import { buildCreateGoalTx } from '@/lib/contracts/savings-goals';
 import { getSessionFromRequest, getPublicKeyFromSession } from '@/lib/auth/session';

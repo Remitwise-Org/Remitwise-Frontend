@@ -10,6 +10,8 @@ This document outlines how external Anchors or payment providers can send asynch
 ## Security & Authentication
 Webhooks are unauthenticated but cryptographically verified. The Anchor must sign the **raw JSON body** using HMAC SHA-256 and a shared secret. The resulting hex string must be passed in the headers.
 
+Signature verification is handled by `lib/webhooks/verify.ts`. See `docs/api/webhooks.md` for common providers and header/secret conventions.
+
 **Required Environment Variable:**
 \`\`\`env
 ANCHOR_WEBHOOK_SECRET="your_shared_secret_here"

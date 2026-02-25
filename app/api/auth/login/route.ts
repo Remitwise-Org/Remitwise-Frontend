@@ -2,6 +2,21 @@ import { NextResponse } from 'next/server';
 import { Keypair } from '@stellar/stellar-sdk';
 import { getAndClearNonce } from '@/lib/auth-cache';
 import { withApiLogger } from '@/lib/api-logger-middleware';
+import {
+  createSession,
+  getSessionCookieHeader,
+} from '../../../../lib/session';
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * Wallet-based auth flow:
+ * 1. Frontend: user connects wallet (e.g. Freighter), gets address.
+ * 2. Frontend: build a nonce message (e.g. "Sign in to Remitwise at {timestamp}").
+ * 3. Frontend: sign message with wallet
+ * 4. Frontend: POST /api/auth/login with { address, signature }
+ * 5. Backend: verify with Keypair using stored server memory nonce; create encrypted session cookie.
+ */
 
 export const POST = withApiLogger(async (request) => {
   try {
@@ -43,11 +58,22 @@ export const POST = withApiLogger(async (request) => {
       );
     }
 
-    const response = NextResponse.json({ success: true, token: 'mock-session-token' });
-    response.cookies.set('session', 'mock-session-cookie', { httpOnly: true, path: '/' });
-    return response;
+    const sealed = await createSession(address);
+    const cookieHeader = getSessionCookieHeader(sealed);
 
-  } catch {
-    return NextResponse.json({ error: 'Bad Request' }, { status: 400 });
+    return new Response(
+      JSON.stringify({ ok: true, address }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Set-Cookie': cookieHeader,
+        },
+      }
+    );
+
+  } catch (err) {
+    console.error('Login error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

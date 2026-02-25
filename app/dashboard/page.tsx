@@ -36,34 +36,28 @@ export default function Dashboard() {
           <StatCard
             title="Total Sent"
             value="$1,200"
-            detail1="+$300"
-            detail1Color="text-red-500"
-            detail2="+25%"
+            percentage="+25%"
             icon={<Send className="w-5 h-5" />}
-            showTrend={true}
           />
           <StatCard
             title="Savings"
             value="$360"
-            detail1="+$90"
-            detail1Color="text-red-500"
-            detail2="+33%"
+            percentage="+33%"
             icon={<PiggyBank className="w-5 h-5" />}
-            showTrend={true}
           />
           <StatCard
             title="Bills Paid"
             value="$180"
-            detail1="3 bills"
-            detail2="This month"
+            percentage="0%"
             icon={<FileText className="w-5 h-5" />}
+            trend="none"
           />
           <StatCard
             title="Insurance"
             value="$60"
-            detail1="2 policies"
-            detail2="Active"
+            percentage="0%"
             icon={<Shield className="w-5 h-5" />}
+            trend="none"
           />
         </div>
 
