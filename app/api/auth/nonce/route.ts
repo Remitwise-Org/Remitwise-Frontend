@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { setNonce } from '@/lib/auth-cache';
+import { withApiLogger } from '@/lib/api-logger-middleware';
 
-export async function GET(request: Request) {
+export const GET = withApiLogger(async (request) => {
     try {
         const { searchParams } = new URL(request.url);
         const address = searchParams.get('address');
@@ -21,4 +22,4 @@ export async function GET(request: Request) {
     } catch (error) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
-}
+});

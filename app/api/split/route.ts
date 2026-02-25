@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { withApiLogger } from '@/lib/api-logger-middleware';
 
-export async function GET() {
+export const GET = withApiLogger(async () => {
     const cookieStore = cookies();
     const sessionCookie = cookieStore.get('session');
 
@@ -17,4 +18,4 @@ export async function GET() {
             insurance: 5
         }
     });
-}
+});

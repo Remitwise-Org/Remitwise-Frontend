@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
+import { withApiLogger } from '@/lib/api-logger-middleware';
 import {
   EmergencyTransferRequest,
   EmergencyTransferResponse,
@@ -25,7 +26,7 @@ const notificationService = new NotificationService();
  * POST /api/remittance/emergency/build
  * Builds an emergency transfer transaction
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiLogger(async (request) => {
   try {
     // 1. Authentication check
     const userId = await authenticateRequest(request);
@@ -72,8 +73,8 @@ export async function POST(request: NextRequest) {
       const errorCode = validation.errors[0].includes('exceeds maximum')
         ? EmergencyTransferErrorCode.AMOUNT_EXCEEDS_LIMIT
         : validation.errors[0].includes('daily')
-        ? EmergencyTransferErrorCode.DAILY_LIMIT_EXCEEDED
-        : EmergencyTransferErrorCode.MONTHLY_COUNT_EXCEEDED;
+          ? EmergencyTransferErrorCode.DAILY_LIMIT_EXCEEDED
+          : EmergencyTransferErrorCode.MONTHLY_COUNT_EXCEEDED;
 
       return NextResponse.json<ErrorResponse>(
         {
@@ -169,7 +170,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * Authenticates the request and returns user ID

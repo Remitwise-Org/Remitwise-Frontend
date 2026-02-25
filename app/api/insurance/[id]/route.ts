@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPolicy } from "@/lib/contracts/insurance";
 import { validateAuth, unauthorizedResponse } from "@/lib/auth";
+import { withApiLogger } from "@/lib/api-logger-middleware";
 
 // GET /api/insurance/:id
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export const GET = withApiLogger(async (
+  request,
+  context,
+) => {
+  const { id } = await context.params! as unknown as { id: string };
   if (!validateAuth(request)) {
     return unauthorizedResponse();
   }
 
   try {
-    const policy = await getPolicy(params.id);
+    const policy = await getPolicy(id);
     return NextResponse.json({ policy });
   } catch (error: unknown) {
     if (
@@ -29,4 +31,4 @@ export async function GET(
       { status: 502 }
     );
   }
-}
+});

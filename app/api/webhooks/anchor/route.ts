@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { withApiLogger } from '@/lib/api-logger-middleware'
 
-export async function POST(request: Request) {
+export const POST = withApiLogger(async (request) => {
   try {
     // 1. Read the raw body as text for accurate signature verification
     const rawBody = await request.text()
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
-}
+});
 
 // Internal function to handle the business logic
 async function handleAnchorEvent(payload: any) {

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { Keypair } from '@stellar/stellar-sdk';
 import { getAndClearNonce } from '@/lib/auth-cache';
+import { withApiLogger } from '@/lib/api-logger-middleware';
 
-export async function POST(request: Request) {
+export const POST = withApiLogger(async (request) => {
   try {
     const body = await request.json();
     const { address, signature } = body;
@@ -49,4 +50,4 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: 'Bad Request' }, { status: 400 });
   }
-}
+});
