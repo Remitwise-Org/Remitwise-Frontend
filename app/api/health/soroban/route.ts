@@ -9,15 +9,16 @@
  */
 
 import { NextResponse } from "next/server";
+import { withApiLogger } from "@/lib/api-logger-middleware";
 import {
   getLatestLedger,
   getNetworkPassphrase,
   SorobanClientError,
 } from "@/lib/soroban/client";
 
-export const runtime = "nodejs"; 
+export const runtime = "nodejs";
 
-export async function GET() {
+export const GET = withApiLogger(async () => {
   try {
     const ledger = await getLatestLedger();
 
@@ -54,4 +55,4 @@ export async function GET() {
       { status: 503 }
     );
   }
-}
+});

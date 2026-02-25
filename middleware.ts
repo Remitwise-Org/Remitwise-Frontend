@@ -1,3 +1,20 @@
+/**
+ * middleware.ts  (project root – runs in the Edge Runtime)
+ *
+ * Applies ONLY to /api routes (see `config.matcher` below).
+ *
+ * Responsibilities:
+ *  1. Ensure every request carries an `x-request-id` header.
+ *     - Forward the client-supplied value if present.
+ *     - Generate a new UUID v4 otherwise.
+ *  2. Propagate the same `x-request-id` on the response.
+ *  3. Rate limiting per IP address with configurable limits per route type.
+ *
+ * This is intentionally lightweight — the heavy structured logging is done
+ * inside `withApiLogger()` at the route-handler level where we have access
+ * to the Node.js runtime and pino.
+ */
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { LRUCache } from 'lru-cache';
@@ -18,13 +35,16 @@ const rateLimitCache = new LRUCache<string, { count: number; expiresAt: number }
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Extract IP or fallback for key
+    // ── requestId: ensure every request carries one ──
+    const incomingId = request.headers.get("x-request-id");
+    const requestId = incomingId || crypto.randomUUID();
+
+    // Extract IP or fallback for rate limiting key
     const forwardedFor = request.headers.get('x-forwarded-for');
     let ip = '127.0.0.1';
     if (forwardedFor) {
         ip = forwardedFor.split(',')[0].trim();
     } else {
-        // Fallback for local dev or when header is missing
         const remoteAddr = request.headers.get('x-real-ip');
         if (remoteAddr) {
             ip = remoteAddr;
@@ -54,9 +74,6 @@ export function middleware(request: NextRequest) {
     }
 
     // Construct Cache Key
-    // e.g., '127.0.0.1:/api/auth' (grouping auth limits separately if desired, 
-    // but let's just do by IP + limit Type to be safe, or just IP.
-    // Standard is usually just "IP:auth", "IP:write", "IP:general")
     let limitType = 'general';
     if (pathname.startsWith('/api/auth/')) {
         limitType = 'auth';
@@ -82,7 +99,7 @@ export function middleware(request: NextRequest) {
         // Exceeded limit
         const retryAfter = Math.ceil((tokenRecord.expiresAt - now) / 1000).toString();
 
-        return new NextResponse(
+        const rateLimitResponse = new NextResponse(
             JSON.stringify({
                 error: 'Too Many Requests',
                 message: 'Rate limit exceeded.',
@@ -98,10 +115,20 @@ export function middleware(request: NextRequest) {
                 },
             }
         );
+        rateLimitResponse.headers.set("x-request-id", requestId);
+        return rateLimitResponse;
     }
 
-    // Allow Request
-    const response = NextResponse.next();
+    // Allow Request — clone headers to inject requestId for downstream handlers
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-request-id", requestId);
+
+    const response = NextResponse.next({
+        request: { headers: requestHeaders },
+    });
+
+    // Propagate requestId and rate limit info on the response
+    response.headers.set("x-request-id", requestId);
     response.headers.set('X-RateLimit-Limit', limit.toString());
     response.headers.set('X-RateLimit-Remaining', (limit - tokenRecord.count).toString());
     response.headers.set('X-RateLimit-Reset', tokenRecord.expiresAt.toString());

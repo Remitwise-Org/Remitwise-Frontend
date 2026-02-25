@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { buildCreatePolicyTx } from '../../../../lib/contracts/insurance'
 import { StrKey } from '@stellar/stellar-sdk'
+import { withApiLogger } from '@/lib/api-logger-middleware'
 
-export async function POST(req: Request) {
+export const POST = withApiLogger(async (req) => {
   try {
     const caller = req.headers.get('x-user')
     if (!caller || !StrKey.isValidEd25519PublicKey(caller)) {
@@ -25,4 +26,4 @@ export async function POST(req: Request) {
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || String(err) }, { status: 500 })
   }
-}
+});

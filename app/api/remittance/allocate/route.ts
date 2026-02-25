@@ -19,6 +19,7 @@ import { NextRequest } from 'next/server';
 import { requireAuth } from '@/lib/session';
 import { jsonSuccess, jsonError } from '@/lib/api/types';
 import { getSplitConfig, computeAllocation } from '@/lib/remittance/split';
+import { withApiLogger } from '@/lib/api-logger-middleware';
 
 function validateAllocateBody(body: unknown): { txHash: string; amount: number } {
   if (!body || typeof body !== 'object') {
@@ -48,7 +49,7 @@ async function validateTxBelongsToUser(
   return true;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withApiLogger(async (request) => {
   let address: string;
   try {
     const auth = await requireAuth();
@@ -92,4 +93,4 @@ export async function POST(request: NextRequest) {
     // Optional: xdrTopUps for savings/bills/insurance contract calls when ready
     // xdrTopUps?: { savings?: string; bills?: string; insurance?: string };
   });
-}
+});

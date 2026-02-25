@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiLogger } from '@/lib/api-logger-middleware';
 import { withAuth, ApiError } from '@/lib/auth';
 import { getSplit } from '@/lib/contracts/remittance-split';
 
-async function getHandler(request: NextRequest, session: string) {
+export const GET = withApiLogger(async () => {
   try {
     const env = (process.env.STELLAR_NETWORK as 'testnet' | 'mainnet') || 'testnet';
     const config = await getSplit(env);
-    
+
     if (!config) {
-      throw new ApiError(404, 'Split configuration not found');
+      return NextResponse.json({ error: 'Split configuration not found' }, { status: 404 });
     }
-    
+
     return NextResponse.json({
       percentages: {
         savings: config.savings_percent,
@@ -20,16 +21,7 @@ async function getHandler(request: NextRequest, session: string) {
       }
     });
   } catch (error) {
-    if (error instanceof ApiError) throw error;
-    throw new ApiError(500, error instanceof Error ? error.message : 'Failed to fetch split config');
+    const message = error instanceof Error ? error.message : 'Failed to fetch split config';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-}
-
-async function postHandler(request: NextRequest, session: string) {
-  const body = await request.json();
-  // TODO: Call Soroban remittance_split contract to update config
-  return NextResponse.json({ success: true });
-}
-
-export const GET = withAuth(getHandler);
-export const POST = withAuth(postHandler);
+});

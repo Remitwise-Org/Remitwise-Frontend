@@ -10,7 +10,8 @@
     "test": "npm run test:unit",
     "test:unit": "node --test tests/unit/webhooks-verify.test.cjs",
     "test:integration": "node -e \"process.exit(0)\"",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:logger": "npx tsx --test tests/api-logger.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -21,6 +22,7 @@
     "lru-cache": "^11.2.6",
     "lucide-react": "^0.575.0",
     "next": "^16.1.6",
+    "pino": "^10.3.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "recharts": "^3.7.0",
@@ -38,6 +40,7 @@
     "postcss": "^8.4.0",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.3.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.0.0"
   }
 }

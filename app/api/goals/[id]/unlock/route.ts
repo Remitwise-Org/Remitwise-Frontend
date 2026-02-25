@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buildUnlockGoalTx } from '@/lib/contracts/savings-goals';
 import { getSessionFromRequest, getPublicKeyFromSession } from '@/lib/auth/session';
+import { withApiLogger } from '@/lib/api-logger-middleware';
 import {
   createValidationError,
   createAuthenticationError,
@@ -11,42 +12,43 @@ import {
 import { validateGoalId } from '@/lib/validation/savings-goals';
 import { ApiSuccessResponse } from '@/lib/types/savings-goals';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export const POST = withApiLogger(async (
+  request,
+  context,
+) => {
+  const { id } = await context.params! as unknown as { id: string };
   try {
     // Authenticate user
     const session = getSessionFromRequest(request);
     if (!session) {
       return createAuthenticationError('Authentication required', 'Please provide a valid session');
     }
-    
+
     let publicKey: string;
     try {
       publicKey = getPublicKeyFromSession(session);
     } catch (error) {
       return createAuthenticationError('Invalid session', 'Session does not contain a valid public key');
     }
-    
+
     // Validate goal ID from URL params
-    const goalId = params.id;
+    const goalId = id;
     const goalIdValidation = validateGoalId(goalId);
     if (!goalIdValidation.isValid) {
       return createValidationError('Invalid goal ID', goalIdValidation.error);
     }
-    
+
     // Build transaction
     const result = await buildUnlockGoalTx(publicKey, goalId);
-    
+
     // Return success response
     const response: ApiSuccessResponse = {
       xdr: result.xdr
     };
-    
+
     return NextResponse.json(response, { status: 200 });
-    
+
   } catch (error) {
     return handleUnexpectedError(error);
   }
-}
+});

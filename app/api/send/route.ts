@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/auth';
+import { withApiLogger } from '@/lib/api-logger-middleware';
+import { validateAuth, unauthorizedResponse } from '@/lib/auth';
 
-async function handler(request: NextRequest, session: string) {
+export const POST = withApiLogger(async (request: NextRequest) => {
+  if (!validateAuth(request)) return unauthorizedResponse();
   const body = await request.json();
   // TODO: Create and submit Stellar transaction
-  return NextResponse.json({ 
+  return NextResponse.json({
     transactionId: 'placeholder',
-    success: true 
+    success: true
   });
-}
-
-export const POST = withAuth(handler);
+});

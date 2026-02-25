@@ -3,11 +3,12 @@ import { validatePreferencesUpdate, ValidationError } from '@/utils/validation/p
 import { DEFAULT_PREFERENCES } from '@/utils/constants/supported-values';
 import { UserPreferences } from '@/utils/types/user.types';
 import { jsonSuccess, jsonError } from '@/lib/api/types';
+import { withApiLogger } from '@/lib/api-logger-middleware';
 
 // In-memory storage for demo purposes (replace with actual database in production)
 let userPreferences: UserPreferences = { ...DEFAULT_PREFERENCES };
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = withApiLogger(async (request) => {
   try {
     const body = await request.json();
 
@@ -27,8 +28,8 @@ export async function PATCH(request: NextRequest) {
     }
     return jsonError('INTERNAL_ERROR', 'Internal server error');
   }
-}
+});
 
-export async function GET() {
+export const GET = withApiLogger(async () => {
   return jsonSuccess(userPreferences);
-}
+});
