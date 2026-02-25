@@ -8,13 +8,15 @@ Structured JSON request/response logging for all `/api` routes.
 ┌─────────────────────────────────────────────────┐
 │  Edge Middleware (middleware.ts)                 │
 │  • Injects / propagates x-request-id header     │
+│  • Rate limiting per IP / route type            │
 │  • Matches /api/:path* only                     │
 └────────────────────┬────────────────────────────┘
                      │
 ┌────────────────────▼────────────────────────────┐
 │  withApiLogger()  (lib/api-logger-middleware.ts) │
 │  • Measures duration (performance.now)           │
-│  • Reads Content-Length for response size        │
+│  • Reads Content-Length for response size         │
+│  • Catches unhandled errors (logs + returns 500) │
 │  • Emits ONE structured JSON log line via pino   │
 └────────────────────┬────────────────────────────┘
                      │
@@ -22,6 +24,8 @@ Structured JSON request/response logging for all `/api` routes.
 │  pino logger  (lib/logger.ts)                    │
 │  • JSON to stdout                                │
 │  • Redact paths for defence-in-depth             │
+│  • ISO 8601 timestamps                           │
+│  • Human-readable level labels                   │
 └──────────────────────────────────────────────────┘
 ```
 
@@ -43,19 +47,51 @@ Every API request produces **exactly one** JSON log line:
 | `requestId`        | `string`        | UUID v4 — from `x-request-id` header or auto-generated       |
 | `responseSizeBytes`| `number\|null`  | Value of the `Content-Length` header, or `null` if absent     |
 
-### Example Log Entry
+### Example Log Entries
+
+#### Successful request
 
 ```json
 {
   "level": "info",
   "time": "2026-02-25T10:30:00.123Z",
+  "requestId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "msg": "api_request",
   "method": "POST",
   "path": "/api/auth/login",
   "statusCode": 200,
   "durationMs": 42.17,
-  "requestId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "responseSizeBytes": 256
+}
+```
+
+#### Unhandled error (caught by middleware)
+
+```json
+{
+  "level": "error",
+  "time": "2026-02-25T10:31:05.456Z",
+  "requestId": "d4e5f6a7-b8c9-0123-4567-890abcdef012",
+  "msg": "Unhandled route error",
+  "method": "POST",
+  "path": "/api/goals",
+  "statusCode": 500
+}
+```
+
+Followed by the completion log line:
+
+```json
+{
+  "level": "info",
+  "time": "2026-02-25T10:31:05.458Z",
+  "requestId": "d4e5f6a7-b8c9-0123-4567-890abcdef012",
+  "msg": "api_request",
+  "method": "POST",
+  "path": "/api/goals",
+  "statusCode": 500,
+  "durationMs": 12.34,
+  "responseSizeBytes": null
 }
 ```
 
@@ -65,13 +101,62 @@ Every API request produces **exactly one** JSON log line:
 
 The following data is **strictly excluded** from all log output:
 
-- ❌ Request body
-- ❌ Response body
+- ❌ Request body (no passwords, tokens, signatures, wallet keys)
+- ❌ Response body (no user data, transaction details)
 - ❌ Headers (especially `Authorization`, `Cookie`, `Set-Cookie`)
-- ❌ Passwords, tokens, secrets, signatures
 - ❌ Query parameters (only the pathname is logged)
-- ❌ Full email addresses (only domain, and only when explicitly opted in)
-- ❌ Full wallet/blockchain addresses (only first 6 chars, and only when opted in)
+- ❌ Full email addresses (only domain, and only when explicitly opted in via `sanitizeEmail`)
+- ❌ Full wallet/blockchain addresses (only first 6 chars, and only when opted in via `sanitizeAddress`)
+
+### Defence-in-depth: pino redaction
+
+Even if a developer accidentally attaches a sensitive field to a log entry, pino's `redact` configuration will replace it with `[REDACTED]`:
+
+```
+password, token, secret, authorization, cookie, cookies, signature,
+req.headers.authorization, req.headers.cookie, res.headers.set-cookie
+```
+
+---
+
+## Route Coverage
+
+All 32 `/api` route handlers are wrapped with `withApiLogger`:
+
+| Route                                    | Methods        | Status |
+| ---------------------------------------- | -------------- | ------ |
+| `/api/health`                            | GET            | ✅     |
+| `/api/health/soroban`                    | GET            | ✅     |
+| `/api/auth/login`                        | POST           | ✅     |
+| `/api/auth/logout`                       | POST           | ✅     |
+| `/api/auth/me`                           | GET            | ✅     |
+| `/api/auth/nonce`                        | GET            | ✅     |
+| `/api/anchor/rates`                      | GET            | ✅     |
+| `/api/bills`                             | GET, POST      | ✅     |
+| `/api/family`                            | GET, POST      | ✅     |
+| `/api/send`                              | POST           | ✅     |
+| `/api/split`                             | GET            | ✅     |
+| `/api/split/calculate`                   | GET            | ✅     |
+| `/api/goals`                             | POST           | ✅     |
+| `/api/goals/[id]/add`                    | POST           | ✅     |
+| `/api/goals/[id]/lock`                   | POST           | ✅     |
+| `/api/goals/[id]/unlock`                 | POST           | ✅     |
+| `/api/goals/[id]/withdraw`              | POST           | ✅     |
+| `/api/insurance`                         | GET            | ✅     |
+| `/api/insurance/[id]`                    | GET            | ✅     |
+| `/api/insurance/reminders`               | GET            | ✅     |
+| `/api/insurance/total-premium`           | GET            | ✅     |
+| `/api/remittance/allocate`               | POST           | ✅     |
+| `/api/remittance/emergency/build`        | POST           | ✅     |
+| `/api/user/preferences`                  | GET, PATCH     | ✅     |
+| `/api/user/profile`                      | GET            | ✅     |
+| `/api/v1/bills`                          | POST           | ✅     |
+| `/api/v1/bills/[id]/cancel`              | POST           | ✅     |
+| `/api/v1/bills/[id]/pay`                 | POST           | ✅     |
+| `/api/v1/insurance`                      | POST           | ✅     |
+| `/api/v1/insurance/[id]/deactivate`      | POST           | ✅     |
+| `/api/v1/insurance/[id]/pay`             | POST           | ✅     |
+| `/api/webhooks/anchor`                   | POST           | ✅     |
 
 ---
 
@@ -129,13 +214,24 @@ export const POST = withApiLogger(async (request) => {
 
 ## Correlating Logs with `requestId`
 
+The `requestId` field is the key to tracing a request through the entire system. Every log line emitted during a single request shares the same `requestId`.
+
 ### Within a single service
 
-Every log line for a given request shares the same `requestId`. Use `jq` to filter:
+Use `jq` to filter logs for a specific request:
 
 ```bash
 # All logs for a specific request
-cat app.log | jq 'select(.requestId == "a1b2c3d4-...")'
+cat app.log | jq 'select(.requestId == "a1b2c3d4-e5f6-7890-abcd-ef1234567890")'
+
+# All requests to a specific endpoint
+cat app.log | jq 'select(.path == "/api/auth/login")'
+
+# Slow requests (> 500ms)
+cat app.log | jq 'select(.durationMs > 500)'
+
+# Failed requests
+cat app.log | jq 'select(.statusCode >= 400)'
 ```
 
 ### Across services (distributed tracing)
@@ -160,19 +256,33 @@ cat app.log | jq 'select(.requestId == "a1b2c3d4-...")'
 
 ### With log aggregation tools
 
-In **Datadog**, **Grafana Loki**, or **CloudWatch Insights**, query by `requestId`:
-
+**CloudWatch Insights:**
 ```
-# CloudWatch Insights
 fields @timestamp, method, path, statusCode, durationMs
 | filter requestId = "a1b2c3d4-..."
 | sort @timestamp asc
 ```
 
+**Grafana Loki:**
 ```
-# Grafana Loki
 {app="remitwise"} | json | requestId="a1b2c3d4-..."
 ```
+
+**Datadog:**
+```
+@requestId:"a1b2c3d4-..." service:remitwise
+```
+
+---
+
+## Performance
+
+The logging middleware is designed for **zero-impact** on request handling:
+
+- **Non-blocking I/O**: pino writes JSON to stdout asynchronously via SonicBoom
+- **No body inspection**: request/response bodies are never read by the middleware
+- **Minimal allocations**: only `performance.now()`, pathname extraction, and a single `logger.child()` call per request
+- **No external calls**: all logging is local, stdout-only
 
 ---
 
@@ -183,6 +293,8 @@ fields @timestamp, method, path, statusCode, durationMs
 npm install pino
 
 # Run the logging tests
+npm run test:logger
+# or directly:
 npx tsx --test tests/api-logger.test.ts
 ```
 

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { anchorClient, ExchangeRate } from '@/lib/anchor/client';
+import { withApiLogger } from '@/lib/api-logger-middleware';
+import logger from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +20,7 @@ let rateCache: CacheData = {
 // 5 minutes in milliseconds
 const CACHE_TTL = 5 * 60 * 1000;
 
-export async function GET() {
+export const GET = withApiLogger(async () => {
     const now = Date.now();
     const isCacheValid = rateCache.rates !== null && (now - rateCache.timestamp) < CACHE_TTL;
 
@@ -43,11 +45,11 @@ export async function GET() {
             stale: false,
         });
     } catch (error) {
-        console.error('API /anchor/rates - Error fetching from Anchor Client:', error);
+        logger.error({ msg: 'anchor_rates_fetch_error', error: String(error) });
 
         // Fallback: If cache exists but is stale, return the stale cache.
         if (rateCache.rates !== null) {
-            console.warn('API /anchor/rates - Returning stale rate cache due to anchor failure.');
+            logger.warn({ msg: 'anchor_rates_stale_cache' });
             return NextResponse.json({
                 rates: rateCache.rates,
                 stale: true,
@@ -60,4 +62,4 @@ export async function GET() {
             { status: 503 }
         );
     }
-}
+});
