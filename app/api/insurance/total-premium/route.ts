@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTotalMonthlyPremium } from "@/lib/contracts/insurance";
 import { validateAuth, unauthorizedResponse } from "@/lib/auth";
+import { withApiLogger } from "@/lib/api-logger-middleware";
 
 // GET /api/insurance/total-premium?owner=G...
-export async function GET(request: NextRequest) {
+export const GET = withApiLogger(async (request) => {
   if (!validateAuth(request)) {
     return unauthorizedResponse();
   }
@@ -34,4 +35,4 @@ export async function GET(request: NextRequest) {
       { status: 502 }
     );
   }
-}
+});

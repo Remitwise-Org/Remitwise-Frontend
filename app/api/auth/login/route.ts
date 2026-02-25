@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Keypair } from '@stellar/stellar-sdk';
 import { getAndClearNonce } from '@/lib/auth-cache';
+import { withApiLogger } from '@/lib/api-logger-middleware';
 import {
   createSession,
   getSessionCookieHeader,
@@ -17,7 +18,7 @@ export const dynamic = 'force-dynamic';
  * 5. Backend: verify with Keypair using stored server memory nonce; create encrypted session cookie.
  */
 
-export async function POST(request: Request) {
+export const POST = withApiLogger(async (request) => {
   try {
     const body = await request.json();
     const { address, signature } = body;
@@ -75,4 +76,4 @@ export async function POST(request: Request) {
     console.error('Login error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

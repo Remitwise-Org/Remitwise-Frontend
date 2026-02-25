@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { verifySignature } from '@/lib/webhooks/verify'
+import { withApiLogger } from '@/lib/api-logger-middleware'
 
-export async function POST(request: Request) {
+export const POST = withApiLogger(async (request) => {
   try {
     // 1. Read the raw body as text for accurate signature verification
     const rawBody = await request.text()
@@ -37,8 +38,6 @@ export async function POST(request: Request) {
     const payload = JSON.parse(rawBody)
 
     // 5. Process the event asynchronously (Fire and forget to return 200 quickly)
-    // Note: If deployed on Vercel, you might need `waitUntil` for background tasks,
-    // but standard async execution works for typical setups.
     handleAnchorEvent(payload).catch(console.error)
 
     // 6. Return 200 quickly to acknowledge receipt
@@ -50,7 +49,7 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
-}
+});
 
 // Internal function to handle the business logic
 async function handleAnchorEvent(payload: any) {
