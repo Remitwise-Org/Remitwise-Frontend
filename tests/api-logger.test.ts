@@ -58,6 +58,12 @@ describe("sanitizeEmail", () => {
 
 import { NextRequest, NextResponse } from "next/server";
 import { withApiLogger } from "../lib/api-logger-middleware";
+import logger from "../lib/logger";
+
+/** Wait for one event-loop tick so pino's async SonicBoom can flush. */
+function tick(): Promise<void> {
+    return new Promise((resolve) => setImmediate(resolve));
+}
 
 /** Capture all stdout writes during `fn` execution and return them. */
 async function captureStdout(fn: () => Promise<void>): Promise<string[]> {
@@ -79,6 +85,10 @@ async function captureStdout(fn: () => Promise<void>): Promise<string[]> {
 
     try {
         await fn();
+        // Pino uses SonicBoom which writes asynchronously. Flush and
+        // wait a tick to ensure the log line is captured by the patch.
+        logger.flush();
+        await tick();
     } finally {
         process.stdout.write = original;
     }
