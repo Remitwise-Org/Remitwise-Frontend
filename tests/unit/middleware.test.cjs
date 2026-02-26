@@ -7,7 +7,7 @@ const assert = require("node:assert/strict");
  */
 
 // Mock NextRequest and NextResponse for testing
-class MockNextRequest { 
+class MockNextRequest {
   constructor(method = "GET", headers = {}, body = null) {
     this.method = method;
     this.headers = new Map(Object.entries(headers));
@@ -60,26 +60,39 @@ test("applyCORS: Sets correct CORS headers for same-origin request", (t) => {
 
   // Mock applyCORS function
   const applyCORS = (response, request) => {
-    const allowedOrigin =
-      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const requestOrigin = request.headers.get("origin");
-    const isSameOrigin = !requestOrigin || requestOrigin === allowedOrigin;
+    const allowedOriginsStr =
+      process.env.ALLOWED_ORIGINS ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
 
-    if (isSameOrigin || requestOrigin === allowedOrigin) {
-      response.set(
-        "Access-Control-Allow-Origin",
-        requestOrigin || allowedOrigin,
-      );
+    const allowedOrigins = allowedOriginsStr
+      .split(",")
+      .map((o) => o.trim())
+      .filter(Boolean);
+
+    const requestOrigin = request.headers.get("origin");
+
+    if (requestOrigin) {
+      if (
+        allowedOrigins.includes(requestOrigin) ||
+        allowedOrigins.includes("*")
+      ) {
+        const originToSet = allowedOrigins.includes("*") ? "*" : requestOrigin;
+        response.set("Access-Control-Allow-Origin", originToSet);
+
+        if (originToSet !== "*") {
+          response.set("Access-Control-Allow-Credentials", "true");
+        }
+      }
     }
 
-    response.set("Access-Control-Allow-Credentials", "true");
     response.set(
       "Access-Control-Allow-Methods",
-      "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+      "GET, POST, PUT, DELETE, PATCH, OPTIONS"
     );
     response.set(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, X-Requested-With",
+      "Content-Type, Authorization, X-Requested-With"
     );
     response.set("Vary", "Origin");
   };
@@ -113,26 +126,39 @@ test("applyCORS: Sets CORS headers for request from allowed origin", (t) => {
   const response = MockNextResponse.next();
 
   const applyCORS = (response, request) => {
-    const allowedOrigin =
-      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const requestOrigin = request.headers.get("origin");
-    const isSameOrigin = !requestOrigin || requestOrigin === allowedOrigin;
+    const allowedOriginsStr =
+      process.env.ALLOWED_ORIGINS ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
 
-    if (isSameOrigin || requestOrigin === allowedOrigin) {
-      response.set(
-        "Access-Control-Allow-Origin",
-        requestOrigin || allowedOrigin,
-      );
+    const allowedOrigins = allowedOriginsStr
+      .split(",")
+      .map((o) => o.trim())
+      .filter(Boolean);
+
+    const requestOrigin = request.headers.get("origin");
+
+    if (requestOrigin) {
+      if (
+        allowedOrigins.includes(requestOrigin) ||
+        allowedOrigins.includes("*")
+      ) {
+        const originToSet = allowedOrigins.includes("*") ? "*" : requestOrigin;
+        response.set("Access-Control-Allow-Origin", originToSet);
+
+        if (originToSet !== "*") {
+          response.set("Access-Control-Allow-Credentials", "true");
+        }
+      }
     }
 
-    response.set("Access-Control-Allow-Credentials", "true");
     response.set(
       "Access-Control-Allow-Methods",
-      "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+      "GET, POST, PUT, DELETE, PATCH, OPTIONS"
     );
     response.set(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, X-Requested-With",
+      "Content-Type, Authorization, X-Requested-With"
     );
     response.set("Vary", "Origin");
   };
@@ -152,31 +178,46 @@ test("applyCORS: Falls back to NEXT_PUBLIC_APP_URL when env var set", (t) => {
   const originalEnv = process.env.NEXT_PUBLIC_APP_URL;
   process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000";
 
-  const request = new MockNextRequest("GET", {});
+  const request = new MockNextRequest("GET", {
+    origin: "http://localhost:3000"
+  });
 
   const response = MockNextResponse.next();
 
   const applyCORS = (response, request) => {
-    const allowedOrigin =
-      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const requestOrigin = request.headers.get("origin");
-    const isSameOrigin = !requestOrigin || requestOrigin === allowedOrigin;
+    const allowedOriginsStr =
+      process.env.ALLOWED_ORIGINS ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
 
-    if (isSameOrigin || requestOrigin === allowedOrigin) {
-      response.set(
-        "Access-Control-Allow-Origin",
-        requestOrigin || allowedOrigin,
-      );
+    const allowedOrigins = allowedOriginsStr
+      .split(",")
+      .map((o) => o.trim())
+      .filter(Boolean);
+
+    const requestOrigin = request.headers.get("origin");
+
+    if (requestOrigin) {
+      if (
+        allowedOrigins.includes(requestOrigin) ||
+        allowedOrigins.includes("*")
+      ) {
+        const originToSet = allowedOrigins.includes("*") ? "*" : requestOrigin;
+        response.set("Access-Control-Allow-Origin", originToSet);
+
+        if (originToSet !== "*") {
+          response.set("Access-Control-Allow-Credentials", "true");
+        }
+      }
     }
 
-    response.set("Access-Control-Allow-Credentials", "true");
     response.set(
       "Access-Control-Allow-Methods",
-      "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+      "GET, POST, PUT, DELETE, PATCH, OPTIONS"
     );
     response.set(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, X-Requested-With",
+      "Content-Type, Authorization, X-Requested-With"
     );
     response.set("Vary", "Origin");
   };
@@ -460,26 +501,39 @@ test("Middleware: CORS applied before rate limiting", (t) => {
 
   // CORS should be applied first
   const applyCORS = (response, request) => {
-    const allowedOrigin =
-      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const requestOrigin = request.headers.get("origin");
-    const isSameOrigin = !requestOrigin || requestOrigin === allowedOrigin;
+    const allowedOriginsStr =
+      process.env.ALLOWED_ORIGINS ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
 
-    if (isSameOrigin || requestOrigin === allowedOrigin) {
-      response.set(
-        "Access-Control-Allow-Origin",
-        requestOrigin || allowedOrigin,
-      );
+    const allowedOrigins = allowedOriginsStr
+      .split(",")
+      .map((o) => o.trim())
+      .filter(Boolean);
+
+    const requestOrigin = request.headers.get("origin");
+
+    if (requestOrigin) {
+      if (
+        allowedOrigins.includes(requestOrigin) ||
+        allowedOrigins.includes("*")
+      ) {
+        const originToSet = allowedOrigins.includes("*") ? "*" : requestOrigin;
+        response.set("Access-Control-Allow-Origin", originToSet);
+
+        if (originToSet !== "*") {
+          response.set("Access-Control-Allow-Credentials", "true");
+        }
+      }
     }
 
-    response.set("Access-Control-Allow-Credentials", "true");
     response.set(
       "Access-Control-Allow-Methods",
-      "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+      "GET, POST, PUT, DELETE, PATCH, OPTIONS"
     );
     response.set(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, X-Requested-With",
+      "Content-Type, Authorization, X-Requested-With"
     );
     response.set("Vary", "Origin");
   };
