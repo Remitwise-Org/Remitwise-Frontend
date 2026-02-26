@@ -28,17 +28,32 @@ const SECURITY_HEADERS: Record<string, string> = {
 
 // Helper functions
 function applyCORS(response: NextResponse, request: NextRequest): void {
-  const allowedOrigin =
-    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const allowedOriginsStr =
+    process.env.ALLOWED_ORIGINS ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3000";
+
+  const allowedOrigins = allowedOriginsStr
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   const requestOrigin = request.headers.get("origin");
-  const isSameOrigin = !requestOrigin || requestOrigin === allowedOrigin;
-  if (isSameOrigin || requestOrigin === allowedOrigin) {
-    response.headers.set(
-      "Access-Control-Allow-Origin",
-      requestOrigin || allowedOrigin,
-    );
+
+  if (requestOrigin) {
+    if (
+      allowedOrigins.includes(requestOrigin) ||
+      allowedOrigins.includes("*")
+    ) {
+      const originToSet = allowedOrigins.includes("*") ? "*" : requestOrigin;
+      response.headers.set("Access-Control-Allow-Origin", originToSet);
+
+      if (originToSet !== "*") {
+        response.headers.set("Access-Control-Allow-Credentials", "true");
+      }
+    }
   }
-  response.headers.set("Access-Control-Allow-Credentials", "true");
+
   response.headers.set(
     "Access-Control-Allow-Methods",
     CORS_ALLOWED_METHODS.join(", "),
