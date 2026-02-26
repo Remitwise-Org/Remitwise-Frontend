@@ -9,13 +9,20 @@ This document describes the server-side integration with the Soroban remittance_
 Add to your `.env.local`:
 
 ```bash
-STELLAR_NETWORK=testnet
-REMITTANCE_SPLIT_CONTRACT_ID=<your_deployed_contract_id>
+SOROBAN_NETWORK=testnet
+
+# Option A: per-network contract IDs
+REMITTANCE_SPLIT_CONTRACT_ID_TESTNET=<your_testnet_contract_id>
+REMITTANCE_SPLIT_CONTRACT_ID_MAINNET=<your_mainnet_contract_id>
+
+# Option B: single JSON value with network keys
+# CONTRACT_IDS_JSON={"testnet":{"REMITTANCE_SPLIT_CONTRACT_ID":"<id>"},"mainnet":{"REMITTANCE_SPLIT_CONTRACT_ID":"<id>"}}
 ```
 
 **Prerequisites:**
 - The remittance_split contract must be deployed on the specified network
-- The contract ID must be set in environment variables
+- `SOROBAN_NETWORK` must be set to `testnet` or `mainnet`
+- The contract ID must be configured for that network
 
 ## Contract Functions
 
@@ -85,7 +92,7 @@ Calculates split amounts for a given remittance amount.
 
 All endpoints handle the following errors:
 
-- **Contract not configured**: Returns 500 with message "REMITTANCE_SPLIT_CONTRACT_ID not configured"
+- **Contract not configured**: Returns 500 with message indicating the missing network-specific key (for example `REMITTANCE_SPLIT_CONTRACT_ID_TESTNET`)
 - **Contract not deployed**: Returns 404 with message "Split configuration not found"
 - **RPC errors**: Returns 500 with descriptive error message
 - **Invalid parameters**: Returns 400 with validation error

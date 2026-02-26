@@ -14,10 +14,23 @@ import {
   getNetworkPassphrase,
   SorobanClientError,
 } from "@/lib/soroban/client";
+import {
+  getResolvedContractIdsForNetwork,
+  getSorobanNetwork,
+} from "@/lib/contracts/contract-id-resolver";
 
 export const runtime = "nodejs"; 
 
 export async function GET() {
+  const network = getSorobanNetwork();
+  const includeContractConfig = process.env.NODE_ENV !== "production";
+  const contractResolution = includeContractConfig
+    ? {
+        network,
+        contractIds: getResolvedContractIdsForNetwork(network),
+      }
+    : undefined;
+
   try {
     const ledger = await getLatestLedger();
 
@@ -30,6 +43,7 @@ export async function GET() {
           protocolVersion: ledger.protocolVersion,
           networkPassphrase: getNetworkPassphrase(),
         },
+        contractResolution,
         timestamp: new Date().toISOString(),
       },
       { status: 200 }
@@ -49,6 +63,7 @@ export async function GET() {
           rpcReachable: false,
           error: message,
         },
+        contractResolution,
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

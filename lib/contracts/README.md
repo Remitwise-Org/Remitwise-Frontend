@@ -16,3 +16,11 @@ Contract read/write layer for the family wallet functionality.
 - `checkSpendingLimit(...)` - Verify spending allowance
 
 See `/docs/FAMILY_WALLET_INTEGRATION.md` for complete documentation.
+
+## Contract ID Resolution
+
+Server-side contract integrations resolve contract IDs by `SOROBAN_NETWORK` (`testnet` or `mainnet`) via `lib/contracts/contract-id-resolver.ts`.
+
+Supported configuration:
+- Network-specific env vars (example: `REMITTANCE_SPLIT_CONTRACT_ID_TESTNET`, `REMITTANCE_SPLIT_CONTRACT_ID_MAINNET`)
+- `CONTRACT_IDS_JSON` with top-level `testnet` and `mainnet` keys

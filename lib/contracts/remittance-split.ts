@@ -1,4 +1,14 @@
-import { Contract, SorobanRpc, Networks } from '@stellar/stellar-sdk';
+import {
+  Account,
+  BASE_FEE,
+  Contract,
+  Networks,
+  scValToNative,
+  SorobanRpc,
+  TransactionBuilder,
+  xdr,
+} from '@stellar/stellar-sdk';
+import { getSorobanNetwork, resolveContractId } from './contract-id-resolver';
 
 export interface SplitConfig {
   savings_percent: number;
@@ -22,22 +32,41 @@ const getRpcServer = (env: 'testnet' | 'mainnet' = 'testnet'): SorobanRpc.Server
   return new SorobanRpc.Server(url);
 };
 
-export async function getSplit(env: 'testnet' | 'mainnet' = 'testnet'): Promise<SplitConfig | null> {
-  const contractId = process.env.REMITTANCE_SPLIT_CONTRACT_ID;
-  if (!contractId) {
-    throw new Error('REMITTANCE_SPLIT_CONTRACT_ID not configured');
-  }
+export async function getSplit(env: 'testnet' | 'mainnet' = getSorobanNetwork()): Promise<SplitConfig | null> {
+  const contractId = resolveContractId('REMITTANCE_SPLIT_CONTRACT_ID', env);
 
   try {
     const server = getRpcServer(env);
     const contract = new Contract(contractId);
-    
-    const result = await server.getContractData(contractId, contract.call('get_split'));
-    
-    if (!result) return null;
-    
-    // Parse contract response - adjust based on actual contract structure
-    return result as unknown as SplitConfig;
+    const networkPassphrase = env === 'mainnet' ? Networks.PUBLIC : Networks.TESTNET;
+    const sourceAccount = new Account(
+      'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN',
+      '0'
+    );
+
+    const tx = new TransactionBuilder(sourceAccount, {
+      fee: BASE_FEE,
+      networkPassphrase,
+    })
+      .addOperation(contract.call('get_split'))
+      .setTimeout(30)
+      .build();
+
+    const simulation = (await server.simulateTransaction(tx)) as {
+      result?: { retval?: xdr.ScVal };
+      error?: string;
+    };
+
+    if (simulation.error) {
+      if (simulation.error.includes('not found')) return null;
+      throw new Error(simulation.error);
+    }
+
+    if (!simulation.result?.retval) {
+      return null;
+    }
+
+    return scValToNative(simulation.result.retval) as SplitConfig;
   } catch (error) {
     if (error instanceof Error && error.message.includes('not found')) {
       return null;
@@ -46,11 +75,11 @@ export async function getSplit(env: 'testnet' | 'mainnet' = 'testnet'): Promise<
   }
 }
 
-export async function getConfig(env: 'testnet' | 'mainnet' = 'testnet'): Promise<SplitConfig | null> {
+export async function getConfig(env: 'testnet' | 'mainnet' = getSorobanNetwork()): Promise<SplitConfig | null> {
   return getSplit(env);
 }
 
-export async function calculateSplit(amount: number, env: 'testnet' | 'mainnet' = 'testnet'): Promise<SplitAmounts | null> {
+export async function calculateSplit(amount: number, env: 'testnet' | 'mainnet' = getSorobanNetwork()): Promise<SplitAmounts | null> {
   const config = await getSplit(env);
   if (!config) return null;
 
