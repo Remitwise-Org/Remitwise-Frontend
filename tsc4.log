@@ -1,0 +1,4 @@
+﻿tests/session/logout.test.ts(16,28): error TS2554: Expected 1 arguments, but got 0.
+tests/session/logout.test.ts(25,28): error TS2554: Expected 1 arguments, but got 0.
+tests/session/logout.test.ts(38,28): error TS2554: Expected 1 arguments, but got 0.
+tests/session/logout.test.ts(49,28): error TS2554: Expected 1 arguments, but got 0.

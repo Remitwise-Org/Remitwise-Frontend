@@ -66,3 +66,16 @@ export function getPublicKeyFromSession(session: Session | null): string {
   
   return session!.publicKey;
 }
+
+/**
+ * Get session with authentication status
+ * @param request NextRequest
+ * @returns Session object with authenticated status or null
+ */
+export async function getSession(request: NextRequest): Promise<{ address: string, authenticated: boolean } | null> {
+  const session = getSessionFromRequest(request);
+  if (session && session.publicKey) {
+    return { address: session.publicKey, authenticated: true };
+  }
+  return null;
+}

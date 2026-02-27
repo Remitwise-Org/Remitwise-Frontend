@@ -13,7 +13,7 @@ describe('Logout Endpoint', () => {
   });
 
   it('should return 200 with success message', async () => {
-    const response = await postLogout();
+    const response = await postLogout(new Request('http://localhost/api/auth/logout', { method: 'POST' }) as any);
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -22,7 +22,7 @@ describe('Logout Endpoint', () => {
   });
 
   it('should include Set-Cookie header to clear session', async () => {
-    const response = await postLogout();
+    const response = await postLogout(new Request('http://localhost/api/auth/logout', { method: 'POST' }) as any);
     const setCookieHeader = response.headers.get('Set-Cookie');
 
     expect(setCookieHeader).toBeDefined();
@@ -35,7 +35,7 @@ describe('Logout Endpoint', () => {
 
   it('should work without existing session', async () => {
     // Logout should succeed even if no session exists
-    const response = await postLogout();
+    const response = await postLogout(new Request('http://localhost/api/auth/logout', { method: 'POST' }) as any);
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -46,7 +46,7 @@ describe('Logout Endpoint', () => {
   it('should use centralized clearSessionCookie function', async () => {
     // Verify that the logout endpoint uses the centralized function
     // by checking the cookie format matches the expected pattern
-    const response = await postLogout();
+    const response = await postLogout(new Request('http://localhost/api/auth/logout', { method: 'POST' }) as any);
     const setCookieHeader = response.headers.get('Set-Cookie');
 
     // The clearSessionCookie function should produce a consistent format

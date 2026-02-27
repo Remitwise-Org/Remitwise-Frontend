@@ -1,0 +1,70 @@
+﻿.next/dev/types/validator.ts(270,31): error TS2344: Type 'typeof import("C:/Users/TOSHIBA/Desktop/Remitwise-Frontend/app/api/goals/[id]/add/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/goals/[id]/add">'.
+  Types of property 'POST' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<ApiErrorResponse> | NextResponse<ApiSuccessResponse>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(279,31): error TS2344: Type 'typeof import("C:/Users/TOSHIBA/Desktop/Remitwise-Frontend/app/api/goals/[id]/lock/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/goals/[id]/lock">'.
+  Types of property 'POST' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<ApiErrorResponse> | NextResponse<ApiSuccessResponse>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(288,31): error TS2344: Type 'typeof import("C:/Users/TOSHIBA/Desktop/Remitwise-Frontend/app/api/goals/[id]/unlock/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/goals/[id]/unlock">'.
+  Types of property 'POST' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<ApiErrorResponse> | NextResponse<ApiSuccessResponse>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(297,31): error TS2344: Type 'typeof import("C:/Users/TOSHIBA/Desktop/Remitwise-Frontend/app/api/goals/[id]/withdraw/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/goals/[id]/withdraw">'.
+  Types of property 'POST' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<ApiErrorResponse> | NextResponse<ApiSuccessResponse>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(333,31): error TS2344: Type 'typeof import("C:/Users/TOSHIBA/Desktop/Remitwise-Frontend/app/api/insurance/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/insurance/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<Response>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(432,31): error TS2344: Type 'typeof import("C:/Users/TOSHIBA/Desktop/Remitwise-Frontend/app/api/v1/bills/[id]/cancel/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/v1/bills/[id]/cancel">'.
+  Types of property 'POST' are incompatible.
+    Type '(req: Request, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ xdr: string; }> | NextResponse<{ error: any; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(441,31): error TS2344: Type 'typeof import("C:/Users/TOSHIBA/Desktop/Remitwise-Frontend/app/api/v1/bills/[id]/pay/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/v1/bills/[id]/pay">'.
+  Types of property 'POST' are incompatible.
+    Type '(req: Request, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ xdr: string; }> | NextResponse<{ error: any; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(459,31): error TS2344: Type 'typeof import("C:/Users/TOSHIBA/Desktop/Remitwise-Frontend/app/api/v1/insurance/[id]/deactivate/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/v1/insurance/[id]/deactivate">'.
+  Types of property 'POST' are incompatible.
+    Type '(req: Request, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ xdr: string; }> | NextResponse<{ error: any; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(468,31): error TS2344: Type 'typeof import("C:/Users/TOSHIBA/Desktop/Remitwise-Frontend/app/api/v1/insurance/[id]/pay/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/v1/insurance/[id]/pay">'.
+  Types of property 'POST' are incompatible.
+    Type '(req: Request, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ xdr: string; }> | NextResponse<{ error: any; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+app/api/insurance/[id]/route.ts(2,31): error TS2307: Cannot find module '../../../lib/i18n' or its corresponding type declarations.
+app/api/remittance/emergency/build/route.ts(4,30): error TS2307: Cannot find module 'uuid' or its corresponding type declarations.
+lib/contracts/bill-payments.ts(1,10): error TS2614: Module '"@stellar/stellar-sdk"' has no exported member 'Server'. Did you mean to use 'import Server from "@stellar/stellar-sdk"' instead?
+lib/contracts/remittance-split.ts(35,61): error TS2345: Argument of type 'Operation2<InvokeHostFunction>' is not assignable to parameter of type 'ScVal'.
+  Type 'Operation2<InvokeHostFunction>' is missing the following properties from type 'ScVal': switch, b, error, u32, and 18 more.
+services/event-storage-service.ts(6,30): error TS2307: Cannot find module 'uuid' or its corresponding type declarations.
+services/transaction-builder-service.ts(5,3): error TS2614: Module '"@stellar/stellar-sdk"' has no exported member 'Server'. Did you mean to use 'import Server from "@stellar/stellar-sdk"' instead?

@@ -1,0 +1,11 @@
+﻿app/api/split/initialize/route.ts(2,10): error TS2305: Module '"@/lib/auth/session"' has no exported member 'getSession'.
+app/api/split/initialize/route.ts(3,10): error TS2305: Module '"@/lib/contracts/remittance-split"' has no exported member 'buildInitializeSplitTx'.
+app/api/split/update/route.ts(2,10): error TS2305: Module '"@/lib/auth/session"' has no exported member 'getSession'.
+app/api/split/update/route.ts(3,10): error TS2305: Module '"@/lib/contracts/remittance-split"' has no exported member 'buildUpdateSplitTx'.
+lib/cache/contract-cache.ts(12,8): error TS2613: Module '"C:/Users/TOSHIBA/Desktop/Remitwise-Frontend/node_modules/lru-cache/dist/esm/index"' has no default export. Did you mean to use 'import { LRUCache } from "C:/Users/TOSHIBA/Desktop/Remitwise-Frontend/node_modules/lru-cache/dist/esm/index"' instead?
+lib/contracts/remittance-split.ts(35,61): error TS2345: Argument of type 'Operation2<InvokeHostFunction>' is not assignable to parameter of type 'ScVal'.
+  Type 'Operation2<InvokeHostFunction>' is missing the following properties from type 'ScVal': switch, b, error, u32, and 18 more.
+tests/session/logout.test.ts(16,28): error TS2554: Expected 1 arguments, but got 0.
+tests/session/logout.test.ts(25,28): error TS2554: Expected 1 arguments, but got 0.
+tests/session/logout.test.ts(38,28): error TS2554: Expected 1 arguments, but got 0.
+tests/session/logout.test.ts(49,28): error TS2554: Expected 1 arguments, but got 0.

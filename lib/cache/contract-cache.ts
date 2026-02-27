@@ -9,7 +9,7 @@
  * @performance LRU eviction, TTL-based expiration, O(1) lookups
  */
 
-import LRUCache from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -112,7 +112,7 @@ const VALID_CONTRACT_IDS: ReadonlySet<string> = new Set(Object.values(CONTRACT_I
 // ============================================================================
 
 // Initialize LRU cache with proper typing
-const cache = new LRUCache<string, CacheEntry<unknown>>(CACHE_MAX_SIZE);
+const cache = new LRUCache<string, CacheEntry<unknown>>({ max: CACHE_MAX_SIZE });
 
 // Metrics tracking for observability (not exposed in production logs)
 let cacheHits = 0;
@@ -324,7 +324,7 @@ export async function cachedContractCall<T>(
         }
       }
       // Expired or TTL mismatch - remove from cache
-      cache.del(cacheKey);
+      cache.delete(cacheKey);
     }
   } catch (error) {
     // Cache read error - log but continue to fetch
@@ -393,7 +393,7 @@ export function invalidate(
 
     const cacheKey = generateCacheKey(contractId, method, args);
     const existed = cache.has(cacheKey);
-    cache.del(cacheKey);
+    cache.delete(cacheKey);
     return existed;
   } catch (error) {
     // Validation error - throw to caller
@@ -447,7 +447,7 @@ export function invalidatePattern(pattern: string): number {
 
   for (const key of keys) {
     if (typeof key === 'string' && key.includes(pattern)) {
-      cache.del(key);
+      cache.delete(key);
       count++;
     }
   }
@@ -460,7 +460,7 @@ export function invalidatePattern(pattern: string): number {
  * @security Should be restricted in production environments
  */
 export function clearCache(): void {
-  cache.reset();
+  cache.clear();
   // Reset metrics
   cacheHits = 0;
   cacheMisses = 0;
@@ -473,9 +473,9 @@ export function clearCache(): void {
 export function getCacheStats(): CacheStats {
   const total = cacheHits + cacheMisses;
   return {
-    size: cache.length,
+    size: cache.size,
     maxSize: CACHE_MAX_SIZE,
-    itemCount: cache.itemCount,
+    itemCount: cache.size,
     hitRate: total > 0 ? cacheHits / total : undefined,
     missRate: total > 0 ? cacheMisses / total : undefined,
   };
@@ -486,7 +486,7 @@ export function getCacheStats(): CacheStats {
  * @security Should be restricted in production environments
  */
 export function getCacheKeys(): readonly string[] {
-  return Object.freeze(cache.keys());
+  return Object.freeze([...cache.keys()]);
 }
 
 /**

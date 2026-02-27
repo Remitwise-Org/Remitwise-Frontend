@@ -27,9 +27,9 @@ export default function SavingsByGoalWidget({
         <PiggyBank className="w-6 h-6 text-red-500" />
         <h2 className="text-xl font-bold text-white">Savings by Goal</h2>
       </div>
-      
+
       {/* Subtitle */}
-      <p className="text-sm text-gray-400 mb-6">Where you're saving</p>
+      <p className="text-sm text-gray-400 mb-6">Where you&apos;re saving</p>
 
       {/* Goals List */}
       <div className="space-y-6">
@@ -43,7 +43,7 @@ export default function SavingsByGoalWidget({
                 <span className="text-xs text-gray-400">{goal.percentage}%</span>
               </div>
             </div>
-            
+
             {/* Progress Bar */}
             <div className="w-full bg-gray-800 rounded-full h-2.5 overflow-hidden">
               <div

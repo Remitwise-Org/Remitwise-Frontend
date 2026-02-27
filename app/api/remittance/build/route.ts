@@ -167,9 +167,9 @@ async function simulateTransaction(xdr: string): Promise<{
   const server = getServer();
 
   try {
-    const { Transaction } = await import('@stellar/stellar-sdk');
-    const transaction = Transaction.fromXDR(xdr, getNetworkPassphrase());
-    
+    const { TransactionBuilder } = await import('@stellar/stellar-sdk');
+    const transaction = TransactionBuilder.fromXDR(xdr, getNetworkPassphrase());
+
     const simulation = await server.simulateTransaction(transaction);
 
     // Check for simulation errors
@@ -243,12 +243,12 @@ export async function POST(request: NextRequest) {
   // Check for common errors
   if (!simulation.success) {
     const errorMsg = simulation.error || 'Unknown simulation error';
-    
+
     // Check for insufficient balance
     if (errorMsg.toLowerCase().includes('insufficient') || errorMsg.toLowerCase().includes('balance')) {
       return jsonError('VALIDATION_ERROR', 'Insufficient balance to complete this transaction');
     }
-    
+
     // Check for invalid destination
     if (errorMsg.toLowerCase().includes('destination') || errorMsg.toLowerCase().includes('account')) {
       return jsonError('VALIDATION_ERROR', 'Invalid or non-existent recipient address');
@@ -268,52 +268,4 @@ export async function POST(request: NextRequest) {
   };
 
   return jsonSuccess(response);
-import { NextRequest, NextResponse } from 'next/server';
-import { withIdempotency } from '@/lib/idempotency';
-
-/**
- * POST /api/remittance/build
- * Build a remittance transaction
- * 
- * Supports idempotency via Idempotency-Key header
- */
-export async function POST(request: NextRequest) {
-    return withIdempotency(request, async (body) => {
-        // TODO: Add authentication
-        // const session = await getSession(request);
-        // if (!session) {
-        //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        // }
-
-        // Validate request body
-        const { amount, recipient, currency } = body;
-
-        if (!amount || !recipient || !currency) {
-            return NextResponse.json(
-                { error: 'Missing required fields: amount, recipient, currency' },
-                { status: 400 }
-            );
-        }
-
-        if (amount <= 0) {
-            return NextResponse.json(
-                { error: 'Amount must be greater than 0' },
-                { status: 400 }
-            );
-        }
-
-        // TODO: Implement actual remittance building logic
-        // For now, return a mock response
-        const transactionId = `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-        return NextResponse.json({
-            transactionId,
-            amount,
-            recipient,
-            currency,
-            status: 'pending',
-            createdAt: new Date().toISOString(),
-            message: 'Remittance transaction built successfully',
-        });
-    });
 }

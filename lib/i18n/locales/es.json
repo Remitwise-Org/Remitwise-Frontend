@@ -1,0 +1,31 @@
+{
+  "errors": {
+    "missing_signature": "Falta la firma",
+    "invalid_signature": "Firma inválida",
+    "unauthorized_missing_header": "No autorizado: falta o es inválido el encabezado x-user",
+    "unauthorized": "No autorizado",
+    "invalid_name": "Nombre inválido",
+    "invalid_coverage_type": "Tipo de cobertura inválido",
+    "invalid_monthly_premium": "Prima mensual inválida; debe ser > 0",
+    "invalid_coverage_amount": "Monto de cobertura inválido; debe ser > 0",
+    "missing_policy_id": "Falta el id de la póliza",
+    "forbidden_owner_deactivate": "Prohibido: solo el propietario puede desactivar",
+    "missing_bill_id": "Falta el id del recibo",
+    "invalid_amount": "Monto inválido; debe ser > 0",
+    "invalid_frequency_days": "Días de frecuencia inválidos para el recibo recurrente",
+    "invalid_due_date": "Fecha de vencimiento inválida",
+    "forbidden_owner_cancel": "Prohibido: solo el propietario puede cancelar",
+    "invalid_stellar_address": "Dirección Stellar inválida",
+    "policy_not_found": "Póliza no encontrada",
+    "address_required": "Se requiere la dirección",
+    "internal_server_error": "Error interno del servidor",
+    "bad_request": "Mala solicitud",
+    "missing_query_owner": "Falta el parámetro de consulta requerido: owner",
+    "failed_fetch_policy": "Error al obtener la póliza del contrato",
+    "failed_fetch_policies": "Error al obtener las pólizas del contrato",
+    "failed_fetch_total_premium": "Error al calcular la prima total",
+    "address_signature_required": "Se requieren la dirección y la firma",
+    "nonce_expired": "Nonce expirado o perdido. Por favor, solicita un nuevo nonce.",
+    "signature_verification_failed": "Fallo en la verificación de la firma"
+  }
+}

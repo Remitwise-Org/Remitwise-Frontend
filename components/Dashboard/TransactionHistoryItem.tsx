@@ -31,6 +31,7 @@ export type TransactionType =
 
 export interface Transaction {
     id: string; // e.g. "TX001"
+    hash?: string; // Full transaction hash for explorer link
     type: TransactionType;
     amount: number;
     currency: string;
@@ -141,7 +142,7 @@ export default function TransactionHistoryItem({ transaction }: { transaction: T
                         </button>
 
                         <a
-                            href={`https://stellar.expert/explorer/public/tx/${transaction.id}`}
+                            href={`https://stellar.expert/explorer/public/tx/${transaction.hash || transaction.id}`}
                             target="_blank"
                             rel="noreferrer"
                             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1A0505] border border-[#2A1515] text-[#FF4B26] text-sm font-medium hover:bg-[#2A0808] transition-colors"
@@ -159,7 +160,7 @@ export default function TransactionHistoryItem({ transaction }: { transaction: T
                 <div className="mt-6 pt-6 border-t border-[#1F1F1F] grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div>
                         <div className="text-[#666] text-xs mb-1.5">Transaction Hash</div>
-                        <div className="text-white text-sm font-mono break-all">33...8a22</div>
+                        <div className="text-white text-sm font-mono break-all">{transaction.hash || `${transaction.id}...`}</div>
                     </div>
                     <div>
                         <div className="text-[#666] text-xs mb-1.5">Block Number</div>

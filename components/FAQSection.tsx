@@ -56,7 +56,7 @@ export default function FAQSection() {
                         Frequently Asked <span className="text-[#DC2626]">Questions</span>
                     </h2>
                     <p className="text-white/60 max-w-xl mx-auto text-base font-regular">
-                        Got questions? We've got answers. Find everything you need to know
+                        Got questions? We&apos;ve got answers. Find everything you need to know
                         about using our platform, plans, and features.
                     </p>
                 </div>

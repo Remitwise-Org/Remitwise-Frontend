@@ -22,7 +22,7 @@ import {
 } from "@/lib/contracts/dashboard-aggregate";
 import { DashboardResponse } from "./types/dashboard";
 
-// ─── TTL cache (in-process, per-user) ─────────────────────────────────────
+// ─── TTL cache (in-process, per-user) 
 
 const TTL_MS = (Number(process.env.DASHBOARD_TTL_SECONDS) || 30) * 1_000;
 

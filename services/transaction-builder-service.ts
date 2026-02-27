@@ -2,7 +2,7 @@
 
 import { ITransactionBuilder } from './transaction-builder';
 import {
-  Server,
+  Horizon,
   TransactionBuilder,
   Networks,
   Operation,
@@ -12,7 +12,7 @@ import {
 } from '@stellar/stellar-sdk';
 
 export class StellarTransactionBuilder implements ITransactionBuilder {
-  private server: Server;
+  private server: Horizon.Server;
   private networkPassphrase: string;
   private emergencyFeePercentage: number;
   private standardFeePercentage: number;
@@ -25,7 +25,7 @@ export class StellarTransactionBuilder implements ITransactionBuilder {
     standardFeePercentage?: number;
     memoPrefix?: string;
   }) {
-    this.server = new Server(config?.horizonUrl || 'https://horizon-testnet.stellar.org');
+    this.server = new Horizon.Server(config?.horizonUrl || 'https://horizon-testnet.stellar.org');
     this.networkPassphrase = config?.networkPassphrase || Networks.TESTNET;
     this.emergencyFeePercentage = config?.emergencyFeePercentage || 0.5;
     this.standardFeePercentage = config?.standardFeePercentage || 1.0;
