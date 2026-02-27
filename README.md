@@ -189,7 +189,11 @@ See [API Routes Documentation](./docs/API_ROUTES.md) for details on authenticati
    - Handle deposit/withdrawal flows
    - Process exchange rate quotes
    - **Environment Setup:** Set `ANCHOR_API_BASE_URL` in your `.env` file (see `.env.example`).
-   - **Frontend API Endpoint:** Use `GET /api/anchor/rates` to fetch cached exchange rates with fallback support.
+   - **Frontend API Endpoints:**
+     - `GET /api/anchor/rates` (cached exchange rates)
+     - `POST /api/anchor/deposit` (authenticated; starts fiat -> USDC flow)
+     - `POST /api/anchor/withdraw` (authenticated; starts USDC -> fiat flow)
+   - Deposit/withdraw returns `501 Not Implemented` when anchor integration is not configured.
 
 4. **Transaction Tracking**
    - Display on-chain transaction history
@@ -247,8 +251,17 @@ API_RATE_LIMIT=100  # requests per minute
 API_TIMEOUT=30000  # milliseconds
 
 # Optional: Anchor Platform
-ANCHOR_PLATFORM_URL=
-ANCHOR_PLATFORM_API_KEY=
+ANCHOR_API_BASE_URL=
+ANCHOR_API_KEY=
+ANCHOR_DEPOSIT_PATH=/transactions/deposit/interactive
+ANCHOR_WITHDRAW_PATH=/transactions/withdraw/interactive
+ANCHOR_WEBHOOK_SECRET=
+
+# Admin / internal APIs
+ADMIN_SECRET=
+
+# In-process background shutdown timeout
+SHUTDOWN_TIMEOUT_MS=15000
 ```
 
 See `.env.example` for a complete list of configuration options.
@@ -483,6 +496,7 @@ Integration tests are in the `__tests__/integration/` directory.
 For detailed API specifications:
 
 - **OpenAPI Spec**: See `openapi.yaml` for complete API documentation
+- **Anchor/Admin/Shutdown Notes**: See `docs/ANCHOR_ADMIN_SHUTDOWN.md`
 - **Interactive Docs**: Run `npm run docs` to view Swagger UI at `http://localhost:3000/api-docs`
 - **Postman Collection**: Import `postman_collection.json` for testing
 
@@ -507,7 +521,36 @@ POST /api/contracts/family    # Manage family wallet
 
 # System
 GET  /api/health              # Health check
+POST /api/anchor/deposit      # Start anchor deposit flow
+POST /api/anchor/withdraw     # Start anchor withdrawal flow
+POST /api/admin/cache/clear   # Admin-only cache invalidation
+GET  /api/admin/users         # Admin-only recent users
+GET  /api/admin/audit         # Admin-only audit events
 ```
+
+### Anchor deposit/withdraw flow notes
+
+- `POST /api/anchor/deposit` body: `{ "amount": 100, "currency": "USD", "destination": "optional" }`
+- `POST /api/anchor/withdraw` body: `{ "amount": 100, "currency": "USD", "destinationAccount": "optional" }`
+- Routes call configured anchor interactive endpoints and return either `url` (interactive flow) and/or `steps`.
+- Pending flows are stored in-memory so webhook callbacks can reconcile status updates.
+
+### Admin route security
+
+- All `/api/admin/*` routes require `ADMIN_SECRET`.
+- Authorized inputs:
+  - Header: `X-Admin-Key: <ADMIN_SECRET>`
+  - Cookie: `admin_key=<ADMIN_SECRET>` (or `admin_secret=<ADMIN_SECRET>`)
+- Rotate `ADMIN_SECRET` regularly; optionally restrict admin routes with an upstream IP allowlist.
+
+### Graceful shutdown for in-process jobs
+
+- In-process background work (nonce cache sweeper and webhook async handlers) now registers `SIGTERM` / `SIGINT` handlers.
+- On shutdown:
+  - New background jobs are rejected.
+  - Active jobs are awaited up to `SHUTDOWN_TIMEOUT_MS` (default `15000` ms).
+  - Process exits after hooks and timeout race complete.
+- If production jobs run externally (Vercel Cron or a separate worker), this in-process shutdown path can remain idle.
 
 ## Design Notes
 

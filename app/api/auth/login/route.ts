@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify nonce exists and matches (atomic read + delete)
+    // Note: getAndClearNonce usually handles the deletion internally
     const storedNonce = getAndClearNonce(address);
     if (!storedNonce || storedNonce !== message) {
       return NextResponse.json(
@@ -42,12 +43,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify signature
-    // The client signs Buffer.from(nonce, 'utf8') so we must decode the same way
-    const keypair = Keypair.fromPublicKey(address);
-    const messageBuffer = Buffer.from(message, 'utf8');
-    const signatureBuffer = Buffer.from(signature, 'base64');
-
-    const isValid = keypair.verify(messageBuffer, signatureBuffer);
+    let isValid = false;
+    try {
+      const keypair = Keypair.fromPublicKey(address);
+      // Most Stellar wallets sign the UTF-8 representation of the string
+      const messageBuffer = Buffer.from(message, 'utf8');
+      const signatureBuffer = Buffer.from(signature, 'base64');
+      
+      isValid = keypair.verify(messageBuffer, signatureBuffer);
+    } catch (verifyError) {
+      console.error('Signature verification technical error:', verifyError);
+      return NextResponse.json(
+        { error: 'Malformed signature or address' },
+        { status: 400 }
+      );
+    }
 
     if (!isValid) {
       return NextResponse.json(
@@ -72,7 +82,7 @@ export async function POST(request: NextRequest) {
       console.warn('DB upsert skipped (non-fatal):', dbErr);
     }
 
-    // Create encrypted session
+    // Create encrypted session (production logic from main)
     const sealed = await createSession(address);
 
     const response = NextResponse.json({

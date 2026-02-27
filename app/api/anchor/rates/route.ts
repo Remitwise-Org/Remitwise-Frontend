@@ -1,24 +1,14 @@
 import { NextResponse } from 'next/server';
-import { anchorClient, ExchangeRate } from '@/lib/anchor/client';
+import { anchorClient } from '@/lib/anchor/client';
+import { getAnchorRatesCache, setAnchorRatesCache } from '@/lib/anchor/rates-cache';
 
 export const dynamic = 'force-dynamic';
-
-interface CacheData {
-    rates: ExchangeRate[] | null;
-    timestamp: number;
-}
-
-// In-memory cache variables for rates.
-// Next.js development server may drop this cache on hot-reload, but it will work effectively in a production environment (serverless instance lifetime).
-let rateCache: CacheData = {
-    rates: null,
-    timestamp: 0,
-};
 
 // 5 minutes in milliseconds
 const CACHE_TTL = 5 * 60 * 1000;
 
 export async function GET() {
+    const rateCache = getAnchorRatesCache();
     const now = Date.now();
     const isCacheValid = rateCache.rates !== null && (now - rateCache.timestamp) < CACHE_TTL;
 
@@ -33,10 +23,7 @@ export async function GET() {
         const fetchedRates = await anchorClient.getExchangeRates();
 
         // Update the cache
-        rateCache = {
-            rates: fetchedRates,
-            timestamp: now,
-        };
+        setAnchorRatesCache(fetchedRates, now);
 
         return NextResponse.json({
             rates: fetchedRates,
