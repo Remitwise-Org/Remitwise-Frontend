@@ -13,6 +13,7 @@ import {
   validateGoalId
 } from '@/lib/validation/savings-goals';
 import { ApiSuccessResponse } from '@/lib/types/savings-goals';
+import { auditLog, createAuditEvent, extractIp, AuditAction } from '@/lib/audit';
 
 export async function POST(
   request: NextRequest,
@@ -60,6 +61,16 @@ export async function POST(
     
     // Build transaction
     const result = await buildAddToGoalTx(publicKey, goalId, amount);
+    
+    // Log goal funding
+    await auditLog(
+      createAuditEvent(AuditAction.GOAL_ADD_FUNDS, 'success', {
+        address: publicKey,
+        ip: extractIp(request),
+        resource: goalId,
+        metadata: { amount },
+      })
+    );
     
     // Return success response
     const response: ApiSuccessResponse = {

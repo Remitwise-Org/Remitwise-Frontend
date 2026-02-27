@@ -23,3 +23,24 @@ model UserPreference {
   language              String  @default("en")
   notifications_enabled Boolean @default(true)
 }
+
+// Audit Log for security and compliance
+// Optional: Used when AUDIT_LOG_DESTINATION=database
+model AuditLog {
+  id        String   @id @default(cuid())
+  timestamp String   // ISO 8601 timestamp
+  action    String   // Action type (LOGIN_SUCCESS, GOAL_CREATE, etc.)
+  address   String?  // Stellar public key
+  ip        String?  // Client IP address
+  resource  String?  // Resource ID (goal ID, bill ID, etc.)
+  result    String   // 'success' or 'failure'
+  error     String?  // Error message (sanitized)
+  metadata  String?  // JSON string with additional context (sanitized)
+  createdAt DateTime @default(now())
+  
+  @@index([address])
+  @@index([action])
+  @@index([timestamp])
+  @@index([createdAt])
+  @@index([result])
+}

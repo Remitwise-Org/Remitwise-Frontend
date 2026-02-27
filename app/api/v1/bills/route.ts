@@ -3,6 +3,7 @@ import { getTranslator } from '../../../../lib/i18n'
 import { buildCreateBillTx } from '../../../../lib/contracts/bill-payments'
 import { StrKey } from '@stellar/stellar-sdk'
 import { ApiRouteError, withApiErrorHandler } from '@/lib/api/error-handler'
+import { auditLog, createAuditEvent, extractIp, AuditAction } from '@/lib/audit'
 
 export const POST = withApiErrorHandler(async function POST(req: Request) {
   const t = getTranslator(req.headers.get('accept-language'));
@@ -29,6 +30,23 @@ export const POST = withApiErrorHandler(async function POST(req: Request) {
     throw new ApiRouteError(400, 'VALIDATION_ERROR', t('errors.invalid_due_date') || 'Invalid dueDate')
   }
 
-  const xdr = await buildCreateBillTx(caller, name, numAmount, dueDate, Boolean(recurring), frequencyDays ? Number(frequencyDays) : undefined)
+  // For non-recurring bills, pass 0 as frequencyDays (it won't be used)
+  const numFrequencyDays = frequencyDays ? Number(frequencyDays) : 0;
+  const xdr = await buildCreateBillTx(caller, name, numAmount, dueDate, Boolean(recurring), numFrequencyDays)
+  
+  // Log bill creation
+  await auditLog(
+    createAuditEvent(AuditAction.BILL_CREATE, 'success', {
+      address: caller,
+      ip: extractIp(req),
+      metadata: {
+        name,
+        amount: numAmount,
+        dueDate,
+        recurring,
+      },
+    })
+  );
+  
   return NextResponse.json({ xdr })
 })

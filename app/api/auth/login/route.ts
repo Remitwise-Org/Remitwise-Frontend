@@ -3,6 +3,7 @@ import { Keypair, StrKey } from '@stellar/stellar-sdk';
 import { getAndClearNonce } from '@/lib/auth-cache';
 import { createSession, getSessionCookieHeader } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { auditLog, createAuditEvent, extractIp, AuditAction } from '@/lib/audit';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -35,6 +36,15 @@ export async function POST(request: NextRequest) {
     // Verify nonce exists and matches (atomic read + delete)
     const storedNonce = getAndClearNonce(address);
     if (!storedNonce || storedNonce !== message) {
+      // Log failed login attempt
+      await auditLog(
+        createAuditEvent(AuditAction.LOGIN_FAIL, 'failure', {
+          address,
+          ip: extractIp(request),
+          error: 'Invalid or expired nonce',
+        })
+      );
+      
       return NextResponse.json(
         { error: 'Invalid or expired nonce' },
         { status: 401 }
@@ -50,6 +60,15 @@ export async function POST(request: NextRequest) {
     const isValid = keypair.verify(messageBuffer, signatureBuffer);
 
     if (!isValid) {
+      // Log failed login attempt
+      await auditLog(
+        createAuditEvent(AuditAction.LOGIN_FAIL, 'failure', {
+          address,
+          ip: extractIp(request),
+          error: 'Invalid signature',
+        })
+      );
+      
       return NextResponse.json(
         { error: 'Invalid signature' },
         { status: 401 }
@@ -85,10 +104,29 @@ export async function POST(request: NextRequest) {
       getSessionCookieHeader(sealed)
     );
 
+    // Log successful login
+    await auditLog(
+      createAuditEvent(AuditAction.LOGIN_SUCCESS, 'success', {
+        address,
+        ip: extractIp(request),
+      })
+    );
+
     return response;
 
   } catch (error) {
     console.error('Login error:', error);
+    
+    // Log failed login due to internal error
+    const body = await request.clone().json().catch(() => ({}));
+    await auditLog(
+      createAuditEvent(AuditAction.LOGIN_FAIL, 'failure', {
+        address: body.address,
+        ip: extractIp(request),
+        error: 'Internal server error',
+      })
+    );
+    
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

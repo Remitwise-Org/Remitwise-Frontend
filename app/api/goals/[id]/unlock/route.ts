@@ -10,6 +10,7 @@ import {
 } from '@/lib/errors/api-errors';
 import { validateGoalId } from '@/lib/validation/savings-goals';
 import { ApiSuccessResponse } from '@/lib/types/savings-goals';
+import { auditLog, createAuditEvent, extractIp, AuditAction } from '@/lib/audit';
 
 export async function POST(
   request: NextRequest,
@@ -38,6 +39,15 @@ export async function POST(
     
     // Build transaction
     const result = await buildUnlockGoalTx(publicKey, goalId);
+    
+    // Log goal unlock
+    await auditLog(
+      createAuditEvent(AuditAction.GOAL_UNLOCK, 'success', {
+        address: publicKey,
+        ip: extractIp(request),
+        resource: goalId,
+      })
+    );
     
     // Return success response
     const response: ApiSuccessResponse = {

@@ -15,34 +15,7 @@ import {
   validateGoalName
 } from '@/lib/validation/savings-goals';
 import { ApiSuccessResponse } from '@/lib/types/savings-goals';
-
-
-export async function GET(req: Request) {
-  try {
-    const publicKey = req.headers.get("x-public-key");
-
-    if (!publicKey) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    const goals = await getAllGoals(publicKey);
-
-    return NextResponse.json(goals, { status: 200 });
-
-  } catch (error) {
-    console.error("GET /api/goals error:", error);
-
-    return NextResponse.json(
-      { error: "Failed to fetch goals" },
-      { status: 500 }
-    );
-  }
-}
-
-
+import { auditLog, createAuditEvent, extractIp, AuditAction } from '@/lib/audit';
 
 
 // ===== Goal Interface & Mock Data =====
@@ -81,6 +54,14 @@ async function getHandler(request: NextRequest, session: string) {
       limit,
       (item) => item.id,
       cursor
+    );
+
+    // Log goals list retrieval
+    await auditLog(
+      createAuditEvent(AuditAction.GOAL_LIST, 'success', {
+        address: session,
+        ip: extractIp(request),
+      })
     );
 
     return NextResponse.json(paginatedResult);
@@ -131,6 +112,19 @@ async function postHandler(request: NextRequest, session: string) {
 
     const response: ApiSuccessResponse = { xdr: result.xdr };
 
+    // Log goal creation
+    await auditLog(
+      createAuditEvent(AuditAction.GOAL_CREATE, 'success', {
+        address: session,
+        ip: extractIp(request),
+        metadata: {
+          name,
+          targetAmount,
+          targetDate,
+        },
+      })
+    );
+
     return NextResponse.json(response, { status: 200 });
 
   } catch (error) {
@@ -138,6 +132,6 @@ async function postHandler(request: NextRequest, session: string) {
   }
 }
 
+// Remove the old unprotected GET export and use only auth-wrapped versions
 export const GET = withAuth(getHandler);
-
 export const POST = withAuth(postHandler);
