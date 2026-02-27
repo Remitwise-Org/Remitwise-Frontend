@@ -261,18 +261,21 @@ The middleware (`middleware.ts`) applies CORS headers, security headers, and req
 
 Cross-Origin Resource Sharing (CORS) is configured to allow requests from the frontend application:
 
-- **Allowed Origins**: Requests from `NEXT_PUBLIC_APP_URL` are allowed (or same-origin)
+- **Allowed Origins**: Configured via the `ALLOWED_ORIGINS` environment variable (comma-separated list, e.g., `https://app.remitwise.com, http://localhost:3000`). If not set, it falls back to `NEXT_PUBLIC_APP_URL`.
 - **Allowed Methods**: GET, POST, PUT, DELETE, PATCH, OPTIONS
 - **Allowed Headers**: Content-Type, Authorization, X-Requested-With
-- **Credentials**: Allowed for same-origin requests
+- **Credentials**: Allowed for specific origins. **Note:** Do not use `*` for origins in production if credentials are required, as browsers block credentials when `Access-Control-Allow-Origin: *` is set. If `*` is used, credentials will not be allowed.
 - **Preflight Handling**: OPTIONS requests return 204 No Content with appropriate CORS headers
 
 **Configuration:**
 
-Set `NEXT_PUBLIC_APP_URL` in `.env.local`:
+Set `ALLOWED_ORIGINS` in `.env.local` to specify authorized clients:
 
 ```bash
-# Frontend URL for CORS policy (e.g., http://localhost:3000)
+# Comma-separated list of allowed origins
+ALLOWED_ORIGINS=https://app.remitwise.com,http://localhost:3000
+
+# Frontend URL (fallback if ALLOWED_ORIGINS is not set)
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
