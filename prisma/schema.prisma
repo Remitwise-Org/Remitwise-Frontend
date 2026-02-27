@@ -13,6 +13,7 @@ model User {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   preferences     UserPreference?
+  reminders       BillReminder[]
 }
 
 model UserPreference {
@@ -22,4 +23,18 @@ model UserPreference {
   currency              String  @default("USD")
   language              String  @default("en")
   notifications_enabled Boolean @default(true)
+}
+
+model BillReminder {
+  id        String   @id @default(cuid())
+  billId    String
+  name      String
+  amount    Float
+  dueDate   DateTime
+  userId    String
+  user      User     @relation(fields: [userId], references: [stellar_address], onDelete: Cascade)
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
