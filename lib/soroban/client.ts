@@ -15,14 +15,14 @@
  */
 
 import { SorobanRpc, Networks } from "@stellar/stellar-sdk";
+import { env } from "@/lib/env";
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 
-const RPC_URL =
-  process.env.SOROBAN_RPC_URL ?? "https://soroban-testnet.stellar.org";
+const RPC_URL = env.SOROBAN_RPC_URL ?? "https://soroban-testnet.stellar.org";
 
 const NETWORK_PASSPHRASE =
-  process.env.SOROBAN_NETWORK_PASSPHRASE ?? Networks.TESTNET;
+  env.SOROBAN_NETWORK_PASSPHRASE ?? Networks.TESTNET;
 
 /** How long (ms) to wait for a single RPC call before aborting. */
 const TIMEOUT_MS = 10_000;
@@ -42,7 +42,7 @@ let _server: SorobanRpc.Server | null = null;
 export function getServer(): SorobanRpc.Server {
   if (!_server) {
     _server = new SorobanRpc.Server(RPC_URL, {
-      allowHttp: RPC_URL.startsWith("http://"), // only allow plain HTTP for local dev
+      allowHttp: RPC_URL.startsWith("http://"),
     });
   }
   return _server;

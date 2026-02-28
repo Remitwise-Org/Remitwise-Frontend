@@ -222,36 +222,45 @@ All API routes are serverless functions deployed alongside the frontend.
 
 ### Environment Variables
 
-Create a `.env.local` file in the root directory with the following variables:
+Create a `.env.local` file in the root directory. See `.env.example` for a complete, documented list. Server-side configuration is centralized in [env.ts](file:///c:/Users/DELL/Desktop/Remitwise-Frontend/lib/env.ts).
 
 ```bash
-# Stellar Network Configuration
-NEXT_PUBLIC_STELLAR_NETWORK=testnet  # or 'mainnet'
-NEXT_PUBLIC_HORIZON_URL=https://horizon-testnet.stellar.org
-NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
+# Soroban RPC (required for on-chain features)
+SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
+SOROBAN_NETWORK_PASSPHRASE=Test SDF Network ; September 2015
 
-# Contract IDs (deployed Soroban contracts)
-NEXT_PUBLIC_REMITTANCE_SPLIT_CONTRACT_ID=
-NEXT_PUBLIC_SAVINGS_GOALS_CONTRACT_ID=
-NEXT_PUBLIC_BILL_PAYMENTS_CONTRACT_ID=
-NEXT_PUBLIC_INSURANCE_CONTRACT_ID=
-NEXT_PUBLIC_FAMILY_WALLET_CONTRACT_ID=
+# Contract IDs (optional; required to enable specific features)
+REMITTANCE_SPLIT_CONTRACT_ID=
+SAVINGS_GOALS_CONTRACT_ID=
+BILL_PAYMENTS_CONTRACT_ID=
+INSURANCE_CONTRACT_ID=
+FAMILY_WALLET_CONTRACT_ID=
 
-# Authentication
-AUTH_SECRET=your-secret-key-here  # Generate with: openssl rand -base64 32
-SESSION_COOKIE_NAME=remitwise-session
-SESSION_MAX_AGE=86400  # 24 hours in seconds
+# Database (optional; required if using the DB-backed features)
+DATABASE_URL=
+# or
+POSTGRES_URL=
 
-# API Configuration
-API_RATE_LIMIT=100  # requests per minute
-API_TIMEOUT=30000  # milliseconds
+# Auth secrets (optional; required if using NextAuth or alt auth)
+NEXTAUTH_SECRET=
+SESSION_SECRET=
 
-# Optional: Anchor Platform
-ANCHOR_PLATFORM_URL=
-ANCHOR_PLATFORM_API_KEY=
+# Anchor API (optional; required if integrating an anchor)
+ANCHOR_API_BASE_URL=
 ```
 
-See `.env.example` for a complete list of configuration options.
+Client-side variables for UI behavior continue to use the `NEXT_PUBLIC_*` prefix as needed.
+
+Required variables by feature:
+- Core Soroban connectivity: SOROBAN_RPC_URL, SOROBAN_NETWORK_PASSPHRASE
+- Remittance split: REMITTANCE_SPLIT_CONTRACT_ID
+- Savings goals: SAVINGS_GOALS_CONTRACT_ID
+- Bill payments: BILL_PAYMENTS_CONTRACT_ID
+- Insurance: INSURANCE_CONTRACT_ID
+- Family wallet: FAMILY_WALLET_CONTRACT_ID
+- Database-backed features: DATABASE_URL or POSTGRES_URL
+- Anchor integrations: ANCHOR_API_BASE_URL
+- NextAuth-based flows (if enabled): NEXTAUTH_SECRET or SESSION_SECRET
 
 ### API Middleware Configuration
 
