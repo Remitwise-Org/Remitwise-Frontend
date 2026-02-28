@@ -280,6 +280,7 @@ export async function getSessionWithRefresh(): Promise<SessionData | null> {
  * Require authentication or throw 401 Response
  * Validates session and returns authenticated user data on success
  * Throws Response with 401 status if session is invalid or expired
+ * Throws Response with 410 status if user account is deactivated
  * @returns Object containing the authenticated user's wallet address
  * @throws Response with 401 status and appropriate error message
  */
@@ -328,6 +329,27 @@ export async function requireAuth(): Promise<{ address: string }> {
         JSON.stringify({ error: 'Unauthorized', message: 'Session expired' }),
         { 
           status: 401, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Set-Cookie': clearSessionCookie()
+          } 
+        }
+      );
+    }
+    
+    // Check if user account is deactivated (soft-deleted)
+    // Import prisma dynamically to avoid circular dependencies
+    const { prisma } = await import('@/lib/prisma');
+    const user = await prisma.user.findUnique({
+      where: { stellar_address: data.address },
+      select: { deletedAt: true },
+    });
+    
+    if (user?.deletedAt) {
+      throw new Response(
+        JSON.stringify({ error: 'USER_DEACTIVATED', message: 'User account has been deactivated' }),
+        { 
+          status: 410, 
           headers: { 
             'Content-Type': 'application/json',
             'Set-Cookie': clearSessionCookie()

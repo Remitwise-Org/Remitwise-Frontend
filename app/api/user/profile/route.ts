@@ -19,6 +19,14 @@ export async function GET() {
       );
     }
 
+    // Return 410 Gone if user is deactivated
+    if (user.deletedAt) {
+      return NextResponse.json(
+        { error: 'USER_DEACTIVATED', message: 'User account has been deactivated' },
+        { status: 410 }
+      );
+    }
+
     return NextResponse.json({
       address: user.stellar_address,
       preferences: {

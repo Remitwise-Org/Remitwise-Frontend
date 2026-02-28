@@ -56,8 +56,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upsert user in database (best-effort — don't fail login if DB is unavailable)
+    // Check if user exists and is deactivated
+    let user;
     try {
+      user = await prisma.user.findUnique({
+        where: { stellar_address: address },
+        select: { deletedAt: true },
+      });
+      
+      // Prevent login for deactivated users
+      if (user?.deletedAt) {
+        return NextResponse.json(
+          { error: 'USER_DEACTIVATED', message: 'Account has been deactivated' },
+          { status: 410 }
+        );
+      }
+      
+      // Upsert user in database (best-effort — don't fail login if DB is unavailable)
       await prisma.user.upsert({
         where: { stellar_address: address },
         update: {},

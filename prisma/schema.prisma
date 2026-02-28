@@ -12,7 +12,10 @@ model User {
   stellar_address String          @unique
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
   preferences     UserPreference?
+
+  @@index([deletedAt])
 }
 
 model UserPreference {

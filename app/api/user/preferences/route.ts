@@ -22,6 +22,14 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    // Return 410 Gone if user is deactivated
+    if (user.deletedAt) {
+      return NextResponse.json(
+        { error: 'USER_DEACTIVATED', message: 'User account has been deactivated' },
+        { status: 410 }
+      );
+    }
+
     const updated = await prisma.userPreference.update({
       where: { userId: user.id },
       data: {
@@ -63,6 +71,14 @@ export async function GET() {
       return NextResponse.json(
         { error: 'USER_NOT_FOUND' },
         { status: 404 }
+      );
+    }
+
+    // Return 410 Gone if user is deactivated
+    if (user.deletedAt) {
+      return NextResponse.json(
+        { error: 'USER_DEACTIVATED', message: 'User account has been deactivated' },
+        { status: 410 }
       );
     }
 

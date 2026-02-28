@@ -10,6 +10,7 @@ export interface UserProfile {
   email: string;
   name: string;
   preferences: UserPreferences;
+  deletedAt?: Date | null; // Soft delete timestamp
 }
 
 export interface PreferencesUpdateRequest {
