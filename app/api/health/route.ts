@@ -13,7 +13,7 @@ import {
   getNetworkPassphrase,
   SorobanClientError,
 } from "@/lib/soroban/client";
-import { prisma } from "@/lib/prisma";
+import { prisma, withQueryTimeout } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
@@ -21,7 +21,8 @@ export async function GET() {
   // ── 1. Database ─────────────────────────────────────────────────
   let database: { reachable: boolean; error?: string };
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    // Fast-fail query with 5s timeout to verify DB connectivity
+    await withQueryTimeout(prisma.$queryRaw`SELECT 1`, 5000);
     database = { reachable: true };
   } catch (err: any) {
     database = { reachable: false, error: err?.message ?? "unreachable" };

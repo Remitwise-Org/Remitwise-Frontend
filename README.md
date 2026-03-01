@@ -410,6 +410,18 @@ The application interacts with the following Soroban smart contracts on Stellar:
 - Verify contract addresses match network (testnet vs mainnet)
 - Contract ABIs are included in `lib/contracts/` directory
 
+### Database Pooling and Timeouts
+
+- Prisma client is a singleton (lib/prisma.ts) to avoid multiple pools.
+- Configure pooling and timeouts in DATABASE_URL for non-SQLite databases:
+  - connection_limit: max pool size (serverless: 1–3; node server: 10)
+  - pool_timeout: milliseconds to wait for a connection (e.g., 5000)
+  - connect_timeout: seconds to establish a TCP connection (e.g., 5)
+- Application-level query timeout: withQueryTimeout helper (default 5s) used in health checks.
+- For Vercel/serverless: use serverless-friendly DB and small connection_limit.
+
+Details: see docs/DB_POOLING_AND_TIMEOUTS.md
+
 ### Health and Monitoring
 
 **Health Check Endpoint**: `GET /api/health`
