@@ -1,12 +1,5 @@
 // lib/prisma.ts
-import { PrismaClient } from '@prisma/client';
+// Re-export serverless-optimized database client
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
-
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: ['error'],
-  });
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+export { prisma, disconnectDatabase, checkDatabaseHealth } from './db-serverless';
+export { prisma as default } from './db-serverless';
