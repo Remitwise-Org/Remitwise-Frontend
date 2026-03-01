@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import prisma from '@/lib/db';
+import { withQueryTimeout } from '@/lib/prisma';
 
 /**
  * Health check endpoint for monitoring system status and connectivity.
@@ -18,8 +19,8 @@ export async function GET() {
 
   // 1. Database Check
   try {
-    // Run a simple query to ensure connectivity
-    await prisma.$queryRaw`SELECT 1`;
+    // Run a simple query with 5s timeout to ensure connectivity
+    await withQueryTimeout(prisma.$queryRaw`SELECT 1`, 5000);
   } catch (error) {
     console.error('[Health Check] Database connectivity error:', error);
     results.database = 'error';

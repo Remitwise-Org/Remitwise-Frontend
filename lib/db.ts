@@ -1,14 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-declare global {
-  // eslint-disable-next-line no-var
-  var prisma: PrismaClient | undefined;
-}
-
-const prisma = global.prisma || new PrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  global.prisma = prisma;
-}
-
+// Deprecated duplicate Prisma client setup replaced with a single shared instance.
+// Re-export the singleton Prisma client from lib/prisma to avoid multiple pools.
+import { prisma } from "./prisma";
 export default prisma;
