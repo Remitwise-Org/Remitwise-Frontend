@@ -473,10 +473,6 @@ Integration tests are in the `__tests__/integration/` directory.
 **Testing Checklist:**
 
 - ✓ Authentication flow (nonce → sign → verify)
-- ✓ Contract interactions (all 5 contracts)
-- ✓ Error handling and validation
-- ✓ Rate limiting
-- ✓ Session management
 
 ### API Documentation
 

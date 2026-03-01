@@ -4,70 +4,50 @@
  * GET /api/health
  *
  * Returns 200 when all critical dependencies are healthy, 503 otherwise.
- * Response always includes: status, database, rpc, anchor, timestamp.
+ * Response always includes: status, database, soroban, anchor, timestamp.
  */
 
 import { NextResponse } from "next/server";
-import {
-  getLatestLedger,
-  getNetworkPassphrase,
-  SorobanClientError,
-} from "@/lib/soroban/client";
-import { prisma } from "@/lib/prisma";
+import { container, initializeProductionServices } from "@/lib/di/container";
+import { HealthService } from "@/lib/services/health-service";
 
 export const runtime = "nodejs";
 
+// Initialize production services if not in test environment
+if (process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true') {
+  // Only initialize if not already done
+  try {
+    container.getDb();
+  } catch {
+    // Database not initialized, set up production services
+    const { prisma } = require("@/lib/prisma");
+    const { createProductionDbClient } = require("@/lib/di/db-factory");
+    const { createProductionSorobanClient } = require("@/lib/di/soroban-factory");
+    
+    container.setDb(createProductionDbClient(prisma));
+    container.setSoroban(createProductionSorobanClient());
+  }
+}
+
 export async function GET() {
-  // ── 1. Database ─────────────────────────────────────────────────
-  let database: { reachable: boolean; error?: string };
+  const healthService = new HealthService(container);
+  
   try {
-    await prisma.$queryRaw`SELECT 1`;
-    database = { reachable: true };
-  } catch (err: any) {
-    database = { reachable: false, error: err?.message ?? "unreachable" };
+    const healthData = await healthService.getOverallHealth();
+    const healthy = healthData.database.reachable && healthData.soroban.reachable;
+    
+    return healthService.createHealthResponse(healthData, healthy ? 200 : 503);
+  } catch (error) {
+    // Fallback health response if service fails
+    return NextResponse.json(
+      {
+        status: "degraded",
+        database: { reachable: false, error: "Health service initialization failed" },
+        soroban: { reachable: false, error: "Health service initialization failed" },
+        anchor: { reachable: false, error: "Health service initialization failed" },
+        timestamp: new Date().toISOString(),
+      },
+      { status: 503 }
+    );
   }
-
-  // ── 2. Soroban RPC ───────────────────────────────────────────────
-  let rpc: {
-    reachable: boolean;
-    latestLedger?: number;
-    protocolVersion?: number;
-    networkPassphrase?: string;
-    error?: string;
-  };
-  try {
-    const ledger = await getLatestLedger();
-    rpc = {
-      reachable: true,
-      latestLedger: ledger.sequence,
-      protocolVersion: Number(ledger.protocolVersion),
-      networkPassphrase: getNetworkPassphrase(),
-    };
-  } catch (err) {
-    rpc = {
-      reachable: false,
-      error:
-        err instanceof SorobanClientError
-          ? err.message
-          : "Unexpected error contacting Soroban RPC",
-    };
-  }
-
-  // ── 3. Anchor ────────────────────────────────────────────────────
-  // Placeholder — swap for a real HTTP probe once an anchor URL is configured
-  const anchor: { reachable: boolean; error?: string } = { reachable: true };
-
-  // ── 4. Overall status ────────────────────────────────────────────
-  const healthy = database.reachable && rpc.reachable;
-
-  return NextResponse.json(
-    {
-      status: healthy ? "ok" : "degraded",
-      database,
-      rpc,
-      anchor,
-      timestamp: new Date().toISOString(),
-    },
-    { status: healthy ? 200 : 503 }
-  );
 }
