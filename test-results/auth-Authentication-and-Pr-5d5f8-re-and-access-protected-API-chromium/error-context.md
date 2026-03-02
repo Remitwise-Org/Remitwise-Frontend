@@ -1,0 +1,320 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - img "logo" [ref=e7]
+        - generic [ref=e8]: RemitWise
+      - navigation [ref=e10]:
+        - link "Home" [ref=e11] [cursor=pointer]:
+          - /url: /
+        - link "Features" [ref=e12] [cursor=pointer]:
+          - /url: "#features"
+        - link "Pricing" [ref=e13] [cursor=pointer]:
+          - /url: "#pricing"
+        - link "About Us" [ref=e14] [cursor=pointer]:
+          - /url: "#about"
+      - button "GDEMOX....XXXX" [ref=e17] [cursor=pointer]:
+        - img [ref=e18]
+        - generic [ref=e21]: GDEMOX....XXXX
+        - img [ref=e22]
+  - generic [ref=e24]:
+    - main [ref=e25]:
+      - generic [ref=e28]:
+        - generic [ref=e30]:
+          - generic [ref=e31]:
+            - img "Happy family" [ref=e33]
+            - img "Happy family" [ref=e35]
+            - img "Happy family" [ref=e37]
+            - img "Happy family" [ref=e39]
+            - img "Happy family" [ref=e41]
+          - generic [ref=e42]:
+            - generic [ref=e43]:
+              - img [ref=e44]
+              - img [ref=e46]
+              - img [ref=e48]
+              - img [ref=e50]
+              - img [ref=e52]
+            - generic [ref=e54]: 120K+ happy families
+        - heading "Smart Remittance & Financial Planning" [level=1] [ref=e55]:
+          - text: Smart Remittance &
+          - text: Financial Planning
+        - paragraph [ref=e57]:
+          - text: Our Stellar-powered platform empowers families to save,
+          - text: plan, and protect—going beyond simple money transfers to
+          - text: build long-term financial security.
+        - generic [ref=e58]:
+          - link "Get Started" [ref=e59] [cursor=pointer]:
+            - /url: "#get-started"
+            - img [ref=e60]
+            - text: Get Started
+          - link "See Details" [ref=e62] [cursor=pointer]:
+            - /url: "#details"
+      - generic [ref=e65]:
+        - generic [ref=e66]:
+          - generic [ref=e67]: 120K+
+          - generic [ref=e68]: Active Families
+        - generic [ref=e69]:
+          - generic [ref=e70]: 150+
+          - generic [ref=e71]: Countries Served
+        - generic [ref=e72]:
+          - generic [ref=e73]: 32K+
+          - generic [ref=e74]: Savings Goals
+        - generic [ref=e75]:
+          - generic [ref=e76]: "12"
+          - generic [ref=e77]: Industry Awards
+      - generic [ref=e79]:
+        - img [ref=e82]
+        - generic [ref=e85]:
+          - heading "Designed for Families. Powered by Stellar." [level=2] [ref=e86]:
+            - generic [ref=e87]: Designed for Families.
+            - generic [ref=e88]: Powered by Stellar.
+          - paragraph [ref=e89]: RemitWise goes beyond simple money transfers. We help you build long-term financial security with intelligent allocation, automated savings, and comprehensive protection—all on the fast, secure Stellar blockchain.
+      - generic [ref=e91]:
+        - generic [ref=e92]:
+          - img [ref=e95]
+          - generic [ref=e98]:
+            - heading "Instant Remittance" [level=3] [ref=e99]
+            - paragraph [ref=e100]: Send money across borders in seconds with minimal fees. Our Stellar-powered infrastructure ensures your transfers are fast, secure, and transparent.
+        - generic [ref=e101]:
+          - img [ref=e104]
+          - generic [ref=e107]:
+            - heading "Smart Allocation" [level=3] [ref=e108]
+            - paragraph [ref=e109]: Automatically split remittances into spending, savings, bills, and insurance. Configure once and every transfer follows your rules automatically.
+      - generic [ref=e112]:
+        - generic [ref=e113]:
+          - img [ref=e115]
+          - generic [ref=e118]:
+            - heading "Goal-Based Savings" [level=3] [ref=e119]
+            - paragraph [ref=e120]: Set education, medical, or marriage goals with visual progress tracking.
+        - generic [ref=e121]:
+          - img [ref=e123]
+          - generic [ref=e126]:
+            - heading "Seamless Bill Payments" [level=3] [ref=e127]
+            - paragraph [ref=e128]: Automated bill payments for electricity, rent, and school fees with reminders.
+        - generic [ref=e129]:
+          - img [ref=e131]
+          - generic [ref=e133]:
+            - heading "Micro-Insurance" [level=3] [ref=e134]
+            - paragraph [ref=e135]: Health and emergency coverage with auto-paid premiums from remittances.
+        - generic [ref=e136]:
+          - img [ref=e138]
+          - generic [ref=e143]:
+            - heading "Family Wallets" [level=3] [ref=e144]
+            - paragraph [ref=e145]: Separate wallets with spending limits and approval workflows for security.
+      - generic [ref=e147]:
+        - heading "Why Choose Stellar ?" [level=2] [ref=e148]
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - img [ref=e153]
+            - generic [ref=e155]:
+              - heading "Lightning Fast Transfers" [level=3] [ref=e156]
+              - paragraph [ref=e157]: Experience 3-5 second settlement times for cross-border transactions, anywhere in the world.
+          - generic [ref=e158]:
+            - img [ref=e161]
+            - generic [ref=e164]:
+              - heading "Bank-Grade Security" [level=3] [ref=e165]
+              - paragraph [ref=e166]: On-chain transaction proofs and built-in memos ensure full transparency and traceability.
+          - generic [ref=e167]:
+            - img [ref=e170]
+            - generic [ref=e173]:
+              - heading "Ultra-Low Fees" [level=3] [ref=e174]
+              - paragraph [ref=e175]: Average transaction cost of just $0.00001—making remittances affordable for everyone.
+          - generic [ref=e176]:
+            - img [ref=e179]
+            - generic [ref=e182]:
+              - heading "Global Ecosystem" [level=3] [ref=e183]
+              - paragraph [ref=e184]: Robust fiat on/off-ramp network through trusted anchors in 150+ countries.
+      - generic [ref=e186]:
+        - generic [ref=e187]:
+          - heading "Choose the Plan That's Right for You" [level=2] [ref=e188]
+          - paragraph [ref=e189]: Start free and scale as your family grows. All plans include our core remittance features with transparent pricing.
+        - generic [ref=e190]:
+          - generic [ref=e191]:
+            - heading "Basic" [level=3] [ref=e192]
+            - generic [ref=e193]:
+              - generic [ref=e194]: $0
+              - generic [ref=e195]: / month
+            - paragraph [ref=e196]: Perfect for individuals sending occasional remittances
+            - button "Start Free" [ref=e197] [cursor=pointer]
+            - list [ref=e198]:
+              - listitem [ref=e199]:
+                - img [ref=e201]
+                - generic [ref=e203]: Up to 5 transfers/month
+              - listitem [ref=e204]:
+                - img [ref=e206]
+                - generic [ref=e208]: Basic money split
+              - listitem [ref=e209]:
+                - img [ref=e211]
+                - generic [ref=e213]: Standard support
+              - listitem [ref=e214]:
+                - img [ref=e216]
+                - generic [ref=e218]: 1% transaction fee
+          - generic [ref=e219]:
+            - heading "Pro" [level=3] [ref=e220]
+            - generic [ref=e221]:
+              - generic [ref=e222]: $7
+              - generic [ref=e223]: / month
+            - paragraph [ref=e224]: Best for families with regular remittance needs
+            - button "Get Started" [ref=e225] [cursor=pointer]
+            - list [ref=e226]:
+              - listitem [ref=e227]:
+                - img [ref=e229]
+                - generic [ref=e231]: Unlimited transfers
+              - listitem [ref=e232]:
+                - img [ref=e234]
+                - generic [ref=e236]: Smart allocation rules
+              - listitem [ref=e237]:
+                - img [ref=e239]
+                - generic [ref=e241]: Savings goals & tracking
+              - listitem [ref=e242]:
+                - img [ref=e244]
+                - generic [ref=e246]: Bill payment automation
+              - listitem [ref=e247]:
+                - img [ref=e249]
+                - generic [ref=e251]: Priority support
+              - listitem [ref=e252]:
+                - img [ref=e254]
+                - generic [ref=e256]: 0.5% transaction fee
+          - generic [ref=e257]:
+            - heading "Enterprise" [level=3] [ref=e258]
+            - generic [ref=e259]:
+              - generic [ref=e260]: $37
+              - generic [ref=e261]: / month
+            - paragraph [ref=e262]: Advanced features for families and businesses
+            - button "Contact Sales" [ref=e263] [cursor=pointer]
+            - list [ref=e264]:
+              - listitem [ref=e265]:
+                - img [ref=e267]
+                - generic [ref=e269]: Everything in Pro
+              - listitem [ref=e270]:
+                - img [ref=e272]
+                - generic [ref=e274]: Family wallets & permissions
+              - listitem [ref=e275]:
+                - img [ref=e277]
+                - generic [ref=e279]: Micro-insurance coverage
+              - listitem [ref=e280]:
+                - img [ref=e282]
+                - generic [ref=e284]: Dedicated account manager
+              - listitem [ref=e285]:
+                - img [ref=e287]
+                - generic [ref=e289]: API access
+              - listitem [ref=e290]:
+                - img [ref=e292]
+                - generic [ref=e294]: 0.3% transaction fee
+      - generic [ref=e296]:
+        - generic [ref=e297]:
+          - heading "Frequently Asked Questions" [level=2] [ref=e298]
+          - paragraph [ref=e299]: Got questions? We've got answers. Find everything you need to know about using our platform, plans, and features.
+        - generic [ref=e300]:
+          - generic [ref=e301]:
+            - button "What is this platform used for?" [ref=e302] [cursor=pointer]:
+              - generic [ref=e303]: What is this platform used for?
+              - img [ref=e304]
+            - generic [ref=e306]: Our platform is designed to help you manage your finances, send remittances, and plan for your future with ease. It combines secure transactions with smart financial tools.
+          - generic [ref=e307]:
+            - button "What happens if I hit my free generation limit?" [ref=e308] [cursor=pointer]:
+              - generic [ref=e309]: What happens if I hit my free generation limit?
+              - img [ref=e310]
+            - generic [ref=e312]: If you reach your limit, you can upgrade your plan or wait for the next billing cycle for your limit to reset. We offer flexible tiers to suit your needs.
+          - generic [ref=e313]:
+            - button "Do I need design experience to use it?" [ref=e314] [cursor=pointer]:
+              - generic [ref=e315]: Do I need design experience to use it?
+              - img [ref=e316]
+            - generic [ref=e318]: No, absolutely not! Our platform is user-friendly and intuitive, designed for everyone regardless of their technical or design background.
+          - generic [ref=e319]:
+            - button "Can I collaborate with my team?" [ref=e320] [cursor=pointer]:
+              - generic [ref=e321]: Can I collaborate with my team?
+              - img [ref=e322]
+            - generic [ref=e324]: Yes, our family wallet and shared features allow you to collaborate on financial goals and manage expenses together seamlessly.
+          - generic [ref=e325]:
+            - button "Is it really free to use?" [ref=e326] [cursor=pointer]:
+              - generic [ref=e327]: Is it really free to use?
+              - img [ref=e328]
+            - generic [ref=e330]: We offer a generous free tier that includes many essential features. For advanced capabilities and higher limits, we have premium plans available.
+    - generic [ref=e335]:
+      - heading "Ready to Transform Your Family's Future?" [level=2] [ref=e336]:
+        - text: Ready to Transform Your
+        - generic [ref=e337]: Family's Future?
+      - paragraph [ref=e338]:
+        - text: Join 120,000+ families building financial security with RemitWise.
+        - text: Smart remittances that save, protect, and grow.
+      - generic [ref=e339]:
+        - link "Get Started Free" [ref=e340] [cursor=pointer]:
+          - /url: /signup
+          - text: Get Started Free
+          - img [ref=e341]
+        - link "Schedule a Demo" [ref=e343] [cursor=pointer]:
+          - /url: /demo
+      - generic [ref=e345]:
+        - generic [ref=e346]:
+          - img [ref=e347]
+          - generic [ref=e349]: Bank-Level Security
+        - generic [ref=e350]:
+          - img [ref=e351]
+          - generic [ref=e353]: 3-5 Second Transfers
+        - generic [ref=e354]:
+          - img [ref=e355]
+          - generic [ref=e358]: 150+ Countries
+    - contentinfo [ref=e359]:
+      - generic [ref=e360]:
+        - generic [ref=e361]:
+          - generic [ref=e362]:
+            - generic [ref=e363]:
+              - img "logo" [ref=e365]
+              - heading "RemitWise" [level=2] [ref=e366]
+            - paragraph [ref=e367]: Building financial security for families worldwide through intelligent remittance solutions.
+          - generic [ref=e368]:
+            - heading "Useful Links" [level=3] [ref=e369]
+            - list [ref=e370]:
+              - listitem [ref=e371]:
+                - link "Home" [ref=e372] [cursor=pointer]:
+                  - /url: /
+              - listitem [ref=e373]:
+                - link "About us" [ref=e374] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e375]:
+                - link "Testimonials" [ref=e376] [cursor=pointer]:
+                  - /url: /testimonials
+              - listitem [ref=e377]:
+                - link "Pricing" [ref=e378] [cursor=pointer]:
+                  - /url: /pricing
+          - generic [ref=e379]:
+            - heading "Help" [level=3] [ref=e380]
+            - list [ref=e381]:
+              - listitem [ref=e382]:
+                - link "Help Center" [ref=e383] [cursor=pointer]:
+                  - /url: /help-center
+              - listitem [ref=e384]:
+                - link "Privacy Policy" [ref=e385] [cursor=pointer]:
+                  - /url: /privacy
+              - listitem [ref=e386]:
+                - link "FAQ" [ref=e387] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e388]:
+                - link "Contact" [ref=e389] [cursor=pointer]:
+                  - /url: /contact
+          - generic [ref=e390]:
+            - heading "Contact With Us" [level=3] [ref=e391]
+            - link "support@remitwise.com" [ref=e392] [cursor=pointer]:
+              - /url: mailto:support@remitwise.com
+            - generic [ref=e393]:
+              - link "LinkedIn" [ref=e394] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e395]
+              - link "Twitter" [ref=e399] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e400]
+              - link "Instagram" [ref=e402] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e403]
+              - link "Facebook" [ref=e406] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e407]
+        - paragraph [ref=e410]: © 2024 RemitWise.com. All rights reserved.
+  - button "Open Next.js Dev Tools" [ref=e416] [cursor=pointer]:
+    - img [ref=e417]
+  - alert [ref=e420]
+```

@@ -30,7 +30,7 @@ export function UnpaidBillsSection() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-[19.67px]">
                 {unpaidBills.map((bill) => {
                     return (
-                        <BillCards bill={bill} />
+                        <BillCards key={bill.id} bill={bill} />
                     );
                 })}
             </div>

@@ -7,7 +7,7 @@ const assert = require("node:assert/strict");
  */
 
 // Mock NextRequest and NextResponse for testing
-class MockNextRequest {
+class MockNextRequest { 
   constructor(method = "GET", headers = {}, body = null) {
     this.method = method;
     this.headers = new Map(Object.entries(headers));

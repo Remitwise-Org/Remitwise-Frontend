@@ -1,3 +1,5 @@
+import { WhatsNewProvider } from "@/lib/context/WhatsNewContext";
+import WhatsNewPanel from "@/components/Dashboard/WhatsNewPanel";
 
 export default function DashboardLayout({
     children,
@@ -5,8 +7,11 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div>
-            {children}
-        </div>
+        <WhatsNewProvider>
+            <div>
+                {children}
+                <WhatsNewPanel />
+            </div>
+        </WhatsNewProvider>
     );
 }

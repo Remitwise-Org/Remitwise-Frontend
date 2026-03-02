@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Keypair, StrKey } from '@stellar/stellar-sdk';
-import { getNonce, deleteNonce } from '@/lib/auth/nonce-store';
+import { getAndClearNonce } from '@/lib/auth-cache';
+import { createSession, getSessionCookieHeader } from '@/lib/session';
+import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -9,11 +11,6 @@ export const runtime = 'nodejs';
 /**
  * POST /api/auth/login
  * Verify a signature and authenticate user
- * 
- * Request Body:
- * - address: Stellar public key
- * - message: The nonce that was signed
- * - signature: Base64-encoded signature
  */
 export async function POST(request: NextRequest) {
   try {
@@ -35,8 +32,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify nonce exists and hasn't expired
-    const storedNonce = getNonce(address);
+    // Verify nonce exists and matches (atomic read + delete)
+    const storedNonce = getAndClearNonce(address);
     if (!storedNonce || storedNonce !== message) {
       return NextResponse.json(
         { error: 'Invalid or expired nonce' },
@@ -44,44 +41,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    try {
-      // Verify the signature
-      const keypair = Keypair.fromPublicKey(address);
-      const messageBuffer = Buffer.from(message, 'utf8');
-      const signatureBuffer = Buffer.from(signature, 'base64');
+    // Verify signature
+    // The client signs Buffer.from(nonce, 'utf8') so we must decode the same way
+    const keypair = Keypair.fromPublicKey(address);
+    const messageBuffer = Buffer.from(message, 'utf8');
+    const signatureBuffer = Buffer.from(signature, 'base64');
 
-      const isValid = keypair.verify(messageBuffer, signatureBuffer);
+    const isValid = keypair.verify(messageBuffer, signatureBuffer);
 
-      if (!isValid) {
-        return NextResponse.json(
-          { error: 'Invalid signature' },
-          { status: 401 }
-        );
-      }
-
-      // Delete used nonce (one-time use)
-      deleteNonce(address);
-
-      // TODO: Create session/JWT token
-      // const token = await createAuthToken(address);
-
-      // Return success with mock token
-      return NextResponse.json({
-        success: true,
-        token: `mock-jwt-${address.substring(0, 10)}`,
-        address,
-      });
-
-    } catch (verifyError) {
-      console.error('Signature verification error:', verifyError);
+    if (!isValid) {
       return NextResponse.json(
         { error: 'Invalid signature' },
         { status: 401 }
       );
     }
 
+    // Upsert user in database (best-effort — don't fail login if DB is unavailable)
+    try {
+      await prisma.user.upsert({
+        where: { stellar_address: address },
+        update: {},
+        create: {
+          stellar_address: address,
+          preferences: {
+            create: {},
+          },
+        },
+      });
+    } catch (dbErr) {
+      console.warn('DB upsert skipped (non-fatal):', dbErr);
+    }
+
+    // Create encrypted session
+    const sealed = await createSession(address);
+
+    const response = NextResponse.json({
+      success: true,
+      address,
+    });
+
+    response.headers.set(
+      'Set-Cookie',
+      getSessionCookieHeader(sealed)
+    );
+
+    return response;
+
   } catch (error) {
-    console.error('Error during login:', error);
+    console.error('Login error:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

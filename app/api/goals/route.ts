@@ -1,7 +1,7 @@
 
 import { getAllGoals } from "@/lib/contracts/savings-goal";
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/auth';
+import { withAuth } from '@/lib/auth'; 
 
 import { validatePaginationParams, paginateData, PaginatedResult } from '../../../lib/utils/pagination';
 import { buildCreateGoalTx } from '@/lib/contracts/savings-goals';

@@ -16,6 +16,41 @@ info:
 servers:
   - url: /api/v1
     description: v1 base path (local/dev)
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Returns system status and connectivity for RPC, DB, and optional anchor.
+      responses:
+        '200':
+          description: All critical dependencies are healthy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '503':
+          description: One or more critical dependencies are unhealthy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, unhealthy]
+        database:
+          type: string
+          enum: [ok, error]
+        rpc:
+          type: string
+          enum: [ok, error]
+        anchor:
+          type: string
+          enum: [ok, error, skipped]
   - url: /api
     description: legacy base path (rewrites to v1)
 
@@ -31,6 +66,32 @@ components:
       in: header
       name: x-user
       description: Stellar public key of the caller
+
+  parameters:
+    AcceptLanguageHeader:
+      in: header
+      name: Accept-Language
+      required: false
+      schema:
+        type: string
+        example: es
+      description: |
+        Optional header to request localized responses. 
+        Supported languages: 'en' (English), 'es' (Spanish).
+
+  schemas:
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: |
+            A translated error message based on the Accept-Language header.
+            If the translation is missing or language is not supported, defaults to English.
+            Example translations:
+             - en: "Unauthorized: missing or invalid x-user header"
+             - es: "No autorizado: falta o es inválido el encabezado x-user"
+          example: "Unauthorized: missing or invalid x-user header"
 
 paths:
   /auth/login:

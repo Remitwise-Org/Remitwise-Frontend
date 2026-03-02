@@ -12,8 +12,9 @@ interface NonceRecord {
     expiresAt: number;
 }
 
-// In-memory store (replace with Redis/DB in production)
-const nonceStore = new Map<string, NonceRecord>();
+const globalForNonce = globalThis as unknown as { nonceStore: Map<string, NonceRecord> };
+const nonceStore = globalForNonce.nonceStore || new Map<string, NonceRecord>();
+if (process.env.NODE_ENV !== "production") globalForNonce.nonceStore = nonceStore;
 
 // Default TTL: 5 minutes
 const DEFAULT_NONCE_TTL_MS = 5 * 60 * 1000;
@@ -41,6 +42,7 @@ export function storeNonce(
     nonce: string,
     ttlMs: number = DEFAULT_NONCE_TTL_MS
 ): void {
+    console.log(`[NONCE-STORE] Storing nonce for ${address}: ${nonce}`);
     const now = Date.now();
     const record: NonceRecord = {
         nonce,
@@ -58,6 +60,7 @@ export function storeNonce(
  * Returns the nonce if valid, null if expired or not found
  */
 export function getNonce(address: string): string | null {
+    console.log(`[NONCE-STORE] Getting nonce for ${address}. Current store size: ${nonceStore.size}, store keys:`, Array.from(nonceStore.keys()));
     const record = nonceStore.get(address);
 
     if (!record) {

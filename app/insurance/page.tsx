@@ -1,7 +1,14 @@
+"use client"
 import Link from 'next/link'
-import { ArrowLeft, Plus, Shield, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Plus, Shield, CheckCircle, Loader2 } from 'lucide-react'
+import { ActionState } from '@/lib/auth/middleware';
+import { useFormAction } from '@/lib/hooks/useFormAction';
 
 export default function Insurance() {
+
+    type AddInsuranceResponse = ActionState & { policyName?: string; coverageAmount?: number, monthlyPremium?: number, coverageType?: string };
+  
+  const [state, formAction, pending] = useFormAction<AddInsuranceResponse>("/api/insurance");
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -63,75 +70,111 @@ export default function Insurance() {
         {/* Add Policy Form */}
         <div className="bg-white rounded-xl shadow-md p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Create New Policy</h2>
-          <form className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+          <form className="space-y-6" action={formAction}>
+            <div className='grid gap-1'>
+              <label className="block text-sm font-medium text-gray-700 ">
                 Policy Name
               </label>
               <input
                 type="text"
+                name='policyName'
+                defaultValue={state?.policyName}
                 placeholder="e.g., Health Insurance, Emergency Coverage"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled
+                // disabled
               />
+               {state?.validationErrors && (
+            <div className="text-red-500 text-sm">{state.validationErrors.find((err)=> err.path === "policyName")?.message || ""}</div>
+          )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className='grid gap-1'>
+              <label className="block text-sm font-medium text-gray-700">
                 Coverage Type
               </label>
               <select
+                name='coverageType'
+                defaultValue={state.coverageType ?? ""}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled
+                // disabled
               >
-                <option>Health</option>
-                <option>Emergency</option>
-                <option>Life</option>
+                <option value="" disabled>Select coverage type</option>
+                <option value="Health">Health</option>
+                <option value="Emergency">Emergency</option>
+                <option value="Life">Life</option>
               </select>
+               {state?.validationErrors && (
+            <div className="text-red-500 text-sm">{state.validationErrors.find((err)=> err.path === "coverageType")?.message || ""}</div>
+          )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className='grid gap-1'>
+                <label className="block text-sm font-medium text-gray-700 ">
                   Monthly Premium (USD)
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-3 text-gray-500">$</span>
                   <input
                     type="number"
+                    name='monthlyPremium'
+                    defaultValue={state.monthlyPremium}
                     placeholder="20.00"
                     step="0.01"
                     min="0"
                     className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled
+                    // disabled
                   />
+                   {state?.validationErrors && (
+            <div className="text-red-500 text-sm">{state.validationErrors.find((err)=> err.path === "monthlyPremium")?.message || ""}</div>
+          )}
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className='grid gap-1'>
+                <label className="block text-sm font-medium text-gray-700">
                   Coverage Amount (USD)
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-3 text-gray-500">$</span>
                   <input
                     type="number"
+                    name='coverageAmount'
+                    defaultValue={state.coverageAmount}
                     placeholder="1000.00"
                     step="0.01"
                     min="0"
                     className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled
+                    // disabled
                   />
+                   {state?.validationErrors && (
+            <div className="text-red-500 text-sm">{state.validationErrors.find((err)=> err.path === "coverageAmount")?.message || ""}</div>
+          )}
                 </div>
               </div>
+            </div>
+
+            <div>
+               {state?.error && (
+            <div className="text-red-500 text-sm">{state.error}</div>
+          )}
+          {state?.success && (
+            <div className="text-green-500 text-sm">{state.success}</div>
+          )}
             </div>
 
             <button
               type="submit"
               className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-              disabled
+              disabled={pending}
             >
-              Create Policy
+              
+               {pending ? (
+                <div className="flex items-center gap-1">
+                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                  Adding...
+                </div>
+              ) : "Create Policy"}
             </button>
           </form>
         </div>

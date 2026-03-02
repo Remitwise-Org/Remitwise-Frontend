@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { getTranslator } from '../../../../lib/i18n'
+import crypto from 'crypto'
 import { verifySignature } from '@/lib/webhooks/verify'
 
 export async function POST(request: Request) {
@@ -18,8 +20,10 @@ export async function POST(request: Request) {
       )
     }
 
+    const t = getTranslator(request.headers.get('accept-language'));
+
     if (!signature) {
-      return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
+      return NextResponse.json({ error: t('errors.missing_signature') }, { status: 401 })
     }
 
     // 3. Verify Signature using shared secret (HMAC SHA-256)
@@ -27,10 +31,7 @@ export async function POST(request: Request) {
 
     if (!isSignatureValid) {
       console.warn('[Webhook] Invalid webhook signature detected.')
-      return NextResponse.json(
-        { error: 'Invalid webhook signature' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: t('errors.invalid_signature') }, { status: 401 })
     }
 
     // 4. Parse the trusted payload
@@ -45,8 +46,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true }, { status: 200 })
   } catch (error) {
     console.error('[Webhook] Error handling request:', error)
+    const t = getTranslator(request.headers.get('accept-language'));
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: t('errors.internal_server_error') },
       { status: 500 }
     )
   }
@@ -54,7 +56,7 @@ export async function POST(request: Request) {
 
 // Internal function to handle the business logic
 async function handleAnchorEvent(payload: any) {
-  const { event_type, transaction_id, status } = payload
+  const { event_type, transaction_id } = payload
 
   console.log(
     `[Webhook] Processing event: ${event_type} for tx: ${transaction_id}`

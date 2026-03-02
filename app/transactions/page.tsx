@@ -221,7 +221,7 @@ export default function TransactionsPage() {
                         ))
                     ) : (
                         <div className="text-center py-12 text-gray-500">
-                            No transactions found matching "{searchQuery}"
+                            No transactions found matching &quot;{searchQuery}&quot;
                         </div>
                     )}
                 </div>

@@ -3,7 +3,7 @@
 import { IEventStorageService } from './event-storage';
 import { EmergencyTransferEvent, EventFilters } from '@/types/emergency-transfer';
 import { EmergencyTransferEvent as EventModel } from '@/models/emergency-transfer-event';
-import { v4 as uuidv4 } from 'uuid';
+
 
 export class EventStorageService implements IEventStorageService {
   // In-memory storage for demonstration
@@ -17,7 +17,7 @@ export class EventStorageService implements IEventStorageService {
     try {
       // Generate ID if not provided
       if (!event.id) {
-        event.id = uuidv4();
+        event.id = crypto.randomUUID();
       }
 
       // Set timestamps

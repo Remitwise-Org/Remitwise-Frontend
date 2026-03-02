@@ -1,0 +1,31 @@
+{
+  "errors": {
+    "missing_signature": "Missing signature",
+    "invalid_signature": "Invalid signature",
+    "unauthorized_missing_header": "Unauthorized: missing or invalid x-user header",
+    "unauthorized": "Unauthorized",
+    "invalid_name": "Invalid name",
+    "invalid_coverage_type": "Invalid coverageType",
+    "invalid_monthly_premium": "Invalid monthlyPremium; must be > 0",
+    "invalid_coverage_amount": "Invalid coverageAmount; must be > 0",
+    "missing_policy_id": "Missing policy id",
+    "forbidden_owner_deactivate": "Forbidden: only owner can deactivate",
+    "missing_bill_id": "Missing bill id",
+    "invalid_amount": "Invalid amount; must be > 0",
+    "invalid_frequency_days": "Invalid frequencyDays for recurring bill",
+    "invalid_due_date": "Invalid dueDate",
+    "forbidden_owner_cancel": "Forbidden: only owner can cancel",
+    "invalid_stellar_address": "Invalid Stellar address",
+    "policy_not_found": "Policy not found",
+    "address_required": "Address is required",
+    "internal_server_error": "Internal Server Error",
+    "bad_request": "Bad Request",
+    "missing_query_owner": "Missing required query parameter: owner",
+    "failed_fetch_policy": "Failed to fetch policy from contract",
+    "failed_fetch_policies": "Failed to fetch policies from contract",
+    "failed_fetch_total_premium": "Failed to compute total premium",
+    "address_signature_required": "Address and signature are required",
+    "nonce_expired": "Nonce expired or missing. Please request a new nonce.",
+    "signature_verification_failed": "Signature verification failed"
+  }
+}
