@@ -553,6 +553,16 @@ Response shape for all paginated endpoints:
 - Dark mode
 - Mobile app (React Native)
 
+## Operations
+
+For database backup, restore, and production deployment procedures see [OPERATIONS.md](./OPERATIONS.md).
+
+**Quick reference:**
+
+- **Backup (SQLite):** `bash scripts/backup-db.sh` — creates a timestamped copy in `./backups/`, optionally uploads to S3, and rotates files older than 7 days.
+- **Restore:** Stop the app → replace `prisma/dev.db` → `npx prisma migrate deploy` → restart.
+- **Production:** Switch `prisma/schema.prisma` provider to `postgresql`, set `DATABASE_URL`, and use a managed provider (Supabase, Neon, Vercel Postgres, etc.) with built-in daily backups and 7-day retention.
+
 ## License
 
 MIT
