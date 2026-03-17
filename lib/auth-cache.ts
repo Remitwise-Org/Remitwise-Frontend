@@ -7,6 +7,8 @@
  * TTL: nonces expire after 5 minutes. A background timer sweeps
  * stale entries every minute so memory doesn't grow unbounded.
  */
+import { registerCache } from '@/lib/cache/registry';
+import { registerGracefulShutdown, registerShutdownHook } from '@/lib/background/runtime';
 
 interface NonceEntry {
   nonce: string;
@@ -34,6 +36,14 @@ if (typeof sweepTimer.unref === 'function') {
   sweepTimer.unref();
 }
 
+registerGracefulShutdown();
+registerShutdownHook('auth_nonce_sweeper', () => {
+  clearInterval(sweepTimer);
+});
+registerCache('auth_nonces', () => {
+  cache.clear();
+});
+
 // ── Public API ─────────────────────────────────
 
 /**
@@ -60,4 +70,8 @@ export function getAndClearNonce(address: string): string | null {
   if (entry.expiresAt <= Date.now()) return null;
 
   return entry.nonce;
+}
+
+export function clearNonceCache(): void {
+  cache.clear();
 }

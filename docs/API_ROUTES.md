@@ -139,6 +139,22 @@ All protected routes return `401 Unauthorized` if no valid session exists.
 | GET | `/api/family` | List family members |
 | POST | `/api/family` | Add family member |
 | POST | `/api/send` | Send money transaction |
+| POST | `/api/anchor/deposit` | Start anchor deposit flow (fiat -> USDC) |
+| POST | `/api/anchor/withdraw` | Start anchor withdrawal flow (USDC -> fiat) |
+
+### Admin/Internal Routes
+
+All `/api/admin/*` routes require admin authentication and return `401` when unauthorized.
+
+Authentication:
+- Header: `X-Admin-Key: <ADMIN_SECRET>`
+- Cookie: `admin_key=<ADMIN_SECRET>` (or `admin_secret=<ADMIN_SECRET>`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/admin/cache/clear` | Clear in-memory caches |
+| GET | `/api/admin/users?limit=20` | List recent users (support/ops) |
+| GET | `/api/admin/audit?limit=50` | List latest audit events |
 
 ---
 
@@ -189,6 +205,14 @@ The following environment variables must be configured:
 
 - `STELLAR_NETWORK`: Network to use (`testnet` or `mainnet`, defaults to `testnet`)
 - `REMITTANCE_SPLIT_CONTRACT_ID`: Deployed remittance split contract address
+- `ANCHOR_API_BASE_URL`: Base URL for anchor API
+- `ANCHOR_API_KEY`: Optional bearer token for anchor API
+- `ANCHOR_DEPOSIT_PATH`: Deposit interactive endpoint path
+- `ANCHOR_WITHDRAW_PATH`: Withdraw interactive endpoint path
+- `ADMIN_SECRET`: Shared secret for `/api/admin/*` authorization
+- `SHUTDOWN_TIMEOUT_MS`: Graceful shutdown timeout for in-process jobs
+
+Anchor routes return `501 Not Implemented` when `ANCHOR_API_BASE_URL` is not configured.
 
 **Important**: The remittance_split contract must be deployed on the specified network before the split API endpoints will work.
 

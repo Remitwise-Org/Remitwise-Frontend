@@ -20,16 +20,42 @@ export interface QuoteResponse {
     };
 }
 
+export interface AnchorFlowRequest {
+    amount: string;
+    currency: string;
+    account: string;
+    destination?: string;
+}
+
+export interface AnchorFlowResponse {
+    id?: string;
+    transaction_id?: string;
+    url?: string;
+    interactive_url?: string;
+    steps?: unknown[];
+    [key: string]: unknown;
+}
+
 const DEFAULT_TIMEOUT_MS = 5000;
 
 export class AnchorClient {
     private baseUrl: string;
+    private apiKey: string;
+    private depositPath: string;
+    private withdrawPath: string;
 
     constructor() {
         this.baseUrl = process.env.ANCHOR_API_BASE_URL || '';
+        this.apiKey = process.env.ANCHOR_API_KEY || '';
+        this.depositPath = process.env.ANCHOR_DEPOSIT_PATH || '/transactions/deposit/interactive';
+        this.withdrawPath = process.env.ANCHOR_WITHDRAW_PATH || '/transactions/withdraw/interactive';
         if (!this.baseUrl) {
             console.warn('ANCHOR_API_BASE_URL is not set. Anchor API calls may fail.');
         }
+    }
+
+    isConfigured(): boolean {
+        return Boolean(this.baseUrl);
     }
 
     /**
@@ -105,6 +131,44 @@ export class AnchorClient {
             console.error('AnchorClient: Error fetching quote:', error);
             throw error;
         }
+    }
+
+    private async startFlow(path: string, payload: AnchorFlowRequest): Promise<AnchorFlowResponse> {
+        if (!this.baseUrl) throw new Error('Anchor Base URL not configured');
+
+        const url = `${this.baseUrl}${path}`;
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+        if (this.apiKey) {
+            headers.Authorization = `Bearer ${this.apiKey}`;
+        }
+
+        const response = await this.fetchWithTimeout(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            let detail = '';
+            try {
+                detail = await response.text();
+            } catch {
+                // ignore body parse issues
+            }
+            throw new Error(`Anchor flow failed: HTTP ${response.status}${detail ? ` - ${detail}` : ''}`);
+        }
+
+        return await response.json();
+    }
+
+    async startDepositFlow(payload: AnchorFlowRequest): Promise<AnchorFlowResponse> {
+        return this.startFlow(this.depositPath, payload);
+    }
+
+    async startWithdrawFlow(payload: AnchorFlowRequest): Promise<AnchorFlowResponse> {
+        return this.startFlow(this.withdrawPath, payload);
     }
 }
 

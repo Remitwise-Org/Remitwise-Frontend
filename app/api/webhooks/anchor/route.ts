@@ -2,9 +2,18 @@ import { NextResponse } from 'next/server'
 import { getTranslator } from '../../../../lib/i18n'
 import crypto from 'crypto'
 import { verifySignature } from '@/lib/webhooks/verify'
+import { runBackgroundJob, isShuttingDown, registerGracefulShutdown } from '@/lib/background/runtime'
+import { updateAnchorFlowStatusByTransactionId } from '@/lib/anchor/flow-store'
+import { recordAuditEvent } from '@/lib/admin/audit'
+
+registerGracefulShutdown();
 
 export async function POST(request: Request) {
   try {
+    if (isShuttingDown()) {
+      return NextResponse.json({ error: 'Server is shutting down' }, { status: 503 })
+    }
+
     // 1. Read the raw body as text for accurate signature verification
     const rawBody = await request.text()
 
@@ -37,10 +46,10 @@ export async function POST(request: Request) {
     // 4. Parse the trusted payload
     const payload = JSON.parse(rawBody)
 
-    // 5. Process the event asynchronously (Fire and forget to return 200 quickly)
-    // Note: If deployed on Vercel, you might need `waitUntil` for background tasks,
-    // but standard async execution works for typical setups.
-    handleAnchorEvent(payload).catch(console.error)
+    // 5. Process the event asynchronously (tracked for graceful shutdown in long-running Node servers)
+    runBackgroundJob('anchor_webhook_event', async () => {
+      await handleAnchorEvent(payload)
+    }).catch(console.error)
 
     // 6. Return 200 quickly to acknowledge receipt
     return NextResponse.json({ received: true }, { status: 200 })
@@ -56,7 +65,8 @@ export async function POST(request: Request) {
 
 // Internal function to handle the business logic
 async function handleAnchorEvent(payload: any) {
-  const { event_type, transaction_id } = payload
+  const { event_type, transaction_id, status } = payload
+  const txId = typeof transaction_id === 'string' ? transaction_id : ''
 
   console.log(
     `[Webhook] Processing event: ${event_type} for tx: ${transaction_id}`
@@ -64,11 +74,27 @@ async function handleAnchorEvent(payload: any) {
 
   switch (event_type) {
     case 'deposit_completed':
-      // TODO: Update transaction status in DB to 'completed'
+      if (txId) {
+        updateAnchorFlowStatusByTransactionId(txId, 'completed')
+      }
+      recordAuditEvent({
+        type: 'anchor.webhook.deposit_completed',
+        actor: 'anchor-webhook',
+        message: `Deposit completed for ${txId || 'unknown'}`,
+        metadata: { transaction_id: txId || null, status },
+      })
       console.log(`[Webhook] Deposit completed for tx ${transaction_id}`)
       break
     case 'withdrawal_failed':
-      // TODO: Update transaction status in DB to 'failed'
+      if (txId) {
+        updateAnchorFlowStatusByTransactionId(txId, 'failed')
+      }
+      recordAuditEvent({
+        type: 'anchor.webhook.withdrawal_failed',
+        actor: 'anchor-webhook',
+        message: `Withdrawal failed for ${txId || 'unknown'}`,
+        metadata: { transaction_id: txId || null, status },
+      })
       console.log(`[Webhook] Withdrawal failed for tx ${transaction_id}`)
       break
     default:
