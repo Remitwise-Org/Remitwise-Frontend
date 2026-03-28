@@ -30,7 +30,12 @@ export async function GET() {
   // ── 1. Database ─────────────────────────────────────────────────
   let database: { reachable: boolean; error?: string };
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await Promise.race([
+      prisma.$queryRaw`SELECT 1`,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database query timeout')), 5000)
+      )
+    ]);
     database = { reachable: true };
   } catch (err: any) {
     database = { reachable: false, error: err?.message ?? "unreachable" };

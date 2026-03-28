@@ -30,7 +30,12 @@ export async function GET() {
   // 1. Database Check
   try {
     // Run a simple query to ensure connectivity
-    await prisma.$queryRaw`SELECT 1`;
+    await Promise.race([
+      prisma.$queryRaw`SELECT 1`,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database query timeout')), 5000)
+      )
+    ]);
   } catch (error) {
     console.error('[Health Check] Database connectivity error:', error);
     results.database = 'error';

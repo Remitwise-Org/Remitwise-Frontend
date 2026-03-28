@@ -45,6 +45,8 @@ npm install
 
 # Setup Database
 # 1. Ensure you have `.env` file with `DATABASE_URL="file:./dev.db"`
+# Note: For serverless environments (like Vercel), connection pooling limits (default min 1, max 10) 
+# and timeouts (5s) are automatically configured on the Prisma DB client.
 # 2. Run initial Prisma migration
 npx prisma migrate dev
 
