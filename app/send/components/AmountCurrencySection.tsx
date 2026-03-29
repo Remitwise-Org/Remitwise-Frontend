@@ -4,11 +4,11 @@ import { useState, useEffect } from "react"
 import { ChevronDown, Info, Zap } from "lucide-react"
 
 interface AmountCurrencySectionProps {
-  onPreview?: () => void
-  onSend?: (amount: number, currency: string) => void
+  onReview?: (amount: number, currency: string) => void
+  onBack?: () => void
 }
 
-export default function AmountCurrencySection({ onPreview, onSend }: AmountCurrencySectionProps) {
+export default function AmountCurrencySection({ onReview, onBack }: AmountCurrencySectionProps) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -45,14 +45,9 @@ export default function AmountCurrencySection({ onPreview, onSend }: AmountCurre
     }
   }
 
-  const handlePreview = () => {
+  const handleReview = () => {
     if (!amount || error) return
-    onPreview?.()
-  }
-
-  const handleSend = () => {
-    if (!amount || error) return
-    onSend?.(parseFloat(amount), currency)
+    onReview?.(parseFloat(amount), currency)
   }
 
   const isValid =
@@ -73,7 +68,7 @@ export default function AmountCurrencySection({ onPreview, onSend }: AmountCurre
 
           {/* Card Content */}
           <div className="relative z-10 bg-zinc-900/50 rounded-2xl p-6 border border-zinc-800 ">
-            <label className="text-sm font-medium mb-3 block">
+            <label className="text-sm font-medium mb-3 block text-white">
               Amount (USD) <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -83,7 +78,7 @@ export default function AmountCurrencySection({ onPreview, onSend }: AmountCurre
                 value={amount}
                 onChange={handleAmountChange}
                 onBlur={handleAmountChange}
-                className="w-full bg-zinc-800/50 border border-zinc-700 rounded-xl pl-8 pr-4 py-3.5 text-sm focus:outline-none focus:border-zinc-600 transition-colors"
+                className="w-full bg-zinc-800/50 border border-zinc-700 rounded-xl pl-8 pr-4 py-3.5 text-lg text-white focus:outline-none focus:border-red-500/50 transition-colors"
                 placeholder="0.00"
               />
             </div>
@@ -99,12 +94,12 @@ export default function AmountCurrencySection({ onPreview, onSend }: AmountCurre
 
           {/* Card Content */}
           <div className="relative z-10 bg-zinc-900/50 rounded-2xl p-6 border border-zinc-800">
-            <label className="text-sm font-medium mb-3 block">Currency</label>
+            <label className="text-sm font-medium mb-3 block text-white">Currency</label>
             <div className="relative">
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full bg-zinc-800/50 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-zinc-600 transition-colors appearance-none text-zinc-400"
+                className="w-full bg-zinc-800/50 border border-zinc-700 rounded-xl px-4 py-3.5 text-lg focus:outline-none focus:border-red-500/50 transition-colors appearance-none text-white"
               >
                 {currencies.map((c) => (
                   <option key={c} value={c} className="bg-zinc-900 text-white">
@@ -112,7 +107,7 @@ export default function AmountCurrencySection({ onPreview, onSend }: AmountCurre
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-4 h-4 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-5 h-5 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
             <p className="text-xs text-zinc-500 mt-2">
               {`1 ${currency} = $${(conversionRates[currency] ?? 0).toFixed(2)} USD`}
@@ -121,30 +116,21 @@ export default function AmountCurrencySection({ onPreview, onSend }: AmountCurre
         </div>
       </div>
 
-      {/* Buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+      {/* Primary CTA */}
+      <div className="flex flex-col gap-4 mt-8">
         <button
-          onClick={handlePreview}
+          onClick={handleReview}
           disabled={!isValid}
-          className={`w-full py-3.5 bg-zinc-900 hover:bg-zinc-800 rounded-xl text-sm font-medium transition-colors border border-zinc-800 flex items-center justify-center gap-2 ${
-            isValid ? "opacity-100" : "opacity-60 cursor-not-allowed"
-          }`}
-          aria-disabled={!isValid}
+          className={`w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 flex items-center justify-center gap-2`}
         >
-          <Info className="w-4 h-4" />
-          Preview Transaction
+          Review Transaction
         </button>
-
+        
         <button
-          onClick={handleSend}
-          disabled={!isValid}
-          className={`w-full py-3.5 bg-red-600 hover:bg-red-700 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-            isValid ? "opacity-100" : "opacity-60 cursor-not-allowed"
-          }`}
-          aria-disabled={!isValid}
+          onClick={onBack}
+          className="w-full py-4 bg-transparent hover:bg-white/5 rounded-2xl text-sm font-medium text-zinc-400 transition-colors border border-zinc-800/50"
         >
-          <Zap className="w-4 h-4" />
-          Send Remittance
+          Back to Recipient
         </button>
       </div>
     </div>

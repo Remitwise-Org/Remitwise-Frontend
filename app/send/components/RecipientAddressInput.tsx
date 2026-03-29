@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 
 interface RecipientAddressInputProps {
   onAddressChange?: (address: string) => void;
+  onContinue?: () => void;
   initialAddress?: string;
 }
 
@@ -14,7 +15,8 @@ const RECENT_RECIPIENTS = [
 ];
 
 export default function RecipientAddressInput({ 
-  onAddressChange, 
+  onAddressChange,
+  onContinue,
   initialAddress = "" 
 }: RecipientAddressInputProps) {
   const [address, setAddress] = useState(initialAddress);
@@ -34,6 +36,8 @@ export default function RecipientAddressInput({
   const handleRecentClick = (recentAddress: string) => {
     setAddress(recentAddress);
   };
+
+  const isContinueEnabled = address !== "" && isValid;
 
   return (
     <div className="mx-auto relative overflow-hidden bg-[#0c0c0c] border border-white/5 rounded-[2rem] p-8 sm:p-10 mb-8 shadow-2xl">
@@ -90,6 +94,17 @@ export default function RecipientAddressInput({
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Primary CTA */}
+        <div className="pt-6">
+          <button
+            onClick={onContinue}
+            disabled={!isContinueEnabled}
+            className={`w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20`}
+          >
+            Continue to Amount
+          </button>
         </div>
       </div>
     </div>

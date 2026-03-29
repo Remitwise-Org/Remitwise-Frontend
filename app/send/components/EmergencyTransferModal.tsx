@@ -4,100 +4,102 @@ import { useState } from 'react'
 import { X, AlertTriangle } from 'lucide-react'
 
 interface EmergencyTransferModalProps {
-  open: boolean
+  isOpen: boolean
   onClose: () => void
 }
 
 export default function EmergencyTransferModal({
-  open,
+  isOpen,
   onClose,
 }: EmergencyTransferModalProps) {
   const [confirmed, setConfirmed] = useState(false)
 
-  if (!open) return null
+  if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+        onClick={onClose}
+      />
+
+      {/* Modal Content */}
+      <div className="relative bg-[#0c0c0c] border border-white/10 rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300">
+        
+        {/* Subtle Atmospheric Glow */}
+        <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-red-900/20 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
 
         {/* Header */}
-        <div className="flex items-center justify-between bg-red-600 px-6 py-4">
-          <div className="flex items-center space-x-2 text-white">
-            <AlertTriangle className="w-6 h-6" />
-            <h2 className="text-lg font-bold">Emergency Transfer</h2>
+        <div className="relative p-8 pb-4 flex items-center justify-between border-b border-white/5">
+          <div className="flex items-center gap-4">
+            <div className="bg-red-500/10 p-3 rounded-2xl">
+              <AlertTriangle className="w-6 h-6 text-red-500" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white tracking-tight">Emergency Transfer</h2>
+              <p className="text-zinc-500 text-sm">Priority immediate delivery</p>
+            </div>
           </div>
-          <button onClick={onClose}>
-            <X className="w-5 h-5 text-white" />
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-white/5 rounded-xl transition-colors text-zinc-500"
+          >
+            <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-4">
+        <div className="relative p-8 space-y-8">
 
           {/* Warning */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-800">
-            This transfer will be processed immediately with priority handling.
-            Use only in urgent situations.
+          <div className="bg-red-950/20 border border-red-900/30 rounded-2xl p-5 flex items-start gap-4">
+             <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+             <p className="text-sm text-red-200/80 leading-relaxed">
+              This transfer bypasses your automatic split rules and is processed immediately. A 2% emergency handling fee will be added.
+             </p>
           </div>
 
-          {/* Recipient */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Recipient
+          <div className="space-y-6">
+            {/* Confirmation Toggle */}
+            <label className="flex items-start gap-4 p-5 rounded-2xl bg-white/5 border border-white/5 cursor-pointer hover:bg-white/[0.07] transition-all active:scale-[0.99]">
+              <div className="flex items-center h-6">
+                <input
+                  type="checkbox"
+                  checked={confirmed}
+                  onChange={(e) => setConfirmed(e.target.checked)}
+                  className="w-5 h-5 rounded border-zinc-700 bg-zinc-800 text-red-600 focus:ring-red-600 focus:ring-offset-zinc-900"
+                />
+              </div>
+              <div className="space-y-1">
+                <span className="text-white font-bold block">I understand the implications</span>
+                <span className="text-zinc-500 text-sm block leading-snug">
+                  By checking this, I agree to the 2% fee and immediate processing.
+                </span>
+              </div>
             </label>
-            <input
-              type="text"
-              disabled
-              value="GXXXXXXXXXXXXXXXXXXXXXXXX"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
-            />
           </div>
-
-          {/* Amount */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Amount (USD)
-            </label>
-            <input
-              type="number"
-              placeholder="250.00"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                         bg-white text-gray-900 placeholder-gray-400
-                         focus:ring-2 focus:ring-red-500 focus:outline-none"
-            />
-          </div>
-
-          {/* Confirmation */}
-          <label className="flex items-start space-x-3 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={confirmed}
-              onChange={(e) => setConfirmed(e.target.checked)}
-              className="mt-1"
-            />
-            <span>I understand this is an emergency transfer</span>
-          </label>
 
           {/* Actions */}
-          <div className="space-y-3 pt-2">
+          <div className="flex flex-col gap-4 pt-4">
             <button
               disabled={!confirmed}
-              className={`w-full py-3 rounded-lg font-semibold text-white transition
+              className={`w-full py-5 rounded-2xl font-bold text-lg transition-all transform active:scale-[0.98] shadow-lg flex items-center justify-center gap-3
                 ${
                   confirmed
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-red-300 cursor-not-allowed'
+                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-900/40'
+                    : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                 }
               `}
             >
-              Send Emergency Transfer
+              Confirm Emergency Transfer
             </button>
 
             <button
               onClick={onClose}
-              className="w-full py-2 text-sm text-gray-600 hover:text-gray-900"
+              className="w-full py-2 text-zinc-500 hover:text-white transition-colors text-sm font-medium"
             >
-              Cancel
+              Cancel and Return
             </button>
           </div>
         </div>
