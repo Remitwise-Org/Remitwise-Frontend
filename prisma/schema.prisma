@@ -23,3 +23,22 @@ model UserPreference {
   language              String  @default("en")
   notifications_enabled Boolean @default(true)
 }
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  source      String    // e.g. "anchor", "stripe"
+  eventType   String    // e.g. "deposit_completed"
+  rawPayload  String    // raw JSON body
+  status      String    @default("pending") // pending | processing | processed | failed | dlq
+  retryCount  Int       @default(0)
+  maxRetries  Int       @default(5)
+  lastError   String?
+  nextRetryAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  processedAt DateTime?
+
+  @@index([status])
+  @@index([source])
+  @@index([nextRetryAt])
+}
