@@ -1,15 +1,4 @@
-import Link from "next/link";
-import {
-  ArrowLeft,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  PiggyBank,
-  Send,
-  File,
-  FileText,
-  Shield,
-} from "lucide-react";
+import { Send, PiggyBank, FileText, Shield } from "lucide-react";
 import CurrentMoneySplitWidget from '@/components/CurrentMoneySplitWidget'
 import GoalProgress from "@/components/Dashboard/GoalProgress";
 import SplitBar from "@/components/Dashboard/SplitBar";
@@ -21,16 +10,9 @@ import MoneyDistributionWidget from "@/components/Dashboard/MoneyDistributionWid
 import RecentTransactionsWidget from "@/components/Dashboard/RecentTransactionsWidget";
 import QuickActions from "@/components/Dashboard/QuickActions";
 
-
-import DashboardHeader from "@/components/Dashboard/DashboardHeader";
-
 export default function Dashboard() {
   return (
-    <div className="min-h-screen bg-[#141414]">
-      {/* Header */}
-      <DashboardHeader />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
@@ -127,6 +109,5 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
-    </div>
   );
 }
