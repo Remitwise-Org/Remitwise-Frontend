@@ -27,3 +27,17 @@ Doc reference of changes made: https://docs.google.com/document/d/1uaXCKiOWRoE6t
 
 Figma design: https://www.figma.com/design/DCcu9gcnC3P69wrYcwVyYl/Remitwise?node-id=175-7413&t=xJDctboafzmPdm5u-1
 
+## Design QA & Engineering Handoff
+
+For consistent design-to-engineering workflow, refer to:
+
+- [Design QA Checklist](./docs/DESIGN_QA_CHECKLIST.md)
+- [Design Handoff Template](./docs/DESIGN_HANDOFF_TEMPLATE.md)
+
+These documents define:
+- Breakpoint coverage across mobile, tablet, and desktop
+- Accessibility expectations aligned with WCAG 2.1 AA
+- Component states and interaction notes
+- Tailwind token alignment and extension notes
+- Mapping of design screens to Next.js `app/` routes for implementation traceability
+- Structured engineering handoff expectations

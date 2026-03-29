@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { useState, useRef } from "react";
 import {
   Send,
   PiggyBank,
@@ -13,7 +11,6 @@ import {
 
 import FAQSection from "@/components/FAQSection";
 import FeatureSection from "@/components/FeatureSection";
-import WalletDropdown from "@/components/WalletDropdown";
 import WhyChooseStellar from "@/components/WhyChooseStellar";
 import Hero from "@/components/Hero";
 import ValueProposition from "@/components/ValueProposition";
@@ -22,9 +19,6 @@ import StatsSection from "@/components/StatsSection";
 import PricingSection from "@/components/PricingSection";
 
 export default function Home() {
-  const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
-  const walletButtonRef = useRef<HTMLButtonElement>(null);
-
   return (
     <main className="min-h-screen bg-brand-dark from-blue-50 to-indigo-100">
       {/* Hero Section */}

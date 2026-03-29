@@ -37,3 +37,29 @@ The webhook expects a JSON payload containing at minimum the `event_type`, `tran
 ### Supported Event Types
 1. **`deposit_completed`**: Fired when an anchor successfully processes a user's fiat deposit and issues on-chain assets.
 2. **`withdrawal_failed`**: Fired when an on-chain withdrawal to fiat fails at the anchor level.
+
+## Reliability & Retry Policy
+
+All Anchor webhooks are processed with automatic retry and dead-letter queue (DLQ) handling to ensure no event is lost:
+
+- **Immediate 200 Response**: Webhook receipt is acknowledged immediately and asynchronously processed
+- **Persistent Storage**: Events are saved to database before processing
+- **Automatic Retry**: Failed events are retried up to 5 times with exponential backoff (~1s, 2s, 4s, 8s, 16s delays)
+- **Dead-Letter Queue**: Events exceeding max retries are moved to DLQ for manual review
+
+See [Webhook Retry and Dead-Letter Queue Documentation](./WEBHOOK_RETRY_AND_DLQ.md) for comprehensive details on:
+- Retry configuration and backoff strategy
+- Dead-letter queue monitoring and replay
+- Admin endpoints for manual intervention
+- Troubleshooting guide
+
+### Example: Failed Event Recovery
+
+If an Anchor webhook fails to process (e.g., database is temporarily unavailable):
+
+1. Event is persisted with status `pending`
+2. First retry happens ~1 second later
+3. If still failing, subsequent retries with exponential backoff
+4. After 5 failed retries, event is moved to DLQ
+5. Administrator reviews DLQ event and manually triggers replay
+6. Event is reprocessed on next background cycle

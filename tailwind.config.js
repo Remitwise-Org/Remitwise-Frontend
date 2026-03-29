@@ -34,11 +34,16 @@ module.exports = {
       // --- ADDED ANIMATIONS BELOW ---
       animation: {
         "neon-pulse": "neon-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "shimmer": "shimmer 2s linear infinite",
       },
       keyframes: {
         "neon-pulse": {
           "0%, 100%": { opacity: "1", filter: "brightness(1)" },
           "50%": { opacity: "0.8", filter: "brightness(1.4) blur(0.5px)" },
+        },
+        "shimmer": {
+          "0%": { backgroundPosition: "200% 0" },
+          "100%": { backgroundPosition: "-200% 0" },
         },
       },
     },

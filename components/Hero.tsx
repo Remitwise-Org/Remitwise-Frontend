@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 
@@ -95,20 +96,27 @@ export default function Hero() {
 
         {/* CTA buttons */}
         <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-          <a
-            href="#get-started"
+          <Link
+            href="/send"
             className="inline-flex items-center gap-2 rounded-lg bg-[#DC2626] px-6 py-3 font-medium text-white transition hover:bg-red-700"
           >
             <LightningBoltIcon />
-            Get Started
-          </a>
+            Send Money
+          </Link>
 
-          <a
-            href="#details"
+          <Link
+            href="/dashboard"
             className="rounded-lg border border-white/30 px-6 py-3 font-medium text-white transition hover:bg-white/10"
           >
-            See Details
-          </a>
+            View Dashboard
+          </Link>
+
+          <Link
+            href="/settings"
+            className="inline-flex items-center justify-center rounded-lg border border-white/30 px-6 py-3 font-medium text-white transition hover:bg-white/10"
+          >
+            Connect Wallet
+          </Link>
         </div>
       </div>
     </section>

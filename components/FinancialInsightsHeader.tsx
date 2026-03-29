@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, ChevronDown, Download } from 'lucide-react'
 import { useState } from 'react'
@@ -127,9 +128,11 @@ export default function FinancialInsightsHeader({
             {/* RemitWise Logo - Icon only on mobile */}
             <Link href="/" className="flex items-center justify-center w-10 h-10 rounded-full bg-[#D72323] hover:scale-105 active:scale-95 transition-transform touch-manipulation" aria-label="RemitWise Home">
               <div className="w-6 h-6 flex-shrink-0">
-                <img 
+                <Image 
                   src="/logo.svg" 
                   alt="RemitWise" 
+                  width={24} 
+                  height={24} 
                   className="w-full h-full" 
                 />
               </div>
@@ -220,9 +223,11 @@ export default function FinancialInsightsHeader({
             {/* RemitWise Logo */}
             <Link href="/" className="flex items-center gap-2.5 xl:gap-3 pl-3 xl:pl-4 border-l border-gray-800 group touch-manipulation">
               <div className="w-10 h-10 flex-shrink-0">
-                <img 
+                <Image 
                   src="/logo.svg" 
                   alt="RemitWise" 
+                  width={40} 
+                  height={40} 
                   className="w-full h-full group-hover:scale-110 group-active:scale-95 transition-transform" 
                 />
               </div>

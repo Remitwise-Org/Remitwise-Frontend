@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import React from "react";
 import { ArrowLeft } from "lucide-react";
 
@@ -41,7 +42,7 @@ return (
         <div className="flex items-center">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 flex items-center justify-center">
-              <img src="/logo.svg" alt="RemitWise" className="w-10 h-10" />
+              <Image src="/logo.svg" alt="RemitWise" width={40} height={40} className="w-10 h-10" />
             </div>
             <span className="text-white text-xl font-bold">RemitWise</span>
           </Link>

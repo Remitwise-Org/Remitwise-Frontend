@@ -80,13 +80,112 @@ const StatusBadge = ({ status }: { status: TransactionStatus }) => {
     }
 };
 
-export default function TransactionHistoryItem({ transaction }: { transaction: Transaction }) {
+export default function TransactionHistoryItem({ 
+    transaction,
+    density = 'comfortable'
+}: { 
+    transaction: Transaction,
+    density?: 'comfortable' | 'compact'
+}) {
     const [isExpanded, setIsExpanded] = useState(false);
     const isNegative = transaction.amount < 0;
-    const amountColor = isNegative ? 'text-white' : 'text-white'; // Prompt says "white" for general text, maybe specialized colors? "Amount with sign... large". 
-
+    
     // Format amount
     const formattedAmount = `${isNegative ? '-' : '+'}${Math.abs(transaction.amount).toFixed(2)} ${transaction.currency}`;
+
+    if (density === 'compact') {
+        return (
+            <div className="border border-[#FFFFFF14] bg-[#0A0A0A] rounded-xl px-4 py-3 mb-2 hover:bg-[#111] transition-colors flex items-center gap-4">
+                <div className="w-8 h-8 bg-[#1A0505] rounded-lg flex items-center justify-center border border-[#2A1515] flex-shrink-0 text-[#FF4B26]">
+                    {React.cloneElement(getIcon(transaction.type) as React.ReactElement, { className: 'w-4 h-4 text-red-500' })}
+                </div>
+                
+                <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-2 items-center">
+                    <div className="flex flex-col">
+                        <span className="font-bold text-white text-sm truncate">{transaction.type}</span>
+                        <span className="text-[#444] text-xs truncate">#{transaction.id}</span>
+                    </div>
+                    
+                    <div className="hidden md:block">
+                        <span className="text-white font-bold text-sm">{formattedAmount}</span>
+                    </div>
+
+                    <div className="hidden md:block truncate">
+                        <span className="text-gray-400 text-xs">{transaction.counterpartyLabel} {transaction.counterpartyName}</span>
+                    </div>
+
+                    <div className="hidden md:block">
+                        <span className="text-gray-400 text-xs">{transaction.date.split(' ')[0]}</span>
+                    </div>
+
+                    <div className="flex justify-end">
+                        <StatusBadge status={transaction.status} />
+                    </div>
+                </div>
+
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="p-1 hover:bg-white/10 rounded text-gray-400"
+                >
+                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+
+                {isExpanded && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setIsExpanded(false)}>
+                        <div className="bg-[#111] border border-white/10 p-6 rounded-2xl max-w-md w-full" onClick={e => e.stopPropagation()}>
+                            <div className="flex justify-between items-start mb-4">
+                                <h3 className="text-lg font-bold text-white">Transaction Details</h3>
+                                <button onClick={() => setIsExpanded(false)} className="text-gray-400 hover:text-white">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <div className="text-gray-500 text-xs">Type</div>
+                                        <div className="text-white text-sm">{transaction.type}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-gray-500 text-xs">ID</div>
+                                        <div className="text-white text-sm">#{transaction.id}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-gray-500 text-xs">Amount</div>
+                                        <div className="text-white text-sm font-bold">{formattedAmount}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-gray-500 text-xs">Status</div>
+                                        <div className="mt-1"><StatusBadge status={transaction.status} /></div>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <div className="text-gray-500 text-xs">{transaction.counterpartyLabel}</div>
+                                        <div className="text-white text-sm">{transaction.counterpartyName}</div>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <div className="text-gray-500 text-xs">Date</div>
+                                        <div className="text-white text-sm">{transaction.date}</div>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <div className="text-gray-500 text-xs">Hash</div>
+                                        <div className="text-white text-xs font-mono break-all">{transaction.hash || 'N/A'}</div>
+                                    </div>
+                                </div>
+                                <a
+                                    href={`https://stellar.expert/explorer/public/tx/${transaction.hash || transaction.id}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#1A0505] border border-[#2A1515] text-[#FF4B26] text-sm font-medium hover:bg-[#2A0808] transition-colors"
+                                >
+                                    <ExternalLink className="w-4 h-4" />
+                                    View on Explorer
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div className="border border-[#FFFFFF14] bg-gradient-to-t from-[#0F0F0F] to-[#0A0A0A] rounded-2xl p-6 mb-4 hover:border-[#333] transition-colors">

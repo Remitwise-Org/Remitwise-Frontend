@@ -4,7 +4,17 @@ import { LRUCache } from "lru-cache";
 // In-memory metrics store
 const metrics: Record<string, { count: number; errorCount: number }> = {};
 
-// CORS & SECURITY CONFIGURATION
+// ---------------------------------------------------------------------------
+// CORS CONFIGURATION
+// ---------------------------------------------------------------------------
+
+const ALLOWED_ORIGINS: Set<string> = new Set(
+  (process.env.ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean)
+);
+
 const CORS_ALLOWED_METHODS = [
   "GET",
   "POST",
@@ -26,18 +36,23 @@ const SECURITY_HEADERS: Record<string, string> = {
   "X-XSS-Protection": "1; mode=block",
 };
 
+// ---------------------------------------------------------------------------
 // Helper functions
+// ---------------------------------------------------------------------------
+
 function applyCORS(response: NextResponse, request: NextRequest): void {
-  const allowedOrigin =
-    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const requestOrigin = request.headers.get("origin");
-  const isSameOrigin = !requestOrigin || requestOrigin === allowedOrigin;
-  if (isSameOrigin || requestOrigin === allowedOrigin) {
-    response.headers.set(
-      "Access-Control-Allow-Origin",
-      requestOrigin || allowedOrigin,
-    );
+
+  // Always set Vary so intermediary caches don't collapse per-origin responses
+  response.headers.set("Vary", "Origin");
+
+  if (!requestOrigin || !ALLOWED_ORIGINS.has(requestOrigin)) {
+    // Origin not in allowlist — omit ACAO entirely.
+    // The browser will block the request; we do not need to explicitly deny.
+    return;
   }
+
+  response.headers.set("Access-Control-Allow-Origin", requestOrigin);
   response.headers.set("Access-Control-Allow-Credentials", "true");
   response.headers.set(
     "Access-Control-Allow-Methods",
@@ -47,7 +62,6 @@ function applyCORS(response: NextResponse, request: NextRequest): void {
     "Access-Control-Allow-Headers",
     CORS_ALLOWED_HEADERS.join(", "),
   );
-  response.headers.set("Vary", "Origin");
 }
 
 function applySecurityHeaders(response: NextResponse): void {
@@ -105,7 +119,10 @@ async function validateBodySize(
   return { valid: true };
 }
 
-// RATE LIMITING CONFIGURATION
+// ---------------------------------------------------------------------------
+// Rate limiting
+// ---------------------------------------------------------------------------
+
 const RATE_LIMITS = {
   auth: 10,
   write: 50,
@@ -118,6 +135,10 @@ const rateLimitCache = new LRUCache<
   max: 10000,
   ttl: 60 * 1000,
 });
+
+// ---------------------------------------------------------------------------
+// Middleware
+// ---------------------------------------------------------------------------
 
 export async function middleware(request: NextRequest) {
   const start = Date.now();
@@ -153,7 +174,6 @@ export async function middleware(request: NextRequest) {
   // CORS & Security headers early
   let apiResponse: NextResponse;
   let statusCode = 200;
-  let error = false;
 
   apiResponse = NextResponse.next();
   applyCORS(apiResponse, request);
@@ -219,7 +239,6 @@ export async function middleware(request: NextRequest) {
     );
     applyCORS(rateLimitError, request);
     applySecurityHeaders(rateLimitError);
-    // Log metrics for rate limit errors
     const durationMs = Date.now() - start;
     const key = `${method} ${url}`;
     if (!metrics[key]) metrics[key] = { count: 0, errorCount: 0 };

@@ -2,56 +2,49 @@
 "use client";
 
 import { useState } from "react";
-
-import Link from "next/link";
-import {
-    ArrowLeft,
-    Search,
-    Filter,
-    Download
-} from "lucide-react";
+import { FilterIcon, Download } from "lucide-react";
 import TransactionHistoryItem, { Transaction } from "@/components/Dashboard/TransactionHistoryItem";
 import { useRouter } from "next/navigation";
+import { useDensity } from "@/lib/context/DensityContext";
 
-// Sample Data (Same as dashboard for now, but pretending to be the full dataset)
 const allTransactions: Transaction[] = [
     {
         id: "TX001",
         type: "Send Money",
-        amount: -500.00,
+        amount: -500.0,
         currency: "USDC",
         counterpartyName: "Maria Santos (Philippines)",
         counterpartyLabel: "To",
         date: "2024-01-28 14:32:15",
-        fee: 0.50,
+        fee: 0.5,
         status: "Completed"
     },
     {
         id: "TX002",
         type: "Smart Split",
-        amount: -1200.00,
+        amount: -1200.0,
         currency: "USDC",
         counterpartyName: "Smart Split: 4 allocations",
         counterpartyLabel: "To",
         date: "2024-01-27 09:15:42",
-        fee: 0.30,
+        fee: 0.3,
         status: "Completed"
     },
     {
         id: "TX003",
         type: "Bill Payment",
-        amount: -85.50,
+        amount: -85.5,
         currency: "USDC",
         counterpartyName: "Manila Electric Company",
         counterpartyLabel: "To",
         date: "2024-01-26 16:45:23",
-        fee: 0.10,
+        fee: 0.1,
         status: "Completed"
     },
     {
         id: "TX004",
         type: "Insurance",
-        amount: -25.00,
+        amount: -25.0,
         currency: "USDC",
         counterpartyName: "HealthGuard Insurance Premium",
         counterpartyLabel: "To",
@@ -62,18 +55,18 @@ const allTransactions: Transaction[] = [
     {
         id: "TX005",
         type: "Savings",
-        amount: -200.00,
+        amount: -200.0,
         currency: "USDC",
         counterpartyName: "Education Fund Goal",
         counterpartyLabel: "To",
         date: "2024-01-24 08:55:17",
-        fee: 0.10,
+        fee: 0.1,
         status: "Completed"
     },
     {
         id: "TX006",
         type: "Family Transfer",
-        amount: -150.00,
+        amount: -150.0,
         currency: "USDC",
         counterpartyName: "Carlos Santos (Son)",
         counterpartyLabel: "To",
@@ -84,40 +77,40 @@ const allTransactions: Transaction[] = [
     {
         id: "TX007",
         type: "Received",
-        amount: 75.00,
+        amount: 75.0,
         currency: "USDC",
         counterpartyName: "Refund from LOBSTR Anchor",
         counterpartyLabel: "From",
         date: "2024-01-22 13:15:30",
-        fee: 0.00,
+        fee: 0.0,
         status: "Completed"
     },
     {
         id: "TX008",
         type: "Send Money",
-        amount: -320.00,
+        amount: -320.0,
         currency: "USDC",
         counterpartyName: "Juan Dela Cruz (Philippines)",
         counterpartyLabel: "To",
         date: "2024-01-21 10:42:18",
-        fee: 0.40,
+        fee: 0.4,
         status: "Pending"
     },
     {
         id: "TX009",
         type: "Bill Payment",
-        amount: -120.00,
+        amount: -120.0,
         currency: "USDC",
         counterpartyName: "Water District Payment",
         counterpartyLabel: "To",
         date: "2024-01-20 15:22:55",
-        fee: 0.00,
+        fee: 0.0,
         status: "Failed"
     },
     {
         id: "TX010",
         type: "Smart Split",
-        amount: -800.00,
+        amount: -800.0,
         currency: "USDC",
         counterpartyName: "Smart Split: 4 allocations",
         counterpartyLabel: "To",
@@ -129,11 +122,12 @@ const allTransactions: Transaction[] = [
 
 export default function TransactionsPage() {
     const router = useRouter();
+    const { density } = useDensity();
 
     const [searchQuery, setSearchQuery] = useState("");
 
-    const filteredTransactions = allTransactions.filter(transaction => {
-        const query = searchQuery.toLowerCase();
+    const filteredTransactions = allTransactions.filter((transaction) => {
+        const query = searchTerm.toLowerCase();
         return (
             transaction.id.toLowerCase().includes(query) ||
             transaction.counterpartyName.toLowerCase().includes(query) ||
@@ -142,40 +136,20 @@ export default function TransactionsPage() {
         );
     });
 
-    function handleBack() {
-        if (typeof window !== "undefined" && window.history.length > 1) {
-            // Prefer native history to ensure it works in all environments
-            window.history.back();
-            return;
-        }
-        router.push("/dashboard");
-    }
+    const handleFilterClick = () => {
+        // Placeholder for future filter work
+        alert("Filter functionality coming soon!");
+    };
 
-    return (
-        <main className="min-h-screen bg-[#0A0A0A] text-white font-sans">
-            {/* Top Header */}
-            <header className="border-b border-[#232323] bg-[#0A0A0A] sticky top-0 z-10">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={handleBack}
-                                aria-label="Go back"
-                                className="flex items-center justify-center bg-white/10 border border-gray-700 hover:bg-white/20 text-white rounded-xl px-3 py-2"
-                                style={{ minWidth: 40, minHeight: 40 }}
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                            </button>
-                            <div>
-                                <h1 className="text-2xl font-bold text-white">Transaction History</h1>
-                                <p className="text-sm text-gray-500">{filteredTransactions.length} transactions found</p>
-                            </div>
-                        </div>
+    const handleExportClick = () => {
+        // Placeholder for future export work
+        alert("Export functionality coming soon!");
+    };
 
                         {/* Right Side Brand */}
                         <Link href="/" className="flex items-center gap-3">
                             <div className="w-8 md:w-10 h-8 md:h-10 flex items-center justify-center">
-                                <img src="/logo.svg" alt="RemitWise" className="w-8 md:w-10 h-8 md:h-10" />
+                                <Image src="/logo.svg" alt="RemitWise" width={40} height={40} className="w-8 md:w-10 h-8 md:h-10" />
                             </div>
                             <span className="text-white text-xl font-bold hidden md:block">RemitWise</span>
                         </Link>
@@ -200,28 +174,32 @@ export default function TransactionsPage() {
                         />
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-3 w-full md:w-auto">
-                        <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-[#FFFFFF0D] border border-[#FFFFFF14] rounded-xl transition-colors text-white text-sm font-medium">
-                            <Filter className="w-4 h-4" />
-                            Filters
-                        </button>
-                        <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-[#FFFFFF0D] border border-[#FFFFFF14] rounded-xl transition-colors text-white text-sm font-medium">
-                            <Download className="w-4 h-4" />
-                            Export
-                        </button>
+            <div className="mx-4 md:mx-20 mt-10 pb-10">
+                <div className="flex flex-col sm:flex-row justify-center gap-0 sm:gap-4 items-center border border-[#FFFFFF14] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] rounded-2xl py-6 px-4">
+                    <TransactionHistorySearchInput
+                        value={searchTerm}
+                        onChange={setSearchTerm}
+                        placeholder="Search by ID, recipient, or transaction hash..."
+                    />
+                    <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-4 sm:mt-0 w-full sm:w-auto">
+                        <Button icon={<FilterIcon size={17} className="text-white" />} text="Filters" onclick={handleFilterClick} />
+                        <Button icon={<Download size={17} className="text-white" />} text="Export" onclick={handleExportClick} />
                     </div>
                 </div>
 
                 {/* Transactions List */}
-                <div className="space-y-2.5">
+                <div className={density === 'compact' ? "space-y-1" : "space-y-2.5"}>
                     {filteredTransactions.length > 0 ? (
                         filteredTransactions.map((transaction) => (
-                            <TransactionHistoryItem key={transaction.id} transaction={transaction} />
+                            <TransactionHistoryItem 
+                                key={transaction.id} 
+                                transaction={transaction} 
+                                density={density}
+                            />
                         ))
                     ) : (
-                        <div className="text-center py-12 text-gray-500">
-                            No transactions found matching &quot;{searchQuery}&quot;
+                        <div className="text-center py-12 text-gray-400">
+                            No transactions found matching "{searchTerm}"
                         </div>
                     )}
                 </div>

@@ -5,6 +5,11 @@ import { verifySignature } from '@/lib/webhooks/verify'
 import { runBackgroundJob, isShuttingDown, registerGracefulShutdown } from '@/lib/background/runtime'
 import { updateAnchorFlowStatusByTransactionId } from '@/lib/anchor/flow-store'
 import { recordAuditEvent } from '@/lib/admin/audit'
+import { 
+  saveWebhookEvent,
+  processWebhookEvent,
+  WebhookProcessResult
+} from '@/lib/webhooks/processor'
 
 registerGracefulShutdown();
 
@@ -46,13 +51,17 @@ export async function POST(request: Request) {
     // 4. Parse the trusted payload
     const payload = JSON.parse(rawBody)
 
-    // 5. Process the event asynchronously (tracked for graceful shutdown in long-running Node servers)
+    // 5. Save webhook event to database
+    const eventId = await saveWebhookEvent('anchor', payload.event_type || 'unknown', rawBody)
+
+    // 6. Process the event asynchronously (tracked for graceful shutdown)
+    // The event will be picked up by the background processing loop or on-demand processing
     runBackgroundJob('anchor_webhook_event', async () => {
-      await handleAnchorEvent(payload)
+      await processWebhookEvent(eventId, handleAnchorEvent)
     }).catch(console.error)
 
-    // 6. Return 200 quickly to acknowledge receipt
-    return NextResponse.json({ received: true }, { status: 200 })
+    // 7. Return 200 quickly to acknowledge receipt
+    return NextResponse.json({ received: true, eventId }, { status: 200 })
   } catch (error) {
     console.error('[Webhook] Error handling request:', error)
     const t = getTranslator(request.headers.get('accept-language'));
@@ -64,7 +73,7 @@ export async function POST(request: Request) {
 }
 
 // Internal function to handle the business logic
-async function handleAnchorEvent(payload: any) {
+async function handleAnchorEvent(payload: any): Promise<WebhookProcessResult> {
   const { event_type, transaction_id, status } = payload
   const txId = typeof transaction_id === 'string' ? transaction_id : ''
 
@@ -72,32 +81,44 @@ async function handleAnchorEvent(payload: any) {
     `[Webhook] Processing event: ${event_type} for tx: ${transaction_id}`
   )
 
-  switch (event_type) {
-    case 'deposit_completed':
-      if (txId) {
-        updateAnchorFlowStatusByTransactionId(txId, 'completed')
-      }
-      recordAuditEvent({
-        type: 'anchor.webhook.deposit_completed',
-        actor: 'anchor-webhook',
-        message: `Deposit completed for ${txId || 'unknown'}`,
-        metadata: { transaction_id: txId || null, status },
-      })
-      console.log(`[Webhook] Deposit completed for tx ${transaction_id}`)
-      break
-    case 'withdrawal_failed':
-      if (txId) {
-        updateAnchorFlowStatusByTransactionId(txId, 'failed')
-      }
-      recordAuditEvent({
-        type: 'anchor.webhook.withdrawal_failed',
-        actor: 'anchor-webhook',
-        message: `Withdrawal failed for ${txId || 'unknown'}`,
-        metadata: { transaction_id: txId || null, status },
-      })
-      console.log(`[Webhook] Withdrawal failed for tx ${transaction_id}`)
-      break
-    default:
-      console.log(`[Webhook] Unhandled event type received: ${event_type}`)
+  try {
+    switch (event_type) {
+      case 'deposit_completed':
+        if (txId) {
+          updateAnchorFlowStatusByTransactionId(txId, 'completed')
+        }
+        recordAuditEvent({
+          type: 'anchor.webhook.deposit_completed',
+          actor: 'anchor-webhook',
+          message: `Deposit completed for ${txId || 'unknown'}`,
+          metadata: { transaction_id: txId || null, status },
+        })
+        console.log(`[Webhook] Deposit completed for tx ${transaction_id}`)
+        return { success: true }
+      
+      case 'withdrawal_failed':
+        if (txId) {
+          updateAnchorFlowStatusByTransactionId(txId, 'failed')
+        }
+        recordAuditEvent({
+          type: 'anchor.webhook.withdrawal_failed',
+          actor: 'anchor-webhook',
+          message: `Withdrawal failed for ${txId || 'unknown'}`,
+          metadata: { transaction_id: txId || null, status },
+        })
+        console.log(`[Webhook] Withdrawal failed for tx ${transaction_id}`)
+        return { success: true }
+      
+      default:
+        console.log(`[Webhook] Unhandled event type received: ${event_type}`)
+        return { success: true } // Don't fail on unknown event types
+    }
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+    console.error(`[Webhook] Error handling anchor event: ${errorMsg}`, error)
+    return { 
+      success: false, 
+      error: errorMsg 
+    }
   }
 }

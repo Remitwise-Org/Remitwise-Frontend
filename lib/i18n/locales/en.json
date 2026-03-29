@@ -27,5 +27,28 @@
     "address_signature_required": "Address and signature are required",
     "nonce_expired": "Nonce expired or missing. Please request a new nonce.",
     "signature_verification_failed": "Signature verification failed"
+  },
+  "transactionHistory": {
+    "title": "Transaction History",
+    "resultsCount": "{{count}} transactions found",
+    "resultsCountZero": "No transactions found",
+    "searchPlaceholder": "Search by transaction hash, address, or memo...",
+    "searchPlaceholderMobile": "Search transactions...",
+    "filters": "Filter Results",
+    "export": "Export History",
+    "tabs": {
+      "all": "All Transactions",
+      "completed": "Completed",
+      "pending": "Pending Review",
+      "failed": "Needs Attention"
+    },
+    "empty": "No transactions matched your search.",
+    "loadMore": "Load More Results",
+    "alerts": {
+      "filtersSoon": "Filter functionality coming soon!",
+      "exportSoon": "Export functionality coming soon!",
+      "fetchFailed": "Failed to fetch transactions",
+      "genericError": "An error occurred"
+    }
   }
 }

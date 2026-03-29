@@ -6,6 +6,7 @@ import SendHeader from "./components/SendHeader";
 import RecipientAddressInput from "./components/RecipientAddressInput";
 import AmountCurrencySection from "./components/AmountCurrencySection";
 import ReviewStep from "./components/ReviewStep";
+import TransactionSuccessReceipt from "@/components/TransactionSuccessReceipt";
 
 type Step = "recipient" | "amount" | "review";
 
@@ -15,6 +16,9 @@ export default function SendMoney() {
   const [amount, setAmount] = useState<number>(0);
   const [currency, setCurrency] = useState<string>("USDC");
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [transactionData, setTransactionData] = useState<any>(null);
 
   const handleRecipientContinue = () => {
     if (recipient) {
@@ -29,9 +33,26 @@ export default function SendMoney() {
   };
 
   const handleConfirm = () => {
-    console.log("Transaction confirmed", { recipient, amount, currency });
-    // In a real app, this would trigger the Stellar transaction
-    alert("Transaction submitted successfully!");
+    // Simulate transaction processing
+    const mockData = {
+      hash: "GCF27P3Q" + Math.random().toString(36).substring(2, 15).toUpperCase(), // Simulated hash
+      amount: amount,
+      currency: currency,
+      recipientName: "Maria Santos",
+      recipientAddress: recipient || "GCF2...7P3Q",
+      date: new Date().toLocaleString(),
+      fee: 0.0001,
+      splits: {
+        dailySpending: amount * 0.5,
+        savings: amount * 0.3,
+        bills: amount * 0.15,
+        insurance: amount * 0.05,
+      }
+    };
+    
+    setTransactionData(mockData);
+    setIsSubmitted(true);
+    console.log(`Send ${amount} ${currency} to ${recipient}`);
   };
 
   return (
@@ -123,6 +144,13 @@ export default function SendMoney() {
         isOpen={showEmergencyModal}
         onClose={() => setShowEmergencyModal(false)}
       />
+
+      {isSubmitted && transactionData && (
+        <TransactionSuccessReceipt
+          {...transactionData}
+          onClose={() => setIsSubmitted(false)}
+        />
+      )}
     </div>
   );
 }

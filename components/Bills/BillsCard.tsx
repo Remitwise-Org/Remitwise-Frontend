@@ -59,8 +59,58 @@ const getStatusStyles = (status: Bill['status']) => {
 };
 
 
-export function BillCards({ bill }: { bill: Bill }) {
+export function BillCards({ 
+    bill,
+    density = 'comfortable'
+}: { 
+    bill: Bill,
+    density?: 'comfortable' | 'compact'
+}) {
     const styles = getStatusStyles(bill.status);
+
+    if (density === 'compact') {
+        return (
+            <div
+                key={bill.id}
+                className={`relative rounded-xl border ${styles.border} overflow-hidden px-4 py-3 mb-2 flex items-center justify-between gap-4`}
+                style={{
+                    background: 'linear-gradient(180deg, #0F0F0F 0%, #0A0A0A 100%)',
+                }}
+            >
+                <div className="flex flex-col flex-1 min-w-0">
+                    <h3 className="font-bold text-sm text-white truncate">
+                        {bill.title}
+                    </h3>
+                    <span className="text-xs text-white/40 truncate">
+                        {bill.category} • Due {bill.dueDate}
+                    </span>
+                </div>
+
+                <div className="flex flex-col items-end">
+                    <span className="font-bold text-lg text-white">
+                        ${bill.amount}
+                    </span>
+                    <div className="flex gap-1 items-center">
+                        {bill.status === "paid" && (
+                            <CheckCircle className={`${styles.badgeText} w-3 h-3`} />
+                        )}
+                        <span className={`text-[10px] font-semibold ${styles.badgeText} uppercase`}>
+                            {bill.status}
+                        </span>
+                    </div>
+                </div>
+
+                {bill.status !== "paid" && (
+                    <button
+                        className="p-2 rounded-lg bg-red-600 hover:bg-red-500 text-white"
+                        title="Pay Now"
+                    >
+                        <Zap className="w-4 h-4" />
+                    </button>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div
