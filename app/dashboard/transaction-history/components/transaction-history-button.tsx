@@ -14,11 +14,11 @@ const Button: React.FC<ITransactionHistoryButtonProps> = ({
   return (
     <button
       type="button"
-      className="bg-white/5 border border-[#FFFFFF14] rounded-[14px] p-3 flex justify-center items-center gap-2 flex-1 sm:flex-none w-full sm:w-fit sm:min-w-[125.15px]"
+      className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[14px] border border-[#FFFFFF14] bg-white/5 px-4 py-3 text-center transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101] sm:w-auto sm:min-w-[148px]"
       onClick={onclick}
     >
       {icon}
-      <p className="text-white font-semibold text-base leading-6 tracking-[-0.31px] text-center">
+      <p className="whitespace-normal break-words text-center text-sm font-semibold leading-5 tracking-[-0.2px] text-white sm:text-base sm:leading-6">
         {text}
       </p>
     </button>

@@ -7,8 +7,10 @@ import TransactionHistorySearchInput from "./components/transaction-history-sear
 import Button from "./components/transaction-history-button";
 import { Download, FilterIcon, Loader2 } from "lucide-react";
 import { TransactionItem } from '@/lib/remittance/horizon';
+import { useClientTranslator } from '@/lib/i18n/client';
 
 const TransactionHistoryPage = () => {
+  const { t } = useClientTranslator();
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +35,7 @@ const TransactionHistoryPage = () => {
 
       const response = await fetch(`/api/v1/remittance/history?${params}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch transactions');
+        throw new Error(t('transactionHistory.alerts.fetchFailed'));
       }
 
       const data = await response.json();
@@ -47,7 +49,7 @@ const TransactionHistoryPage = () => {
       setCursor(data.nextCursor);
       setHasMore(!!data.nextCursor);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : t('transactionHistory.alerts.genericError'));
     } finally {
       setLoading(false);
     }
@@ -65,12 +67,12 @@ const TransactionHistoryPage = () => {
 
   const handleFilterClick = () => {
     // TODO: Implement filter modal/dropdown
-    alert("Filter functionality coming soon!");
+    alert(t('transactionHistory.alerts.filtersSoon'));
   };
 
   const handleExportClick = () => {
     // TODO: Implement export functionality
-    alert("Export functionality coming soon!");
+    alert(t('transactionHistory.alerts.exportSoon'));
   };
 
   const filteredTransactions = transactions.filter(tx => 
@@ -95,34 +97,50 @@ const TransactionHistoryPage = () => {
             tx.status === 'failed' ? 'Failed' : 'Pending') as 'Completed' | 'Failed' | 'Pending',
   });
 
+  const resultsSubtitle =
+    filteredTransactions.length > 0
+      ? t('transactionHistory.resultsCount').replace('{{count}}', `${filteredTransactions.length}`)
+      : t('transactionHistory.resultsCountZero');
+
+  const statusLabels: Record<typeof statusFilter, string> = {
+    all: t('transactionHistory.tabs.all'),
+    completed: t('transactionHistory.tabs.completed'),
+    pending: t('transactionHistory.tabs.pending'),
+    failed: t('transactionHistory.tabs.failed'),
+  };
+
   return (
     <main className="w-full min-h-screen bg-[#010101] font-inter">
-      <TransactionHistoryHeader transactions={filteredTransactions.length} />
+      <TransactionHistoryHeader
+        title={t('transactionHistory.title')}
+        subtitle={resultsSubtitle}
+      />
       
-      <div className="mx-4 md:mx-20 mt-10">
+      <div className="mx-4 mt-8 md:mx-20 md:mt-10">
         {/* Search and Filter Bar */}
-        <div className="flex flex-col sm:flex-row justify-center gap-0 sm:gap-4 items-center border border-[#FFFFFF14] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] rounded-2xl py-6 px-4">
+        <div className="flex flex-col gap-4 rounded-2xl border border-[#FFFFFF14] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] px-4 py-6 sm:gap-5">
           <TransactionHistorySearchInput 
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="Search by transaction hash, address, or memo..."
+            placeholder={t('transactionHistory.searchPlaceholder')}
+            mobilePlaceholder={t('transactionHistory.searchPlaceholderMobile')}
           />
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-4 sm:mt-0 w-full sm:w-auto">
+          <div className="flex w-full flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
             <Button
               icon={<FilterIcon size={17} className="text-white" />}
-              text="Filters"
+              text={t('transactionHistory.filters')}
               onclick={handleFilterClick}
             />
             <Button
               icon={<Download size={17} className="text-white" />}
-              text="Export"
+              text={t('transactionHistory.export')}
               onclick={handleExportClick}
             />
           </div>
         </div>
 
         {/* Status Filter Tabs */}
-        <div className="flex gap-2 mt-6 overflow-x-auto">
+        <div className="mt-6 flex flex-wrap gap-2">
           {(['all', 'completed', 'pending', 'failed'] as const).map((status) => (
             <button
               key={status}
@@ -130,13 +148,13 @@ const TransactionHistoryPage = () => {
                 setStatusFilter(status);
                 setCursor(undefined);
               }}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              className={`min-h-[44px] rounded-xl px-4 py-2 text-sm font-medium transition-colors whitespace-normal sm:text-base ${
                 statusFilter === status
                   ? 'bg-[#FF4B26] text-white'
                   : 'bg-[#1A1A1A] text-gray-400 hover:bg-[#2A2A2A]'
               }`}
             >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              {statusLabels[status]}
             </button>
           ))}
         </div>
@@ -158,7 +176,7 @@ const TransactionHistoryPage = () => {
         {/* Transactions List */}
         {!loading && filteredTransactions.length === 0 && !error && (
           <div className="mt-8 text-center">
-            <p className="text-gray-400">No transactions found</p>
+            <p className="text-gray-400">{t('transactionHistory.empty')}</p>
           </div>
         )}
 
@@ -176,9 +194,9 @@ const TransactionHistoryPage = () => {
           <div className="mt-8 text-center">
             <button
               onClick={handleLoadMore}
-              className="px-6 py-3 bg-[#FF4B26] text-white rounded-lg hover:bg-[#FF4B26]/80 transition-colors"
+              className="min-h-[48px] rounded-xl bg-[#FF4B26] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#FF4B26]/80 sm:text-base"
             >
-              Load More
+              {t('transactionHistory.loadMore')}
             </button>
           </div>
         )}
