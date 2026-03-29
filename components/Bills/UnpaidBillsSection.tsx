@@ -1,10 +1,12 @@
 import React from 'react';
 import { BillCards } from './BillsCard';
 import { mockBills } from '@/lib/mockdata/bills';
+import { useDensity } from '@/lib/context/DensityContext';
 
 
 
 export function UnpaidBillsSection() {
+    const { density } = useDensity();
     const unpaidStatuses: Bill['status'][] = ['overdue', 'urgent', 'upcoming'];
 
     const unpaidBills = mockBills.filter((bill) =>
@@ -27,10 +29,10 @@ export function UnpaidBillsSection() {
             </div>
 
             {/* Bills Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-[19.67px]">
+            <div className={density === 'compact' ? "flex flex-col gap-2" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-[19.67px]"}>
                 {unpaidBills.map((bill) => {
                     return (
-                        <BillCards key={bill.id} bill={bill} />
+                        <BillCards key={bill.id} bill={bill} density={density} />
                     );
                 })}
             </div>

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import TransactionHistoryItem, { Transaction } from "@/components/Dashboard/TransactionHistoryItem";
 import { useRouter } from "next/navigation";
+import { useDensity } from "@/lib/context/DensityContext";
 
 // Sample Data (Same as dashboard for now, but pretending to be the full dataset)
 const allTransactions: Transaction[] = [
@@ -129,6 +130,7 @@ const allTransactions: Transaction[] = [
 
 export default function TransactionsPage() {
     const router = useRouter();
+    const { density } = useDensity();
 
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -214,10 +216,14 @@ export default function TransactionsPage() {
                 </div>
 
                 {/* Transactions List */}
-                <div className="space-y-2.5">
+                <div className={density === 'compact' ? "space-y-1" : "space-y-2.5"}>
                     {filteredTransactions.length > 0 ? (
                         filteredTransactions.map((transaction) => (
-                            <TransactionHistoryItem key={transaction.id} transaction={transaction} />
+                            <TransactionHistoryItem 
+                                key={transaction.id} 
+                                transaction={transaction} 
+                                density={density}
+                            />
                         ))
                     ) : (
                         <div className="text-center py-12 text-gray-500">

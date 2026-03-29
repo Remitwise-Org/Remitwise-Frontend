@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import LayoutWrapper from "@/components/LayoutWrapper";
+import { DensityProvider } from "@/lib/context/DensityContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,9 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} starry-bg min-h-screen`}>
-        <LayoutWrapper>
-          {children}
-        </LayoutWrapper>
+        <DensityProvider>
+          <LayoutWrapper>
+            {children}
+          </LayoutWrapper>
+        </DensityProvider>
       </body>
     </html>
   );
