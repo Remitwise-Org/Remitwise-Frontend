@@ -1,8 +1,9 @@
 "use client"
 import Link from 'next/link'
-import { ArrowLeft, Plus, Shield, CheckCircle, Loader2 } from 'lucide-react'
+import { ArrowLeft, Plus, Shield, Loader2, CalendarClock } from 'lucide-react'
 import { ActionState } from '@/lib/auth/middleware';
 import { useFormAction } from '@/lib/hooks/useFormAction';
+import { getPolicyPaymentPresentation } from '@/lib/ui/status-semantics';
 
 export default function Insurance() {
 
@@ -199,6 +200,9 @@ function PolicyCard({ name, coverageType, monthlyPremium, coverageAmount, nextPa
   nextPayment: string,
   active: boolean 
 }) {
+  const paymentStatus = getPolicyPaymentPresentation(nextPayment, active);
+  const StatusIcon = paymentStatus.icon;
+
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
@@ -206,12 +210,10 @@ function PolicyCard({ name, coverageType, monthlyPremium, coverageAmount, nextPa
           <Shield className="w-5 h-5 text-blue-600" />
           <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
         </div>
-        {active && (
-          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded flex items-center space-x-1">
-            <CheckCircle className="w-3 h-3" />
-            <span>Active</span>
-          </span>
-        )}
+        <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${paymentStatus.badgeClassName}`}>
+          <StatusIcon className="h-3.5 w-3.5" />
+          <span>{paymentStatus.label}</span>
+        </span>
       </div>
 
       <div className="space-y-3">
@@ -230,6 +232,20 @@ function PolicyCard({ name, coverageType, monthlyPremium, coverageAmount, nextPa
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Next Payment</span>
           <span className="font-semibold text-gray-900">{nextPayment}</span>
+        </div>
+      </div>
+
+      <div className={`mt-4 rounded-lg border px-3 py-3 ${paymentStatus.panelClassName}`}>
+        <div className="flex items-start gap-2">
+          <StatusIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">{paymentStatus.label}</p>
+            <p className="text-sm">{paymentStatus.emphasis}</p>
+            <p className="mt-1 flex items-center gap-1 text-xs text-gray-700">
+              <CalendarClock className="h-3.5 w-3.5" />
+              <span>Next scheduled payment: {nextPayment}</span>
+            </p>
+          </div>
         </div>
       </div>
 

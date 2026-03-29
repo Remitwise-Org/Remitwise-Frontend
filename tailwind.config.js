@@ -12,6 +12,32 @@ module.exports = {
           red: "#D72323",
           dark: "#0A0A0A",
         },
+        status: {
+          success: {
+            fg: "#86EFAC",
+            bg: "rgba(34, 197, 94, 0.14)",
+            border: "rgba(34, 197, 94, 0.28)",
+            soft: "rgba(20, 83, 45, 0.28)",
+          },
+          warning: {
+            fg: "#FDE68A",
+            bg: "rgba(245, 158, 11, 0.14)",
+            border: "rgba(245, 158, 11, 0.28)",
+            soft: "rgba(120, 53, 15, 0.28)",
+          },
+          error: {
+            fg: "#FDA4AF",
+            bg: "rgba(244, 63, 94, 0.14)",
+            border: "rgba(244, 63, 94, 0.28)",
+            soft: "rgba(127, 29, 29, 0.3)",
+          },
+          info: {
+            fg: "#93C5FD",
+            bg: "rgba(59, 130, 246, 0.14)",
+            border: "rgba(59, 130, 246, 0.28)",
+            soft: "rgba(30, 64, 175, 0.24)",
+          },
+        },
         primary: {
           50: "#f0f9ff",
           100: "#e0f2fe",
