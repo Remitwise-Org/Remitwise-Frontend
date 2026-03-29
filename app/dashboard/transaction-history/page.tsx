@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import TransactionHistoryItem from '@/components/Dashboard/TransactionHistoryItem';
 import TransactionHistoryHeader from "./components/transaction-history-header";
 import TransactionHistorySearchInput from "./components/transaction-history-search-input";
@@ -17,15 +17,15 @@ const TransactionHistoryPage = () => {
   const [cursor, setCursor] = useState<string | undefined>();
   const [hasMore, setHasMore] = useState(true);
 
-  const fetchTransactions = async (reset = false) => {
+  const fetchTransactions = useCallback(async (currentCursor?: string, reset = false) => {
     try {
       setLoading(true);
       setError(null);
       
       const params = new URLSearchParams();
       params.append('limit', '10');
-      if (cursor && !reset) {
-        params.append('cursor', cursor);
+      if (currentCursor && !reset) {
+        params.append('cursor', currentCursor);
       }
       if (statusFilter !== 'all') {
         params.append('status', statusFilter);
@@ -51,15 +51,15 @@ const TransactionHistoryPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
 
   useEffect(() => {
-    fetchTransactions(true);
-  }, [statusFilter]);
+    fetchTransactions(undefined, true);
+  }, [fetchTransactions]);
 
   const handleLoadMore = () => {
     if (hasMore && !loading) {
-      fetchTransactions(false);
+      fetchTransactions(cursor, false);
     }
   };
 

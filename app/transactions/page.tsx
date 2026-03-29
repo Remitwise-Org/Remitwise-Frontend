@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import TransactionHistoryItem, { Transaction } from "@/components/Dashboard/TransactionHistoryItem";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 // Sample Data (Same as dashboard for now, but pretending to be the full dataset)
 const allTransactions: Transaction[] = [
@@ -175,7 +176,7 @@ export default function TransactionsPage() {
                         {/* Right Side Brand */}
                         <Link href="/" className="flex items-center gap-3">
                             <div className="w-8 md:w-10 h-8 md:h-10 flex items-center justify-center">
-                                <img src="/logo.svg" alt="RemitWise" className="w-8 md:w-10 h-8 md:h-10" />
+                                <Image src="/logo.svg" alt="RemitWise" width={40} height={40} className="w-8 md:w-10 h-8 md:h-10" />
                             </div>
                             <span className="text-white text-xl font-bold hidden md:block">RemitWise</span>
                         </Link>
