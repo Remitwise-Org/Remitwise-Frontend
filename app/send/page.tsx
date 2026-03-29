@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import EmergencyTransferModal from "./components/EmergencyTransferModal";
-import Link from "next/link";
-import { ArrowLeft, Send, AlertCircle } from "lucide-react";
 import SendHeader from "./components/SendHeader";
 import RecipientAddressInput from "./components/RecipientAddressInput";
 import AmountCurrencySection from "./components/AmountCurrencySection";
