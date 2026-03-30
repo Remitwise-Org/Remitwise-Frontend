@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { ChevronDown, Info, Zap } from "lucide-react"
+import { useState } from "react"
+import { ChevronDown } from "lucide-react"
 
 interface AmountCurrencySectionProps {
   onReview?: (amount: number, currency: string) => void
@@ -9,12 +9,6 @@ interface AmountCurrencySectionProps {
 }
 
 export default function AmountCurrencySection({ onReview, onBack }: AmountCurrencySectionProps) {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
   const [amount, setAmount] = useState<string>("")
   const [currency, setCurrency] = useState<string>("USDC")
   const [error, setError] = useState<string>("")
