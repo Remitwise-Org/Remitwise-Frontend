@@ -2,9 +2,10 @@
 "use client";
 
 import { useState } from "react";
-import { FilterIcon, Download } from "lucide-react";
-import TransactionHistoryItem, { Transaction } from "@/components/Dashboard/TransactionHistoryItem";
-import { useRouter } from "next/navigation";
+import { Download, FilterIcon } from "lucide-react";
+import TransactionHistoryItem, {
+  Transaction,
+} from "@/components/Dashboard/TransactionHistoryItem";
 import { useDensity } from "@/lib/context/DensityContext";
 
 const allTransactions: Transaction[] = [
@@ -121,13 +122,11 @@ const allTransactions: Transaction[] = [
 ];
 
 export default function TransactionsPage() {
-    const router = useRouter();
     const { density } = useDensity();
-
     const [searchQuery, setSearchQuery] = useState("");
 
     const filteredTransactions = allTransactions.filter((transaction) => {
-        const query = searchTerm.toLowerCase();
+        const query = searchQuery.toLowerCase();
         return (
             transaction.id.toLowerCase().includes(query) ||
             transaction.counterpartyName.toLowerCase().includes(query) ||
@@ -146,60 +145,60 @@ export default function TransactionsPage() {
         alert("Export functionality coming soon!");
     };
 
-                        {/* Right Side Brand */}
-                        <Link href="/" className="flex items-center gap-3">
-                            <div className="w-8 md:w-10 h-8 md:h-10 flex items-center justify-center">
-                                <Image src="/logo.svg" alt="RemitWise" width={40} height={40} className="w-8 md:w-10 h-8 md:h-10" />
-                            </div>
-                            <span className="text-white text-xl font-bold hidden md:block">RemitWise</span>
-                        </Link>
-                    </div>
+    return (
+        <main className="min-h-screen bg-[#010101] px-4 py-8 text-white sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl">
+                <div className="mb-8 flex flex-col gap-3">
+                    <h1 className="text-3xl font-semibold tracking-tight">
+                        Transactions
+                    </h1>
+                    <p className="max-w-2xl text-sm leading-6 text-gray-400">
+                        Review remittance history, search recent activity, and export a record when needed.
+                    </p>
                 </div>
-            </header>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Filter Bar Container */}
-                <div className="bg-[#141414] border border-[#FFFFFF14] bg-gradient-to-t from-[#0F0F0F] to-[#0A0A0A] rounded-2xl p-4 mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
-                    {/* Search Input */}
-                    <div className="relative w-full">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="h-5 w-5 text-gray-500" />
-                        </div>
+                <div className="mb-8 rounded-2xl border border-[#FFFFFF14] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] p-4 sm:p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2.5 border border-[#FFFFFF14] rounded-xl leading-5 bg-[#FFFFFF0D] text-gray-300 placeholder-gray-500 focus:outline-none focus:bg-[#1A1A1A] focus:border-[#FF4B26] focus:ring-1 focus:ring-[#FF4B26] sm:text-sm transition-colors"
-                            placeholder="Search by ID, recipient, or transaction hash..."
+                            className="min-h-[48px] w-full rounded-xl border border-[#FFFFFF14] bg-[#FFFFFF0D] px-4 py-3 text-sm text-gray-200 placeholder:text-gray-500 focus:border-[#FF4B26] focus:outline-none focus:ring-1 focus:ring-[#FF4B26]"
+                            placeholder="Search by ID, recipient, or transaction type..."
                         />
-                    </div>
-
-            <div className="mx-4 md:mx-20 mt-10 pb-10">
-                <div className="flex flex-col sm:flex-row justify-center gap-0 sm:gap-4 items-center border border-[#FFFFFF14] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] rounded-2xl py-6 px-4">
-                    <TransactionHistorySearchInput
-                        value={searchTerm}
-                        onChange={setSearchTerm}
-                        placeholder="Search by ID, recipient, or transaction hash..."
-                    />
-                    <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-4 sm:mt-0 w-full sm:w-auto">
-                        <Button icon={<FilterIcon size={17} className="text-white" />} text="Filters" onclick={handleFilterClick} />
-                        <Button icon={<Download size={17} className="text-white" />} text="Export" onclick={handleExportClick} />
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                            <button
+                                type="button"
+                                onClick={handleFilterClick}
+                                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[#FFFFFF14] bg-[#151515] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#1E1E1E]"
+                            >
+                                <FilterIcon size={17} />
+                                Filters
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleExportClick}
+                                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#FF4B26] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#ff623f]"
+                            >
+                                <Download size={17} />
+                                Export
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Transactions List */}
-                <div className={density === 'compact' ? "space-y-1" : "space-y-2.5"}>
+                <div className={density === "compact" ? "space-y-1" : "space-y-2.5"}>
                     {filteredTransactions.length > 0 ? (
                         filteredTransactions.map((transaction) => (
-                            <TransactionHistoryItem 
-                                key={transaction.id} 
-                                transaction={transaction} 
+                            <TransactionHistoryItem
+                                key={transaction.id}
+                                transaction={transaction}
                                 density={density}
                             />
                         ))
                     ) : (
-                        <div className="text-center py-12 text-gray-400">
-                            No transactions found matching "{searchTerm}"
+                        <div className="rounded-2xl border border-[#FFFFFF14] bg-[#0F0F0F] px-6 py-12 text-center text-gray-400">
+                            No transactions found matching &quot;{searchQuery}&quot;
                         </div>
                     )}
                 </div>

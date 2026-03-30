@@ -113,7 +113,7 @@ export default function SwaggerUIWrapper({ specUrl }: SwaggerUIWrapperProps) {
                 RemitWise API Documentation
               </h2>
               <p className="text-gray-300 text-base sm:text-lg leading-relaxed mb-6">
-                Complete reference for integrating with RemitWise's remittance and financial planning services. 
+                Complete reference for integrating with RemitWise&apos;s remittance and financial planning services.
                 Build secure, scalable applications with our comprehensive API.
               </p>
               <div className="flex flex-wrap gap-4">

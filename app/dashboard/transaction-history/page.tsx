@@ -53,7 +53,7 @@ const TransactionHistoryPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, t]);
 
   useEffect(() => {
     fetchTransactions(undefined, true);

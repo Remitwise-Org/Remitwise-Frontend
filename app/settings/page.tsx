@@ -15,22 +15,6 @@ import {
   Sun,
   Smartphone,
 } from "lucide-react";
-import SettingsSection from "@/components/SettingsSection";
-import SettingsItem from "@/components/SettingsItem";
-import { AccountSection } from "@/components/AccountSection";
-import SettingsHeader from "@/components/SettingsHeader";
-import PreferencesRow from "@/components/PreferencesRow";
-import SecuritySection from "@/components/SecuritySection";
-import { useDensity } from "@/lib/context/DensityContext";
-
-export default function SettingsPage() {
-  const { density, setDensity } = useDensity();
-  const [notifications, setNotifications] = useState({
-    billReminders: true,
-    paymentConfirmations: true,
-    goalUpdates: false,
-    securityAlerts: true,
-  });
 
 const SECTIONS = [
   { id: "profile",        label: "Profile",         icon: User    },
@@ -209,30 +193,25 @@ function SaveButton({ label = "Save changes" }: { label?: string }) {
               stroke="currentColor"
               strokeWidth="4"
             />
-
-            {/* Density Row */}
-            <PreferencesRow
-              icon={<Zap className="w-5 h-5 text-blue-400" />}
-              title="Display Density"
-              subtitle="Adjust the spacing of tables and lists"
-              rightContent={
-                <div className="relative">
-                  <select
-                    className="w-full bg-[#FFFFFF0D] text-white text-sm rounded-lg px-4 py-2 pr-8 appearance-none border border-zinc-800 focus:outline-none focus:border-[#FF4500]"
-                    value={density}
-                    onChange={(e) => setDensity(e.target.value as 'comfortable' | 'compact')}
-                  >
-                    <option value="comfortable">Comfortable</option>
-                    <option value="compact">Compact</option>
-                  </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
-                    <ChevronDown className="w-5 h-5 text-gray-300" />
-                  </div>
-                </div>
-              }
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
             />
-          </div>
-        </div>
+          </svg>
+        )}
+        {state === "saved" && <Check size={16} />}
+        <span>
+          {state === "saving"
+            ? "Saving..."
+            : state === "saved"
+              ? "Saved"
+              : label}
+        </span>
+      </button>
+    </div>
+  );
+}
 
 // ─── Sections ────────────────────────────────────────────────────────────────
 

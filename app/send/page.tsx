@@ -69,6 +69,12 @@ export default function SendMoney() {
           onClose={() => setIsSubmitted(false)}
         />
       )}
+
+      <EmergencyTransferModal
+        open={showEmergencyModal}
+        onClose={() => setShowEmergencyModal(false)}
+        recipientAddress={recipientAddress}
+      />
     </div>
   );
 }
