@@ -28,7 +28,7 @@ export default function Home() {
       <ValueProposition />
 
       {/* Highlight Feature Cards - Instant Remittance & Smart Allocation */}
-      <div className="max-w-7xl mx-auto bg-[#0a0a0a] rounded-3xl p-6 mb-12">
+      <div className="max-w-7xl mx-auto bg-bg3 rounded-3xl p-6 mb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <HighlightCard
             icon={<Send className="w-6 h-6" />}
@@ -51,7 +51,7 @@ export default function Home() {
 
       {/* Pricing Section */}
       <PricingSection />
-      
+
       {/* FAQ Section */}
       <FAQSection />
     </main>
@@ -68,7 +68,7 @@ function HighlightCard({
   description: string;
 }) {
   return (
-    <div className="bg-[#141414] border border-[#232323] rounded-2xl p-7 pb-12 flex items-start gap-4">
+    <div className="bg-bg1 border border-border rounded-2xl p-7 pb-12 flex items-start gap-4">
       <div className="w-11 h-11 bg-[#1c1010] border border-[#2a1515] rounded-lg flex items-center justify-center flex-shrink-0">
         <div className="text-red-500">{icon}</div>
       </div>
