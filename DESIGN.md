@@ -33,6 +33,7 @@ For consistent design-to-engineering workflow, refer to:
 
 - [Design QA Checklist](./docs/DESIGN_QA_CHECKLIST.md)
 - [Design Handoff Template](./docs/DESIGN_HANDOFF_TEMPLATE.md)
+- [Iconography Guidelines Handoff](./docs/iconography-guidelines-handoff.md)
 
 These documents define:
 - Breakpoint coverage across mobile, tablet, and desktop
@@ -41,3 +42,9 @@ These documents define:
 - Tailwind token alignment and extension notes
 - Mapping of design screens to Next.js `app/` routes for implementation traceability
 - Structured engineering handoff expectations
+
+## Current Foundation Handoffs
+
+The following issue-specific design handoffs are currently documented in-repo:
+
+- [Iconography Guidelines Handoff (Lucide)](./docs/iconography-guidelines-handoff.md)
