@@ -68,7 +68,7 @@ const PricingCard: React.FC<{ plan: PricingPlan }> = ({ plan }) => {
       className={`relative rounded-2xl p-8 flex flex-col h-full transition-all duration-300 ${
         isHighlighted
           ? "bg-[#DC2626] border-2 border-[#DC2626]"
-          : "bg-[#141414] border border-[#232323] hover:border-[#DC2626]/30"
+          : "bg-bg1 border border-border hover:border-red-600/30"
       }`}
     >
       {/* Plan Name */}
@@ -94,15 +94,16 @@ const PricingCard: React.FC<{ plan: PricingPlan }> = ({ plan }) => {
             isHighlighted ? "text-white/80" : "text-gray-500"
           }`}
         >
-          / <span
-        className={`text-sm relative top-5 ${
-          isHighlighted ? "text-white/80" : "text-gray-500"
-        }`}
-      >
-        month
-      </span>
+          /{" "}
+          <span
+            className={`text-sm relative top-5 ${
+              isHighlighted ? "text-white/80" : "text-gray-500"
+            }`}
+          >
+            month
+          </span>
         </span>
-      </div>      
+      </div>
 
       {/* Description */}
       <p

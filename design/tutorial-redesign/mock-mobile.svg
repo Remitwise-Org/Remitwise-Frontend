@@ -1,0 +1,11 @@
+<svg width="375" height="812" viewBox="0 0 375 812" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#141414" rx="24"/>
+  <rect x="16" y="24" width="36" height="36" fill="#D72323" rx="8"/>
+  <text x="64" y="48" fill="#ffffff" font-size="18" font-family="Arial">Tutorials</text>
+  <rect x="16" y="80" width="343" height="120" rx="12" fill="#0f0f0f" stroke="#2a2a2a"/>
+  <rect x="16" y="212" width="343" height="120" rx="12" fill="#0f0f0f" stroke="#2a2a2a"/>
+  <rect x="16" y="344" width="343" height="120" rx="12" fill="#0f0f0f" stroke="#2a2a2a"/>
+  <text x="24" y="96" fill="#ffffff" font-size="16" font-family="Arial">Getting Started</text>
+  <text x="24" y="236" fill="#ffffff" font-size="16" font-family="Arial">Family Wallets</text>
+  <text x="24" y="368" fill="#ffffff" font-size="16" font-family="Arial">Savings Goals</text>
+</svg>

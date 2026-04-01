@@ -1,62 +1,38 @@
-"use client";
+import { CalendarClock, CheckCircle, Repeat, Zap } from "lucide-react";
+import { getBillStatusPresentation } from "@/lib/ui/status-semantics";
 
-import { AlertCircle, CheckCircle, CheckCircle2, Clock4, RefreshCw, Zap } from "lucide-react";
+const getStatusStyles = (status: Bill['status']) => {
+    switch (status) {
+        case 'overdue':
+            return {
+                border: 'border-status-error-border',
+                glow: 'bg-red-600/10',
+                dueBg: 'bg-status-error-soft',
+                dueBorder: 'border-status-error-border',
+            };
+        case 'urgent':
+            return {
+                border: 'border-status-warning-border',
+                glow: 'bg-red-600/5',
+                dueBg: 'bg-status-warning-soft',
+                dueBorder: 'border-status-warning-border',
+            };
+        case 'upcoming':
+            return {
+                border: 'border-status-info-border',
+                glow: 'bg-red-600/5',
+                dueBg: 'bg-status-info-soft',
+                dueBorder: 'border-status-info-border',
+            };
 
-// ─── Status style map ────────────────────────────────────────────────────────
-
-const STATUS_STYLES: Record<
-  Bill["status"],
-  {
-    cardBorder: string;
-    badgeBg: string;
-    badgeBorder: string;
-    badgeText: string;
-    dueBg: string;
-    dueBorder: string;
-    dueIcon: string;
-    dueText: string;
-  }
-> = {
-  overdue: {
-    cardBorder: "border-red-600/40",
-    badgeBg: "bg-red-600/20",
-    badgeBorder: "border-red-600/40",
-    badgeText: "text-red-400",
-    dueBg: "bg-red-600/10",
-    dueBorder: "border-red-600/30",
-    dueIcon: "text-red-400",
-    dueText: "text-red-400",
-  },
-  urgent: {
-    cardBorder: "border-amber-500/40",
-    badgeBg: "bg-amber-500/15",
-    badgeBorder: "border-amber-500/40",
-    badgeText: "text-amber-400",
-    dueBg: "bg-amber-500/10",
-    dueBorder: "border-amber-500/30",
-    dueIcon: "text-amber-400",
-    dueText: "text-amber-400",
-  },
-  upcoming: {
-    cardBorder: "border-white/[0.08]",
-    badgeBg: "bg-white/5",
-    badgeBorder: "border-white/10",
-    badgeText: "text-white/50",
-    dueBg: "bg-white/5",
-    dueBorder: "border-white/[0.08]",
-    dueIcon: "text-white/40",
-    dueText: "text-white/60",
-  },
-  paid: {
-    cardBorder: "border-white/[0.06]",
-    badgeBg: "bg-emerald-600/10",
-    badgeBorder: "border-emerald-600/30",
-    badgeText: "text-emerald-400",
-    dueBg: "bg-white/5",
-    dueBorder: "border-white/[0.08]",
-    dueIcon: "text-white/30",
-    dueText: "text-white/40",
-  },
+        case 'paid':
+            return {
+                border: 'border-status-success-border',
+                glow: 'bg-red-600/5',
+                dueBg: 'bg-status-success-soft',
+                dueBorder: 'border-status-success-border',
+            };
+    }
 };
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
@@ -96,66 +72,60 @@ function RecurringBadge({
   recurrenceLabel?: string;
   nextOccurrence?: string;
 }) {
-  const label = recurrenceLabel ?? "Recurring";
-  const nextLabel = nextOccurrence
-    ? `Next: ${new Date(nextOccurrence).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })}`
-    : null;
+    const styles = getStatusStyles(bill.status);
+    const statusPresentation = getBillStatusPresentation(bill.status);
+    const StatusIcon = statusPresentation.icon;
 
-  return (
-    <span
-      className="inline-flex items-center gap-1 rounded-[10px] border border-indigo-500/30 bg-indigo-500/10 px-2 py-0.5 text-xs font-semibold text-indigo-400"
-      title={nextLabel ?? label}
-      aria-label={nextLabel ? `${label} — ${nextLabel}` : label}
-    >
-      <RefreshCw className="h-3 w-3" aria-hidden="true" />
-      {label}
-      {nextLabel && (
-        <span className="ml-0.5 text-indigo-400/60">· {nextLabel}</span>
-      )}
-    </span>
-  );
-}
+    if (density === 'compact') {
+        return (
+            <div
+                key={bill.id}
+                className={`relative rounded-xl border ${styles.border} overflow-hidden px-4 py-3 mb-2 flex items-center justify-between gap-4`}
+                style={{
+                    background: 'linear-gradient(180deg, #0F0F0F 0%, #0A0A0A 100%)',
+                }}
+            >
+                <div className="flex flex-col flex-1 min-w-0">
+                    <h3 className="font-bold text-sm text-white truncate">
+                        {bill.title}
+                    </h3>
+                    <span className="text-xs text-white/40 truncate">
+                        {bill.category} • Due {bill.dueDate}
+                    </span>
+                </div>
 
-// ─── Compact row ──────────────────────────────────────────────────────────────
+                <div className="flex flex-col items-end">
+                    <span className="font-bold text-lg text-white">
+                        ${bill.amount}
+                    </span>
+                    <div className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${statusPresentation.badgeClassName}`}>
+                        <StatusIcon className="h-3 w-3" />
+                        <span>{statusPresentation.label}</span>
+                    </div>
+                    <span className={`mt-1 text-[11px] font-medium ${statusPresentation.metaClassName}`}>
+                        {statusPresentation.emphasis}
+                    </span>
+                </div>
 
-function CompactBillCard({ bill }: { bill: Bill }) {
-  const s = STATUS_STYLES[bill.status];
-  return (
-    <div
-      className={`relative flex items-center gap-4 rounded-xl border ${s.cardBorder} bg-[#0F0F0F] px-4 py-3`}
-      role="listitem"
-    >
-      <div className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-sm font-bold text-white">
-          {bill.title}
-        </span>
-        <span className="truncate text-xs text-white/40">
-          {bill.category}
-          {bill.isRecurring && bill.recurrenceLabel
-            ? ` · ${bill.recurrenceLabel}`
-            : ""}
-          {" · Due "}
-          {new Date(bill.dueDate).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          })}
-        </span>
-      </div>
+                {bill.status !== "paid" && (
+                    <button
+                        className="p-2 rounded-lg bg-red-600 hover:bg-red-500 text-white"
+                        title="Pay Now"
+                    >
+                        <Zap className="w-4 h-4" />
+                    </button>
+                )}
+            </div>
+        );
+    }
 
-      <div className="flex flex-col items-end gap-1">
-        <span className="text-lg font-bold text-white">
-          ${bill.amount.toLocaleString()}
-        </span>
-        <StatusBadge status={bill.status} />
-      </div>
-
-      {bill.status !== "paid" && (
-        <button
-          className="rounded-lg bg-red-600 p-2 text-white transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F0F0F]"
-          aria-label={`Pay ${bill.title} now`}
+    return (
+        <div
+            key={bill.id}
+            className={`relative rounded-2xl border ${styles.border} overflow-hidden`}
+            style={{
+                background: 'linear-gradient(180deg, #0F0F0F 0%, #0A0A0A 100%)',
+            }}
         >
           <Zap className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -170,92 +140,85 @@ function ComfortableBillCard({ bill }: { bill: Bill }) {
   const s = STATUS_STYLES[bill.status];
   const isPaid = bill.status === "paid";
 
-  return (
-    <article
-      className={`relative flex flex-col gap-4 overflow-hidden rounded-2xl border ${s.cardBorder} bg-[linear-gradient(180deg,#0F0F0F_0%,#0A0A0A_100%)] p-6`}
-      aria-label={`${bill.title} — ${bill.status}`}
-    >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <h3 className="truncate text-lg font-bold leading-7 text-white">
-            {bill.title}
-          </h3>
-          <span className="text-xs text-white/40">{bill.category}</span>
+            {/* Content */}
+            <div className="relative flex flex-col gap-4 p-6">
+                {/* Header with Title and Badge */}
+                <div className="flex flex-row justify-between items-start">
+                    <div className="flex flex-col gap-1 flex-1">
+                        <h3 className="font-bold text-lg leading-7 tracking-[-0.439453px] text-white">
+                            {bill.title}
+                        </h3>
+                        <span className="font-normal text-xs leading-4 text-white/40">
+                            {bill.category}
+                        </span>
+                    </div>
+
+                    {/* Status Badge */}
+                    <div className="flex flex-col items-end">
+                        <div
+                            className={`inline-flex h-[26px] items-center gap-1 rounded-[10px] border px-2 py-0 ${statusPresentation.badgeClassName}`}
+                        >
+                            <StatusIcon className="h-3 w-3" />
+                            <span className="whitespace-nowrap text-xs font-semibold leading-4">
+                                {statusPresentation.label}
+                            </span>
+                        </div>
+                        <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-white/65">
+                            {bill.isRecurring ? <Repeat className="h-3 w-3" /> : <CalendarClock className="h-3 w-3" />}
+                            <span>{bill.isRecurring ? "Recurring charge" : "One-time charge"}</span>
+                        </div>
+
+                    </div>
+                </div>
+
+                {/* Amount */}
+                <div className="w-full">
+                    <span className="font-bold text-4xl leading-10 tracking-[0.369141px] text-white">
+                        ${bill.amount}
+                    </span>
+                </div>
+
+                {/* Due Date Info */}
+                <div
+                    className={`flex flex-row items-center px-3 gap-2 h-[62px] mt-auto rounded-[10px] border ${styles.dueBorder} ${styles.dueBg}`}
+                >
+                    <StatusIcon className={`h-4 w-4 ${statusPresentation.metaClassName}`} />
+
+                    <div className="flex flex-col flex-1">
+                        <span className="font-normal text-xs leading-4 text-white/50">
+                            Due Date
+                        </span>
+                        <span className="font-semibold text-sm leading-5 tracking-[-0.150391px] text-white">
+                            {bill.dueDate}
+                        </span>
+                    </div>
+
+                    <div className="text-right">
+                        <div className={`font-semibold text-xs leading-4 whitespace-nowrap ${statusPresentation.metaClassName}`}>
+                            {statusPresentation.emphasis}
+                        </div>
+                        <div className="mt-1 text-[11px] leading-4 text-white/55">
+                            {bill.daysInfo}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Pay Now Button */}
+                {bill.status !== "paid" &&
+                    <button
+                        className="w-full h-10 rounded-[14px] flex items-center justify-center gap-2"
+                        style={{
+                            background: 'linear-gradient(180deg, #DC2626 0%, #B91C1C 100%)',
+                            boxShadow: '0px 10px 15px -3px rgba(220, 38, 38, 0.2), 0px 4px 6px -4px rgba(220, 38, 38, 0.2)',
+                        }}
+                    >
+                        {/* Lightning Icon */}
+                        <Zap className="w-4 h-4" />
+                        <span className="font-semibold text-sm leading-5 tracking-[-0.150391px] text-white">
+                            Pay Now
+                        </span>
+                    </button>}
+            </div>
         </div>
-
-        {/* Badges */}
-        <div className="flex flex-col items-end gap-1.5 shrink-0">
-          <StatusBadge status={bill.status} />
-          {bill.isRecurring && (
-            <RecurringBadge
-              recurrenceLabel={bill.recurrenceLabel}
-              nextOccurrence={bill.nextOccurrence}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Amount */}
-      <span
-        className={`text-4xl font-bold tracking-tight ${isPaid ? "text-white/40" : "text-white"}`}
-      >
-        ${bill.amount.toLocaleString()}
-      </span>
-
-      {/* Due date row */}
-      <div
-        className={`flex items-center gap-2 rounded-[10px] border ${s.dueBorder} ${s.dueBg} px-3 py-3`}
-      >
-        <Clock4 className={`h-3.5 w-3.5 shrink-0 ${s.dueIcon}`} aria-hidden="true" />
-        <div className="flex flex-1 flex-col">
-          <span className="text-xs text-white/50">Due Date</span>
-          <span className="text-sm font-semibold text-white">
-            {new Date(bill.dueDate).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </span>
-        </div>
-        <span className={`text-xs font-semibold ${s.dueText} whitespace-nowrap`}>
-          {bill.daysInfo}
-        </span>
-      </div>
-
-      {/* Pay Now */}
-      {!isPaid && (
-        <button
-          className="flex h-10 w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-b from-red-600 to-red-700 text-sm font-semibold text-white shadow-[0_10px_15px_-3px_rgba(220,38,38,0.2)] transition hover:from-red-500 hover:to-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
-          aria-label={`Pay ${bill.title}`}
-        >
-          <Zap className="h-4 w-4" aria-hidden="true" />
-          Pay Now
-        </button>
-      )}
-
-      {isPaid && (
-        <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-400">
-          <CheckCircle className="h-3.5 w-3.5" aria-hidden="true" />
-          Payment complete
-        </div>
-      )}
-    </article>
-  );
-}
-
-// ─── Public export ────────────────────────────────────────────────────────────
-
-export function BillCards({
-  bill,
-  density = "comfortable",
-}: {
-  bill: Bill;
-  density?: "comfortable" | "compact";
-}) {
-  return density === "compact" ? (
-    <CompactBillCard bill={bill} />
-  ) : (
-    <ComfortableBillCard bill={bill} />
-  );
+    )
 }

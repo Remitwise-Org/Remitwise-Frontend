@@ -358,6 +358,41 @@ components: {}
         '400':
           description: Invalid input parameters
           
+  /v1/bills/due-soon:
+    get:
+      summary: Get bills due soon
+      description: Returns unpaid bills with dueDate within the next 7 days (inclusive).
+      security:
+        - cookieAuth: []
+      tags:
+        - Bills (v1)
+      responses:
+        '200':
+          description: List of bill reminders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - billId
+                    - name
+                    - amount
+                    - dueDate
+                  properties:
+                    billId:
+                      type: string
+                    name:
+                      type: string
+                    amount:
+                      type: number
+                    dueDate:
+                      type: string
+                      format: date-time
+        '401':
+          description: Unauthorized
+
   /v1/bills/{id}/cancel:
     post:
       summary: Cancel a Bill

@@ -15,7 +15,7 @@ import AsyncOperationsPanel from '@/components/AsyncOperationsPanel'
 import AsyncSubmissionStatus from '@/components/AsyncSubmissionStatus'
 
 interface EmergencyTransferModalProps {
-  open: boolean
+  isOpen: boolean
   onClose: () => void
 }
 
@@ -79,14 +79,14 @@ const emergencyQueue = [
 ]
 
 export default function EmergencyTransferModal({
-  open,
+  isOpen,
   onClose,
 }: EmergencyTransferModalProps) {
   const [confirmed, setConfirmed] = useState(false)
   const [amount, setAmount] = useState('')
   const [speed, setSpeed] = useState<'emergency' | 'regular'>('emergency')
 
-  if (!open) return null
+  if (!isOpen) return null
 
   const numericAmount = Number(amount) || 0
   const priorityFee = speed === 'emergency' ? 2 : 0
@@ -95,7 +95,7 @@ export default function EmergencyTransferModal({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 p-4 backdrop-blur-sm sm:p-6">
       <div className="mx-auto flex min-h-full max-w-6xl items-center justify-center">
-        <div className="w-full rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] shadow-[0_32px_120px_rgba(0,0,0,0.55)]">
+        <div className="w-full rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] shadow-[0_32px_120px_rgba(0,0,0,0.55)] overflow-hidden">
           <div className="flex items-start justify-between border-b border-white/[0.08] px-5 py-5 sm:px-8">
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-red-500/20 bg-red-500/10 text-red-300">
@@ -243,7 +243,7 @@ export default function EmergencyTransferModal({
                 pendingDescription="The modal footer should hold the active loading state until wallet approval can begin."
               />
 
-              <label className="flex items-start gap-3 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm text-gray-300">
+              <label className="flex items-start gap-3 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm text-gray-300 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={confirmed}

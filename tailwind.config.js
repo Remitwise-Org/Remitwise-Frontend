@@ -7,10 +7,53 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // Semantic spacing tokens for design system
+      spacing: {
+        "space-xs": "4px",
+        "space-sm": "8px",
+        "space-md": "16px",
+        "space-lg": "24px",
+        "space-xl": "32px",
+      },
+
+      // Focus ring tokens (use with `ring-focus` and `ring-offset-focus`)
+      ringWidth: {
+        focus: "3px",
+      },
+      ringOffsetWidth: {
+        focus: "4px",
+      },
       colors: {
         brand: {
           red: "#D72323",
           dark: "#0A0A0A",
+          redHover: "#B91C1C",
+        },
+        status: {
+          success: {
+            fg: "#86EFAC",
+            bg: "rgba(34, 197, 94, 0.14)",
+            border: "rgba(34, 197, 94, 0.28)",
+            soft: "rgba(20, 83, 45, 0.28)",
+          },
+          warning: {
+            fg: "#FDE68A",
+            bg: "rgba(245, 158, 11, 0.14)",
+            border: "rgba(245, 158, 11, 0.28)",
+            soft: "rgba(120, 53, 15, 0.28)",
+          },
+          error: {
+            fg: "#FDA4AF",
+            bg: "rgba(244, 63, 94, 0.14)",
+            border: "rgba(244, 63, 94, 0.28)",
+            soft: "rgba(127, 29, 29, 0.3)",
+          },
+          info: {
+            fg: "#93C5FD",
+            bg: "rgba(59, 130, 246, 0.14)",
+            border: "rgba(59, 130, 246, 0.28)",
+            soft: "rgba(30, 64, 175, 0.24)",
+          },
         },
         primary: {
           50: "#f0f9ff",
@@ -34,14 +77,14 @@ module.exports = {
       // --- ADDED ANIMATIONS BELOW ---
       animation: {
         "neon-pulse": "neon-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "shimmer": "shimmer 2s linear infinite",
+        shimmer: "shimmer 2s linear infinite",
       },
       keyframes: {
         "neon-pulse": {
           "0%, 100%": { opacity: "1", filter: "brightness(1)" },
           "50%": { opacity: "0.8", filter: "brightness(1.4) blur(0.5px)" },
         },
-        "shimmer": {
+        shimmer: {
           "0%": { backgroundPosition: "200% 0" },
           "100%": { backgroundPosition: "-200% 0" },
         },
