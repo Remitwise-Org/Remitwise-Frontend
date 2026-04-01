@@ -51,9 +51,14 @@ const SplitCategory = ({
   );
 };
 
-export default function AutomaticSplitCard() {
-  const [amount, setAmount] = useState<string>("");
-  const total = parseFloat(amount) || 0;
+interface AutomaticSplitCardProps {
+  amount?: number;
+}
+
+export default function AutomaticSplitCard({ amount: externalAmount }: AutomaticSplitCardProps) {
+  const [internalAmount, setInternalAmount] = useState<string>("");
+  
+  const total = externalAmount !== undefined ? externalAmount : (parseFloat(internalAmount) || 0);
 
   const categories = [
     { icon: Wallet, label: "Daily Spending", percentage: 50 },
@@ -117,15 +122,17 @@ export default function AutomaticSplitCard() {
               </span>
             </div>
 
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter an amount to see split preview"
-              min="0"
-              step="0.01"
-              className="w-full bg-[#161616]/80 backdrop-blur-sm text-white px-4 py-4 rounded-2xl border border-white/5 focus:outline-none focus:ring-1 focus:ring-red-600/30 transition-all placeholder:text-gray-600 text-sm"
-            />
+            {externalAmount === undefined && (
+              <input
+                type="number"
+                value={internalAmount}
+                onChange={(e) => setInternalAmount(e.target.value)}
+                placeholder="Enter an amount to see split preview"
+                min="0"
+                step="0.01"
+                className="w-full bg-[#161616]/80 backdrop-blur-sm text-white px-4 py-4 rounded-2xl border border-white/5 focus:outline-none focus:ring-1 focus:ring-red-600/30 transition-all placeholder:text-gray-600 text-sm"
+              />
+            )}
           </div>
         </div>
       </div>
