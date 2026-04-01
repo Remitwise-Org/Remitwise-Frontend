@@ -1,59 +1,36 @@
-import { AlertCircle, Check, CheckCircle, Clock4, Repeat, Zap } from "lucide-react";
-
-
-
-
+import { CalendarClock, CheckCircle, Repeat, Zap } from "lucide-react";
+import { getBillStatusPresentation } from "@/lib/ui/status-semantics";
 
 const getStatusStyles = (status: Bill['status']) => {
     switch (status) {
         case 'overdue':
             return {
-                border: 'border-red-600/40',
+                border: 'border-status-error-border',
                 glow: 'bg-red-600/10',
-                badgeBg: 'bg-red-600/30',
-                badgeBorder: 'border-red-600/50',
-                badgeText: 'text-red-600',
-                dueBg: 'bg-red-600/20',
-                dueBorder: 'border-red-600/30',
-                dueIcon: 'text-red-600',
-                dueText: 'text-red-600',
+                dueBg: 'bg-status-error-soft',
+                dueBorder: 'border-status-error-border',
             };
         case 'urgent':
             return {
-                border: 'border-red-400/30',
+                border: 'border-status-warning-border',
                 glow: 'bg-red-600/5',
-                badgeBg: 'bg-red-600/20',
-                badgeBorder: 'border-red-600/30',
-                badgeText: 'text-red-600',
-                dueBg: 'bg-red-400/10',
-                dueBorder: 'border-red-400/20',
-                dueIcon: 'text-red-400',
-                dueText: 'text-red-400',
+                dueBg: 'bg-status-warning-soft',
+                dueBorder: 'border-status-warning-border',
             };
         case 'upcoming':
             return {
-                border: 'border-white/[0.08]',
+                border: 'border-status-info-border',
                 glow: 'bg-red-600/5',
-                badgeBg: 'bg-red-600/20',
-                badgeBorder: 'border-red-600/30',
-                badgeText: 'text-red-600',
-                dueBg: 'bg-white/5',
-                dueBorder: 'border-white/[0.08]',
-                dueIcon: 'text-white/40',
-                dueText: 'text-white/70',
+                dueBg: 'bg-status-info-soft',
+                dueBorder: 'border-status-info-border',
             };
 
         case 'paid':
             return {
-                border: 'border-white/10',
+                border: 'border-status-success-border',
                 glow: 'bg-red-600/5',
-                badgeBg: 'bg-red-600/20',
-                badgeBorder: 'border-red-600/30',
-                badgeText: 'text-red-600',
-                dueBg: 'bg-white/5',
-                dueBorder: 'border-white/[0.08]',
-                dueIcon: 'text-white/40',
-                dueText: 'text-white/70',
+                dueBg: 'bg-status-success-soft',
+                dueBorder: 'border-status-success-border',
             };
     }
 };
@@ -67,6 +44,8 @@ export function BillCards({
     density?: 'comfortable' | 'compact'
 }) {
     const styles = getStatusStyles(bill.status);
+    const statusPresentation = getBillStatusPresentation(bill.status);
+    const StatusIcon = statusPresentation.icon;
 
     if (density === 'compact') {
         return (
@@ -90,14 +69,13 @@ export function BillCards({
                     <span className="font-bold text-lg text-white">
                         ${bill.amount}
                     </span>
-                    <div className="flex gap-1 items-center">
-                        {bill.status === "paid" && (
-                            <CheckCircle className={`${styles.badgeText} w-3 h-3`} />
-                        )}
-                        <span className={`text-[10px] font-semibold ${styles.badgeText} uppercase`}>
-                            {bill.status}
-                        </span>
+                    <div className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${statusPresentation.badgeClassName}`}>
+                        <StatusIcon className="h-3 w-3" />
+                        <span>{statusPresentation.label}</span>
                     </div>
+                    <span className={`mt-1 text-[11px] font-medium ${statusPresentation.metaClassName}`}>
+                        {statusPresentation.emphasis}
+                    </span>
                 </div>
 
                 {bill.status !== "paid" && (
@@ -136,34 +114,17 @@ export function BillCards({
 
                     {/* Status Badge */}
                     <div className="flex flex-col items-end">
-                        {bill.status === "paid" &&
-                            <div
-                                className={`flex flex-row items-center px-2 py-0 gap-1 mb-2 h-[26px] rounded-[10px] border ${styles.badgeBorder} ${styles.badgeBg}`}
-                            >
-                                <CheckCircle fontSize={"12px"} className={`${styles.badgeText} w-3 h-3`} />
-
-                                <span className={`font-semibold text-xs leading-4 ${styles.badgeText} whitespace-nowrap`}>
-                                    Paid
-                                </span>
-
-                            </div>
-                        }
                         <div
-                            className={`flex flex-row items-center px-2 py-0 gap-1 h-[26px] rounded-[10px] border 
-                                ${bill.status === "paid" ? "!bg-transparent !border-white/10 !text-white/40" : ""} 
-                                ${styles.badgeBorder} ${styles.badgeBg}`}
+                            className={`inline-flex h-[26px] items-center gap-1 rounded-[10px] border px-2 py-0 ${statusPresentation.badgeClassName}`}
                         >
-                            {bill.isRecurring ? (
-                                // Recurring Icon
-                                <Repeat fontSize={"12px"} className={`${styles.badgeText} ${bill.status === "paid" ? "!text-white/40" : ""}  w-3 h-3`} />
-                            ) : (
-                                // Overdue Icon
-                                <AlertCircle className={`${styles.badgeText} w-3 h-3`} />
-                            )}
-                            <span className={`font-semibold text-xs leading-4 ${styles.badgeText}  ${bill.status === "paid" ? "!text-white/40" : ""}  whitespace-nowrap`}>
-                                {bill.isRecurring ? 'Recurring' : 'Overdue'}
+                            <StatusIcon className="h-3 w-3" />
+                            <span className="whitespace-nowrap text-xs font-semibold leading-4">
+                                {statusPresentation.label}
                             </span>
-
+                        </div>
+                        <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-white/65">
+                            {bill.isRecurring ? <Repeat className="h-3 w-3" /> : <CalendarClock className="h-3 w-3" />}
+                            <span>{bill.isRecurring ? "Recurring charge" : "One-time charge"}</span>
                         </div>
 
                     </div>
@@ -180,7 +141,7 @@ export function BillCards({
                 <div
                     className={`flex flex-row items-center px-3 gap-2 h-[62px] mt-auto rounded-[10px] border ${styles.dueBorder} ${styles.dueBg}`}
                 >
-                    <Clock4 className={`${styles.dueIcon} w-3 h-3`} />
+                    <StatusIcon className={`h-4 w-4 ${statusPresentation.metaClassName}`} />
 
                     <div className="flex flex-col flex-1">
                         <span className="font-normal text-xs leading-4 text-white/50">
@@ -191,9 +152,14 @@ export function BillCards({
                         </span>
                     </div>
 
-                    <span className={`font-semibold text-xs leading-4 text-right ${styles.dueText} whitespace-nowrap`}>
-                        {bill.daysInfo}
-                    </span>
+                    <div className="text-right">
+                        <div className={`font-semibold text-xs leading-4 whitespace-nowrap ${statusPresentation.metaClassName}`}>
+                            {statusPresentation.emphasis}
+                        </div>
+                        <div className="mt-1 text-[11px] leading-4 text-white/55">
+                            {bill.daysInfo}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Pay Now Button */}

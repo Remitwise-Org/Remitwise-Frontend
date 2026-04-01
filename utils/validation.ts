@@ -1,6 +1,7 @@
 // Request Validation Utilities
 
 import { EmergencyTransferErrorCode } from '@/types/emergency-transfer';
+import { StrKey } from '@stellar/stellar-sdk';
 
 export interface ValidationError {
   code: EmergencyTransferErrorCode;
@@ -57,8 +58,10 @@ export function validateAmount(amount: string): ValidationError | null {
  * Validates recipient address is a valid Stellar public key (G... format, 56 chars)
  */
 export function validateRecipientAddress(address: string): ValidationError | null {
+  const normalizedAddress = address.trim().toUpperCase();
+
   // Check if address is provided
-  if (!address || address.trim() === '') {
+  if (!address || normalizedAddress === '') {
     return {
       code: EmergencyTransferErrorCode.INVALID_RECIPIENT,
       message: 'Recipient address is required',
@@ -67,7 +70,7 @@ export function validateRecipientAddress(address: string): ValidationError | nul
   }
 
   // Check if address starts with 'G'
-  if (!address.startsWith('G')) {
+  if (!normalizedAddress.startsWith('G')) {
     return {
       code: EmergencyTransferErrorCode.INVALID_RECIPIENT,
       message: 'Recipient address must start with G',
@@ -76,7 +79,7 @@ export function validateRecipientAddress(address: string): ValidationError | nul
   }
 
   // Check if address is exactly 56 characters
-  if (address.length !== 56) {
+  if (normalizedAddress.length !== 56) {
     return {
       code: EmergencyTransferErrorCode.INVALID_RECIPIENT,
       message: 'Recipient address must be exactly 56 characters',
@@ -86,10 +89,19 @@ export function validateRecipientAddress(address: string): ValidationError | nul
 
   // Check if address contains only valid base32 characters
   const base32Regex = /^[A-Z2-7]+$/;
-  if (!base32Regex.test(address)) {
+  if (!base32Regex.test(normalizedAddress)) {
     return {
       code: EmergencyTransferErrorCode.INVALID_RECIPIENT,
       message: 'Recipient address contains invalid characters',
+      field: 'recipientAddress',
+    };
+  }
+
+  // Validate Stellar checksum
+  if (!StrKey.isValidEd25519PublicKey(normalizedAddress)) {
+    return {
+      code: EmergencyTransferErrorCode.INVALID_RECIPIENT,
+      message: 'Recipient address checksum is invalid',
       field: 'recipientAddress',
     };
   }
