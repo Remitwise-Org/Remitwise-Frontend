@@ -7,10 +7,27 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // Semantic spacing tokens for design system
+      spacing: {
+        "space-xs": "4px",
+        "space-sm": "8px",
+        "space-md": "16px",
+        "space-lg": "24px",
+        "space-xl": "32px",
+      },
+
+      // Focus ring tokens (use with `ring-focus` and `ring-offset-focus`)
+      ringWidth: {
+        focus: "3px",
+      },
+      ringOffsetWidth: {
+        focus: "4px",
+      },
       colors: {
         brand: {
           red: "#D72323",
           dark: "#0A0A0A",
+          redHover: "#B91C1C",
         },
         status: {
           success: {
@@ -60,14 +77,14 @@ module.exports = {
       // --- ADDED ANIMATIONS BELOW ---
       animation: {
         "neon-pulse": "neon-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "shimmer": "shimmer 2s linear infinite",
+        shimmer: "shimmer 2s linear infinite",
       },
       keyframes: {
         "neon-pulse": {
           "0%, 100%": { opacity: "1", filter: "brightness(1)" },
           "50%": { opacity: "0.8", filter: "brightness(1.4) blur(0.5px)" },
         },
-        "shimmer": {
+        shimmer: {
           "0%": { backgroundPosition: "200% 0" },
           "100%": { backgroundPosition: "-200% 0" },
         },

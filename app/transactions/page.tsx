@@ -159,7 +159,7 @@ export default function TransactionsPage() {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Filter Bar Container */}
-                <div className="bg-[#141414] border border-[#FFFFFF14] bg-gradient-to-t from-[#0F0F0F] to-[#0A0A0A] rounded-2xl p-4 mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="bg-bg1 border border-border bg-gradient-to-t from-bg2 to-bg3 rounded-2xl p-4 mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
                     {/* Search Input */}
                     <div className="relative w-full">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
