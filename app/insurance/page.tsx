@@ -183,8 +183,7 @@ export default function Insurance() {
         {/* Integration Note */}
         <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-sm text-yellow-800">
-            <strong>Integration Required:</strong> Connect to insurance smart contract to create policies, 
-            pay premiums, and track coverage. Integrate with payment processing for automatic premium payments.
+            <strong>Integration Required:</strong> Insurance actions are prepared as USDC smart contract payloads. Users sign transactions locally in their wallet, and RemitWise does not custody funds.
           </p>
         </div>
       </main>
