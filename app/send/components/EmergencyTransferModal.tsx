@@ -111,8 +111,8 @@ export default function EmergencyTransferModal({
                   </span>
                 </div>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-300">
-                  Emergency sends need stronger feedback than a single button spinner.
-                  This modal keeps review details on the left and submission behavior on the right.
+                  Funds arrive in 2–5 minutes. A $2.00 priority fee applies.
+                  This transfer cannot be reversed — only use it for urgent situations.
                 </p>
               </div>
             </div>
@@ -170,9 +170,9 @@ export default function EmergencyTransferModal({
                   }`}
                 >
                   <p className="text-sm font-semibold text-white">Emergency</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">2-5 min</p>
+                  <p className="mt-2 text-2xl font-semibold text-white">2–5 min</p>
                   <p className="mt-2 text-sm leading-6 text-gray-300">
-                    Highest priority path. Use for urgent household needs only.
+                    Highest priority. +$2.00 fee. Use for urgent household or family needs only.
                   </p>
                 </button>
 
@@ -186,10 +186,9 @@ export default function EmergencyTransferModal({
                   }`}
                 >
                   <p className="text-sm font-semibold text-white">Regular</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">30-60 min</p>
+                  <p className="mt-2 text-2xl font-semibold text-white">30–60 min</p>
                   <p className="mt-2 text-sm leading-6 text-gray-300">
-                    Lower urgency flow. Keep the same status pattern, but reduce
-                    priority styling.
+                    Standard processing. No extra fee. Choose this if the transfer is not time-critical.
                   </p>
                 </button>
               </div>
@@ -199,7 +198,7 @@ export default function EmergencyTransferModal({
                   <div>
                     <p className="text-sm font-medium text-gray-300">Transfer summary</p>
                     <p className="mt-1 text-sm text-gray-500">
-                      Keep fees and total in the same reading zone as the confirm action.
+                      Review the amount and fee before confirming. These figures are final.
                     </p>
                   </div>
                   <DollarSign className="h-5 w-5 text-red-300" />
@@ -237,10 +236,10 @@ export default function EmergencyTransferModal({
 
               <AsyncSubmissionStatus
                 pending={false}
-                idleTitle="Submission placement"
-                idleDescription="Build and review feedback should remain inside the modal. After the user signs, move progress into the persistent stacked status surface so they can keep navigating."
-                pendingTitle="Preparing emergency contract request"
-                pendingDescription="The modal footer should hold the active loading state until wallet approval can begin."
+                idleTitle="Ready to submit"
+                idleDescription="Check the recipient, amount, and fee above. Once you confirm, the transfer is queued immediately and cannot be cancelled."
+                pendingTitle="Preparing emergency transfer"
+                pendingDescription="Building the transaction. Your wallet approval will be requested next."
               />
 
               <label className="flex items-start gap-3 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm text-gray-300 cursor-pointer">
@@ -251,8 +250,8 @@ export default function EmergencyTransferModal({
                   className="mt-1 h-4 w-4 rounded border-gray-500 bg-[#1a1a1a] text-red-600 focus:ring-red-500"
                 />
                 <span className="leading-6">
-                  I understand this is an emergency transfer, fees apply, and the
-                  confirmation state should persist after this modal closes.
+                  I confirm this is an urgent transfer. I understand the $2.00 priority
+                  fee will be charged and this transaction cannot be reversed once submitted.
                 </span>
               </label>
 
@@ -279,10 +278,10 @@ export default function EmergencyTransferModal({
               <AsyncOperationsPanel
                 eyebrow="Async behavior"
                 title="Emergency Submission Pattern"
-                description="Urgent transfers need the clearest duration language in the product, which makes this modal a good place to standardize contract-submission feedback."
+                description="Urgent transfers carry the highest stakes in the product. Each stage below shows what the user sees and how long to expect it to take."
                 stages={emergencyStages}
                 queueTitle="Stack behavior"
-                queueDescription="The modal owns early review states. After signature, move progress into the global stack so it does not disappear when the user closes or moves away from the modal."
+                queueDescription="The modal owns the review and build stages. After wallet signature, progress moves into the global stack so it stays visible if the user navigates away."
                 queueItems={emergencyQueue}
               />
             </aside>
