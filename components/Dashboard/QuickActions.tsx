@@ -42,7 +42,7 @@ function ActionButton({
         <span className="text-white">{icon}</span>
         <span className="text-base">{label}</span>
       </div>
-      <ArrowRight className="w-5 h-5 text-white opacity-70" />
+      <ArrowRight className="w-5 h-5 text-white/70" />
     </Link>
   );
 }
