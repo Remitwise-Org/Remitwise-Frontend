@@ -80,7 +80,7 @@ export default function SavingsGoalsPage() {
   const [showNewGoalModal, setShowNewGoalModal] = useState(false)
 
   return (
-    <div className="min-h-screen bg-[#010101]">
+    <div className="min-h-screen bg-[#010101] safari-safe-bottom">
       {/* Header */}
       <PageHeader
         title="Savings Goals"
@@ -90,9 +90,9 @@ export default function SavingsGoalsPage() {
         showBottomDivider
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 py-7 375:py-8">
         {/* Savings Goals Stats Cards */}
-        <div className="mb-8">
+        <div className="mb-7 375:mb-8">
           <SavingsGoalsStatsCards
             totalGoals={totalGoals}
             totalTarget={totalTarget}
@@ -101,7 +101,7 @@ export default function SavingsGoalsPage() {
         </div>
 
         {/* Goals Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 450:grid-cols-2 xl:grid-cols-3 gap-5 375:gap-6">
           {goalsData.map((goal) => (
             <SavingsGoalCard
               key={goal.id}
@@ -124,25 +124,25 @@ export default function SavingsGoalsPage() {
       {/* New Goal Modal Placeholder */}
       {showNewGoalModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
           onClick={() => setShowNewGoalModal(false)}
         >
           <div
-            className="rounded-2xl p-8 max-w-md mx-4"
+            className="rounded-2xl p-7 375:p-8 max-w-md w-full mx-4"
             style={{
               background: 'linear-gradient(180deg, #0F0F0F 0%, #0A0A0A 100%)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-bold text-white mb-4">Create New Goal</h2>
-            <p className="text-sm text-white/50 mb-6">
+            <h2 className="text-lg 375:text-xl font-bold text-white mb-4">Create New Goal</h2>
+            <p className="text-sm 375:text-base text-white/50 mb-6">
               Goal creation form will be implemented here. Connect to savings_goals smart contract.
             </p>
             <button
               type="button"
               onClick={() => setShowNewGoalModal(false)}
-              className="w-full h-[42px] rounded-[14px] text-sm font-semibold text-white"
+              className="touch-target-wide w-full rounded-[14px] text-sm 375:text-base font-semibold text-white"
               style={{
                 background: 'linear-gradient(180deg, #DC2626 0%, #B91C1C 100%)',
               }}

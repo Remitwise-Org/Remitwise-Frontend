@@ -44,7 +44,7 @@ export default function SavingsGoalCard({
 
     return (
         <div
-            className="relative box-border rounded-2xl p-6 overflow-hidden"
+            className="relative box-border rounded-2xl p-5 320:p-6 375:p-7 overflow-hidden"
             style={{
                 background: 'linear-gradient(180deg, #0F0F0F 0%, #0A0A0A 100%)',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -178,7 +178,7 @@ export default function SavingsGoalCard({
                     <button
                         type="button"
                         onClick={onAddFunds}
-                        className="flex-1 h-[42px] rounded-[14px] text-sm font-semibold text-white"
+                        className="touch-target-wide flex-1 rounded-[14px] text-sm 375:text-base font-semibold text-white"
                         style={{
                             background: 'linear-gradient(180deg, #DC2626 0%, #B91C1C 100%)',
                             boxShadow:
@@ -190,7 +190,7 @@ export default function SavingsGoalCard({
                     <button
                         type="button"
                         onClick={onDetails}
-                        className="w-[80px] h-[42px] rounded-[14px] text-sm font-semibold text-white"
+                        className="touch-target-wide w-[88px] 375:w-[96px] rounded-[14px] text-sm 375:text-base font-semibold text-white"
                         style={{
                             background:
                                 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
