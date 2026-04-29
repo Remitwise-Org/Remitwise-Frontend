@@ -59,6 +59,12 @@ export default function ReviewStep({
               </div>
             </div>
 
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300">
+              <p>
+                This transaction is prepared as a USDC remittance payload. Your wallet signs the payload locally, and RemitWise never holds your private keys or custody of your funds.
+              </p>
+            </div>
+
             <div className="mt-10 space-y-4">
               <button
                 onClick={onConfirm}
