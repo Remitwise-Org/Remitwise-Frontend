@@ -44,7 +44,7 @@ const EmergencyTransferModal = ({
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-1">
-                Priority processing guaranteed.
+                Funds arrive in 2–5 minutes. Use only for urgent needs.
               </p>
             </div>
           </div>
@@ -61,11 +61,13 @@ const EmergencyTransferModal = ({
             <AlertCircle size={20} className="shrink-0 text-red-500" />
             <div className="text-xs sm:text-[13px] leading-relaxed">
               <span className="font-bold text-[#DC2626] text-sm block mb-1">
-                Emergency Priority Transfer:
+                Before you continue
               </span>
               <span className="text-white opacity-55">
-                This transfer will be processed with highest priority.
-                Additional fees apply.
+                Emergency transfers are processed immediately and{" "}
+                <strong className="text-white opacity-80">cannot be reversed</strong>.
+                A $2.00 priority fee applies. Only use this for urgent situations
+                — medical, family emergencies, or time-critical payments.
               </span>
             </div>
           </div>
@@ -162,7 +164,7 @@ const EmergencyTransferModal = ({
             />
             <span className="text-sm font-bold text-white">Emergency</span>
             <span className="text-[10px] text-zinc-500 uppercase font-black">
-              2-5 Minutes
+              2–5 Minutes · +$2.00 fee
             </span>
           </button>
 
@@ -173,7 +175,7 @@ const EmergencyTransferModal = ({
             <Clock size={18} className="text-zinc-400" />
             <span className="text-sm font-bold text-zinc-200">Regular</span>
             <span className="text-[10px] text-zinc-300 uppercase font-black">
-              30-60 Minutes
+              30–60 Minutes · No extra fee
             </span>
           </button>
         </div>
@@ -191,11 +193,11 @@ const EmergencyTransferModal = ({
             className="hidden"
           />
           <span className="text-xs text-zinc-500 group-hover:text-zinc-300 transition-colors select-none">
-            I agree to the{" "}
+            I confirm this transfer is for an urgent need. I understand the{" "}
             <span className="text-red-500 hover:underline">
-              Priority Fee terms
+              $2.00 priority fee
             </span>{" "}
-            and understand this action is irreversible.
+            will be charged and this transaction cannot be reversed once submitted.
           </span>
         </label>
 

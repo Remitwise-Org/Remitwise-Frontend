@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { DensityProvider } from "@/lib/context/DensityContext";
+import { ToastProvider } from "@/lib/context/ToastContext";
+import ToastRegion from "@/components/ToastRegion";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,11 +22,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} starry-bg min-h-screen`}>
-        <DensityProvider>
-          <LayoutWrapper>
-            {children}
-          </LayoutWrapper>
-        </DensityProvider>
+        <ToastProvider>
+          <DensityProvider>
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+            <ToastRegion />
+          </DensityProvider>
+        </ToastProvider>
       </body>
     </html>
   );

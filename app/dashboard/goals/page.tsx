@@ -100,6 +100,10 @@ export default function SavingsGoalsPage() {
           />
         </div>
 
+        <div className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-gray-300">
+          Savings goals are tracked in USDC and stored through the connected savings_goals contract. Funds remain in your wallet until each signed goal action is submitted.
+        </div>
+
         {/* Goals Grid */}
         <div className="grid grid-cols-1 450:grid-cols-2 xl:grid-cols-3 gap-5 375:gap-6">
           {goalsData.map((goal) => (

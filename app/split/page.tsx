@@ -86,18 +86,9 @@ export default function SplitConfiguration() {
 								contract submission states anchored to the same area so the
 								workflow never feels detached.
 							</p>
-						</div>
-
-						<form className='mt-6 space-y-5 375:space-y-6'>
-							<SplitInput
-								label='Daily Spending'
-								description='For immediate family expenses'
-								value={50}
-								color='bg-blue-500'
-							/>
-							<SplitInput
-								label='Savings'
-								description='Allocated to savings goals'
+						<p className='mt-3 text-sm leading-6 text-gray-300'>
+							Allocation changes are saved as a USDC smart contract action. The payload is prepared in-app and the wallet signs it locally.
+						</p>
 								value={30}
 								color='bg-green-500'
 							/>

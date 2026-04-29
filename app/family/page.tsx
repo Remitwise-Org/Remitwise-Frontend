@@ -129,9 +129,7 @@ export default function FamilyWallets() {
 								<strong className='font-semibold text-amber-50'>
 									Integration required:
 								</strong>{" "}
-								Connect the `family_wallet` smart contract to add members,
-								update spending limits, and verify permissions against the
-								connected wallet.
+							Connect the `family_wallet` smart contract and wallet to add members, update spending limits, and enforce permissions non-custodially. Each change is prepared as an on-chain payload and signed locally.
 							</p>
 						</div>
 					</aside>

@@ -35,7 +35,7 @@ const SubNav = () => {
                         >
                             {link.icon}
                             {link.name}
-                            {isActive(link.href) && <ChevronRight className="w-3 h-3 h-opacity-50" />}
+                            {isActive(link.href) && <ChevronRight className="w-4 h-4 opacity-50" />}
                         </Link>
                     ))}
                 </div>
