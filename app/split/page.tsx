@@ -68,20 +68,20 @@ const splitQueue = [
 
 export default function SplitConfiguration() {
 	return (
-		<div className='min-h-screen bg-[#010101]'>
+		<div className='min-h-screen bg-[#010101] safari-safe-bottom'>
 			<SmartMoneySplitHeader />
 
-			<main className='mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8'>
-				<div className='grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_360px] xl:items-start'>
-					<div className='rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-6 sm:p-8'>
-						<div className='border-b border-white/[0.08] pb-6'>
+			<main className='mx-auto max-w-7xl px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 py-7 375:py-8 sm:py-8'>
+				<div className='grid gap-7 375:gap-8 xl:grid-cols-[minmax(0,1.1fr)_360px] xl:items-start'>
+					<div className='rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-5 320:p-6 375:p-7 sm:p-8'>
+						<div className='border-b border-white/[0.08] pb-5 375:pb-6'>
 							<p className='text-xs font-semibold uppercase tracking-[0.24em] text-red-300'>
 								Allocation editor
 							</p>
-							<h2 className='mt-3 text-2xl font-semibold text-white'>
+							<h2 className='mt-3 text-xl 375:text-2xl font-semibold text-white'>
 								Current Allocation
 							</h2>
-							<p className='mt-2 text-sm leading-6 text-gray-300'>
+							<p className='mt-2 text-sm 375:text-base leading-6 text-gray-300'>
 								Customize how your remittances are distributed, then keep the
 								contract submission states anchored to the same area so the
 								workflow never feels detached.
@@ -105,16 +105,16 @@ export default function SplitConfiguration() {
 								color='bg-violet-500'
 							/>
 
-							<div className='rounded-2xl border border-white/[0.08] bg-[#141414] p-5'>
+							<div className='rounded-2xl border border-white/[0.08] bg-[#141414] p-4 375:p-5'>
 								<div className='flex items-center justify-between gap-4'>
 									<div>
 										<p className='text-sm font-medium text-gray-300'>Total</p>
-										<p className='mt-1 text-sm text-gray-500'>
+										<p className='mt-1 text-xs 375:text-sm text-gray-500'>
 											Every contract build should block submission until this is
 											exactly 100%.
 										</p>
 									</div>
-									<span className='text-3xl font-semibold text-white'>100%</span>
+									<span className='text-2xl 375:text-3xl font-semibold text-white'>100%</span>
 								</div>
 							</div>
 
@@ -128,15 +128,15 @@ export default function SplitConfiguration() {
 
 							<HowItWorks />
 
-							<div className='flex flex-col gap-4 pt-2 sm:flex-row'>
+							<div className='flex flex-col gap-3 375:gap-4 pt-2 sm:flex-row'>
 								<Link
 									href='/'
-									className='flex-1 rounded-2xl border border-white/10 bg-[#161616] px-6 py-3.5 text-center font-semibold text-white transition hover:bg-[#202020] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010]'>
+									className='touch-target-wide flex-1 rounded-2xl border border-white/10 bg-[#161616] px-6 py-3.5 text-center text-sm 375:text-base font-semibold text-white transition hover:bg-[#202020] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010]'>
 									Cancel
 								</Link>
 								<button
 									type='submit'
-									className='flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-red-600 to-red-700 px-6 py-3.5 font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010] disabled:cursor-not-allowed disabled:opacity-60'
+									className='touch-target-wide flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-red-600 to-red-700 px-6 py-3.5 text-sm 375:text-base font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010] disabled:cursor-not-allowed disabled:opacity-60'
 									disabled>
 									<Save className='h-5 w-5' />
 									<span>Connect Contract First</span>
@@ -175,13 +175,13 @@ function SplitInput({
 	color: string;
 }) {
 	return (
-		<div className='rounded-2xl border border-white/[0.08] bg-black/20 p-4 transition-colors hover:bg-white/[0.02]'>
+		<div className='rounded-2xl border border-white/[0.08] bg-black/20 p-4 375:p-5 transition-colors hover:bg-white/[0.02]'>
 			<div className='mb-3 flex items-center justify-between gap-4'>
 				<div>
-					<label className='block text-sm font-medium text-white'>{label}</label>
-					<p className='mt-0.5 text-xs text-gray-500'>{description}</p>
+					<label className='block text-sm 375:text-base font-medium text-white'>{label}</label>
+					<p className='mt-0.5 text-xs 375:text-sm text-gray-500'>{description}</p>
 				</div>
-				<div className='text-2xl font-semibold text-white'>{value}%</div>
+				<div className='text-xl 375:text-2xl font-semibold text-white'>{value}%</div>
 			</div>
 			<div className='mb-4 h-2 w-full rounded-full bg-white/10'>
 				<div
@@ -193,7 +193,7 @@ function SplitInput({
 				min='0'
 				max='100'
 				value={value}
-				className='h-1 w-full accent-red-600'
+				className='h-11 w-full accent-red-600 touch-target'
 				disabled
 			/>
 		</div>

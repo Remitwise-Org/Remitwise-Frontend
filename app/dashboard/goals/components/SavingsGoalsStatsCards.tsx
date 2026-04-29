@@ -9,23 +9,23 @@ interface StatsCardProps {
 function StatsCard({ label, value, icon }: StatsCardProps) {
     return (
         <div
-            className="rounded-[20px] p-6 border border-white/[0.08] relative"
+            className="rounded-[20px] p-5 320:p-6 375:p-7 border border-white/[0.08] relative"
             style={{
                 background: 'linear-gradient(180deg, #1A1A1A 0%, #141414 100%)',
             }}
         >
             {/* Icon in top right */}
-            <div className="absolute top-6 right-6 text-[#DC2626]">
+            <div className="absolute top-5 320:top-6 375:top-7 right-5 320:right-6 375:right-7 text-[#DC2626]">
                 {icon}
             </div>
 
             {/* Label */}
-            <div className="text-sm font-medium text-white/40 mb-2">
+            <div className="text-xs 375:text-sm font-medium text-white/40 mb-2">
                 {label}
             </div>
 
             {/* Value */}
-            <div className="text-[40px] font-bold text-white leading-none tracking-tight">
+            <div className="text-3xl 375:text-[40px] font-bold text-white leading-none tracking-tight">
                 {value}
             </div>
         </div>
@@ -53,7 +53,7 @@ export default function SavingsGoalsStatsCards({
     }
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 375:grid-cols-2 tablet:grid-cols-3 gap-4 375:gap-5">
             <StatsCard
                 label="Total Goals"
                 value={String(totalGoals)}

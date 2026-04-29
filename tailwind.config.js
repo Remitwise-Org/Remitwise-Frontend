@@ -7,6 +7,16 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // Custom responsive breakpoints for mobile-first design
+      screens: {
+        '320': '320px',      // iPhone SE (smallest mobile)
+        '375': '375px',      // iPhone 14 (primary mobile target)
+        '450': '450px',      // Foldables and larger phones
+        'tablet': '768px',   // iPad portrait
+        'laptop': '1024px',  // iPad landscape
+        'desktop': '1440px', // Desktop standard
+      },
+      
       // Semantic spacing tokens for design system
       spacing: {
         "space-xs": "4px",
@@ -14,6 +24,16 @@ module.exports = {
         "space-md": "16px",
         "space-lg": "24px",
         "space-xl": "32px",
+        // Fine-grained responsive spacing scale
+        '3.5': '14px',
+        '7': '28px',
+        '9': '36px',
+        '11': '44px',     // Touch target minimum (WCAG 2.1 AAA)
+        '13': '52px',
+        '15': '60px',
+        '17.5': '70px',
+        '22.5': '90px',
+        '27.5': '110px',
       },
 
       // Focus ring tokens (use with `ring-focus` and `ring-offset-focus`)

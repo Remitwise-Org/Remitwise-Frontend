@@ -34,3 +34,33 @@ body {
   );
   background-size: 40px 40px;
 }
+
+/* iOS Safari Safe Area Utilities */
+@layer utilities {
+  .safari-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safari-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safari-safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safari-safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  /* Touch target guarantee utilities */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .touch-target-wide {
+    min-height: 44px;
+    min-width: 88px;
+  }
+}
