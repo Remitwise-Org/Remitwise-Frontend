@@ -18,12 +18,12 @@ export default function Insurance() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/" className="text-gray-600 hover:text-gray-900">
-                <ArrowLeft className="w-6 h-6" />
+                <ArrowLeft className="w-5 h-5" />
               </Link>
               <h1 className="text-2xl font-bold text-gray-900">Micro-Insurance</h1>
             </div>
             <button
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
               disabled
             >
               <Plus className="w-5 h-5" />
@@ -171,8 +171,8 @@ export default function Insurance() {
             >
               
                {pending ? (
-                <div className="flex items-center gap-1">
-                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="animate-spin w-5 h-5" />
                   Adding...
                 </div>
               ) : "Create Policy"}
@@ -205,7 +205,7 @@ function PolicyCard({ name, coverageType, monthlyPremium, coverageAmount, nextPa
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <Shield className="w-5 h-5 text-blue-600" />
           <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
         </div>
