@@ -3,12 +3,15 @@
 import {
 	ArrowUpRight,
 	CheckCircle2,
+	ChevronDown,
+	ChevronUp,
 	Clock3,
 	Loader2,
 	ShieldCheck,
 	Wallet,
 	type LucideIcon,
 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 type AsyncStage = {
 	label: string;
@@ -22,7 +25,7 @@ type QueueItem = {
 	title: string;
 	duration: string;
 	detail: string;
-	status: "active" | "queued" | "complete";
+	status: "active" | "queued" | "complete" | "failed";
 };
 
 interface AsyncOperationsPanelProps {
@@ -59,6 +62,13 @@ const queueStatusStyles = {
 		Icon: CheckCircle2,
 		spin: false,
 	},
+	failed: {
+		badge: "Failed",
+		cardClass: "border-amber-500/20 bg-amber-500/[0.06]",
+		iconClass: "text-amber-200",
+		Icon: Clock3,
+		spin: false,
+	},
 } as const;
 
 export default function AsyncOperationsPanel({
@@ -71,6 +81,22 @@ export default function AsyncOperationsPanel({
 	queueItems,
 	footer,
 }: AsyncOperationsPanelProps) {
+	const [expanded, setExpanded] = useState(false);
+	const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+	const activeIndex = useMemo(() => queueItems.findIndex((i) => i.status === "active"), [queueItems]);
+
+	useEffect(() => {
+		// Close open detail if item list changes and index no longer valid
+		if (openIndex !== null && openIndex >= queueItems.length) setOpenIndex(null);
+	}, [queueItems, openIndex]);
+
+	// Live announcement for major state: active started/completed/failed
+	const [liveText, setLiveText] = useState("");
+	useEffect(() => {
+		const active = queueItems[activeIndex];
+		if (active) setLiveText(`${active.title} ${active.status}`);
+	}, [queueItems, activeIndex]);
 	return (
 		<section className='rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-6 sm:p-7'>
 			<div className='border-b border-white/[0.08] pb-5'>
@@ -120,7 +146,8 @@ export default function AsyncOperationsPanel({
 				})}
 			</div>
 
-			<div className='mt-6 rounded-2xl border border-white/[0.08] bg-black/20 p-4'>
+			{/* Queue: compact rail on desktop, inline on mobile */}
+			<div className='mt-6'>
 				<div className='flex items-start justify-between gap-3'>
 					<div>
 						<h3 className='text-sm font-semibold text-white'>{queueTitle}</h3>
@@ -128,51 +155,80 @@ export default function AsyncOperationsPanel({
 							{queueDescription}
 						</p>
 					</div>
-					<ArrowUpRight className='mt-1 h-4 w-4 flex-shrink-0 text-gray-500' />
+					<div className='flex items-center gap-2'>
+						<span className='hidden sm:inline-flex text-xs text-gray-400'>{queueItems.length} total</span>
+						<button
+							aria-expanded={expanded}
+							aria-controls='ops-panel'
+							onClick={() => setExpanded((s) => !s)}
+							className='inline-flex items-center gap-2 rounded-md bg-white/[0.02] px-2 py-1 text-xs text-gray-300 hover:bg-white/[0.04]'>
+							{expanded ? (
+								<ChevronUp className='h-4 w-4' />
+							) : (
+								<ChevronDown className='h-4 w-4' />
+							)}
+							<span className='sr-only'>Toggle operations panel</span>
+						</button>
+					</div>
 				</div>
 
-				<div className='mt-4 space-y-3'>
+				<div id='ops-panel' className={`mt-4 space-y-3 ${expanded ? "" : "max-h-[220px] overflow-hidden"}`}>
 					{queueItems.map((item, index) => {
-						const statusConfig = queueStatusStyles[item.status];
+						const statusConfig = queueStatusStyles[item.status] ?? queueStatusStyles.queued;
 						const StatusIcon = statusConfig.Icon;
+						const isActive = item.status === "active";
+						const isOpen = openIndex === index;
 
 						return (
 							<article
-								key={`${item.title}-${item.status}`}
-								className={`rounded-2xl border p-4 shadow-[0_18px_40px_rgba(0,0,0,0.22)] ${statusConfig.cardClass} ${
-									index > 0 ? "sm:-mt-2 sm:ml-4" : ""
-								}`}>
-								<div className='flex items-start justify-between gap-4'>
-									<div className='flex items-start gap-3'>
-										<div className='flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]'>
-											<StatusIcon
-												className={`h-4 w-4 ${statusConfig.iconClass} ${
-													statusConfig.spin ? "animate-spin" : ""
-												}`}
-											/>
+								key={`${item.title}-${item.status}-${index}`}
+								className={`group relative flex flex-col rounded-2xl border p-3 ${statusConfig.cardClass} ${isActive ? "ring-2 ring-blue-400/20 shadow-md" : ""}`}>
+								<div className='flex items-center justify-between gap-3'>
+									<div className='flex items-center gap-3 min-w-0'>
+										<div className={`flex h-8 w-8 items-center justify-center rounded-md border border-white/8 bg-white/[0.03] ${isActive ? "animate-pulse" : ""}`}>
+											<StatusIcon className={`h-4 w-4 ${statusConfig.iconClass}`} />
 										</div>
-										<div>
-											<div className='flex flex-wrap items-center gap-2'>
-												<h4 className='text-sm font-semibold text-white'>
+										<div className='min-w-0'>
+											<div className='flex items-center gap-2'>
+												<h4 className='truncate text-sm font-semibold text-white'>
 													{item.title}
 												</h4>
-												<span className='rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-gray-400'>
+												<span className='hidden md:inline-flex rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.12em] text-gray-400'>
 													{statusConfig.badge}
 												</span>
 											</div>
-											<p className='mt-2 text-sm leading-6 text-gray-300'>
-												{item.detail}
-											</p>
+											<p className='mt-1 truncate text-xs text-gray-300'>{item.detail}</p>
 										</div>
 									</div>
-									<span className='rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-gray-300'>
-										{item.duration}
-									</span>
+
+									<div className='flex items-center gap-2'>
+										<span className='text-xs text-gray-300'>{item.duration}</span>
+										<button
+											aria-expanded={isOpen}
+											aria-controls={`op-${index}`}
+											onClick={() => setOpenIndex(isOpen ? null : index)}
+											className='ml-2 inline-flex items-center justify-center rounded-md p-2 text-gray-300 hover:bg-white/[0.02]'>
+											{isOpen ? <ChevronUp className='h-4 w-4' /> : <ChevronDown className='h-4 w-4' />}
+										</button>
+									</div>
 								</div>
+
+								{isOpen ? (
+									<div id={`op-${index}`} className='mt-3 border-t border-white/[0.04] pt-3 text-sm text-gray-300'>
+										<p>{item.detail}</p>
+										<div className='mt-2 flex gap-2'>
+											{item.status === 'failed' ? (
+												<button className='rounded-md bg-amber-500/10 px-3 py-1 text-amber-200'>Retry</button>
+											) : null}
+											<a className='text-sm text-blue-400 hover:underline' href='#'>View details</a>
+										</div>
+									</div>
+								) : null}
 							</article>
 						);
 					})}
 				</div>
+				<div aria-hidden className='sr-only' aria-live='polite'>{liveText}</div>
 			</div>
 
 			{footer ? (

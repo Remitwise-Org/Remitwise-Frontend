@@ -83,6 +83,8 @@ export default function AsyncSubmissionStatus({
 
 	return (
 		<div
+			role='status'
+			aria-atomic='true'
 			aria-live='polite'
 			className={`rounded-2xl border p-4 ${style.cardClass}`}>
 			<div className='flex items-start gap-3'>
