@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     include: [
       'lib/contracts/**/*.test.ts',
+      'lib/**/*.test.ts',
       'tests/unit/**/*.test.ts',
       'tests/unit/**/*.test.cjs',
       'tests/integration/**/*.test.ts',
@@ -22,6 +23,7 @@ export default defineConfig({
       include: ['lib/contracts/**/*.ts', 'app/**/*.ts', 'lib/**/*.ts'],
       exclude: [
         'lib/contracts/**/*.test.ts',
+        'lib/**/*.test.ts',
         'tests/**',
       ],
     },
