@@ -162,7 +162,8 @@ remitwise-frontend/
 ├── lib/                     # Utilities and helpers
 │   └── auth.ts              # Auth middleware
 ├── docs/                    # Documentation
-│   └── API_ROUTES.md        # API routes documentation
+│   ├── API_ROUTES.md        # API routes documentation
+│   └── contract-cache.md    # Contract caching architecture and guidelines
 ├── public/                  # Static assets
 └── package.json
 ```
