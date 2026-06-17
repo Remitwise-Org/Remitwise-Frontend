@@ -50,5 +50,16 @@
       "fetchFailed": "Failed to fetch transactions",
       "genericError": "An error occurred"
     }
+  },
+  "send": {
+    "confirm_button": "Confirm & Send Remittance",
+    "confirm_pending": "Processing…",
+    "success_title": "Transfer submitted",
+    "success_description": "Successfully sent {{amount}} {{currency}} to {{address}}.",
+    "error_title": "Transfer failed",
+    "error_network": "Network error. Please check your connection and try again.",
+    "error_empty_amount": "Amount must be greater than zero.",
+    "error_missing_recipient": "Recipient address is required.",
+    "error_api": "The server returned an error. Please try again."
   }
 }

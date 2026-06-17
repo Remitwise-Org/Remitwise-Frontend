@@ -50,5 +50,16 @@
       "fetchFailed": "No se pudieron obtener las transacciones",
       "genericError": "Ocurrio un error"
     }
+  },
+  "send": {
+    "confirm_button": "Confirmar y enviar remesa",
+    "confirm_pending": "Procesando…",
+    "success_title": "Transferencia enviada",
+    "success_description": "Se enviaron {{amount}} {{currency}} a {{address}} correctamente.",
+    "error_title": "Transferencia fallida",
+    "error_network": "Error de red. Revisa tu conexión e intenta de nuevo.",
+    "error_empty_amount": "El monto debe ser mayor que cero.",
+    "error_missing_recipient": "Se requiere la dirección del destinatario.",
+    "error_api": "El servidor devolvió un error. Por favor, intenta de nuevo."
   }
 }
