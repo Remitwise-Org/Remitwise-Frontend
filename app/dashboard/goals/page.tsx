@@ -108,7 +108,7 @@ export default function SavingsGoalsPage() {
         showBottomDivider
       />
 
-      <main className="max-w-7xl mx-auto px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 py-7 375:py-8">
+      <main className="max-w-7xl mx-auto px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 py-7 375:py-8 overflow-x-hidden">
         {/* Savings Goals Stats Cards */}
         <div className="mb-7 375:mb-8">
           <SavingsGoalsStatsCards
