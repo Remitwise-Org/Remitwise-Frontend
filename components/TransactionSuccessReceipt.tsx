@@ -34,7 +34,8 @@ interface TransactionSuccessReceiptProps {
   date: string;
   fee: number;
   splits?: {
-    dailySpending: number;
+    /** Allocated to daily spending (matches AllocationAmounts.spending) */
+    spending: number;
     savings: number;
     bills: number;
     insurance: number;
@@ -65,7 +66,7 @@ export default function TransactionSuccessReceipt({
   };
 
   const splitDetails: SplitDetail[] = splits ? [
-    { icon: Wallet, label: "Daily Spending", amount: splits.dailySpending, percentage: 50, color: "bg-blue-500" },
+    { icon: Wallet, label: "Daily Spending", amount: splits.spending, percentage: 50, color: "bg-blue-500" },
     { icon: TrendingUp, label: "Savings", amount: splits.savings, percentage: 30, color: "bg-emerald-500" },
     { icon: FileText, label: "Bills", amount: splits.bills, percentage: 15, color: "bg-amber-500" },
     { icon: Shield, label: "Insurance", amount: splits.insurance, percentage: 5, color: "bg-purple-500" },
