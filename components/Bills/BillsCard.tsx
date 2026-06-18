@@ -1,5 +1,6 @@
-import { CalendarClock, CheckCircle, Repeat, Zap } from "lucide-react";
+import { CalendarClock, CheckCircle, CheckCircle2, Clock4, AlertCircle, Repeat, Zap } from "lucide-react";
 import { getBillStatusPresentation } from "@/lib/ui/status-semantics";
+import { Bill } from "@/lib/contracts/bill-payments";
 
 const getStatusStyles = (status: Bill['status']) => {
     switch (status) {
@@ -38,7 +39,7 @@ const getStatusStyles = (status: Bill['status']) => {
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: Bill["status"] }) {
-  const s = STATUS_STYLES[status];
+  const s = getStatusStyles(status)!;
   const label: Record<Bill["status"], string> = {
     overdue: "Overdue",
     urgent: "Due Soon",
@@ -54,7 +55,7 @@ function StatusBadge({ status }: { status: Bill["status"] }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-[10px] border px-2 py-0.5 text-xs font-semibold ${s.badgeBg} ${s.badgeBorder} ${s.badgeText}`}
+      className={`inline-flex items-center gap-1 rounded-[10px] border px-2 py-0.5 text-xs font-semibold ${s.dueBg} ${s.border} text-white`}
       aria-label={`Status: ${label[status]}`}
     >
       <Icon className="h-3 w-3" aria-hidden="true" />
@@ -63,16 +64,10 @@ function StatusBadge({ status }: { status: Bill["status"] }) {
   );
 }
 
-// ─── Recurring chain badge ────────────────────────────────────────────────────
+// ─── Exported Component ─────────────────────────────────────────────────────────
 
-function RecurringBadge({
-  recurrenceLabel,
-  nextOccurrence,
-}: {
-  recurrenceLabel?: string;
-  nextOccurrence?: string;
-}) {
-    const styles = getStatusStyles(bill.status);
+export function BillCards({ bill, density = "comfortable" }: { bill: Bill; density?: "comfortable" | "compact" }) {
+    const styles = getStatusStyles(bill.status) || getStatusStyles("upcoming")!;
     const statusPresentation = getBillStatusPresentation(bill.status);
     const StatusIcon = statusPresentation.icon;
 
@@ -127,18 +122,6 @@ function RecurringBadge({
                 background: 'linear-gradient(180deg, #0F0F0F 0%, #0A0A0A 100%)',
             }}
         >
-          <Zap className="h-4 w-4" aria-hidden="true" />
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ─── Comfortable card ─────────────────────────────────────────────────────────
-
-function ComfortableBillCard({ bill }: { bill: Bill }) {
-  const s = STATUS_STYLES[bill.status];
-  const isPaid = bill.status === "paid";
 
             {/* Content */}
             <div className="relative flex flex-col gap-4 p-6">

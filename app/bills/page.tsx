@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Loader2, Layers3, ShieldCheck, Wallet, Clock3 } from "lucide-react";
 import { UnpaidBillsSection } from "@/components/Bills/UnpaidBillsSection";
 import PageHeader from "@/components/PageHeader";
@@ -10,6 +10,10 @@ import { ActionState } from "@/lib/auth/middleware";
 import { useFormAction } from "@/lib/hooks/useFormAction";
 import AsyncOperationsPanel from "@/components/AsyncOperationsPanel";
 import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
+import { apiClient } from "@/lib/client/apiClient";
+import { Bill } from "@/lib/contracts/bill-payments";
+import { WidgetErrorState } from "@/components/ui/WidgetStates";
+import { SkeletonList } from "@/components/ui/Skeleton";
 
 type AddBillResponse = ActionState & {
 	name?: string;
@@ -80,6 +84,57 @@ export default function Bills() {
 	const formSectionRef = useRef<HTMLDivElement>(null);
 	const [state, formAction, pending] = useFormAction<AddBillResponse>("/api/bills");
 
+	const [bills, setBills] = useState<Bill[]>([]);
+	const [stats, setStats] = useState<any>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<Error | null>(null);
+
+	const fetchBillsData = async () => {
+		setIsLoading(true);
+		setError(null);
+		try {
+			const [billsRes, statsRes] = await Promise.all([
+				apiClient.get('/api/bills'),
+				apiClient.get('/api/bills/total-unpaid')
+			]);
+			
+			if (!billsRes || !statsRes) throw new Error("Session expired");
+			if (!billsRes.ok || !statsRes.ok) throw new Error("Failed to load bills data");
+			
+			const billsJson = await billsRes.json();
+			const statsJson = await statsRes.json();
+			
+			const fetchedBills: Bill[] = billsJson.data?.bills || [];
+			const fetchedStats = statsJson.data;
+
+			setBills(fetchedBills);
+
+			const paidBills = fetchedBills.filter((b: Bill) => b.status === 'paid');
+			const paidAmount = paidBills.reduce((acc: number, b: Bill) => acc + b.amount, 0);
+			const overdueCount = fetchedBills.filter((b: Bill) => b.status === 'overdue' || b.status === 'urgent').length;
+
+			setStats({
+				totalUnpaid: {
+					amount: fetchedStats?.totalUnpaid?.toLocaleString() || '0',
+					pendingCount: fetchedStats?.count || 0
+				},
+				overdueCount,
+				paidThisMonth: {
+					amount: paidAmount.toLocaleString(),
+					paymentCount: paidBills.length
+				}
+			});
+		} catch (err) {
+			setError(err instanceof Error ? err : new Error("Unknown error"));
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchBillsData();
+	}, []);
+
 	function handleAddBill() {
 		formSectionRef.current?.scrollIntoView({
 			behavior: "smooth",
@@ -98,17 +153,34 @@ export default function Bills() {
 			/>
 
 			<main className='mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8'>
-				<section className='mb-8'>
-					<BillPaymentsStatsCards />
-				</section>
+				{error ? (
+					<div className="mb-8">
+						<WidgetErrorState 
+							title="Failed to load bills" 
+							message={error.message} 
+							onRetry={fetchBillsData} 
+						/>
+					</div>
+				) : isLoading ? (
+					<div className="mb-8 space-y-8">
+						<SkeletonList rows={3} variant="cards" />
+						<SkeletonList rows={3} variant="table" />
+					</div>
+				) : (
+					<>
+						<section className='mb-8'>
+							<BillPaymentsStatsCards stats={stats} />
+						</section>
 
-				<div className='mb-8'>
-					<UnpaidBillsSection />
-				</div>
+						<div className='mb-8'>
+							<UnpaidBillsSection bills={bills} />
+						</div>
 
-				<div className='mb-8'>
-					<RecentPaymentsSection />
-				</div>
+						<div className='mb-8'>
+							<RecentPaymentsSection bills={bills} />
+						</div>
+					</>
+				)}
 
 				<div className='grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_360px] xl:items-start'>
 					<div
@@ -126,11 +198,23 @@ export default function Bills() {
 								feedback. Longer-running submit states should move into a stack
 								that stays visible while the user continues working.
 							</p>
+						</div>
 						<div className='mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300'>
 							<p>
 								This bill request is built as an on-chain USDC payment payload. Your wallet signs and submits the transaction; RemitWise only prepares the payload.
 							</p>
 						</div>
+
+						<form action={formAction} className='mt-6 space-y-6'>
+							<div className='grid gap-1'>
+								<label className='block text-sm font-medium text-gray-300'>
+									Bill Name
+								</label>
+								<input
+									id='name'
+									name='name'
+									type='text'
+									defaultValue={state.name}
 									placeholder='e.g., Electricity, School Fees, Rent'
 									className='w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-red-500'
 								/>

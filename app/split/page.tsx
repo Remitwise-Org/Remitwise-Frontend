@@ -89,6 +89,11 @@ export default function SplitConfiguration() {
 						<p className='mt-3 text-sm leading-6 text-gray-300'>
 							Allocation changes are saved as a USDC smart contract action. The payload is prepared in-app and the wallet signs it locally.
 						</p>
+						</div>
+						<form className='mt-6 space-y-6'>
+							<SplitInput
+								label='Family'
+								description='General household expenses'
 								value={30}
 								color='bg-green-500'
 							/>

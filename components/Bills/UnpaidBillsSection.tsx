@@ -1,18 +1,16 @@
 import React from 'react';
 import { BillCards } from './BillsCard';
-import { mockBills } from '@/lib/mockdata/bills';
 import { useDensity } from '@/lib/context/DensityContext';
+import { Bill } from '@/lib/contracts/bill-payments';
+import { WidgetEmptyState } from '@/components/ui/WidgetStates';
 
-
-
-export function UnpaidBillsSection() {
+export function UnpaidBillsSection({ bills }: { bills: Bill[] }) {
     const { density } = useDensity();
     const unpaidStatuses: Bill['status'][] = ['overdue', 'urgent', 'upcoming'];
 
-    const unpaidBills = mockBills.filter((bill) =>
+    const unpaidBills = bills.filter((bill) =>
         unpaidStatuses.includes(bill.status)
     );
-
 
     return (
         <div className="w-full max-w-7xl bg-[#010101] p-3 mx-auto flex flex-col gap-6 px-4 sm:px-2 lg:px-0">
@@ -29,13 +27,15 @@ export function UnpaidBillsSection() {
             </div>
 
             {/* Bills Grid */}
-            <div className={density === 'compact' ? "flex flex-col gap-2" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-[19.67px]"}>
-                {unpaidBills.map((bill) => {
-                    return (
+            {unpaidBills.length > 0 ? (
+                <div className={density === 'compact' ? "flex flex-col gap-2" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-[19.67px]"}>
+                    {unpaidBills.map((bill) => (
                         <BillCards key={bill.id} bill={bill} density={density} />
-                    );
-                })}
-            </div>
+                    ))}
+                </div>
+            ) : (
+                <WidgetEmptyState title="No unpaid bills" message="You're all caught up on your upcoming payments!" />
+            )}
         </div>
     );
-};
+}
