@@ -31,10 +31,11 @@ export const MOCK_SPENDING_VS_SAVINGS: SpendingVsSavingsDataPoint[] = [
 ]
 
 // ── Color tokens — match the existing dark theme ──────────────────────────────
-const SPENDING_COLOR = '#D72323'   // brand red
-const SAVINGS_COLOR = '#0ea5e9'   // primary-500 from tailwind config
-const GRID_COLOR = 'rgba(255,255,255,0.06)'
-const AXIS_COLOR = '#6b7280'   // gray-500
+import { INSIGHTS_PALETTE } from './palette';
+const SPENDING_COLOR = INSIGHTS_PALETTE[0]; // blue‑teal
+const SAVINGS_COLOR = INSIGHTS_PALETTE[1]; // light blue
+const GRID_COLOR = 'rgba(255,255,255,0.06)';
+const AXIS_COLOR = '#6b7280';
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 function CustomTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
@@ -158,7 +159,10 @@ export function SpendingVsSavingsChart({
                     <Bar dataKey="savings" name="savings" fill={SAVINGS_COLOR} radius={[4, 4, 0, 0]} />
                 </BarChart>
             </ResponsiveContainer>
-
+            {/* Screen‑reader summary */}
+            <p className="sr-only" aria-live="polite">
+                {data.map(d => `${d.month}: spending $${d.spending.toLocaleString()}, savings $${d.savings.toLocaleString()}`).join(', ')}
+            </p>
             <CustomLegend />
         </div>
     )

@@ -1,4 +1,4 @@
-import SixMonthTrendsWidget from '@/components/Dashboard/SixMonthTrendsWidget'
+import SixMonthTrendsWidget from '@/components/dashboard/SixMonthTrendsWidget'
 export default function InsightPage() {
     return (
         <div

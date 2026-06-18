@@ -1,19 +1,18 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
-import { Loader2, Layers3, ShieldCheck, Wallet, Clock3 } from "lucide-react";
+import { useRef, useEffect, useMemo, useState } from "react";
+import { CalendarClock, Loader2, Layers3, ShieldCheck, Wallet, Clock3 } from "lucide-react";
 import { UnpaidBillsSection } from "@/components/Bills/UnpaidBillsSection";
 import PageHeader from "@/components/PageHeader";
 import BillPaymentsStatsCards from "./components/BillPaymentsStatsCards";
 import RecentPaymentsSection from "@/components/Bills/RecentPaymentsSection";
+import Toggle from "@/components/Toggle";
 import { ActionState } from "@/lib/auth/middleware";
 import { useFormAction } from "@/lib/hooks/useFormAction";
 import AsyncOperationsPanel from "@/components/AsyncOperationsPanel";
 import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
-import { apiClient } from "@/lib/client/apiClient";
-import { Bill } from "@/lib/contracts/bill-payments";
-import { WidgetErrorState } from "@/components/ui/WidgetStates";
-import { SkeletonList } from "@/components/ui/Skeleton";
+import { useToast } from "@/lib/context/ToastContext";
+import { mockBills } from "@/lib/mockdata/bills";
 
 type AddBillResponse = ActionState & {
 	name?: string;
@@ -80,9 +79,55 @@ const billQueue = [
 	},
 ];
 
+const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+function ordinalDay(day: string) {
+	const value = Number(day);
+	const suffix =
+		value % 10 === 1 && value % 100 !== 11
+			? "st"
+			: value % 10 === 2 && value % 100 !== 12
+				? "nd"
+				: value % 10 === 3 && value % 100 !== 13
+					? "rd"
+					: "th";
+
+	return `${value}${suffix}`;
+}
+
 export default function Bills() {
 	const formSectionRef = useRef<HTMLDivElement>(null);
 	const [state, formAction, pending] = useFormAction<AddBillResponse>("/api/bills");
+	const [isRecurring, setIsRecurring] = useState(false);
+	const [frequency, setFrequency] = useState("monthly");
+	const [monthlyDay, setMonthlyDay] = useState("1");
+	const [weeklyDay, setWeeklyDay] = useState("Monday");
+	const [reminderLead, setReminderLead] = useState("3");
+	const { toast } = useToast();
+
+	const recurrencePreview = useMemo(() => {
+		if (!isRecurring) return "One-time bill";
+		if (frequency === "weekly") return `Weekly on ${weeklyDay}`;
+		return `Monthly on the ${ordinalDay(monthlyDay)}`;
+	}, [frequency, isRecurring, monthlyDay, weeklyDay]);
+
+	useEffect(() => {
+		const overdueBill = mockBills.find((b) => b.status === "overdue");
+		if (overdueBill) {
+			toast({
+				variant: "warning",
+				title: "Bill overdue",
+				description: `${overdueBill.title} was due on ${overdueBill.dueDate}.`,
+				action: {
+					label: "Pay now",
+					onClick: () => {
+						const formElement = document.getElementById("name");
+						if (formElement) formElement.scrollIntoView({ behavior: "smooth" });
+					},
+				},
+			});
+		}
+	}, [toast]);
 
 	const [bills, setBills] = useState<Bill[]>([]);
 	const [stats, setStats] = useState<any>(null);
@@ -207,7 +252,7 @@ export default function Bills() {
 
 						<form action={formAction} className='mt-6 space-y-6'>
 							<div className='grid gap-1'>
-								<label className='block text-sm font-medium text-gray-300'>
+								<label htmlFor='name' className='block text-sm font-medium text-gray-300'>
 									Bill Name
 								</label>
 								<input
@@ -228,7 +273,7 @@ export default function Bills() {
 
 							<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
 								<div className='grid gap-1'>
-									<label className='block text-sm font-medium text-gray-300'>
+									<label htmlFor='amount' className='block text-sm font-medium text-gray-300'>
 										Amount (USD)
 									</label>
 									<div className='relative'>
@@ -253,7 +298,7 @@ export default function Bills() {
 								</div>
 
 								<div className='grid gap-1'>
-									<label className='block text-sm font-medium text-gray-300'>
+									<label htmlFor='dueDate' className='block text-sm font-medium text-gray-300'>
 										Due Date
 									</label>
 									<input
@@ -272,17 +317,132 @@ export default function Bills() {
 								</div>
 							</div>
 
-							<label className='flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-black/20 p-4'>
-								<input
-									type='checkbox'
-									name='recurring'
-									id='recurring'
-									className='h-5 w-5 rounded border-gray-500 bg-[#1a1a1a] text-red-600 focus:ring-red-500'
-								/>
-								<span className='text-sm font-medium text-gray-300'>
-									Recurring bill (for monthly or scheduled payments)
-								</span>
-							</label>
+							<section
+								className={`rounded-2xl border p-4 transition-colors ${
+									isRecurring
+										? "border-red-500/35 bg-red-500/10"
+										: "border-white/[0.08] bg-black/20"
+								}`}
+								aria-labelledby='recurring-bill-label'>
+								<input type='hidden' name='recurring' value={isRecurring ? "true" : "false"} />
+								<input type='hidden' name='recurrenceLabel' value={isRecurring ? recurrencePreview : ""} />
+								<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+									<div className='flex min-w-0 items-start gap-3'>
+										<div className='mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-white/10 bg-white/5 text-red-300'>
+											<CalendarClock className='h-4 w-4' aria-hidden='true' />
+										</div>
+										<div className='min-w-0'>
+											<div className='flex flex-wrap items-center gap-2'>
+												<label
+													id='recurring-bill-label'
+													htmlFor='recurring-toggle'
+													className='text-sm font-semibold text-white'>
+													Repeat this bill
+												</label>
+												<span
+													className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${
+														isRecurring
+															? "border-red-400/40 bg-red-500/15 text-red-200"
+															: "border-white/10 bg-white/5 text-white/45"
+													}`}>
+													{isRecurring ? "On" : "Off"}
+												</span>
+											</div>
+											<p className='mt-1 text-sm leading-5 text-gray-400'>
+												{isRecurring
+													? `${recurrencePreview}; reminders start ${reminderLead} days before each due date.`
+													: "Leave off for one-time bills, or turn on to add a visible payment schedule."}
+											</p>
+										</div>
+									</div>
+									<Toggle
+										id='recurring-toggle'
+										enabled={isRecurring}
+										onChange={setIsRecurring}
+										ariaLabelledBy='recurring-bill-label'
+									/>
+								</div>
+
+								{isRecurring && (
+									<div className='mt-4 grid gap-4 border-t border-white/10 pt-4 md:grid-cols-3'>
+										<div className='grid gap-1'>
+											<label htmlFor='recurrenceFrequency' className='text-xs font-semibold uppercase tracking-[0.14em] text-white/50'>
+												Repeats
+											</label>
+											<select
+												id='recurrenceFrequency'
+												name='recurrenceFrequency'
+												value={frequency}
+												onChange={(event) => setFrequency(event.target.value)}
+												className='w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-3 text-sm text-white focus:border-transparent focus:ring-2 focus:ring-red-500'>
+												<option value='monthly'>Monthly</option>
+												<option value='weekly'>Weekly</option>
+											</select>
+										</div>
+
+										{frequency === "monthly" ? (
+											<div className='grid gap-1'>
+												<label htmlFor='recurrenceDayOfMonth' className='text-xs font-semibold uppercase tracking-[0.14em] text-white/50'>
+													Day
+												</label>
+												<select
+													id='recurrenceDayOfMonth'
+													name='recurrenceDayOfMonth'
+													value={monthlyDay}
+													onChange={(event) => setMonthlyDay(event.target.value)}
+													className='w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-3 text-sm text-white focus:border-transparent focus:ring-2 focus:ring-red-500'>
+													{Array.from({ length: 28 }, (_, index) => `${index + 1}`).map((day) => (
+														<option key={day} value={day}>
+															{ordinalDay(day)}
+														</option>
+													))}
+												</select>
+											</div>
+										) : (
+											<div className='grid gap-1'>
+												<label htmlFor='recurrenceDayOfWeek' className='text-xs font-semibold uppercase tracking-[0.14em] text-white/50'>
+													Day
+												</label>
+												<select
+													id='recurrenceDayOfWeek'
+													name='recurrenceDayOfWeek'
+													value={weeklyDay}
+													onChange={(event) => setWeeklyDay(event.target.value)}
+													className='w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-3 text-sm text-white focus:border-transparent focus:ring-2 focus:ring-red-500'>
+													{weekDays.map((day) => (
+														<option key={day} value={day}>
+															{day}
+														</option>
+													))}
+												</select>
+											</div>
+										)}
+
+										<div className='grid gap-1'>
+											<label htmlFor='recurrenceReminderLead' className='text-xs font-semibold uppercase tracking-[0.14em] text-white/50'>
+												Reminder
+											</label>
+											<select
+												id='recurrenceReminderLead'
+												name='recurrenceReminderLead'
+												value={reminderLead}
+												onChange={(event) => setReminderLead(event.target.value)}
+												className='w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-3 text-sm text-white focus:border-transparent focus:ring-2 focus:ring-red-500'>
+												<option value='1'>1 day before</option>
+												<option value='3'>3 days before</option>
+												<option value='5'>5 days before</option>
+											</select>
+										</div>
+
+										<div className='rounded-xl border border-white/10 bg-black/25 px-3 py-3 md:col-span-3'>
+											<p className='text-xs font-semibold uppercase tracking-[0.14em] text-white/45'>
+												Card label preview
+											</p>
+											<p className='mt-1 text-sm font-semibold text-white'>{recurrencePreview}</p>
+										</div>
+									</div>
+								)}
+							</section>
 
 							<AsyncSubmissionStatus
 								pending={pending}

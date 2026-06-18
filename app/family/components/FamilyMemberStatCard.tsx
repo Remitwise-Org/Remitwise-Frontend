@@ -56,43 +56,37 @@ const FamilyMemberStatCard: React.FC<FamilyMemberStatCardProps> = ({
 	};
 
 	const getUsageMeta = (usedPercentage: number) => {
-		if (usedPercentage >= 80) {
+		if (usedPercentage >= 100) {
 			return {
-				label: "Approaching limit",
-				textClass: "text-red-200",
-				badgeClass: "border-red-500/30 bg-red-500/[0.12] text-red-100",
-				barClass: "bg-gradient-to-r from-red-600 to-red-400",
-				helper: "Review this member's allowance soon.",
+				label: "Over limit",
+				textClass: "text-status-error-fg",
+				badgeClass: "border-status-error-border bg-status-error-bg text-status-error-fg",
+				barClass: "bg-status-error-fg",
+				panelBorderClass: "border-status-error-border",
+				helper: "Exceeded monthly limit.",
 			};
 		}
 
-		if (usedPercentage >= 40) {
+		if (usedPercentage >= 75) {
 			return {
-				label: "On track",
-				textClass: "text-amber-100",
-				badgeClass: "border-amber-500/30 bg-amber-500/[0.12] text-amber-100",
-				barClass: "bg-gradient-to-r from-amber-500 to-orange-400",
-				helper: "Usage is within the expected range.",
-			};
-		}
-
-		if (usedPercentage > 0) {
-			return {
-				label: "Low usage",
-				textClass: "text-emerald-100",
-				badgeClass:
-					"border-emerald-500/30 bg-emerald-500/[0.12] text-emerald-100",
-				barClass: "bg-gradient-to-r from-emerald-500 to-emerald-300",
-				helper: "This member still has plenty of budget available.",
+				label: "Near limit",
+				textClass: "text-status-warning-fg",
+				badgeClass: "border-status-warning-border bg-status-warning-bg text-status-warning-fg",
+				barClass: "bg-status-warning-fg",
+				panelBorderClass: "border-status-warning-border",
+				helper: "Approaching spending cap.",
 			};
 		}
 
 		return {
-			label: "Unused",
-			textClass: "text-gray-300",
-			badgeClass: "border-white/10 bg-white/[0.03] text-gray-200",
-			barClass: "bg-white/10",
-			helper: "No spending recorded yet this month.",
+			label: "On track",
+			textClass: "text-status-success-fg",
+			badgeClass: "border-status-success-border bg-status-success-bg text-status-success-fg",
+			barClass: "bg-status-success-fg",
+			panelBorderClass: "border-white/[0.08]",
+			helper: usedPercentage > 0
+				? "Usage is within range."
+				: "No spending recorded yet.",
 		};
 	};
 
@@ -113,7 +107,7 @@ const FamilyMemberStatCard: React.FC<FamilyMemberStatCardProps> = ({
 
 	const roleMeta = getRoleMeta(member.role);
 	const usageMeta = getUsageMeta(member.usedPercentage);
-	const remaining = Math.max(member.spendingLimit - member.used, 0);
+	const remaining = member.spendingLimit - member.used;
 
 	return (
 		<article className='rounded-3xl border border-white/10 bg-[linear-gradient(180deg,rgba(36,11,11,0.92),rgba(13,13,13,0.98))] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.32)]'>
@@ -209,13 +203,13 @@ const FamilyMemberStatCard: React.FC<FamilyMemberStatCardProps> = ({
 					<p className='text-xs font-semibold uppercase tracking-[0.18em] text-gray-500'>
 						Remaining
 					</p>
-					<p className='mt-3 text-lg font-semibold text-white'>
+					<p className={`mt-3 text-lg font-semibold ${remaining < 0 ? "text-status-error-fg" : "text-white"}`}>
 						{currencyFormatter.format(remaining)}
 					</p>
 				</div>
 			</div>
 
-			<div className='mt-4 rounded-2xl border border-white/[0.08] bg-black/25 p-4'>
+			<div className={`mt-4 rounded-2xl border bg-black/25 p-4 ${usageMeta.panelBorderClass}`}>
 				<div className='flex flex-wrap items-center justify-between gap-2'>
 					<p className='text-sm font-medium text-white'>Utilization</p>
 					<p className={`text-sm ${usageMeta.textClass}`}>{usageMeta.helper}</p>
@@ -224,7 +218,7 @@ const FamilyMemberStatCard: React.FC<FamilyMemberStatCardProps> = ({
 				<div className='mt-4 h-2.5 w-full overflow-hidden rounded-full bg-white/[0.06]'>
 					<div
 						className={`h-full rounded-full transition-all duration-500 ${usageMeta.barClass}`}
-						style={{ width: `${member.usedPercentage}%` }}></div>
+						style={{ width: `${Math.min(member.usedPercentage, 100)}%` }}></div>
 				</div>
 
 				<div className='mt-3 flex items-center justify-between text-sm text-gray-400'>

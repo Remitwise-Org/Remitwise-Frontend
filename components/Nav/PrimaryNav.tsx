@@ -2,13 +2,16 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Send, LayoutDashboard, FileText, Shield, Users, Settings } from "lucide-react";
+import { Send, LayoutDashboard, FileText, Shield, Users, Settings, Bell } from "lucide-react";
 import Logo from "./Logo";
 import WalletButton from "../WalletButton";
 import MobileNav from "./MobileNav";
+import { useWhatsNewOptional } from "@/lib/context/WhatsNewContext";
+import WhatsNewBadge from "@/components/Dashboard/WhatsNewBadge";
 
 const PrimaryNav = () => {
     const pathname = usePathname();
+    const whatsNew = useWhatsNewOptional();
 
     const links = [
         { name: "Send", href: "/send", icon: <Send className="w-4 h-4" /> },
@@ -57,7 +60,18 @@ const PrimaryNav = () => {
                     </nav>
 
                     {/* Right: Wallet & Mobile Menu Toggle */}
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3">
+                        {whatsNew && (
+                            <button
+                                onClick={whatsNew.toggle}
+                                aria-label="What's New"
+                                aria-expanded={whatsNew.isOpen}
+                                className="relative flex items-center justify-center w-10 h-10 rounded-full text-white/60 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
+                            >
+                                <Bell className="w-5 h-5" />
+                                <WhatsNewBadge className="top-1.5 right-1.5 w-5 h-5" />
+                            </button>
+                        )}
                         <WalletButton />
                         <div className="lg:hidden">
                             <MobileNav />

@@ -54,10 +54,9 @@ const goalsData = [
     description: 'Family vacation to the beach',
     icon: <Plane className="w-6 h-6" />,
     iconGradient: { from: '#F87171', to: '#EF4444' },
-    currentAmount: 1200,
+    currentAmount: 3000,
     targetAmount: 3000,
     targetDate: 'Jul 1, 2025',
-    daysLeft: 152,
     isOverdue: false,
   },
 ]

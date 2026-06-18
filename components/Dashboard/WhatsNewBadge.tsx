@@ -20,8 +20,10 @@ export default function WhatsNewBadge({ className = "" }: WhatsNewBadgeProps) {
         >
             {/* Pulsing outer ring */}
             <span className="absolute inline-flex w-full h-full rounded-full bg-brand-red opacity-60 animate-ping" />
-            {/* Solid dot */}
-            <span className="relative inline-flex rounded-full w-2.5 h-2.5 bg-brand-red border border-[#111111]" />
+            {/* Solid badge with count */}
+            <span className="relative inline-flex items-center justify-center min-w-full h-full px-1 rounded-full bg-brand-red border border-[#111111] text-[10px] font-bold leading-none text-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
         </span>
     );
 }

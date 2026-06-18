@@ -87,3 +87,6 @@ export function useWhatsNew(): WhatsNewContextValue {
     }
     return ctx;
 }
+export function useWhatsNewOptional(): WhatsNewContextValue | null {
+    return useContext(WhatsNewContext);
+}

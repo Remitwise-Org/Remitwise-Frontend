@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -42,24 +42,67 @@ export interface Transaction {
   status: TransactionStatus;
 }
 
-const getIcon = (type: TransactionType) => {
+const typeVisuals: Record<
+  TransactionType,
+  { background: string; border: string; icon: string }
+> = {
+  "Send Money": {
+    background: "bg-sky-500/10",
+    border: "border-sky-400/20",
+    icon: "text-sky-300",
+  },
+  "Smart Split": {
+    background: "bg-violet-500/10",
+    border: "border-violet-400/20",
+    icon: "text-violet-300",
+  },
+  "Bill Payment": {
+    background: "bg-amber-500/10",
+    border: "border-amber-400/20",
+    icon: "text-amber-300",
+  },
+  Insurance: {
+    background: "bg-emerald-500/10",
+    border: "border-emerald-400/20",
+    icon: "text-emerald-300",
+  },
+  Savings: {
+    background: "bg-lime-500/10",
+    border: "border-lime-400/20",
+    icon: "text-lime-300",
+  },
+  "Family Transfer": {
+    background: "bg-cyan-500/10",
+    border: "border-cyan-400/20",
+    icon: "text-cyan-300",
+  },
+  Received: {
+    background: "bg-fuchsia-500/10",
+    border: "border-fuchsia-400/20",
+    icon: "text-fuchsia-300",
+  },
+};
+
+const getIcon = (type: TransactionType, className?: string) => {
+  const iconClassName = className ?? `w-5 h-5 ${typeVisuals[type].icon}`;
+
   switch (type) {
     case "Send Money":
-      return <Send className="w-5 h-5 text-red-500" />; // Red-orange approximation
+      return <Send className={iconClassName} />;
     case "Smart Split":
-      return <GitBranch className="w-5 h-5 text-red-500" />;
+      return <GitBranch className={iconClassName} />;
     case "Bill Payment":
-      return <FileText className="w-5 h-5 text-red-500" />;
+      return <FileText className={iconClassName} />;
     case "Insurance":
-      return <Shield className="w-5 h-5 text-red-500" />;
+      return <Shield className={iconClassName} />;
     case "Savings":
-      return <TrendingUp className="w-5 h-5 text-red-500" />;
+      return <TrendingUp className={iconClassName} />;
     case "Family Transfer":
-      return <Users className="w-5 h-5 text-red-500" />;
+      return <Users className={iconClassName} />;
     case "Received":
-      return <ArrowDownLeft className="w-5 h-5 text-red-500" />;
+      return <ArrowDownLeft className={iconClassName} />;
     default:
-      return <Send className="w-5 h-5 text-red-500" />;
+      return <Send className={iconClassName} />;
   }
 };
 
@@ -98,6 +141,7 @@ export default function TransactionHistoryItem({
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const isNegative = transaction.amount < 0;
+  const typeVisual = typeVisuals[transaction.type];
 
   // Format amount
   const formattedAmount = `${isNegative ? "-" : "+"}${Math.abs(transaction.amount).toFixed(2)} ${transaction.currency}`;
@@ -105,10 +149,10 @@ export default function TransactionHistoryItem({
   if (density === "compact") {
     return (
       <div className="border border-[#FFFFFF14] bg-bg3 rounded-xl px-4 py-3 mb-2 hover:bg-[#111] transition-colors flex items-center gap-4">
-        <div className="w-8 h-8 bg-[#1A0505] rounded-lg flex items-center justify-center border border-[#2A1515] flex-shrink-0 text-[#FF4B26]">
-          {React.cloneElement(getIcon(transaction.type) as React.ReactElement, {
-            className: "w-4 h-4 text-red-500",
-          })}
+        <div
+          className={`w-8 h-8 rounded-lg flex items-center justify-center border flex-shrink-0 ${typeVisual.background} ${typeVisual.border}`}
+        >
+          {getIcon(transaction.type, `w-4 h-4 ${typeVisual.icon}`)}
         </div>
 
         <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-2 items-center">
@@ -236,7 +280,9 @@ export default function TransactionHistoryItem({
   return (
     <div className="border border-[#FFFFFF14] bg-gradient-to-t from-bg2 to-bg3 rounded-2xl p-6 mb-4 hover:border-[#333] transition-colors">
       <div className="flex gap-4">
-        <div className="w-12 h-12 bg-[#1A0505] rounded-xl flex items-center justify-center border border-[#2A1515] flex-shrink-0 text-[#FF4B26] mr-2">
+        <div
+          className={`w-12 h-12 rounded-xl flex items-center justify-center border flex-shrink-0 mr-2 ${typeVisual.background} ${typeVisual.border}`}
+        >
           {getIcon(transaction.type)}
         </div>
 

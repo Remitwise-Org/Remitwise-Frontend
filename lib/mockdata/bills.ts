@@ -23,7 +23,7 @@ const rawBills: Omit<Bill, 'status' | 'daysInfo'>[] = [
     amount: 800,
     dueDate: daysFromNow(2),
     isRecurring: true,
-    recurrenceLabel: 'Monthly',
+    recurrenceLabel: 'Monthly on the 1st',
     nextOccurrence: daysFromNow(32),
   },
   {
@@ -33,7 +33,7 @@ const rawBills: Omit<Bill, 'status' | 'daysInfo'>[] = [
     amount: 150,
     dueDate: daysFromNow(6),
     isRecurring: true,
-    recurrenceLabel: 'Monthly',
+    recurrenceLabel: 'Monthly on the 15th',
     nextOccurrence: daysFromNow(36),
   },
   {
@@ -43,7 +43,7 @@ const rawBills: Omit<Bill, 'status' | 'daysInfo'>[] = [
     amount: 60,
     dueDate: daysFromNow(11),
     isRecurring: true,
-    recurrenceLabel: 'Monthly',
+    recurrenceLabel: 'Monthly on the 5th',
     nextOccurrence: daysFromNow(41),
   },
   {
@@ -53,7 +53,7 @@ const rawBills: Omit<Bill, 'status' | 'daysInfo'>[] = [
     amount: 60,
     dueDate: daysFromNow(-3),
     isRecurring: true,
-    recurrenceLabel: 'Monthly',
+    recurrenceLabel: 'Monthly on the 5th',
     nextOccurrence: daysFromNow(27),
   },
 ];
@@ -75,7 +75,7 @@ export const mockPaidBills: Bill[] = [
     daysInfo: 'Paid',
     status: 'paid',
     isRecurring: true,
-    recurrenceLabel: 'Monthly',
+    recurrenceLabel: 'Monthly on the 20th',
   },
   {
     id: 'p2',

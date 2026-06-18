@@ -1,16 +1,7 @@
 'use client'
 
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from 'recharts'
-import { Activity } from 'lucide-react'
+import { INSIGHTS_PALETTE } from './palette';
+const LINE_COLOR = INSIGHTS_PALETTE[0];
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
@@ -53,8 +44,8 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   const point = payload[0]?.payload as TrendDataPoint
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-3 shadow-2xl text-sm">
-      <p className="text-gray-400 font-medium mb-2">{label}</p>
+    <div className="rounded-xl border border-white/10 bg-black/80 px-4 py-3 shadow-2xl text-sm" aria-live="polite" role="region" aria-label="Remittance trend tooltip">
+      <p className="text-gray-400 font-medium mb-2">{label}</p
       <div className="space-y-1">
         <div className="flex justify-between gap-6">
           <span className="text-gray-400">Amount</span>
@@ -179,6 +170,10 @@ export function RemittanceTrendChart({
           />
         </AreaChart>
       </ResponsiveContainer>
+      {/* Screen‑reader summary */}
+      <p className="sr-only" aria-live="polite">
+        {data.map(d => `${d.date}: $${d.amount.toLocaleString()} (${d.transactions} transactions)`).join(', ')}
+      </p>
     </div>
   )
 }

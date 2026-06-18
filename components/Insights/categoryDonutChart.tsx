@@ -10,6 +10,7 @@ import {
   type TooltipProps,
 } from 'recharts'
 import { PieChart as PieChartIcon, Info } from 'lucide-react'
+import { INSIGHTS_PALETTE } from './palette';
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ export const MOCK_CATEGORY_DATA: CategoryDataPoint[] = [
   { name: 'Emergency',      amount: 200,  percentage: 6  },
 ]
 
-const SLICE_COLORS = ['#D72323', '#0ea5e9', '#f59e0b', '#10b981']
+const SLICE_COLORS = INSIGHTS_PALETTE.slice(0, 8); // use first 8 colors
 
 const AXIS_COLOR = '#6b7280'
 
@@ -42,7 +43,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   const data  = entry.payload as CategoryDataPoint
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-3 shadow-2xl text-sm">
+    <div className="rounded-xl border border-white/10 bg-black/80 px-4 py-3 shadow-2xl text-sm" aria-live="polite" role="region" aria-label="Category donut chart tooltip">
       <div className="flex items-center gap-2 mb-1.5">
         <span
           className="inline-block w-2.5 h-2.5 rounded-full"
@@ -233,6 +234,10 @@ export function CategoryDonutChart({ data = MOCK_CATEGORY_DATA }: CategoryDonutC
           </p>
         </div>
       )}
+      {/* Screen‑reader summary for the chart */}
+      <p className="sr-only" aria-live="polite">
+        {data.map(d => `${d.name}: ${d.percentage}% amount $${d.amount.toLocaleString()}`).join(', ')}
+      </p>
     </div>
   )
 }

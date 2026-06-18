@@ -33,15 +33,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const toast = useCallback((options: Omit<Toast, "id">): string => {
     const id = `toast-${++counterRef.current}`;
-    const duration = options.duration ?? 5000;
+    const duration = options.duration ?? (options.action ? 0 : 5000);
     setToasts((prev) => [...prev, { ...options, id, duration }]);
-
-    if (duration > 0) {
-      setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
-      }, duration);
-    }
-
     return id;
   }, []);
 

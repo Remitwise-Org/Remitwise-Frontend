@@ -9,6 +9,6 @@ interface Bill {
     isRecurring?: boolean;
     /** ISO date string for the next occurrence (recurring bills only) */
     nextOccurrence?: string;
-    /** Human-readable recurrence label e.g. "Monthly" */
+    /** Human-readable recurrence label e.g. "Monthly on the 1st" */
     recurrenceLabel?: string;
 }

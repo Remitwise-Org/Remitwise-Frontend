@@ -23,6 +23,10 @@ The frontend includes placeholder pages and components for:
 6. **Micro-Insurance** - Policy management and premium payments
 7. **Family Wallets** - Family member management with roles and spending limits
 
+## Loading States
+
+Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
+
 ## Getting Started
 
 ### Environment Configuration
@@ -691,6 +695,32 @@ Insurance endpoints (v1)
 Notes:
 
 - These endpoints return transaction XDRs composed with `manageData` operations to encode policy actions. If you prefer Soroban contract invocations, I can convert the builders to use contract calls.
+
+## Stellar TOML discovery
+
+RemitWise exposes wallet and anchor discovery support through the Stellar TOML standard.
+
+- `GET /.well-known/stellar.toml`
+- optional redirect via `STELLAR_TOML_REDIRECT`
+
+The endpoint returns a valid Stellar TOML file with discovery fields such as:
+
+- `DOCUMENTATION`
+- `SIGNING_KEY`
+- `TRANSFER_SERVER`
+- `WEB_AUTH_ENDPOINT`
+- `KYC_SERVER`
+
+To configure a custom domain, set environment variables in production or host a static TOML at the domain root. If the domain is not ready yet, use `STELLAR_TOML_REDIRECT` to point wallets to a hosted TOML.
+
+Example environment variables:
+
+- `STELLAR_TOML_REDIRECT`
+- `STELLAR_SIGNING_KEY`
+- `STELLAR_DOCUMENTATION_URL`
+- `STELLAR_TRANSFER_SERVER`
+- `STELLAR_WEB_AUTH_ENDPOINT`
+- `STELLAR_KYC_SERVER`
 
 ## API Discovery
 

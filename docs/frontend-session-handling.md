@@ -20,7 +20,8 @@ Core module for detecting and handling session expiry.
 **Key Functions:**
 
 - `isSessionExpired(response)` - Checks if a response indicates session expiry (401 with "Session expired" message)
-- `handleSessionExpiry(intendedPath)` - Orchestrates the expiry flow: clears state, triggers notification, redirects
+- `handleSessionExpiry(intendedPath)` - Orchestrates the expiry flow: clears state, triggers notification, redirects after 15s safety timeout
+- `dispatchSessionExpiring(countdown?, message?)` - Dispatches a `session-expiring` event to show the proactive warning with countdown
 - `clearAuthState()` - Removes local authentication data from localStorage
 
 **Usage:**
@@ -224,7 +225,16 @@ function LoginComponent() {
 }
 ```
 
-## Session Expiry Flow
+## Session Expiry — Warning Flow (Proactive)
+
+1. Backend or idle timer signals the session is about to expire
+2. `sessionHandler.dispatchSessionExpiring(countdown)` dispatches a `session-expiring` custom event
+3. Session expiry provider listens for the event and shows the **warning** notification with countdown
+4. If user clicks **"Stay signed in"**: a `session-refresh` event is dispatched; the provider should call the session refresh API; the warning clears
+5. If countdown reaches 0: the notification auto-transitions to the **expired** state
+6. If an API call returns 401 during the warning period: the `session-expired` event is dispatched, transitioning to expired
+
+## Session Expiry — Expired Flow
 
 1. User makes a request to a protected API endpoint
 2. Backend detects expired session and returns 401 with `{ error: 'Unauthorized', message: 'Session expired' }`
@@ -232,10 +242,11 @@ function LoginComponent() {
 4. Session handler clears local authentication state
 5. Session handler stores the current path for post-auth redirect
 6. Session handler triggers a `session-expired` custom event
-7. Session expiry provider listens for the event and shows notification
-8. User is redirected to the home/login page
-9. User reconnects their wallet
-10. After successful authentication, user is redirected back to their intended destination
+7. Session expiry provider listens for the event and shows **expired** notification
+8. User clicks **"Reconnect wallet"** (or auto-redirect fires after 15s safety timeout)
+9. User is redirected to the home/login page
+10. User reconnects their wallet
+11. After successful authentication via `getPostAuthRedirect()`, user is redirected back to their intended destination
 
 ## Logout Flow
 
@@ -256,6 +267,31 @@ The session handling system uses the following localStorage keys:
 
 ## Custom Events
 
+### `session-expiring`
+
+Dispatched when the session is about to expire (proactive warning).
+
+**Event Detail:**
+
+```typescript
+{
+  message: 'Your session will expire in 120 seconds...',
+  countdown: 120  // seconds remaining
+}
+```
+
+**Dispatching the Event:**
+
+```typescript
+import { sessionHandler } from '@/lib/client/sessionHandler';
+
+// Default 120s countdown
+sessionHandler.dispatchSessionExpiring();
+
+// Custom countdown and message
+sessionHandler.dispatchSessionExpiring(60, 'Custom warning message');
+```
+
 ### `session-expired`
 
 Dispatched when a session expiry is detected.
@@ -273,6 +309,16 @@ Dispatched when a session expiry is detected.
 ```typescript
 window.addEventListener('session-expired', (event: CustomEvent) => {
   console.log(event.detail.message);
+});
+```
+
+### `session-refresh`
+
+Dispatched when the user clicks "Stay signed in". A handler should call the session refresh API.
+
+```typescript
+window.addEventListener('session-refresh', async () => {
+  await fetch('/api/auth/refresh', { method: 'POST' });
 });
 ```
 

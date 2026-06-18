@@ -5,6 +5,7 @@ import LayoutWrapper from "@/components/LayoutWrapper";
 import { DensityProvider } from "@/lib/context/DensityContext";
 import { ToastProvider } from "@/lib/context/ToastContext";
 import ToastRegion from "@/components/ToastRegion";
+import SessionExpiryProvider from "@/components/SessionExpiryProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,10 +25,12 @@ export default function RootLayout({
       <body className={`${inter.className} starry-bg min-h-screen`}>
         <ToastProvider>
           <DensityProvider>
-            <LayoutWrapper>
-              {children}
-            </LayoutWrapper>
-            <ToastRegion />
+            <SessionExpiryProvider>
+              <LayoutWrapper>
+                {children}
+              </LayoutWrapper>
+              <ToastRegion />
+            </SessionExpiryProvider>
           </DensityProvider>
         </ToastProvider>
       </body>

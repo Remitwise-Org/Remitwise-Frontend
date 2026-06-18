@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/lib/context/ToastContext";
 import EmergencyTransferModal from "./components/EmergencyTransferModal";
 import SendHeader from "./components/SendHeader";
 import RecipientAddressInput from "./components/RecipientAddressInput";
@@ -19,6 +20,7 @@ export default function SendMoney() {
   
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [transactionData, setTransactionData] = useState<any>(null);
+  const { toast } = useToast();
 
   const handleRecipientContinue = () => {
     if (recipient) {
@@ -52,6 +54,11 @@ export default function SendMoney() {
     
     setTransactionData(mockData);
     setIsSubmitted(true);
+    toast({
+      variant: "success",
+      title: "Transfer submitted",
+      description: `Successfully sent ${amount} ${currency} to ${mockData.recipientAddress}.`,
+    });
     console.log(`Send ${amount} ${currency} to ${recipient}`);
   };
 

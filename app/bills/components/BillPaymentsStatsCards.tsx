@@ -1,6 +1,6 @@
 'use client'
 
-import { Receipt, AlertCircle, TrendingUp } from 'lucide-react'
+import { Receipt, AlertCircle, TrendingUp, Clock3 } from 'lucide-react'
 
 type StatsData = {
   totalUnpaid: { amount: string; pendingCount: number }
@@ -37,16 +37,33 @@ export default function BillPaymentsStatsCards({
 
       {/* Overdue Bills */}
       <div className="relative rounded-2xl bg-[#0f0f0f] p-5 sm:p-6 border border-white/5">
-        <div className="absolute top-4 right-4 sm:top-5 sm:right-5 flex items-center justify-center w-8 h-8 rounded-full bg-red-500/20 text-red-500">
-          <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2} />
-        </div>
-        <p className="text-sm text-gray-400 mb-1">Overdue Bills</p>
-        <p className="text-2xl sm:text-3xl font-bold text-white">
-          {stats.overdueCount}
-        </p>
-        <p className="text-sm text-red-500 font-medium mt-1">
-          Requires immediate attention
-        </p>
+        {stats.overdueCount > 0 ? (
+          <>
+            <div className="absolute top-4 right-4 sm:top-5 sm:right-5 flex items-center justify-center w-8 h-8 rounded-full bg-red-500/20 text-red-500">
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2} />
+            </div>
+            <p className="text-sm text-gray-400 mb-1">Overdue Bills</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white">
+              {stats.overdueCount}
+            </p>
+            <p className="text-sm text-red-500 font-medium mt-1">
+              Requires immediate attention
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="absolute top-4 right-4 sm:top-5 sm:right-5 flex items-center justify-center w-8 h-8 rounded-full bg-white/5 text-gray-400">
+              <Clock3 className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.5} />
+            </div>
+            <p className="text-sm text-gray-400 mb-1">Overdue Bills</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white">
+              0
+            </p>
+            <p className="text-sm text-gray-400 mt-1">
+              No overdue bills
+            </p>
+          </>
+        )}
       </div>
 
       {/* Paid This Month */}

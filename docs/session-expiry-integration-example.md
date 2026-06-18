@@ -131,14 +131,25 @@ export default function HomePage() {
 
 ## What Happens When Session Expires
 
+### Passive detection (current)
+
 1. User is on `/dashboard` and their session expires
 2. They click a button that makes an API request
 3. API returns 401 with "Session expired" message
-4. Session expiry notification appears at top-right
-5. User is redirected to `/` (home page)
-6. `/dashboard` is stored in localStorage as `redirect_after_auth`
-7. User reconnects their wallet
-8. After successful connection, they're redirected back to `/dashboard`
+4. **Expired** notification appears at top-right with "Reconnect wallet" button
+5. User clicks "Reconnect wallet" (or auto-redirect after 15s)
+6. User is redirected to `/` (home page)
+7. `/dashboard` is stored in localStorage as `redirect_after_auth`
+8. User reconnects their wallet
+9. After successful connection, they're redirected back to `/dashboard`
+
+### Proactive warning (with backend support)
+
+1. Backend signals session is about to expire
+2. **Warning** notification appears with countdown timer
+3. User clicks "Stay signed in" to refresh the session
+4. Warning clears and session is extended
+5. If countdown reaches 0, the notification transitions to the expired state
 
 ## Testing
 
@@ -165,6 +176,29 @@ To test the session expiry flow:
 ### Custom Notification Style
 
 Edit `components/SessionExpiryNotification.tsx` to match your design system.
+
+The notification supports two phases — `warning` (amber countdown bar) and `expired` (red reconnect bar) — via the `phase` prop.
+
+### Triggering a Proactive Warning
+
+To show the countdown warning before the session actually expires:
+
+```typescript
+import { sessionHandler } from '@/lib/client/sessionHandler';
+
+// Show warning with 120s countdown
+sessionHandler.dispatchSessionExpiring(120);
+```
+
+### Handling "Stay Signed In"
+
+Listen for the `session-refresh` event to call the session refresh API:
+
+```typescript
+window.addEventListener('session-refresh', async () => {
+  await fetch('/api/auth/refresh', { method: 'POST' });
+});
+```
 
 ### Custom Redirect Path
 
