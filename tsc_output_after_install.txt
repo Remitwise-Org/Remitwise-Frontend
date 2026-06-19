@@ -1,0 +1,630 @@
+app/api/anchor/rates/route.ts(6,5): error TS2305: Module '"@/lib/anchor/rates-cache"' has no exported member 'isCacheFresh'.
+app/api/anchor/rates/route.ts(7,5): error TS2305: Module '"@/lib/anchor/rates-cache"' has no exported member 'isCacheStale'.
+app/bills/page.tsx(142,5): error TS2304: Cannot find name 'apiClient'.
+app/bills/page.tsx(143,5): error TS2304: Cannot find name 'apiClient'.
+app/bills/page.tsx(203,8): error TS2304: Cannot find name 'WidgetErrorState'.
+app/bills/page.tsx(211,8): error TS2304: Cannot find name 'SkeletonList'.
+app/bills/page.tsx(212,8): error TS2304: Cannot find name 'SkeletonList'.
+app/bills/page.tsx(221,28): error TS2322: Type '{ bills: Bill[]; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'bills' does not exist on type 'IntrinsicAttributes'.
+app/bills/page.tsx(225,31): error TS2322: Type 'Bill[]' is not assignable to type 'import("/home/collins/grantfox/Remitwise-Frontend/lib/contracts/bill-payments").Bill[]'.
+  Type 'Bill' is missing the following properties from type 'Bill': owner, name, recurring
+app/dashboard/transaction-history/page.tsx(136,13): error TS2367: This comparison appears to be unintentional because the types 'TxStatus' and '"pending"' have no overlap.
+app/dashboard/transaction-history/page.tsx(517,70): error TS2322: Type 'Transaction' is not assignable to type 'import("/home/collins/grantfox/Remitwise-Frontend/components/Dashboard/TransactionHistoryItem").Transaction'.
+  Types of property 'type' are incompatible.
+    Type 'string' is not assignable to type 'TransactionType'.
+app/emergency-transfer/page.tsx(126,66): error TS2367: This comparison appears to be unintentional because the types '"amount" | "review" | "confirm"' and '"recipient"' have no overlap.
+app/family/components/FamilyMemberSection.tsx(76,8): error TS2304: Cannot find name 't'.
+app/family/components/FamilyMemberSection.tsx(79,8): error TS2304: Cannot find name 't'.
+app/family/components/FamilyMemberSection.tsx(82,8): error TS2304: Cannot find name 't'.
+app/family/components/FamilyMemberSection.tsx(89,9): error TS2304: Cannot find name 't'.
+app/family/components/FamilyMemberSection.tsx(95,9): error TS2304: Cannot find name 't'.
+app/family/components/FamilyMemberSection.tsx(101,9): error TS2304: Cannot find name 't'.
+app/family/components/FamilyMemberSection.tsx(107,9): error TS2304: Cannot find name 't'.
+app/family/components/FamilyMemberSection.tsx(115,9): error TS2304: Cannot find name 't'.
+app/family/components/FamilyMemberSection.tsx(121,9): error TS2304: Cannot find name 't'.
+app/family/components/FamilyMemberSection.tsx(129,7): error TS2304: Cannot find name 't'.
+app/family/components/FamilyMemberSection.tsx(132,7): error TS2304: Cannot find name 't'.
+app/family/components/FamilyMemberSection.tsx(135,7): error TS2304: Cannot find name 't'.
+app/family/components/FamilyMemberStatCard.tsx(32,16): error TS2304: Cannot find name 'useClientTranslator'.
+app/insurance/page.tsx(236,18): error TS2304: Cannot find name 'PolicyCard'.
+app/layout.tsx(13,25): error TS2323: Cannot redeclare exported variable 'default'.
+app/layout.tsx(13,25): error TS2393: Duplicate function implementation.
+app/layout.tsx(30,25): error TS2323: Cannot redeclare exported variable 'default'.
+app/layout.tsx(30,25): error TS2393: Duplicate function implementation.
+app/layout.tsx(43,10): error TS2304: Cannot find name 'ContractOperationsProvider'.
+app/layout.tsx(51,11): error TS2304: Cannot find name 'ContractOperationsProvider'.
+app/split/page.tsx(239,9): error TS2739: Type '{}' is missing the following properties from type 'HowItWorksModalProps': isOpen, onClose
+components/Bills/BillsCard.tsx(66,13): error TS2304: Cannot find name 'getStatusStyles'.
+components/Bills/RecentPaymentsSection.tsx(20,17): error TS2304: Cannot find name 'mockPaidBills'.
+components/Bills/RecentPaymentsSection.tsx(34,38): error TS2739: Type 'Bill' is missing the following properties from type 'Bill': title, category, daysInfo
+components/Bills/UnpaidBillsSection.tsx(9,47): error TS2322: Type '"overdue"' is not assignable to type '"paid" | "unpaid" | "cancelled"'.
+components/Bills/UnpaidBillsSection.tsx(9,58): error TS2322: Type '"urgent"' is not assignable to type '"paid" | "unpaid" | "cancelled"'.
+components/Bills/UnpaidBillsSection.tsx(9,68): error TS2322: Type '"upcoming"' is not assignable to type '"paid" | "unpaid" | "cancelled"'.
+components/Bills/UnpaidBillsSection.tsx(11,25): error TS2304: Cannot find name 'bills'.
+components/Bills/UnpaidBillsSection.tsx(11,39): error TS7006: Parameter 'bill' implicitly has an 'any' type.
+components/Bills/UnpaidBillsSection.tsx(14,54): error TS7006: Parameter 'bill' implicitly has an 'any' type.
+components/Bills/UnpaidBillsSection.tsx(17,47): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+components/Bills/UnpaidBillsSection.tsx(17,52): error TS7006: Parameter 'bill' implicitly has an 'any' type.
+components/Bills/UnpaidBillsSection.tsx(22,44): error TS2322: Type '"overdue"' is not assignable to type '"paid" | "unpaid" | "cancelled"'.
+components/Bills/UnpaidBillsSection.tsx(22,55): error TS2322: Type '"urgent"' is not assignable to type '"paid" | "unpaid" | "cancelled"'.
+components/Bills/UnpaidBillsSection.tsx(22,65): error TS2322: Type '"upcoming"' is not assignable to type '"paid" | "unpaid" | "cancelled"'.
+components/Bills/UnpaidBillsSection.tsx(51,41): error TS7006: Parameter 'bill' implicitly has an 'any' type.
+components/RootErrorBoundary.test.tsx(2,43): error TS2307: Cannot find module '@testing-library/react' or its corresponding type declarations.
+components/Toast.test.tsx(8,48): error TS2307: Cannot find module '@testing-library/react' or its corresponding type declarations.
+components/Toast.test.tsx(9,41): error TS2307: Cannot find module 'jest-axe' or its corresponding type declarations.
+components/Toast.test.tsx(110,23): error TS2339: Property 'toHaveNoViolations' does not exist on type 'Assertion<any>'.
+components/ToastContext.test.tsx(8,37): error TS2307: Cannot find module '@testing-library/react' or its corresponding type declarations.
+components/ToastContext.test.tsx(10,41): error TS2307: Cannot find module 'jest-axe' or its corresponding type declarations.
+components/ToastContext.test.tsx(37,23): error TS2339: Property 'toHaveNoViolations' does not exist on type 'Assertion<any>'.
+components/ToastRegion.test.tsx(8,46): error TS2307: Cannot find module '@testing-library/react' or its corresponding type declarations.
+components/ToastRegion.test.tsx(9,41): error TS2307: Cannot find module 'jest-axe' or its corresponding type declarations.
+components/ToastRegion.test.tsx(108,23): error TS2339: Property 'toHaveNoViolations' does not exist on type 'Assertion<any>'.
+components/ToastRegion.test.tsx(131,23): error TS2339: Property 'toHaveNoViolations' does not exist on type 'Assertion<any>'.
+components/WalletButton.tsx(17,11): error TS2339: Property 'address' does not exist on type 'WalletContextValue'.
+components/WalletButton.tsx(17,20): error TS2339: Property 'connected' does not exist on type 'WalletContextValue'.
+components/insurance/PolicyDetail.tsx(18,34): error TS2307: Cannot find module '@/hooks/usePolicyActions' or its corresponding type declarations.
+lib/client/apiClient.ts(85,21): error TS2339: Property '_isRetry' does not exist on type 'ApiClientOptions'.
+lib/client/apiClient.ts(90,45): error TS2353: Object literal may only specify known properties, and '_isRetry' does not exist in type 'ApiClientOptions'.
+lib/utils/format-currency.test.ts(3,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/utils/format-currency.test.ts(4,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/utils/format-currency.test.ts(5,5): error TS2304: Cannot find name 'expect'.
+lib/utils/format-currency.test.ts(8,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/utils/format-currency.test.ts(9,5): error TS2304: Cannot find name 'expect'.
+lib/utils/format-currency.test.ts(12,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/utils/format-currency.test.ts(13,5): error TS2304: Cannot find name 'expect'.
+lib/utils/format-currency.test.ts(16,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/utils/format-currency.test.ts(17,5): error TS2304: Cannot find name 'expect'.
+lib/utils/format-currency.test.ts(20,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/utils/format-currency.test.ts(22,5): error TS2304: Cannot find name 'expect'.
+lib/utils/format-currency.test.ts(26,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/utils/format-currency.test.ts(27,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/utils/format-currency.test.ts(28,5): error TS2304: Cannot find name 'expect'.
+sentry.client.config.ts(25,3): error TS2322: Type '(event: ErrorEvent) => Event' is not assignable to type '(event: ErrorEvent, hint: EventHint) => ErrorEvent | PromiseLike<ErrorEvent | null> | null'.
+  Type 'Event' is not assignable to type 'ErrorEvent | PromiseLike<ErrorEvent | null> | null'.
+    Type 'Event' is not assignable to type 'ErrorEvent'.
+      Types of property 'type' are incompatible.
+        Type 'EventType' is not assignable to type 'undefined'.
+          Type '"transaction"' is not assignable to type 'undefined'.
+sentry.server.config.ts(23,3): error TS2322: Type '(event: ErrorEvent) => Event' is not assignable to type '(event: ErrorEvent, hint: EventHint) => ErrorEvent | PromiseLike<ErrorEvent | null> | null'.
+  Type 'Event' is not assignable to type 'ErrorEvent | PromiseLike<ErrorEvent | null> | null'.
+    Type 'Event' is not assignable to type 'ErrorEvent'.
+      Types of property 'type' are incompatible.
+        Type 'EventType' is not assignable to type 'undefined'.
+          Type '"transaction"' is not assignable to type 'undefined'.
+src/App.tsx(1,55): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/App.tsx(2,50): error TS2307: Cannot find module '@tanstack/react-query' or its corresponding type declarations.
+src/App.tsx(3,25): error TS2307: Cannot find module '@/components/ui/toaster' or its corresponding type declarations.
+src/App.tsx(4,33): error TS2307: Cannot find module '@/components/ui/tooltip' or its corresponding type declarations.
+src/App.tsx(14,18): error TS2307: Cannot find module '@/pages/home' or its corresponding type declarations.
+src/App.tsx(15,23): error TS2307: Cannot find module '@/pages/dashboard' or its corresponding type declarations.
+src/App.tsx(16,18): error TS2307: Cannot find module '@/pages/send' or its corresponding type declarations.
+src/App.tsx(17,26): error TS2307: Cannot find module '@/pages/transactions' or its corresponding type declarations.
+src/App.tsx(18,19): error TS2307: Cannot find module '@/pages/bills' or its corresponding type declarations.
+src/App.tsx(19,20): error TS2307: Cannot find module '@/pages/family' or its corresponding type declarations.
+src/App.tsx(20,22): error TS2307: Cannot find module '@/pages/insights' or its corresponding type declarations.
+src/App.tsx(21,23): error TS2307: Cannot find module '@/pages/insurance' or its corresponding type declarations.
+src/App.tsx(22,22): error TS2307: Cannot find module '@/pages/settings' or its corresponding type declarations.
+src/App.tsx(23,19): error TS2307: Cannot find module '@/pages/split' or its corresponding type declarations.
+src/App.tsx(24,31): error TS2307: Cannot find module '@/pages/financial-insights' or its corresponding type declarations.
+src/App.tsx(25,31): error TS2307: Cannot find module '@/pages/emergency-transfer' or its corresponding type declarations.
+src/App.tsx(26,18): error TS2307: Cannot find module '@/pages/fund' or its corresponding type declarations.
+src/App.tsx(27,22): error TS2307: Cannot find module '@/pages/not-found' or its corresponding type declarations.
+src/App.tsx(63,51): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/components/Bills/BillsCard.tsx(5,10): error TS2305: Module '"@/lib/mockdata/bills"' has no exported member 'Bill'.
+src/components/Bills/RecentPaymentsSection.tsx(5,10): error TS2305: Module '"@/lib/mockdata/bills"' has no exported member 'Bill'.
+src/components/Bills/UnpaidBillsSection.tsx(4,10): error TS2305: Module '"@/lib/mockdata/bills"' has no exported member 'Bill'.
+src/components/Bills/UnpaidBillsSection.tsx(19,10): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type 'Record<BillUrgency, Bill[]>'.
+src/components/Bills/UnpaidBillsSection.tsx(19,29): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type 'Record<BillUrgency, Bill[]>'.
+src/components/CurrentMoneySplitWidget.tsx(3,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/Dashboard/DashboardHeader.tsx(3,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/Dashboard/EmergencyTransferModal.tsx(34,5): error TS2353: Object literal may only specify known properties, and 'onOverlayClick' does not exist in type 'UseFocusTrapOptions'.
+src/components/Dashboard/QuickActions.tsx(3,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/Dashboard/RecentTransactionsWidget.tsx(4,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/Dashboard/TransactionHistoryItem.tsx(19,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/FinalCallToAction.tsx(1,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/FinancialInsightsHeader.tsx(3,29): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/FinancialInsightsHeader.tsx(5,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/Hero.tsx(1,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/HowItWorksModal.tsx(24,5): error TS2353: Object literal may only specify known properties, and 'onOverlayClick' does not exist in type 'UseFocusTrapOptions'.
+src/components/Insights/spendingVsSavingChart.tsx(158,30): error TS2322: Type '({ active, payload, label }: { active?: boolean | undefined; payload?: TooltipPayloadEntry[] | undefined; label?: string | undefined; }) => Element | null' is not assignable to type 'ContentType<ValueType, NameType> | undefined'.
+  Type '({ active, payload, label }: { active?: boolean | undefined; payload?: TooltipPayloadEntry[] | undefined; label?: string | undefined; }) => Element | null' is not assignable to type '(props: TooltipContentProps<ValueType, NameType>) => ReactNode'.
+    Types of parameters '__0' and 'props' are incompatible.
+      Type 'TooltipContentProps<ValueType, NameType>' is not assignable to type '{ active?: boolean | undefined; payload?: TooltipPayloadEntry[] | undefined; label?: string | undefined; }'.
+        Types of property 'payload' are incompatible.
+          The type 'readonly any[]' is 'readonly' and cannot be assigned to the mutable type 'TooltipPayloadEntry[]'.
+src/components/LayoutWrapper.tsx(3,29): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/MobileMenu.tsx(5,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/Nav/Logo.tsx(4,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/Nav/MobileNav.tsx(11,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/Nav/MobileNav.tsx(12,29): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/Nav/PrimaryNav.tsx(3,29): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/Nav/PrimaryNav.tsx(4,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/Nav/PrimaryNav.tsx(72,34): error TS2304: Cannot find name 'Bell'.
+src/components/Nav/SubNav.tsx(3,29): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/Nav/SubNav.tsx(4,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/NavLinks.tsx(1,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/PageHeader.tsx(3,29): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/SettingsHeader.tsx(3,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/SettingsHeader.tsx(4,29): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/SmartMoneySplitHeader.tsx(3,29): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/Toast.test.tsx(8,48): error TS2307: Cannot find module '@testing-library/react' or its corresponding type declarations.
+src/components/Toast.test.tsx(9,41): error TS2307: Cannot find module 'jest-axe' or its corresponding type declarations.
+src/components/Toast.test.tsx(110,23): error TS2339: Property 'toHaveNoViolations' does not exist on type 'Assertion<any>'.
+src/components/ToastContext.test.tsx(8,37): error TS2307: Cannot find module '@testing-library/react' or its corresponding type declarations.
+src/components/ToastContext.test.tsx(10,41): error TS2307: Cannot find module 'jest-axe' or its corresponding type declarations.
+src/components/ToastContext.test.tsx(37,23): error TS2339: Property 'toHaveNoViolations' does not exist on type 'Assertion<any>'.
+src/components/ToastRegion.test.tsx(8,46): error TS2307: Cannot find module '@testing-library/react' or its corresponding type declarations.
+src/components/ToastRegion.test.tsx(9,41): error TS2307: Cannot find module 'jest-axe' or its corresponding type declarations.
+src/components/ToastRegion.test.tsx(108,23): error TS2339: Property 'toHaveNoViolations' does not exist on type 'Assertion<any>'.
+src/components/ToastRegion.test.tsx(131,23): error TS2339: Property 'toHaveNoViolations' does not exist on type 'Assertion<any>'.
+src/components/TransactionSuccessReceipt.tsx(17,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/footer.tsx(2,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/tutorials/ChapterView.tsx(4,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/tutorials/ChapterView.tsx(5,29): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/tutorials/TutorialCard.tsx(1,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/ui/WidgetEmptyState.tsx(3,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/components/ui/WidgetErrorBoundary.tsx(35,5): error TS2554: Expected 4-6 arguments, but got 3.
+src/components/ui/accordion.tsx(2,37): error TS2307: Cannot find module '@radix-ui/react-accordion' or its corresponding type declarations.
+src/components/ui/accordion.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/alert-dialog.tsx(2,39): error TS2307: Cannot find module '@radix-ui/react-alert-dialog' or its corresponding type declarations.
+src/components/ui/alert-dialog.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/alert-dialog.tsx(5,32): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+src/components/ui/alert.tsx(2,40): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/alert.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/aspect-ratio.tsx(1,39): error TS2307: Cannot find module '@radix-ui/react-aspect-ratio' or its corresponding type declarations.
+src/components/ui/avatar.tsx(4,34): error TS2307: Cannot find module '@radix-ui/react-avatar' or its corresponding type declarations.
+src/components/ui/avatar.tsx(6,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/badge.tsx(2,40): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/badge.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/badge.tsx(37,29): error TS2339: Property 'variant' does not exist on type 'BadgeProps'.
+src/components/ui/breadcrumb.tsx(2,22): error TS2307: Cannot find module '@radix-ui/react-slot' or its corresponding type declarations.
+src/components/ui/breadcrumb.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/button-group.tsx(1,22): error TS2307: Cannot find module '@radix-ui/react-slot' or its corresponding type declarations.
+src/components/ui/button-group.tsx(2,40): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/button-group.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/button-group.tsx(5,27): error TS2307: Cannot find module '@/components/ui/separator' or its corresponding type declarations.
+src/components/ui/button.tsx(2,22): error TS2307: Cannot find module '@radix-ui/react-slot' or its corresponding type declarations.
+src/components/ui/button.tsx(3,40): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/button.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/button.tsx(52,17): error TS2339: Property 'variant' does not exist on type 'ButtonProps'.
+src/components/ui/button.tsx(52,26): error TS2339: Property 'size' does not exist on type 'ButtonProps'.
+src/components/ui/calendar.tsx(9,60): error TS2307: Cannot find module 'react-day-picker' or its corresponding type declarations.
+src/components/ui/calendar.tsx(11,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/calendar.tsx(12,40): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+src/components/ui/calendar.tsx(39,31): error TS7006: Parameter 'date' implicitly has an 'any' type.
+src/components/ui/calendar.tsx(128,18): error TS7031: Binding element 'className' implicitly has an 'any' type.
+src/components/ui/calendar.tsx(128,29): error TS7031: Binding element 'rootRef' implicitly has an 'any' type.
+src/components/ui/calendar.tsx(138,21): error TS7031: Binding element 'className' implicitly has an 'any' type.
+src/components/ui/calendar.tsx(138,32): error TS7031: Binding element 'orientation' implicitly has an 'any' type.
+src/components/ui/calendar.tsx(159,24): error TS7031: Binding element 'children' implicitly has an 'any' type.
+src/components/ui/card.tsx(3,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/carousel.tsx(4,8): error TS2307: Cannot find module 'embla-carousel-react' or its corresponding type declarations.
+src/components/ui/carousel.tsx(7,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/carousel.tsx(8,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+src/components/ui/chart.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/chart.tsx(117,7): error TS2339: Property 'payload' does not exist on type 'Omit<Omit<Props<ValueType, NameType>, PropertiesReadFromContext> & { active?: boolean | undefined; allowEscapeViewBox?: AllowInDimension | undefined; ... 24 more ...; wrapperStyle?: CSSProperties | undefined; } & ClassAttributes<...> & HTMLAttributes<...> & { ...; }, "ref">'.
+src/components/ui/chart.tsx(122,7): error TS2339: Property 'label' does not exist on type 'Omit<Omit<Props<ValueType, NameType>, PropertiesReadFromContext> & { active?: boolean | undefined; allowEscapeViewBox?: AllowInDimension | undefined; ... 24 more ...; wrapperStyle?: CSSProperties | undefined; } & ClassAttributes<...> & HTMLAttributes<...> & { ...; }, "ref">'.
+src/components/ui/chart.tsx(187,22): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/components/ui/chart.tsx(188,19): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/components/ui/chart.tsx(188,25): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/components/ui/chart.tsx(264,41): error TS2344: Type '"payload" | "verticalAlign"' does not satisfy the constraint '"string" | "name" | "path" | "local" | "key" | "method" | "type" | "values" | "filter" | "fill" | "origin" | "id" | "from" | "to" | "cursor" | "result" | "transform" | "target" | ... 425 more ... | "onBBoxUpdate"'.
+  Type '"payload"' is not assignable to type '"string" | "name" | "path" | "local" | "key" | "method" | "type" | "values" | "filter" | "fill" | "origin" | "id" | "from" | "to" | "cursor" | "result" | "transform" | "target" | ... 425 more ... | "onBBoxUpdate"'.
+src/components/ui/chart.tsx(275,19): error TS2339: Property 'length' does not exist on type '{}'.
+src/components/ui/chart.tsx(289,12): error TS2339: Property 'filter' does not exist on type '{}'.
+src/components/ui/chart.tsx(289,20): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/components/ui/chart.tsx(290,17): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/components/ui/checkbox.tsx(2,36): error TS2307: Cannot find module '@radix-ui/react-checkbox' or its corresponding type declarations.
+src/components/ui/checkbox.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/collapsible.tsx(3,39): error TS2307: Cannot find module '@radix-ui/react-collapsible' or its corresponding type declarations.
+src/components/ui/command.tsx(4,34): error TS2307: Cannot find module '@radix-ui/react-dialog' or its corresponding type declarations.
+src/components/ui/command.tsx(5,45): error TS2307: Cannot find module 'cmdk' or its corresponding type declarations.
+src/components/ui/command.tsx(8,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/command.tsx(9,39): error TS2307: Cannot find module '@/components/ui/dialog' or its corresponding type declarations.
+src/components/ui/context-menu.tsx(2,39): error TS2307: Cannot find module '@radix-ui/react-context-menu' or its corresponding type declarations.
+src/components/ui/context-menu.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/dialog.tsx(2,34): error TS2307: Cannot find module '@radix-ui/react-dialog' or its corresponding type declarations.
+src/components/ui/dialog.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/drawer.tsx(2,43): error TS2307: Cannot find module 'vaul' or its corresponding type declarations.
+src/components/ui/drawer.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/dropdown-menu.tsx(4,40): error TS2307: Cannot find module '@radix-ui/react-dropdown-menu' or its corresponding type declarations.
+src/components/ui/dropdown-menu.tsx(7,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/empty.tsx(1,40): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/empty.tsx(3,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/field.tsx(4,40): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/field.tsx(6,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/field.tsx(7,23): error TS2307: Cannot find module '@/components/ui/label' or its corresponding type declarations.
+src/components/ui/field.tsx(8,27): error TS2307: Cannot find module '@/components/ui/separator' or its corresponding type declarations.
+src/components/ui/form.tsx(2,33): error TS2307: Cannot find module '@radix-ui/react-label' or its corresponding type declarations.
+src/components/ui/form.tsx(3,22): error TS2307: Cannot find module '@radix-ui/react-slot' or its corresponding type declarations.
+src/components/ui/form.tsx(11,8): error TS2307: Cannot find module 'react-hook-form' or its corresponding type declarations.
+src/components/ui/form.tsx(13,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/form.tsx(14,23): error TS2307: Cannot find module '@/components/ui/label' or its corresponding type declarations.
+src/components/ui/hover-card.tsx(2,37): error TS2307: Cannot find module '@radix-ui/react-hover-card' or its corresponding type declarations.
+src/components/ui/hover-card.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/input-group.tsx(2,40): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/input-group.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/input-group.tsx(5,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+src/components/ui/input-group.tsx(6,23): error TS2307: Cannot find module '@/components/ui/input' or its corresponding type declarations.
+src/components/ui/input-group.tsx(7,26): error TS2307: Cannot find module '@/components/ui/textarea' or its corresponding type declarations.
+src/components/ui/input-otp.tsx(2,43): error TS2307: Cannot find module 'input-otp' or its corresponding type declarations.
+src/components/ui/input-otp.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/input-otp.tsx(36,44): error TS18047: 'inputOTPContext' is possibly 'null'.
+src/components/ui/input-otp.tsx(36,60): error TS2339: Property 'slots' does not exist on type 'string | number | boolean | ServerContextJSONArray | { [key: string]: ServerContextJSONValue; }'.
+  Property 'slots' does not exist on type 'string'.
+src/components/ui/input.tsx(3,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/item.tsx(2,22): error TS2307: Cannot find module '@radix-ui/react-slot' or its corresponding type declarations.
+src/components/ui/item.tsx(3,40): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/item.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/item.tsx(6,27): error TS2307: Cannot find module '@/components/ui/separator' or its corresponding type declarations.
+src/components/ui/kbd.tsx(1,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/label.tsx(4,33): error TS2307: Cannot find module '@radix-ui/react-label' or its corresponding type declarations.
+src/components/ui/label.tsx(5,40): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/label.tsx(7,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/menubar.tsx(2,35): error TS2307: Cannot find module '@radix-ui/react-menubar' or its corresponding type declarations.
+src/components/ui/menubar.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/navigation-menu.tsx(2,42): error TS2307: Cannot find module '@radix-ui/react-navigation-menu' or its corresponding type declarations.
+src/components/ui/navigation-menu.tsx(3,21): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/navigation-menu.tsx(6,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/pagination.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/pagination.tsx(5,45): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+src/components/ui/pagination.tsx(68,5): error TS2783: 'size' is specified more than once, so this usage will be overwritten.
+src/components/ui/pagination.tsx(84,5): error TS2783: 'size' is specified more than once, so this usage will be overwritten.
+src/components/ui/popover.tsx(2,35): error TS2307: Cannot find module '@radix-ui/react-popover' or its corresponding type declarations.
+src/components/ui/popover.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/progress.tsx(4,36): error TS2307: Cannot find module '@radix-ui/react-progress' or its corresponding type declarations.
+src/components/ui/progress.tsx(6,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/radio-group.tsx(2,38): error TS2307: Cannot find module '@radix-ui/react-radio-group' or its corresponding type declarations.
+src/components/ui/radio-group.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/resizable.tsx(4,37): error TS2307: Cannot find module 'react-resizable-panels' or its corresponding type declarations.
+src/components/ui/resizable.tsx(6,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/scroll-area.tsx(2,38): error TS2307: Cannot find module '@radix-ui/react-scroll-area' or its corresponding type declarations.
+src/components/ui/scroll-area.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/select.tsx(4,34): error TS2307: Cannot find module '@radix-ui/react-select' or its corresponding type declarations.
+src/components/ui/select.tsx(7,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/separator.tsx(2,37): error TS2307: Cannot find module '@radix-ui/react-separator' or its corresponding type declarations.
+src/components/ui/separator.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/sheet.tsx(4,33): error TS2307: Cannot find module '@radix-ui/react-dialog' or its corresponding type declarations.
+src/components/ui/sheet.tsx(5,40): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/sheet.tsx(8,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/sheet.tsx(59,6): error TS2339: Property 'side' does not exist on type 'SheetContentProps'.
+src/components/ui/sheet.tsx(59,22): error TS2339: Property 'className' does not exist on type 'SheetContentProps'.
+src/components/ui/sheet.tsx(59,33): error TS2339: Property 'children' does not exist on type 'SheetContentProps'.
+src/components/ui/sidebar.tsx(4,22): error TS2307: Cannot find module '@radix-ui/react-slot' or its corresponding type declarations.
+src/components/ui/sidebar.tsx(5,35): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/sidebar.tsx(8,29): error TS2307: Cannot find module '@/hooks/use-mobile' or its corresponding type declarations.
+src/components/ui/sidebar.tsx(9,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/sidebar.tsx(10,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+src/components/ui/sidebar.tsx(11,23): error TS2307: Cannot find module '@/components/ui/input' or its corresponding type declarations.
+src/components/ui/sidebar.tsx(12,27): error TS2307: Cannot find module '@/components/ui/separator' or its corresponding type declarations.
+src/components/ui/sidebar.tsx(19,8): error TS2307: Cannot find module '@/components/ui/sheet' or its corresponding type declarations.
+src/components/ui/sidebar.tsx(26,8): error TS2307: Cannot find module '@/components/ui/tooltip' or its corresponding type declarations.
+src/components/ui/sidebar.tsx(270,17): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/components/ui/slider.tsx(2,34): error TS2307: Cannot find module '@radix-ui/react-slider' or its corresponding type declarations.
+src/components/ui/slider.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/sonner.tsx(3,26): error TS2307: Cannot find module 'next-themes' or its corresponding type declarations.
+src/components/ui/sonner.tsx(4,35): error TS2307: Cannot find module 'sonner' or its corresponding type declarations.
+src/components/ui/spinner.tsx(3,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/switch.tsx(2,35): error TS2307: Cannot find module '@radix-ui/react-switch' or its corresponding type declarations.
+src/components/ui/switch.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/table.tsx(3,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/tabs.tsx(2,32): error TS2307: Cannot find module '@radix-ui/react-tabs' or its corresponding type declarations.
+src/components/ui/tabs.tsx(4,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/textarea.tsx(3,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/toast.tsx(2,34): error TS2307: Cannot find module '@radix-ui/react-toast' or its corresponding type declarations.
+src/components/ui/toast.tsx(3,40): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/toast.tsx(6,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/toaster.tsx(1,26): error TS2307: Cannot find module '@/hooks/use-toast' or its corresponding type declarations.
+src/components/ui/toaster.tsx(9,8): error TS2307: Cannot find module '@/components/ui/toast' or its corresponding type declarations.
+src/components/ui/toaster.tsx(16,31): error TS7031: Binding element 'id' implicitly has an 'any' type.
+src/components/ui/toaster.tsx(16,35): error TS7031: Binding element 'title' implicitly has an 'any' type.
+src/components/ui/toaster.tsx(16,42): error TS7031: Binding element 'description' implicitly has an 'any' type.
+src/components/ui/toaster.tsx(16,55): error TS7031: Binding element 'action' implicitly has an 'any' type.
+src/components/ui/toggle-group.tsx(4,39): error TS2307: Cannot find module '@radix-ui/react-toggle-group' or its corresponding type declarations.
+src/components/ui/toggle-group.tsx(5,35): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/toggle-group.tsx(7,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/toggle-group.tsx(8,32): error TS2307: Cannot find module '@/components/ui/toggle' or its corresponding type declarations.
+src/components/ui/toggle.tsx(2,34): error TS2307: Cannot find module '@radix-ui/react-toggle' or its corresponding type declarations.
+src/components/ui/toggle.tsx(3,40): error TS2307: Cannot find module 'class-variance-authority' or its corresponding type declarations.
+src/components/ui/toggle.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/components/ui/tooltip.tsx(4,35): error TS2307: Cannot find module '@radix-ui/react-tooltip' or its corresponding type declarations.
+src/components/ui/tooltip.tsx(6,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+src/hooks/use-toast.ts(6,8): error TS2307: Cannot find module '@/components/ui/toast' or its corresponding type declarations.
+src/hooks/use-toast.ts(158,22): error TS7006: Parameter 'open' implicitly has an 'any' type.
+src/lib/hooks/useAnchorFlow.ts(18,3): error TS2305: Module '"@/lib/anchor/client"' has no exported member 'fetchRates'.
+src/lib/hooks/useAnchorFlow.ts(19,3): error TS2305: Module '"@/lib/anchor/client"' has no exported member 'initiateDeposit'.
+src/lib/hooks/useAnchorFlow.ts(20,3): error TS2305: Module '"@/lib/anchor/client"' has no exported member 'initiateWithdraw'.
+src/lib/hooks/useAnchorFlow.ts(23,3): error TS2305: Module '"@/lib/anchor/rates-cache"' has no exported member 'getCachedRates'.
+src/lib/hooks/useAnchorFlow.ts(24,3): error TS2305: Module '"@/lib/anchor/rates-cache"' has no exported member 'isRateExpired'.
+src/lib/hooks/useAnchorFlow.ts(25,3): error TS2305: Module '"@/lib/anchor/rates-cache"' has no exported member 'isRateStale'.
+src/lib/hooks/useAnchorFlow.ts(26,3): error TS2305: Module '"@/lib/anchor/rates-cache"' has no exported member 'setRatesCache'.
+src/lib/hooks/useAnchorFlow.ts(27,8): error TS2305: Module '"@/lib/anchor/rates-cache"' has no exported member 'AnchorRate'.
+src/lib/hooks/useAnchorFlow.ts(30,3): error TS2305: Module '"@/lib/anchor/flow-store"' has no exported member 'clearFlow'.
+src/lib/hooks/useAnchorFlow.ts(31,3): error TS2305: Module '"@/lib/anchor/flow-store"' has no exported member 'getFlow'.
+src/lib/hooks/useAnchorFlow.ts(32,3): error TS2305: Module '"@/lib/anchor/flow-store"' has no exported member 'startFlow'.
+src/lib/hooks/useAnchorFlow.ts(33,3): error TS2305: Module '"@/lib/anchor/flow-store"' has no exported member 'subscribeFlow'.
+src/lib/hooks/useAnchorFlow.ts(34,3): error TS2305: Module '"@/lib/anchor/flow-store"' has no exported member 'updateFlow'.
+src/lib/hooks/useAnchorFlow.ts(35,8): error TS2305: Module '"@/lib/anchor/flow-store"' has no exported member 'AnchorFlow'.
+src/lib/hooks/useAnchorFlow.ts(36,8): error TS2305: Module '"@/lib/anchor/flow-store"' has no exported member 'FlowDirection'.
+src/lib/hooks/useAnchorFlow.ts(174,19): error TS2339: Property 'fetchFlowStatus' does not exist on type 'typeof import("/home/collins/grantfox/Remitwise-Frontend/lib/anchor/client")'.
+src/lib/hooks/useFocusTrap.ts(154,45): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(type: "touchstart", listener: (this: Document, ev: TouchEvent) => any, options?: boolean | AddEventListenerOptions | undefined): void', gave the following error.
+    Argument of type '(event: MouseEvent) => void' is not assignable to parameter of type '(this: Document, ev: TouchEvent) => any'.
+      Types of parameters 'event' and 'ev' are incompatible.
+        Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.
+  Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | undefined): void', gave the following error.
+    Argument of type '(event: MouseEvent) => void' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.
+      Type '(event: MouseEvent) => void' is not assignable to type 'EventListener'.
+        Types of parameters 'event' and 'evt' are incompatible.
+          Type 'Event' is missing the following properties from type 'MouseEvent': altKey, button, buttons, clientX, and 23 more.
+src/lib/hooks/useFocusTrap.ts(162,50): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(type: "touchstart", listener: (this: Document, ev: TouchEvent) => any, options?: boolean | EventListenerOptions | undefined): void', gave the following error.
+    Argument of type '(event: MouseEvent) => void' is not assignable to parameter of type '(this: Document, ev: TouchEvent) => any'.
+      Types of parameters 'event' and 'ev' are incompatible.
+        Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.
+  Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions | undefined): void', gave the following error.
+    Argument of type '(event: MouseEvent) => void' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.
+      Type '(event: MouseEvent) => void' is not assignable to type 'EventListener'.
+        Types of parameters 'event' and 'evt' are incompatible.
+          Type 'Event' is missing the following properties from type 'MouseEvent': altKey, button, buttons, clientX, and 23 more.
+src/lib/mockdata/recurringRemittances.ts(2,37): error TS2307: Cannot find module '@/lib/types/recurringRemittance.types' or its corresponding type declarations.
+src/lib/ui/status-semantics.ts(9,10): error TS2305: Module '"@/lib/mockdata/bills"' has no exported member 'Bill'.
+src/lib/ui/status-semantics.ts(77,68): error TS2366: Function lacks ending return statement and return type does not include 'undefined'.
+src/lib/utils/format-currency.test.ts(3,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/utils/format-currency.test.ts(4,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/utils/format-currency.test.ts(5,5): error TS2304: Cannot find name 'expect'.
+src/lib/utils/format-currency.test.ts(8,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/utils/format-currency.test.ts(9,5): error TS2304: Cannot find name 'expect'.
+src/lib/utils/format-currency.test.ts(12,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/utils/format-currency.test.ts(13,5): error TS2304: Cannot find name 'expect'.
+src/lib/utils/format-currency.test.ts(16,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/utils/format-currency.test.ts(17,5): error TS2304: Cannot find name 'expect'.
+src/lib/utils/format-currency.test.ts(20,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/utils/format-currency.test.ts(22,5): error TS2304: Cannot find name 'expect'.
+src/lib/utils/format-currency.test.ts(26,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/utils/format-currency.test.ts(27,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/utils/format-currency.test.ts(28,5): error TS2304: Cannot find name 'expect'.
+src/pages/bills/index.tsx(15,21): error TS2305: Module '"@/lib/mockdata/bills"' has no exported member 'Bill'.
+src/pages/dashboard/transaction-history/components/components/transaction-history-header.tsx(5,29): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/pages/emergency-transfer.tsx(4,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/pages/fund/index.tsx(15,31): error TS2307: Cannot find module '@/lib/hooks/useAnchorFlow' or its corresponding type declarations.
+src/pages/fund/index.tsx(17,15): error TS2305: Module '"@/lib/anchor/flow-store"' has no exported member 'AnchorFlow'.
+src/pages/fund/index.tsx(17,27): error TS2305: Module '"@/lib/anchor/flow-store"' has no exported member 'FlowDirection'.
+src/pages/fund/index.tsx(18,15): error TS2305: Module '"@/lib/anchor/rates-cache"' has no exported member 'AnchorRate'.
+src/pages/fund/index.tsx(401,36): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/pages/insurance/index.tsx(2,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/pages/not-found.tsx(1,35): error TS2307: Cannot find module '@/components/ui/card' or its corresponding type declarations.
+src/pages/send/components/SendHeader.tsx(3,29): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+src/pages/split/index.tsx(4,22): error TS2307: Cannot find module 'wouter' or its corresponding type declarations.
+tests/property/validation-properties.test.ts(288,53): error TS2353: Object literal may only specify known properties, and 'alphabet' does not exist in type 'StringConstraints'.
+tests/property/validation-properties.test.ts(320,38): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+tests/session/config.test.ts(8,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(11,3): error TS2304: Cannot find name 'beforeEach'.
+tests/session/config.test.ts(13,5): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(17,3): error TS2304: Cannot find name 'afterAll'.
+tests/session/config.test.ts(22,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(23,5): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(24,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(27,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(32,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(35,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(40,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(43,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(46,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(49,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(53,5): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(54,7): error TS2304: Cannot find name 'beforeEach'.
+tests/session/config.test.ts(58,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(60,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(64,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(65,11): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(67,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(68,11): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(73,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(75,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(79,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(80,11): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(85,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(87,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(91,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(92,11): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(97,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(99,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(103,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(107,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(109,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(113,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(118,5): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(119,7): error TS2304: Cannot find name 'beforeEach'.
+tests/session/config.test.ts(123,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(125,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(129,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(135,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(137,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(141,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(147,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(149,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(153,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(159,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(161,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(165,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(172,5): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(173,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(178,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(179,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(181,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(182,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(183,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(191,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(196,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(197,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(199,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(200,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(201,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(209,7): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/config.test.ts(214,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(215,25): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/config.test.ts(217,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(218,9): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(219,11): error TS2304: Cannot find name 'expect'.
+tests/session/config.test.ts(221,9): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(10,1): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(11,12): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(16,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logging.test.ts(18,28): error TS2694: Namespace 'global.jest' has no exported member 'SpyInstance'.
+tests/session/logging.test.ts(20,3): error TS2304: Cannot find name 'beforeEach'.
+tests/session/logging.test.ts(21,5): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(24,22): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(27,3): error TS2304: Cannot find name 'afterEach'.
+tests/session/logging.test.ts(31,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logging.test.ts(32,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logging.test.ts(47,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(48,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(53,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(54,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(55,9): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(58,22): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(59,22): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(64,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logging.test.ts(79,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(80,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(88,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(89,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(90,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(91,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(94,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logging.test.ts(108,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(109,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(117,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(118,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(119,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(120,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(121,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(125,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logging.test.ts(126,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logging.test.ts(142,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(143,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(148,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(149,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(150,9): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(153,22): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(154,22): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(159,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logging.test.ts(175,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(176,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(184,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(185,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(186,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(187,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(190,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logging.test.ts(206,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(207,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(215,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(216,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(217,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(218,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(219,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(222,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logging.test.ts(238,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(239,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(245,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(249,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logging.test.ts(250,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logging.test.ts(264,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(265,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logging.test.ts(273,7): error TS2304: Cannot find name 'expect'.
+tests/session/logging.test.ts(274,7): error TS2304: Cannot find name 'expect'.
+tests/session/logout.test.ts(8,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logout.test.ts(9,3): error TS2304: Cannot find name 'beforeEach'.
+tests/session/logout.test.ts(10,5): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/logout.test.ts(15,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logout.test.ts(19,5): error TS2304: Cannot find name 'expect'.
+tests/session/logout.test.ts(20,5): error TS2304: Cannot find name 'expect'.
+tests/session/logout.test.ts(21,5): error TS2304: Cannot find name 'expect'.
+tests/session/logout.test.ts(24,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logout.test.ts(28,5): error TS2304: Cannot find name 'expect'.
+tests/session/logout.test.ts(29,5): error TS2304: Cannot find name 'expect'.
+tests/session/logout.test.ts(30,5): error TS2304: Cannot find name 'expect'.
+tests/session/logout.test.ts(31,5): error TS2304: Cannot find name 'expect'.
+tests/session/logout.test.ts(32,5): error TS2304: Cannot find name 'expect'.
+tests/session/logout.test.ts(33,5): error TS2304: Cannot find name 'expect'.
+tests/session/logout.test.ts(36,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logout.test.ts(41,5): error TS2304: Cannot find name 'expect'.
+tests/session/logout.test.ts(42,5): error TS2304: Cannot find name 'expect'.
+tests/session/logout.test.ts(43,5): error TS2304: Cannot find name 'expect'.
+tests/session/logout.test.ts(46,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/logout.test.ts(53,5): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(10,1): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(11,12): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(16,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/protected-routes.test.ts(19,3): error TS2304: Cannot find name 'beforeEach'.
+tests/session/protected-routes.test.ts(20,5): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(26,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/protected-routes.test.ts(27,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/protected-routes.test.ts(31,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(32,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(38,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(39,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(40,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(41,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(42,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(43,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(46,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/protected-routes.test.ts(62,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(63,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(69,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(70,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(71,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(75,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(78,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/protected-routes.test.ts(80,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(81,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(87,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(88,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(89,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(93,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/protected-routes.test.ts(94,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/protected-routes.test.ts(98,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(99,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(105,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(106,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(107,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(108,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(109,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(112,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/protected-routes.test.ts(128,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(129,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(135,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(136,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(137,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(140,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/session/protected-routes.test.ts(142,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(143,14): error TS2708: Cannot use namespace 'jest' as a value.
+tests/session/protected-routes.test.ts(149,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(150,7): error TS2304: Cannot find name 'expect'.
+tests/session/protected-routes.test.ts(151,7): error TS2304: Cannot find name 'expect'.
+tests/session/require-auth.test.ts(65,7): error TS2304: Cannot find name 'fail'.
+tests/session/require-auth.test.ts(102,7): error TS2304: Cannot find name 'fail'.
+tests/session/require-auth.test.ts(127,7): error TS2304: Cannot find name 'fail'.
+tests/session/require-auth.test.ts(163,7): error TS2304: Cannot find name 'fail'.
+tests/session/require-auth.test.ts(194,7): error TS2304: Cannot find name 'fail'.
+tests/session/require-auth.test.ts(219,9): error TS2304: Cannot find name 'fail'.
+tests/unit/anchor/client.test.ts(13,5): error TS2305: Module '"@/lib/anchor/rates-cache"' has no exported member 'isCacheFresh'.
+tests/unit/anchor/client.test.ts(14,5): error TS2305: Module '"@/lib/anchor/rates-cache"' has no exported member 'isCacheStale'.
+tests/unit/anchor/client.test.ts(15,5): error TS2305: Module '"@/lib/anchor/rates-cache"' has no exported member 'getCacheAgeMs'.
+tests/unit/anchor/client.test.ts(16,5): error TS2305: Module '"@/lib/anchor/rates-cache"' has no exported member 'RATES_CACHE_TTL_MS'.
+tests/unit/anchor/client.test.ts(249,46): error TS7006: Parameter '_url' implicitly has an 'any' type.
+tests/unit/anchor/client.test.ts(249,52): error TS7006: Parameter 'options' implicitly has an 'any' type.
+tests/unit/hooks/usePolicyActions.test.tsx(2,42): error TS2307: Cannot find module '@testing-library/react' or its corresponding type declarations.
+tests/unit/hooks/usePolicyActions.test.tsx(3,58): error TS2307: Cannot find module '@/hooks/usePolicyActions' or its corresponding type declarations.
+tests/unit/validation/family-limits.test.ts(1,39): error TS2307: Cannot find module './family-limits' or its corresponding type declarations.
+tests/unit/validation/family-limits.test.ts(3,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/unit/validation/family-limits.test.ts(4,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/unit/validation/family-limits.test.ts(5,5): error TS2304: Cannot find name 'expect'.
+tests/unit/validation/family-limits.test.ts(6,5): error TS2304: Cannot find name 'expect'.
+tests/unit/validation/family-limits.test.ts(9,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/unit/validation/family-limits.test.ts(10,5): error TS2304: Cannot find name 'expect'.
+tests/unit/validation/family-limits.test.ts(13,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/unit/validation/family-limits.test.ts(15,5): error TS2304: Cannot find name 'expect'.
+tests/unit/validation/family-limits.test.ts(16,5): error TS2304: Cannot find name 'expect'.
+tests/unit/validation/family-limits.test.ts(19,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.

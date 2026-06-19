@@ -211,4 +211,40 @@ export class AnchorClient {
     }
 }
 
+export type AnchorFlowStatus = 'pending' | 'completed' | 'failed';
+
+export interface FlowStatusResponse {
+  status: AnchorFlowStatus;
+  error?: string;
+}
+
+/**
+ * Backwards-compatible facade expected by older hook/tests.
+ *
+ * Note: the app currently starts flows via the Next.js API routes
+ * and/or directly via AnchorClient; status polling is not implemented in
+ * this module because there is no AnchorClient method for it.
+ */
+export async function fetchRates(): Promise<ExchangeRate[]> {
+  return anchorClient.getExchangeRates();
+}
+
+export async function initiateDeposit(payload: AnchorFlowRequest): Promise<AnchorFlowResponse> {
+  return anchorClient.startDepositFlow(payload);
+}
+
+export async function initiateWithdraw(payload: AnchorFlowRequest): Promise<AnchorFlowResponse> {
+  return anchorClient.startWithdrawFlow(payload);
+}
+
+export async function fetchFlowStatus(
+  _args: { pendingFlowId?: string; anchorTransactionId?: string }
+): Promise<FlowStatusResponse> {
+  // There is no server-side flow status endpoint implemented in the current codebase.
+  // The UI/hook should poll a dedicated route; callers using this facade will need
+  // to wire it to the appropriate API.
+  return { status: 'pending' };
+}
+
 export const anchorClient = new AnchorClient();
+

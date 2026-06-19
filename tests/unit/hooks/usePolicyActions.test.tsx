@@ -3,6 +3,7 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 import { usePolicyActions, type PolicyActionState } from "@/hooks/usePolicyActions";
 import { apiClient } from "@/lib/client/apiClient";
 import { AsyncOperationsProvider } from "@/lib/context/AsyncOperationsContext";
+import type React from "react";
 
 // Mock apiClient
 vi.mock("@/lib/client/apiClient", () => ({

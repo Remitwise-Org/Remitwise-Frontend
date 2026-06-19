@@ -5,7 +5,7 @@ interface UseFocusTrapProps {
   onEscape?: () => void;
   onOverlayClick?: () => void;
   restoreFocusOnClose?: boolean;
-  initialFocusRef?: React.RefObject<HTMLElement>;
+  initialFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
 /**

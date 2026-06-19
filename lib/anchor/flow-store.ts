@@ -1,6 +1,11 @@
 export type AnchorFlowType = 'deposit' | 'withdraw';
 export type AnchorFlowStatus = 'pending' | 'completed' | 'failed';
 
+// Backwards-compatible aliases expected by older hooks/tests.
+export type FlowDirection = AnchorFlowType;
+export type AnchorFlow = AnchorFlowRecord;
+
+
 export interface AnchorFlowRecord {
   id: string;
   type: AnchorFlowType;
@@ -21,6 +26,7 @@ const flowByAnchorTransactionId = new Map<string, string>();
 export function createPendingAnchorFlow(
   input: Omit<AnchorFlowRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'>
 ): AnchorFlowRecord {
+
   const now = new Date().toISOString();
   const record: AnchorFlowRecord = {
     id: crypto.randomUUID(),
@@ -40,6 +46,7 @@ export function updateAnchorFlowStatusByTransactionId(
   anchorTransactionId: string,
   status: AnchorFlowStatus
 ): AnchorFlowRecord | null {
+
   const flowId = flowByAnchorTransactionId.get(anchorTransactionId);
   if (!flowId) return null;
   const existing = flowById.get(flowId);

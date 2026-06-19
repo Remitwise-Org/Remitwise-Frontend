@@ -26,6 +26,10 @@
 import type { ExchangeRate } from '@/lib/anchor/client';
 import { registerCache } from '@/lib/cache/registry';
 
+// Legacy aliases expected by older hooks/tests.
+export type AnchorRate = ExchangeRate;
+
+
 /**
  * Structure of the cached anchor exchange rates data.
  */
@@ -60,6 +64,17 @@ export function getAnchorRatesCache(): AnchorRatesCacheData {
   return rateCache;
 }
 
+// Legacy API expected by older hooks/tests
+export function getCachedRates(nowMs: number = Date.now()): { rates: ExchangeRate[] | null; timestamp: number; stale: boolean } {
+  const data = getAnchorRatesCache();
+  return {
+    rates: data.rates,
+    timestamp: data.timestamp,
+    stale: isCacheStale(nowMs),
+  };
+}
+
+
 /**
  * Sets/updates the cached anchor exchange rates with a new list of rates
  * and a timestamp. Overwrites any previously stored rates (latest-wins).
@@ -72,6 +87,12 @@ export function getAnchorRatesCache(): AnchorRatesCacheData {
 export function setAnchorRatesCache(rates: ExchangeRate[], timestamp: number): void {
   rateCache = { rates, timestamp };
 }
+
+// Legacy API expected by older hooks/tests
+export function setRatesCache(rates: ExchangeRate[], timestamp: number): void {
+  setAnchorRatesCache(rates, timestamp);
+}
+
 
 /**
  * Clears the cached rates, resetting the storage to its initial/empty state
@@ -87,5 +108,52 @@ export function clearAnchorRatesCache(): void {
   rateCache = { ...initialState };
 }
 
+/**
+ * TTL used by the Anchor rates endpoint.
+ *
+ * Kept in sync with the freshness contract used by the anchor rates API route.
+ */
+export const RATES_CACHE_TTL_MS = 300_000;
+
+/**
+ * Returns the current cache age in milliseconds.
+ * If the cache is empty/uninitialized, returns `Infinity`.
+ */
+export function getCacheAgeMs(nowMs: number = Date.now()): number {
+  if (rateCache.rates === null) return Number.POSITIVE_INFINITY;
+  return Math.max(0, nowMs - rateCache.timestamp);
+}
+
+/**
+ * Cache is fresh if:
+ * - rates have been populated at least once (rates !== null)
+ * - cache age is strictly less than the TTL
+ */
+export function isCacheFresh(nowMs: number = Date.now()): boolean {
+  if (rateCache.rates === null) return false;
+  return getCacheAgeMs(nowMs) < RATES_CACHE_TTL_MS;
+}
+
+/**
+ * Cache is stale if:
+ * - rates are empty/uninitialized OR
+ * - cache age is greater than or equal to the TTL
+ */
+export function isCacheStale(nowMs: number = Date.now()): boolean {
+  if (rateCache.rates === null) return true;
+  return getCacheAgeMs(nowMs) >= RATES_CACHE_TTL_MS;
+}
+
+// Legacy API expected by older hooks/tests
+export function isRateStale(nowMs: number = Date.now()): boolean {
+  return isCacheStale(nowMs);
+}
+
+export function isRateExpired(nowMs: number = Date.now()): boolean {
+  return isCacheStale(nowMs);
+}
+
+
 // Register with central cache registry for admin/on-demand cache clear capabilities
 registerCache('anchor_rates', clearAnchorRatesCache);
+
