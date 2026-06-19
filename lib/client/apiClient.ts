@@ -1,6 +1,6 @@
 /**
- * API client wrapper with session expiry detection
- * Automatically handles session expiry and redirects users to re-authenticate
+ * API client wrapper with session expiry detection and retry mechanism
+ * Automatically handles session expiry, redirects users to re-authenticate, and retries failed requests.
  * 
  * @example Basic usage
  * ```typescript
@@ -13,7 +13,9 @@
  * ```typescript
  * const data = await apiClient.post('/api/protected/action', {
  *   body: JSON.stringify({ key: 'value' }),
- *   headers: { 'Content-Type': 'application/json' }
+ *   headers: { 'Content-Type': 'application/json' },
+ *   retries: 2,
+ *   backoff: 500
  * });
  * ```
  */
@@ -21,22 +23,62 @@
 import { sessionHandler } from './sessionHandler';
 
 export interface ApiClientOptions extends RequestInit {
-  // Additional options can be added here
+  retries?: number;
+  backoff?: number;
+}
+
+const DEFAULT_RETRIES = 3;
+const DEFAULT_BACKOFF = 1000;
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchWithRetry(url: string, options: ApiClientOptions): Promise<Response> {
+  const { retries = DEFAULT_RETRIES, backoff = DEFAULT_BACKOFF, ...fetchOptions } = options;
+  
+  try {
+    const response = await fetch(url, fetchOptions);
+
+    // Retry on 5xx errors or 429 rate limiting
+    if (response.status >= 500 || response.status === 429) {
+      if (retries > 0) {
+        await delay(backoff);
+        return fetchWithRetry(url, { ...options, retries: retries - 1, backoff: backoff * 2 });
+      }
+    }
+
+    return response;
+  } catch (error) {
+    // Retry on network errors
+    if (retries > 0) {
+      await delay(backoff);
+      return fetchWithRetry(url, { ...options, retries: retries - 1, backoff: backoff * 2 });
+    }
+    throw error;
+  }
 }
 
 /**
- * Make an API request with automatic session expiry handling
+ * Make an API request with automatic session expiry handling and retries
  * @param url - The API endpoint URL
  * @param options - Fetch options
  * @returns Response object or null if session expired
  */
 async function request(url: string, options?: ApiClientOptions): Promise<Response | null> {
   try {
-    const response = await fetch(url, options);
+    const response = await fetchWithRetry(url, options || {});
     
     // Check if session expired
     if (await sessionHandler.isSessionExpired(response)) {
-      // Get current path for post-auth redirect
+      if (!options?._isRetry) {
+        // Attempt to refresh session
+        const refreshed = await sessionHandler.refreshSession();
+        if (refreshed) {
+          // Retry original request once
+          return request(url, { ...options, _isRetry: true });
+        }
+      }
+
+      // If refresh failed or already retried, trigger session expiry flow
       const currentPath = typeof window !== 'undefined' ? window.location.pathname : undefined;
       sessionHandler.handleSessionExpiry(currentPath);
       return null;

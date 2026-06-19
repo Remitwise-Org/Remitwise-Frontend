@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   X,
   Zap,
@@ -9,6 +9,7 @@ import {
   Check,
   DollarSign,
 } from "lucide-react";
+import { useFocusTrap } from "../../src/lib/hooks/useFocusTrap";
 
 const EmergencyTransferModal = ({
   isOpen,
@@ -20,14 +21,31 @@ const EmergencyTransferModal = ({
   const [speed, setSpeed] = useState<"emergency" | "regular">("emergency");
   const [amount, setAmount] = useState<number>(0);
   const [agreed, setAgreed] = useState<boolean>(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const initialFocusRef = useRef<HTMLInputElement>(null);
 
   const priorityFee = speed === "emergency" ? 2.0 : 0.0;
   const total = amount + priorityFee;
 
+  // Focus trap hook
+  useFocusTrap({
+    isActive: isOpen,
+    onEscape: onClose,
+    onOverlayClick: onClose,
+    restoreFocusOnClose: true,
+    initialFocusRef,
+  });
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-6">
+    <div
+      ref={modalRef}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="emergency-transfer-title"
+    >
       <div className="w-full max-w-3xl rounded-2xl sm:rounded-[32px] border border-zinc-800 bg-bg3 p-5 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-hide">
         <div className="flex items-start justify-between mb-6 sm:mb-8">
           <div className="flex gap-3 sm:gap-4">
@@ -36,7 +54,10 @@ const EmergencyTransferModal = ({
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2 solid border-[#DC262666]">
-                <h2 className="text-lg sm:text-2xl font-bold text-white tracking-tight">
+                <h2
+                  id="emergency-transfer-title"
+                  className="text-lg sm:text-2xl font-bold text-white tracking-tight"
+                >
                   Emergency Transfer
                 </h2>
                 <span className="rounded-full bg-red-600/10 px-2.5 py-0.5 text-[10px] font-black text-red-500 border border-red-500/20 uppercase whitespace-nowrap">
@@ -51,11 +72,13 @@ const EmergencyTransferModal = ({
           <button
             onClick={onClose}
             className="rounded-full bg-zinc-900 p-2 text-zinc-500 hover:text-white transition-all shrink-0"
+            aria-label="Close emergency transfer modal"
           >
             <X size={20} />
           </button>
         </div>
 
+        {/* Rest of the modal content - same as before */}
         <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/5 p-4">
           <div className="flex gap-3">
             <AlertCircle size={20} className="shrink-0 text-red-500" />
@@ -75,11 +98,16 @@ const EmergencyTransferModal = ({
 
         <div className="space-y-5">
           <div className="group">
-            <label className="flex items-center gap-2 text-sm font-semibold text-zinc-400 mb-2 group-focus-within:text-white">
+            <label
+              htmlFor="recipient-name"
+              className="flex items-center gap-2 text-sm font-semibold text-zinc-400 mb-2 group-focus-within:text-white"
+            >
               <Users size={16} className="text-red-500" />
               Recipient Name
             </label>
             <input
+              id="recipient-name"
+              ref={initialFocusRef}
               type="text"
               placeholder="Enter recipient name"
               className="w-full rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 text-white placeholder:text-zinc-600 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 outline-none transition-all text-sm sm:text-base"
@@ -87,10 +115,14 @@ const EmergencyTransferModal = ({
           </div>
 
           <div className="group">
-            <label className="flex items-center gap-2 text-sm font-bold text-zinc-400 mb-2 transition-colors group-focus-within:text-white">
+            <label
+              htmlFor="country"
+              className="flex items-center gap-2 text-sm font-bold text-zinc-400 mb-2 transition-colors group-focus-within:text-white"
+            >
               Country
             </label>
             <input
+              id="country"
               type="text"
               placeholder="Select country"
               className="w-full rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 text-white placeholder:text-zinc-600 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 outline-none transition-all text-sm sm:text-base"
@@ -98,12 +130,16 @@ const EmergencyTransferModal = ({
           </div>
 
           <div className="group">
-            <label className="flex items-center gap-2 text-sm font-bold text-zinc-400 mb-2 transition-colors group-focus-within:text-white">
+            <label
+              htmlFor="amount"
+              className="flex items-center gap-2 text-sm font-bold text-zinc-400 mb-2 transition-colors group-focus-within:text-white"
+            >
               <DollarSign size={16} className="text-red-500" />
               Amount (USDC)
             </label>
             <div className="relative">
               <input
+                id="amount"
                 type="number"
                 value={amount || ""}
                 onChange={(e) => setAmount(Number(e.target.value))}
@@ -156,6 +192,7 @@ const EmergencyTransferModal = ({
           <button
             onClick={() => setSpeed("emergency")}
             className={`flex flex-col items-start gap-1 rounded-2xl border-2 p-3 sm:p-4 transition-all ${speed === "emergency" ? "border-red-600/50 bg-red-600/5 shadow-[0_0_15px_rgba(220,38,38,0.1)]" : "border-zinc-800 bg-zinc-900/20 grayscale opacity-40"}`}
+            aria-label="Emergency speed - funds arrive in 2-5 minutes"
           >
             <Zap
               size={18}
@@ -171,6 +208,7 @@ const EmergencyTransferModal = ({
           <button
             onClick={() => setSpeed("regular")}
             className={`flex flex-col items-start gap-1 rounded-2xl border-2 p-3 sm:p-4 transition-all ${speed === "regular" ? "border-zinc-600 bg-zinc-800/20" : "border-zinc-800 bg-zinc-900/20 grayscale opacity-50"}`}
+            aria-label="Regular speed - funds arrive in 30-60 minutes"
           >
             <Clock size={18} className="text-zinc-400" />
             <span className="text-sm font-bold text-zinc-200">Regular</span>
@@ -191,6 +229,7 @@ const EmergencyTransferModal = ({
             checked={agreed}
             onChange={(e) => setAgreed(e.target.checked)}
             className="hidden"
+            aria-label="Confirm I understand the priority fee and transaction cannot be reversed"
           />
           <span className="text-xs text-zinc-500 group-hover:text-zinc-300 transition-colors select-none">
             I confirm this transfer is for an urgent need. I understand the{" "}

@@ -1,5 +1,16 @@
 'use client'
 
+import { Activity } from 'lucide-react';
+import { 
+  ResponsiveContainer, 
+  AreaChart, 
+  CartesianGrid, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  ReferenceLine, 
+  Area 
+} from 'recharts';
 import { INSIGHTS_PALETTE } from './palette';
 const LINE_COLOR = INSIGHTS_PALETTE[0];
 
@@ -30,7 +41,6 @@ export const MOCK_TREND_DATA: TrendDataPoint[] = [
 
 const AXIS_COLOR  = '#6b7280'
 const GRID_COLOR  = 'rgba(255,255,255,0.06)'
-const LINE_COLOR  = '#D72323'
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 interface CustomTooltipProps {
@@ -45,7 +55,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 
   return (
     <div className="rounded-xl border border-white/10 bg-black/80 px-4 py-3 shadow-2xl text-sm" aria-live="polite" role="region" aria-label="Remittance trend tooltip">
-      <p className="text-gray-400 font-medium mb-2">{label}</p
+      <p className="text-gray-400 font-medium mb-2">{label}</p>
       <div className="space-y-1">
         <div className="flex justify-between gap-6">
           <span className="text-gray-400">Amount</span>

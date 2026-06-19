@@ -456,8 +456,9 @@ export function invalidatePattern(pattern: string): number {
 }
 
 /**
- * Clears all cache entries
- * @security Should be restricted in production environments
+ * Clears all cache entries from memory and resets cache hits/misses metrics.
+ * 
+ * @security Should be restricted in production environments to avoid performance degradation.
  */
 export function clearCache(): void {
   cache.clear();
@@ -467,8 +468,9 @@ export function clearCache(): void {
 }
 
 /**
- * Gets cache statistics for monitoring
- * @returns Immutable cache statistics object
+ * Retrieves the current cache metrics and statistics for monitoring and observability.
+ * 
+ * @returns An object containing the cache size, maxSize, itemCount, hitRate, and missRate.
  */
 export function getCacheStats(): CacheStats {
   const total = cacheHits + cacheMisses;
@@ -482,8 +484,10 @@ export function getCacheStats(): CacheStats {
 }
 
 /**
- * Gets all cache keys for debugging
- * @security Should be restricted in production environments
+ * Retrieves all keys currently stored in the cache.
+ * 
+ * @returns A frozen read-only array of cache keys.
+ * @security Access should be restricted in production environments to prevent information disclosure.
  */
 export function getCacheKeys(): readonly string[] {
   return Object.freeze([...cache.keys()]);

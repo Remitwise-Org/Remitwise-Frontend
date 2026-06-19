@@ -1,4 +1,46 @@
 {
+  "insurance": {
+    "page_title": "Microseguro",
+    "page_subtitle": "Administra tus pólizas de cobertura activas",
+    "new_policy": "Nueva Póliza",
+    "active_policies": "Pólizas Activas",
+    "no_policies_title": "Aún no hay pólizas activas",
+    "no_policies_body": "Crea tu primera póliza para empezar a proteger lo que más importa.",
+    "total_premium": "Prima Mensual Total",
+    "total_premium_sub": "Se paga automáticamente desde la asignación de remesas",
+    "form_title": "Crear Nueva Póliza",
+    "form_eyebrow": "Creación de póliza",
+    "form_description": "Esta póliza se construye como un payload de contrato inteligente USDC en cadena. Tu billetera firma y envía la transacción; RemitWise solo prepara el payload.",
+    "field_policy_name": "Nombre de la Póliza",
+    "field_policy_name_placeholder": "p.ej., Seguro de Salud, Cobertura de Emergencia",
+    "field_coverage_type": "Tipo de Cobertura",
+    "field_coverage_type_placeholder": "Selecciona el tipo de cobertura",
+    "field_monthly_premium": "Prima Mensual (USD)",
+    "field_monthly_premium_placeholder": "20.00",
+    "field_coverage_amount": "Monto de Cobertura (USD)",
+    "field_coverage_amount_placeholder": "1000.00",
+    "submit": "Crear Póliza",
+    "submitting": "Creando Póliza…",
+    "status_idle_title": "Listo para enviar",
+    "status_idle_desc": "Completa el formulario y haz clic en Crear Póliza para registrar tu nueva cobertura.",
+    "status_pending_title": "Preparando solicitud de contrato de póliza",
+    "status_pending_desc": "Construyendo el payload en cadena — esto tarda un momento.",
+    "status_success_title": "Póliza creada exitosamente",
+    "status_error_title": "No se pudo crear la póliza",
+    "success_badge_name": "Nombre de la póliza",
+    "success_badge_type": "Tipo de cobertura",
+    "success_badge_premium": "Prima mensual",
+    "success_badge_coverage": "Monto de cobertura",
+    "integration_note": "Las acciones de seguro se preparan como payloads de contratos inteligentes USDC. Los usuarios firman las transacciones localmente en su billetera, y RemitWise no custodia fondos.",
+    "card_coverage_type": "Tipo de Cobertura",
+    "card_monthly_premium": "Prima Mensual",
+    "card_coverage_amount": "Monto de Cobertura",
+    "card_next_payment": "Próximo Pago",
+    "card_pay_now": "Pagar Prima Ahora",
+    "coverage_health": "Salud",
+    "coverage_emergency": "Emergencia",
+    "coverage_life": "Vida"
+  },
   "errors": {
     "missing_signature": "Falta la firma",
     "invalid_signature": "Firma invalida",
@@ -30,11 +72,16 @@
   },
   "transactionHistory": {
     "title": "Historial de transacciones",
+    "titleStandalone": "Historial de transacciones",
+    "subtitleStandalone": "Busca, filtra y revisa actividad de pagos, divisiones, facturas y seguros con resultados agrupados por fecha.",
     "resultsCount": "{{count}} transacciones encontradas",
     "resultsCountZero": "No se encontraron transacciones",
     "searchPlaceholder": "Busca por hash de transaccion, direccion o memo...",
     "searchPlaceholderMobile": "Busca transacciones...",
+    "searchStandalonePlaceholder": "Busca ID, destinatario, tipo, estado, monto",
     "filters": "Filtrar resultados",
+    "filtersHeading": "Filtrar transacciones",
+    "filtersHelper": "La busqueda se combina con cada chip de tipo y estado seleccionado.",
     "export": "Exportar historial",
     "tabs": {
       "all": "Todas las transacciones",
@@ -42,8 +89,69 @@
       "pending": "Pendientes de revision",
       "failed": "Requieren atencion"
     },
+    "typeFilterLabel": "Tipo",
+    "statusFilterLabel": "Estado",
+    "typeFilter": {
+      "all": "Todos los tipos",
+      "send": "Enviar",
+      "split": "Dividir",
+      "bill": "Facturas",
+      "insurance": "Seguro",
+      "savings": "Ahorros",
+      "family": "Familia",
+      "received": "Recibido"
+    },
+    "statusFilter": {
+      "all": "Todos los estados",
+      "completed": "Completado",
+      "pending": "Pendiente",
+      "failed": "Fallido"
+    },
+    "dateRange": {
+      "label": "Rango de fechas",
+      "from": "Fecha desde",
+      "to": "Fecha hasta",
+      "clear": "Limpiar fechas"
+    },
+    "dateGroups": {
+      "today": "Hoy",
+      "todayHelper": "Transacciones de hoy",
+      "yesterday": "Ayer",
+      "yesterdayHelper": "Transacciones de ayer",
+      "earlier": "Anteriores",
+      "earlierHelper": "Actividad mas antigua en orden cronologico"
+    },
+    "activeFilters": {
+      "label": "Activos",
+      "none": "Sin filtros aplicados",
+      "search": "Busqueda: {{query}}",
+      "type": "Tipo: {{type}}",
+      "status": "Estado: {{status}}",
+      "clearAll": "Limpiar todo",
+      "clearSearch": "Limpiar busqueda de transacciones",
+      "removeFilter": "Eliminar filtro {{label}}"
+    },
     "empty": "Ninguna transaccion coincide con tu busqueda.",
+    "noResults": {
+      "title": "Sin transacciones coincidentes",
+      "description": "Intenta limpiar un filtro, ampliar la seleccion de estado, o buscar por destinatario, ID, monto o tipo de transaccion.",
+      "clearFilters": "Limpiar filtros"
+    },
+    "emptyState": {
+      "title": "Aun no hay historial de transacciones",
+      "description": "Las transferencias completadas, divisiones, pagos de facturas y actividad de seguros apareceran aqui una vez que hagas tu primera transaccion.",
+      "cta": "Enviar dinero"
+    },
+    "resultsAriaLive": {
+      "one": "1 transaccion encontrada",
+      "many": "{{count}} transacciones encontradas",
+      "none": "No se encontraron transacciones"
+    },
     "loadMore": "Cargar mas resultados",
+    "showing": "Mostrando {{count}} de {{total}} transacciones",
+    "results_one": "{{count}} resultado",
+    "results_many": "{{count}} resultados",
+    "clearSearch": "Limpiar busqueda",
     "alerts": {
       "filtersSoon": "La funcion de filtros estara disponible pronto.",
       "exportSoon": "La exportacion estara disponible pronto.",
@@ -52,62 +160,14 @@
     }
   },
   "send": {
-    "steps": {
-      "recipient": "Destinatario",
-      "amount": "Monto",
-      "review": "Revisar"
-    },
-    "toast": {
-      "transferSubmitted": "Transferencia enviada",
-      "transferSuccess": "Enviado exitosamente {{amount}} {{currency}} a {{address}}."
-    }
-  },
-  "split": {
-    "allocationEditor": "Editor de asignacion",
-    "currentAllocation": "Asignacion actual",
-    "currentAllocationDescription": "Personaliza como se distribuyen tus remesas, luego mantiene los estados de envio del contrato anclados a la misma area para que el flujo de trabajo nunca se sienta desconectado.",
-    "allocationNote": "Los cambios de asignacion se guardan como una accion de contrato inteligente USDC. El payload se prepara en la aplicacion y la billetera lo firma localmente.",
-    "inputs": {
-      "dailySpending": "Gasto diario",
-      "dailySpendingDescription": "Para gastos familiares inmediatos",
-      "savings": "Ahorros",
-      "savingsDescription": "Asignado a metas de ahorro",
-      "bills": "Facturas",
-      "billsDescription": "Pagos automaticos de facturas",
-      "insurance": "Seguro",
-      "insuranceDescription": "Primas de micro-seguro"
-    },
-    "total": "Total",
-    "totalDescription": "Cada construccion de contrato debe bloquear el envio hasta que esto sea exactamente 100%.",
-    "asyncStatus": {
-      "idleTitle": "Colocacion de envio de contrato",
-      "idleDescription": "Mantenga la validacion y el comentarios de construccion en linea con el formulario. Reserve tarjetas de estado apiladas para enviar y confirmar para que puedan persistir despues de la navegacion.",
-      "pendingTitle": "Construyendo solicitud de contrato",
-      "pendingDescription": "Muestre al usuario que el payload remittance_split se esta preparando antes de que se abra el paso de la billetera."
-    },
-    "buttons": {
-      "cancel": "Cancelar",
-      "connectContract": "Conectar contrato primero",
-      "save": "Guardar"
-    },
-    "asyncPanel": {
-      "eyebrow": "Comportamiento asincrono",
-      "title": "Duracion, apilamiento y colocacion",
-      "description": "Esta ruta es el ejemplo mas claro de configuracion de contrato, por lo que establece el patron de donde debe aparecer cada estado de envio.",
-      "queueTitle": "Comportamiento de pila",
-      "queueDescription": "Mantenga no mas de tres tarjetas de envio visibles a la vez. Las acciones mas nuevas permanecen mas altas en la pila y el movil colapsa la pila en linea debajo del formulario iniciador.",
-      "footer": "No se requieren nuevos tokens Tailwind para este patron. La implementacion reutiliza los rojos existentes, neutrales, anillos de enfoque y gradientes de valor arbitrario ya utilizados en la aplicacion."
-    },
-    "stages": {
-      "validateAllocation": "Validar asignacion",
-      "buildContractRequest": "Construir solicitud de contrato",
-      "requestWalletSignature": "Solicitar firma de billetera",
-      "submitAndConfirm": "Enviar y confirmar"
-    }
-  },
-  "localeSwitcher": {
-    "label": "Idioma",
-    "english": "Ingles",
-    "spanish": "Español"
+    "confirm_button": "Confirmar y enviar remesa",
+    "confirm_pending": "Procesando…",
+    "success_title": "Transferencia enviada",
+    "success_description": "Se enviaron {{amount}} {{currency}} a {{address}} correctamente.",
+    "error_title": "Transferencia fallida",
+    "error_network": "Error de red. Revisa tu conexión e intenta de nuevo.",
+    "error_empty_amount": "El monto debe ser mayor que cero.",
+    "error_missing_recipient": "Se requiere la dirección del destinatario.",
+    "error_api": "El servidor devolvió un error. Por favor, intenta de nuevo."
   }
 }

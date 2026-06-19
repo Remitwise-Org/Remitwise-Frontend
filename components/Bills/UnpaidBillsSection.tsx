@@ -1,13 +1,14 @@
 import React from 'react';
 import { BillCards } from './BillsCard';
-import { mockBills } from '@/lib/mockdata/bills';
 import { useDensity } from '@/lib/context/DensityContext';
+import { Bill } from '@/lib/contracts/bill-payments';
+import { WidgetEmptyState } from '@/components/ui/WidgetStates';
 
 export function UnpaidBillsSection() {
     const { density } = useDensity();
     const unpaidStatuses: Bill['status'][] = ['overdue', 'urgent', 'upcoming'];
 
-    const unpaidBills = mockBills.filter((bill) =>
+    const unpaidBills = bills.filter((bill) =>
         unpaidStatuses.includes(bill.status)
     );
     const recurringUnpaidCount = unpaidBills.filter((bill) => bill.isRecurring).length;
@@ -37,10 +38,11 @@ export function UnpaidBillsSection() {
             {statusOrder.map((status) => {
                 const bills = billsByStatus[status] ?? [];
                 if (!bills.length) return null;
-                const headerStyles = {
+                const headerStyles: Record<string, string> = {
                     overdue: "text-red-400",
                     urgent: "text-amber-400",
                     upcoming: "text-white/60",
+                    paid: "text-green-400",
                 };
                 return (
                     <section key={status} className="mb-4">

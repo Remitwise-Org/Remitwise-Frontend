@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Copy, Check, Eye, Edit2, User, Send, ShieldCheck } from "lucide-react";
+import { Copy, Check, Eye, Edit2, User, Send, ShieldCheck, Save, X } from "lucide-react";
+import { validateSpendingLimit } from "@/lib/validation/family-limits";
 
 export type FamilyMemberRole = "Recipient" | "Sender" | "Admin";
 
@@ -28,6 +29,9 @@ const FamilyMemberStatCard: React.FC<FamilyMemberStatCardProps> = ({
 	member,
 }) => {
 	const [copied, setCopied] = useState(false);
+	const [isEditing, setIsEditing] = useState(false);
+	const [newLimit, setNewLimit] = useState(member.spendingLimit);
+	const [error, setError] = useState<string | null>(null);
 
 	const getRoleMeta = (role: FamilyMemberRole) => {
 		switch (role) {
@@ -103,6 +107,17 @@ const FamilyMemberStatCard: React.FC<FamilyMemberStatCardProps> = ({
 		} catch (err) {
 			console.error("Failed to copy text: ", err);
 		}
+	};
+
+	const handleSaveLimit = () => {
+		const validation = validateSpendingLimit(newLimit);
+		if (!validation.isValid) {
+			setError(validation.error || 'Invalid limit');
+			return;
+		}
+		setError(null);
+		setIsEditing(false);
+		// TODO: Call contract update function here
 	};
 
 	const roleMeta = getRoleMeta(member.role);
@@ -187,9 +202,19 @@ const FamilyMemberStatCard: React.FC<FamilyMemberStatCardProps> = ({
 					<p className='text-xs font-semibold uppercase tracking-[0.18em] text-gray-500'>
 						Spending limit
 					</p>
-					<p className='mt-3 text-lg font-semibold text-white'>
-						{currencyFormatter.format(member.spendingLimit)}
-					</p>
+					{isEditing ? (
+						<input
+							type="number"
+							value={newLimit}
+							onChange={(e) => setNewLimit(parseFloat(e.target.value))}
+							className="mt-2 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1 text-white focus:border-red-500 focus:outline-none"
+						/>
+					) : (
+						<p className='mt-3 text-lg font-semibold text-white'>
+							{currencyFormatter.format(member.spendingLimit)}
+						</p>
+					)}
+					{error && <p className="mt-1 text-xs text-status-error-fg">{error}</p>}
 				</div>
 				<div className='rounded-2xl border border-white/[0.08] bg-black/25 p-4'>
 					<p className='text-xs font-semibold uppercase tracking-[0.18em] text-gray-500'>
@@ -215,7 +240,7 @@ const FamilyMemberStatCard: React.FC<FamilyMemberStatCardProps> = ({
 					<p className={`text-sm ${usageMeta.textClass}`}>{usageMeta.helper}</p>
 				</div>
 
-				<div className='mt-4 h-2.5 w-full overflow-hidden rounded-full bg-white/[0.06]'>
+				<div className='mt-4 h-2.5 w-full overflow-hidden rounded-full bg-white/[0.06]' role="progressbar" aria-valuenow={Math.min(member.usedPercentage, 100)} aria-valuemin={0} aria-valuemax={100}>
 					<div
 						className={`h-full rounded-full transition-all duration-500 ${usageMeta.barClass}`}
 						style={{ width: `${Math.min(member.usedPercentage, 100)}%` }}></div>
@@ -231,24 +256,35 @@ const FamilyMemberStatCard: React.FC<FamilyMemberStatCardProps> = ({
 			<div className='mt-6 flex flex-col gap-3 sm:flex-row'>
 				<button
 					type='button'
-					disabled
-					className='flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-gray-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60'>
+					className='flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-white/[0.08]'>
 					<Eye className='h-3.5 w-3.5' />
 					View Details
 				</button>
-				<button
-					type='button'
-					disabled
-					className='flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-50 transition-colors disabled:cursor-not-allowed disabled:opacity-60'>
-					<Edit2 className='h-3.5 w-3.5' />
-					Edit Limits
-				</button>
+				{isEditing ? (
+					<>
+						<button
+							onClick={handleSaveLimit}
+							className='flex flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-100 transition-colors hover:bg-emerald-500/20'>
+							<Save className='h-3.5 w-3.5' />
+							Save
+						</button>
+						<button
+							onClick={() => {setIsEditing(false); setError(null);}}
+							className='flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-500/20 bg-gray-500/10 px-4 py-3 text-sm font-medium text-gray-100 transition-colors hover:bg-gray-500/20'>
+							<X className='h-3.5 w-3.5' />
+							Cancel
+						</button>
+					</>
+				) : (
+					<button
+						type='button'
+						onClick={() => setIsEditing(true)}
+						className='flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-50 transition-colors hover:bg-red-500/20'>
+						<Edit2 className='h-3.5 w-3.5' />
+						Edit Limits
+					</button>
+				)}
 			</div>
-
-			<p className='mt-3 text-xs leading-5 text-gray-500'>
-				Member actions will unlock after the wallet contract integration is
-				connected.
-			</p>
 		</article>
 	);
 };

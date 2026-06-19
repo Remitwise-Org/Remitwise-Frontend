@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   ArrowRight,
   Clock3,
@@ -13,7 +13,6 @@ import {
 } from 'lucide-react'
 import AsyncOperationsPanel from '@/components/AsyncOperationsPanel'
 import AsyncSubmissionStatus from '@/components/AsyncSubmissionStatus'
-import { useContractOperations } from '@/lib/context/ContractOperationsContext'
 
 interface EmergencyTransferModalProps {
   isOpen: boolean
@@ -55,6 +54,30 @@ const emergencyStages = [
   },
 ]
 
+const emergencyQueue = [
+  {
+    title: 'Emergency transfer submission',
+    duration: 'Live',
+    detail:
+      'The active transfer keeps the strongest visual treatment and remains pinned while waiting on network confirmation.',
+    status: 'active' as const,
+  },
+  {
+    title: 'Wallet approval waiting',
+    duration: 'Queued',
+    detail:
+      'If another transfer is in flight, collapse it into a smaller stacked card instead of replacing the active item.',
+    status: 'queued' as const,
+  },
+  {
+    title: 'Transfer confirmed',
+    duration: '< 1 min',
+    detail:
+      'Leave the final state visible briefly so users can trust the result before moving on.',
+    status: 'complete' as const,
+  },
+]
+
 export default function EmergencyTransferModal({
   isOpen,
   onClose,
@@ -62,57 +85,6 @@ export default function EmergencyTransferModal({
   const [confirmed, setConfirmed] = useState(false)
   const [amount, setAmount] = useState('')
   const [speed, setSpeed] = useState<'emergency' | 'regular'>('emergency')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  
-  const { addOperation, updateOperation } = useContractOperations()
-  const [currentOperationId, setCurrentOperationId] = useState<string | null>(null)
-
-  // Simulate contract operation lifecycle
-  useEffect(() => {
-    if (isSubmitting && !currentOperationId) {
-      const opId = addOperation({
-        type: 'emergency_transfer',
-        title: 'Emergency transfer submission',
-        status: 'pending',
-        detail: 'The active transfer keeps the strongest visual treatment and remains pinned while waiting on network confirmation.',
-        duration: 'Live',
-        metadata: { amount, speed },
-      })
-      setCurrentOperationId(opId)
-
-      // Simulate the operation lifecycle
-      setTimeout(() => {
-        updateOperation(opId, { status: 'building' })
-      }, 1000)
-
-      setTimeout(() => {
-        updateOperation(opId, { status: 'signing' })
-      }, 3000)
-
-      setTimeout(() => {
-        updateOperation(opId, { status: 'submitting' })
-      }, 5000)
-
-      setTimeout(() => {
-        updateOperation(opId, { status: 'confirming' })
-      }, 8000)
-
-      setTimeout(() => {
-        updateOperation(opId, { 
-          status: 'complete',
-          transactionHash: 'GCF27P3Q' + Math.random().toString(36).substring(2, 15).toUpperCase()
-        })
-        setIsSubmitting(false)
-        setCurrentOperationId(null)
-      }, 12000)
-    }
-  }, [isSubmitting, currentOperationId, addOperation, updateOperation, amount, speed])
-
-  const handleSubmit = () => {
-    if (confirmed && amount) {
-      setIsSubmitting(true)
-    }
-  }
 
   if (!isOpen) return null
 
@@ -293,11 +265,10 @@ export default function EmergencyTransferModal({
                 </button>
                 <button
                   type="button"
-                  disabled={!confirmed || numericAmount <= 0 || isSubmitting}
-                  onClick={handleSubmit}
+                  disabled={!confirmed || numericAmount <= 0}
                   className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-red-600 to-red-700 px-6 py-3 font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Processing...' : 'Review Transfer'}
+                  Review Transfer
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
@@ -305,8 +276,13 @@ export default function EmergencyTransferModal({
 
             <aside className="space-y-6">
               <AsyncOperationsPanel
-                useLiveContext={true}
+                eyebrow="Async behavior"
+                title="Emergency Submission Pattern"
+                description="Urgent transfers carry the highest stakes in the product. Each stage below shows what the user sees and how long to expect it to take."
                 stages={emergencyStages}
+                queueTitle="Stack behavior"
+                queueDescription="The modal owns the review and build stages. After wallet signature, progress moves into the global stack so it stays visible if the user navigates away."
+                queueItems={emergencyQueue}
               />
             </aside>
           </div>

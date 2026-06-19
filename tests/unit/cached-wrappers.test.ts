@@ -232,7 +232,7 @@ describe('Insurance Cached Wrapper', () => {
 
   describe('getActivePolicies', () => {
     it('should return active policies', async () => {
-      const result = await insuranceCached.getActivePolicies('GABC123456789012345678901234567890123456789012345678901234');
+      const result = await insuranceCached.getActivePolicies('GABC1234567890123456789012345678901234567890123456789012');
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('policy-1');
@@ -248,13 +248,13 @@ describe('Insurance Cached Wrapper', () => {
       ).rejects.toThrow('owner must be a valid Stellar address');
 
       await expect(
-        insuranceCached.getActivePolicies('XABC123456789012345678901234567890123456789012345678901234')
+        insuranceCached.getActivePolicies('XABC1234567890123456789012345678901234567890123456789012')
       ).rejects.toThrow('owner must be a valid Stellar address');
     });
 
     it('should cache results', async () => {
       const originalModule = await import('@/lib/contracts/insurance');
-      const address = 'GABC123456789012345678901234567890123456789012345678901234';
+      const address = 'GABC1234567890123456789012345678901234567890123456789012';
 
       await insuranceCached.getActivePolicies(address);
       await insuranceCached.getActivePolicies(address);
@@ -269,14 +269,14 @@ describe('Insurance Cached Wrapper', () => {
       vi.mocked(originalModule.getActivePolicies).mockRejectedValueOnce(invalidError);
 
       await expect(
-        insuranceCached.getActivePolicies('GABC123456789012345678901234567890123456789012345678901234')
+        insuranceCached.getActivePolicies('GABC1234567890123456789012345678901234567890123456789012')
       ).rejects.toThrow('Invalid address');
     });
   });
 
   describe('getTotalMonthlyPremium', () => {
     it('should return total premium', async () => {
-      const result = await insuranceCached.getTotalMonthlyPremium('GABC123456789012345678901234567890123456789012345678901234');
+      const result = await insuranceCached.getTotalMonthlyPremium('GABC1234567890123456789012345678901234567890123456789012');
 
       expect(result).toBe(100);
     });
@@ -296,7 +296,7 @@ describe('Insurance Cached Wrapper', () => {
       vi.mocked(originalModule.getTotalMonthlyPremium).mockResolvedValueOnce(NaN);
 
       await expect(
-        insuranceCached.getTotalMonthlyPremium('GABC123456789012345678901234567890123456789012345678901234')
+        insuranceCached.getTotalMonthlyPremium('GABC1234567890123456789012345678901234567890123456789012')
       ).rejects.toThrow('Invalid premium value');
     });
 
@@ -305,13 +305,13 @@ describe('Insurance Cached Wrapper', () => {
       vi.mocked(originalModule.getTotalMonthlyPremium).mockResolvedValueOnce(-100);
 
       await expect(
-        insuranceCached.getTotalMonthlyPremium('GABC123456789012345678901234567890123456789012345678901234')
+        insuranceCached.getTotalMonthlyPremium('GABC1234567890123456789012345678901234567890123456789012')
       ).rejects.toThrow('Premium cannot be negative');
     });
 
     it('should cache results', async () => {
       const originalModule = await import('@/lib/contracts/insurance');
-      const address = 'GABC123456789012345678901234567890123456789012345678901234';
+      const address = 'GABC1234567890123456789012345678901234567890123456789012';
 
       await insuranceCached.getTotalMonthlyPremium(address);
       await insuranceCached.getTotalMonthlyPremium(address);

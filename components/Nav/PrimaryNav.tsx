@@ -6,7 +6,6 @@ import { Send, LayoutDashboard, FileText, Shield, Users, Settings, Bell } from "
 import Logo from "./Logo";
 import WalletButton from "../WalletButton";
 import MobileNav from "./MobileNav";
-import LocaleSwitcher from "@/components/LocaleSwitcher";
 import { useWhatsNewOptional } from "@/lib/context/WhatsNewContext";
 import WhatsNewBadge from "@/components/Dashboard/WhatsNewBadge";
 
@@ -60,9 +59,8 @@ const PrimaryNav = () => {
                         ))}
                     </nav>
 
-                    {/* Right: Locale Switcher, Wallet & Mobile Menu Toggle */}
+                    {/* Right: Wallet & Mobile Menu Toggle */}
                   <div className="flex items-center gap-3">
-                        <LocaleSwitcher />
                         {whatsNew && (
                             <button
                                 onClick={whatsNew.toggle}

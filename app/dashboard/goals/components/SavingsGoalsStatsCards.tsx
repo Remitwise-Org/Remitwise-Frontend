@@ -1,4 +1,5 @@
 import { Target, DollarSign, TrendingUp } from 'lucide-react'
+import { useClientTranslator } from '@/lib/i18n/client'
 
 interface StatsCardProps {
     label: string
@@ -43,6 +44,8 @@ export default function SavingsGoalsStatsCards({
     totalTarget = 48000,
     totalSaved = 26500,
 }: SavingsGoalsStatsCardsProps) {
+    const { t } = useClientTranslator()
+    
     const formatCurrency = (amount: number): string => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -55,17 +58,17 @@ export default function SavingsGoalsStatsCards({
     return (
         <div className="grid grid-cols-1 375:grid-cols-2 tablet:grid-cols-3 gap-4 375:gap-5">
             <StatsCard
-                label="Total Goals"
+                label={t('savingsGoals.stats.totalGoals')}
                 value={String(totalGoals)}
                 icon={<Target className="w-6 h-6" />}
             />
             <StatsCard
-                label="Total Target"
+                label={t('savingsGoals.stats.totalTarget')}
                 value={formatCurrency(totalTarget)}
                 icon={<DollarSign className="w-6 h-6" />}
             />
             <StatsCard
-                label="Total Saved"
+                label={t('savingsGoals.stats.totalSaved')}
                 value={formatCurrency(totalSaved)}
                 icon={<TrendingUp className="w-6 h-6" />}
             />

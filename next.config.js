@@ -1,27 +1,34 @@
+const { withSentryConfig } = require("@sentry/nextjs");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-}
+};
 
-// Keep legacy `/api/*` routes working as v1 to avoid breaking existing clients.
-// When v2 is introduced, add a new `/api/v2/*` namespace and update rewrites as needed.
 const rewrites = async () => {
   return [
     {
-      source: '/api/:path*',
-      destination: '/api/v1/:path*',
+      source: "/api/:path*",
+      destination: "/api/v1/:path*",
     },
-  ]
-}
+  ];
+};
 
-module.exports = {
-  ...nextConfig,
-  rewrites,
-}
+const sentryWebpackPluginOptions = {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
 
-// /** @type {import('next').NextConfig} */
-// const nextConfig = {
-//   reactStrictMode: true,
-// }
+  silent: !process.env.CI,
 
-// module.exports = nextConfig
+  tunnelRoute: "/monitoring",
+
+  hideSourceMaps: true,
+
+  disableLogger: true,
+};
+
+module.exports = withSentryConfig(
+  { ...nextConfig, rewrites },
+  sentryWebpackPluginOptions
+);

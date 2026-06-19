@@ -63,7 +63,7 @@ const STATUS_STYLES: Record<
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: Bill["status"] }) {
-  const s = STATUS_STYLES[status];
+  const s = getStatusStyles(status)!;
   const label: Record<Bill["status"], string> = {
     overdue: "Overdue",
     urgent: "Due Soon",
@@ -79,7 +79,7 @@ function StatusBadge({ status }: { status: Bill["status"] }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-[10px] border px-2 py-0.5 text-xs font-semibold ${s.badgeBg} ${s.badgeBorder} ${s.badgeText}`}
+      className={`inline-flex items-center gap-1 rounded-[10px] border px-2 py-0.5 text-xs font-semibold ${s.dueBg} ${s.border} text-white`}
       aria-label={`Status: ${label[status]}`}
     >
       <Icon className="h-3 w-3" aria-hidden="true" />
@@ -88,7 +88,7 @@ function StatusBadge({ status }: { status: Bill["status"] }) {
   );
 }
 
-// ─── Recurring chain badge ────────────────────────────────────────────────────
+// ─── Exported Component ─────────────────────────────────────────────────────────
 
 function RecurringBadge({
   recurrenceLabel,

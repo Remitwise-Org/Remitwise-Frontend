@@ -2,6 +2,8 @@
 
 Frontend application for the RemitWise remittance and financial planning platform.
 
+> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map.
+
 ## Overview
 
 This is a Next.js-based frontend skeleton that provides the UI structure for all RemitWise features. The application is built with:
@@ -26,6 +28,24 @@ The frontend includes placeholder pages and components for:
 ## Loading States
 
 Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
+
+## Sentry
+
+Sentry is wired through the client, server, and edge config files with separate environment variables for each runtime:
+
+- `NEXT_PUBLIC_SENTRY_DSN` is used by the browser bundle.
+- `SENTRY_DSN` and `SENTRY_RELEASE` are used on the server and edge runtimes.
+- `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` are required for source map uploads in CI.
+- `NEXT_PUBLIC_APP_ENV` drives sampling behavior, with higher collection in development and lower rates in production.
+- The Sentry tunnel route is `/monitoring`, which keeps requests working through ad blockers.
+
+PII scrubbing is applied before events leave the app:
+
+- Client events scrub Stellar public keys and amount strings.
+- Server events use the same scrubbing plus `iron-session` token redaction.
+- Edge events stay minimal and do not attach replay or extra scrubbing.
+
+Keep the auth token out of the repo and store it only in CI secrets.
 
 ## Getting Started
 
@@ -162,7 +182,8 @@ remitwise-frontend/
 ├── lib/                     # Utilities and helpers
 │   └── auth.ts              # Auth middleware
 ├── docs/                    # Documentation
-│   └── API_ROUTES.md        # API routes documentation
+│   ├── API_ROUTES.md        # API routes documentation
+│   └── contract-cache.md    # Contract caching architecture and guidelines
 ├── public/                  # Static assets
 └── package.json
 ```
@@ -726,7 +747,35 @@ Example environment variables:
 
 RemitWise exposes an OpenAPI discovery endpoint:
 
-/api/.well-known/openapi
+ /api/.well-known/openapi
 
 This allows integrators and wallets to automatically discover
 the RemitWise API specification.
+
+## Sentry
+
+Sentry error monitoring is integrated for client, server, and edge runtimes.
+
+**Required environment variables** (see `.env.example`):
+- `NEXT_PUBLIC_SENTRY_DSN` — public DSN for browser and client
+- `SENTRY_DSN` — server/edge DSN (same value)
+- `SENTRY_ORG`, `SENTRY_PROJECT` — project identifiers for source map uploads
+- `SENTRY_AUTH_TOKEN` — CI-only token (never commit); store as secret in CI
+- `SENTRY_RELEASE` — release id (git SHA or tag), set automatically in CI
+- `NEXT_PUBLIC_APP_ENV` — `development` | `staging` | `production`
+
+**Sample rates**:
+- `NEXT_PUBLIC_APP_ENV=production` sets lower rates: `tracesSampleRate: 0.1`, `replaysSessionSampleRate: 0.05`
+- Non-production uses higher rates for visibility
+
+**Tunnel route**:
+- All Sentry requests are proxied through `/monitoring` (configured in `next.config.js`) to avoid ad blockers.
+
+**PII scrubbing**:
+- Client (`scrubStellarPII`): Stellar addresses (`G[A-Z2-7]{55}`) and amounts (`\d+ XLM|USDC|USD`) are replaced before send.
+- Server (`scrubServerPII`): same + `iron-session` tokens are redacted.
+- Scrubbers live inside each config file for edge compatibility.
+
+**Source maps**:
+- Uploaded during build when `SENTRY_AUTH_TOKEN` and CI are present.
+- `hideSourceMaps: true` prevents browser exposure.

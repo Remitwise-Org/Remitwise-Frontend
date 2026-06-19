@@ -9,20 +9,12 @@ export interface ValidationResult {
  * Validates that an amount is a positive number
  */
 export function validateAmount(amount: number): ValidationResult {
-  if (typeof amount !== 'number') {
-    return { isValid: false, error: 'Amount must be a number' };
-  }
-  
-  if (isNaN(amount)) {
-    return { isValid: false, error: 'Amount cannot be NaN' };
-  }
-  
-  if (!isFinite(amount)) {
-    return { isValid: false, error: 'Amount must be finite' };
+  if (typeof amount !== 'number' || isNaN(amount) || !isFinite(amount)) {
+    return { isValid: false, error: 'goal_amount_positive' };
   }
   
   if (amount <= 0) {
-    return { isValid: false, error: 'Amount must be positive' };
+    return { isValid: false, error: 'goal_amount_positive' };
   }
   
   return { isValid: true };
@@ -33,19 +25,19 @@ export function validateAmount(amount: number): ValidationResult {
  */
 export function validateFutureDate(dateString: string): ValidationResult {
   if (!dateString || typeof dateString !== 'string') {
-    return { isValid: false, error: 'Date must be a non-empty string' };
+    return { isValid: false, error: 'goal_invalid_date' };
   }
   
   const date = new Date(dateString);
   
   if (isNaN(date.getTime())) {
-    return { isValid: false, error: 'Invalid date format' };
+    return { isValid: false, error: 'goal_invalid_date' };
   }
   
   const now = new Date();
   
   if (date <= now) {
-    return { isValid: false, error: 'Target date must be in the future' };
+    return { isValid: false, error: 'goal_date_future' };
   }
   
   return { isValid: true };
@@ -55,12 +47,8 @@ export function validateFutureDate(dateString: string): ValidationResult {
  * Validates that a goal ID is non-empty
  */
 export function validateGoalId(goalId: string): ValidationResult {
-  if (!goalId || typeof goalId !== 'string') {
-    return { isValid: false, error: 'Goal ID must be a non-empty string' };
-  }
-  
-  if (goalId.trim().length === 0) {
-    return { isValid: false, error: 'Goal ID cannot be empty or whitespace' };
+  if (!goalId || typeof goalId !== 'string' || goalId.trim().length === 0) {
+    return { isValid: false, error: 'goal_id_required' };
   }
   
   return { isValid: true };
@@ -70,16 +58,27 @@ export function validateGoalId(goalId: string): ValidationResult {
  * Validates that a goal name is valid
  */
 export function validateGoalName(name: string): ValidationResult {
-  if (!name || typeof name !== 'string') {
-    return { isValid: false, error: 'Goal name must be a non-empty string' };
-  }
-  
-  if (name.trim().length === 0) {
-    return { isValid: false, error: 'Goal name cannot be empty or whitespace' };
+  if (!name || typeof name !== 'string' || name.trim().length === 0) {
+    return { isValid: false, error: 'goal_name_required' };
   }
   
   if (name.length > 100) {
-    return { isValid: false, error: 'Goal name cannot exceed 100 characters' };
+    return { isValid: false, error: 'goal_name_too_long' };
+  }
+  
+  return { isValid: true };
+}
+
+/**
+ * Validates that a goal description is valid
+ */
+export function validateGoalDescription(description: string): ValidationResult {
+  if (typeof description !== 'string') {
+    return { isValid: false, error: 'goal_description_invalid' };
+  }
+  
+  if (description.length > 200) {
+    return { isValid: false, error: 'goal_description_too_long' };
   }
   
   return { isValid: true };
