@@ -1,217 +1,344 @@
-"use client"
-import Link from 'next/link'
-import { ArrowLeft, Plus, Shield, Loader2, CalendarClock } from 'lucide-react'
-import { ActionState } from '@/lib/auth/middleware';
-import { useFormAction } from '@/lib/hooks/useFormAction';
-import { getPolicyPaymentPresentation } from '@/lib/ui/status-semantics';
-import NewPolicyForm from '@/components/forms/NewPolicyForm';
+"use client";
 
-export default function Insurance() {
-  type AddInsuranceResponse = ActionState & { 
-    policyName?: string; 
-    coverageAmount?: number; 
-    monthlyPremium?: number; 
-    coverageType?: string 
-  };
-  
-  const [state, formAction, pending] = useFormAction<AddInsuranceResponse>("/api/insurance");
+import { useState, useCallback, useEffect } from "react";
+import { Shield, Plus } from "lucide-react";
+import { type Policy } from "@/lib/contracts/insurance";
+import { getPolicyPaymentPresentation } from "@/lib/ui/status-semantics";
+import { apiClient } from "@/lib/client/apiClient";
+import { SkeletonList } from "@/components/ui/Skeleton";
+import PolicyDetail from "@/components/insurance/PolicyDetail";
+import NewPolicyForm from "@/components/forms/NewPolicyForm";
+
+// ─── i18n stubs (replace with your real i18n hook) ───────────────────────────
+
+const en = {
+  insurance: {
+    page_title: "Micro-Insurance",
+    page_subtitle: "Manage your active coverage policies",
+    new_policy: "New Policy",
+    active_policies: "Active Policies",
+    no_policies_title: "No active policies yet",
+    no_policies_body: "Create your first policy to start protecting what matters most.",
+    total_premium: "Total Monthly Premium",
+    total_premium_sub: "Auto-paid from remittance allocation",
+    card_coverage_type: "Coverage Type",
+    card_monthly_premium: "Monthly Premium",
+    card_coverage_amount: "Coverage Amount",
+    card_next_payment: "Next Payment",
+    card_pay_now: "Pay Premium Now",
+    card_view_detail: "View Details",
+    detail_subtitle: "Policy details and actions",
+    detail_close: "Close policy details",
+    detail_status_idle_title: "Ready",
+    detail_status_idle_desc: "Select an action above to interact with this policy.",
+    detail_status_pending_title: "Processing request",
+    detail_status_pending_desc: "Building the on-chain payload — this takes a moment.",
+    detail_status_success_title: "Request ready",
+    detail_status_error_title: "Request failed",
+    pay_success_desc: "Premium payment payload is ready for signing.",
+    deactivate_success_desc: "Deactivation payload is ready for signing.",
+    pay_confirm_title: "Confirm premium payment",
+    pay_confirm_body: "You are about to pay {{amount}} for this policy. This action cannot be undone after signing.",
+    pay_submitting: "Preparing payment…",
+    pay_confirm: "Confirm Payment",
+    deactivate_confirm_title: "Deactivate policy permanently",
+    deactivate_confirm_body: "This will permanently deactivate your policy. You will lose coverage immediately and cannot reactivate it. Are you sure?",
+    deactivate_submitting: "Deactivating…",
+    deactivate_confirm: "Yes, Deactivate",
+    action_deactivate: "Deactivate Policy",
+    action_cancel: "Cancel",
+    already_deactivated: "This policy has been deactivated and can no longer be modified.",
+    error_fetch_policies: "Failed to load policies. Please try again.",
+    error_fetch_detail: "Failed to load policy details.",
+  },
+};
+
+function t(key: string, interpolations?: Record<string, string | number>): string {
+  const parts = key.split(".");
+  let value: unknown = en;
+  for (const part of parts) {
+    if (value && typeof value === "object" && part in value) {
+      value = (value as Record<string, unknown>)[part];
+    } else {
+      return key;
+    }
+  }
+  let result = typeof value === "string" ? value : key;
+  if (interpolations) {
+    Object.entries(interpolations).forEach(([k, v]) => {
+      result = result.replace(new RegExp(`{{${k}}}`, "g"), String(v));
+    });
+  }
+  return result;
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface PageState {
+  policies: Policy[];
+  loading: boolean;
+  error: string | null;
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function InsurancePage() {
+  const [state, setState] = useState<PageState>({
+    policies: [],
+    loading: true,
+    error: null,
+  });
+  const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [showNewPolicy, setShowNewPolicy] = useState(false);
+
+  // Fetch policies on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchPolicies() {
+      try {
+        const response = await apiClient.get("/api/v1/insurance");
+        if (!cancelled) {
+          if (!response) {
+            setState({ policies: [], loading: false, error: null });
+            return;
+          }
+          if (!response.ok) {
+            setState({
+              policies: [],
+              loading: false,
+              error: t("insurance.error_fetch_policies"),
+            });
+            return;
+          }
+          const data = await response.json();
+          setState({ policies: data.policies || [], loading: false, error: null });
+        }
+      } catch {
+        if (!cancelled) {
+          setState({ policies: [], loading: false, error: t("insurance.error_fetch_policies") });
+        }
+      }
+    }
+
+    fetchPolicies();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleOpenDetail = useCallback((policy: Policy) => {
+    setSelectedPolicy(policy);
+    setDetailOpen(true);
+  }, []);
+
+  const handleCloseDetail = useCallback(() => {
+    setDetailOpen(false);
+    setTimeout(() => setSelectedPolicy(null), 300);
+  }, []);
+
+  const totalPremium = state.policies
+    .filter((p) => p.active)
+    .reduce((sum, p) => sum + p.monthlyPremium, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="text-gray-600 hover:text-gray-900">
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Micro-Insurance</h1>
+    <div className="min-h-screen bg-[#0a0b0f] text-white">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              {t("insurance.page_title")}
+            </h1>
+            <p className="text-gray-400 mt-1 text-sm sm:text-base">
+              {t("insurance.page_subtitle")}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowNewPolicy((s) => !s)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/40"
+          >
+            <Plus className="w-4 h-4" />
+            {t("insurance.new_policy")}
+          </button>
+        </div>
+
+        {/* Total premium stat */}
+        {state.policies.length > 0 && !state.loading && (
+          <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">
+                  {t("insurance.total_premium")}
+                </p>
+                <p className="text-2xl sm:text-3xl font-bold text-white mt-1">
+                  {new Intl.NumberFormat(undefined, {
+                    style: "currency",
+                    currency: "USD",
+                  }).format(totalPremium)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {t("insurance.total_premium_sub")}
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-red-500/10">
+                <Shield className="w-6 h-6 text-red-400" />
+              </div>
             </div>
-            <div className="flex flex-col items-end">
+          </div>
+        )}
+
+        {/* New policy form */}
+        {showNewPolicy && (
+          <div className="mb-8">
+            <NewPolicyForm
+              pending={false}
+              state={{}}
+              formAction={() => {}}
+            />
+          </div>
+        )}
+
+        {/* Policies list */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Shield className="w-5 h-5 text-red-400" />
+            {t("insurance.active_policies")}
+          </h2>
+
+          {state.loading && (
+            <SkeletonList rows={3} variant="cards" />
+          )}
+
+          {state.error && !state.loading && (
+            <div className="p-6 rounded-2xl border border-red-500/20 bg-red-500/[0.06] text-center">
+              <p className="text-red-300 text-sm">{state.error}</p>
               <button
-                className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 bg-gradient-to-b from-red-600 to-red-700 text-white font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled
+                onClick={() => window.location.reload()}
+                className="mt-3 px-4 py-2 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-sm transition-colors"
               >
-                <Plus className="w-5 h-5" />
-                <span>New Policy</span>
+                Retry
               </button>
-              <p className="mt-1 text-sm text-gray-500">Policy creation will be available once contract integration is live.</p>
             </div>
-          </div>
-        </div>
-      </header>
+          )}
 
-      {/* New Policy Form */}
-      <NewPolicyForm pending={pending} state={state} formAction={formAction} />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Active Policies */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Active Policies</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <PolicyCard
-              name="Health Insurance"
-              coverageType="health"
-              monthlyPremium={20}
-              coverageAmount={1000}
-              nextPayment="2024-02-01"
-              active={true}
+          {!state.loading && !state.error && state.policies.length === 0 && (
+            <EmptyPolicies
+              title={t("insurance.no_policies_title")}
+              body={t("insurance.no_policies_body")}
+              onCta={() => setShowNewPolicy(true)}
+              ctaLabel={t("insurance.new_policy")}
             />
-            <PolicyCard
-              name="Emergency Coverage"
-              coverageType="emergency"
-              monthlyPremium={15}
-              coverageAmount={500}
-              nextPayment="2024-02-05"
-              active={true}
-            />
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
+          )}
 
-function PolicyCard({ 
-  name, 
-  coverageType, 
-  monthlyPremium, 
-  coverageAmount, 
-  nextPayment, 
-  active 
-}: { 
-  name: string; 
-  coverageType: string; 
-  monthlyPremium: number; 
-  coverageAmount: number; 
-  nextPayment: string;
-  active: boolean; 
-}) {
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-6"
-    >
-      <div className="flex items-center gap-3 mb-4">
-        <ShieldCheck className="h-6 w-6 text-emerald-400" aria-hidden />
-        <h3 className="font-semibold text-white">{t("insurance.status_success_title")}</h3>
+          {!state.loading && !state.error && state.policies.length > 0 && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {state.policies.map((policy) => (
+                <PolicyCard
+                  key={policy.id}
+                  policy={policy}
+                  t={t}
+                  onViewDetail={() => handleOpenDetail(policy)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-      <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <SuccessBadge label={t("insurance.success_badge_name")} value={state.policyName} />
-        <SuccessBadge label={t("insurance.success_badge_type")} value={state.coverageType} />
-        <SuccessBadge
-          label={t("insurance.success_badge_premium")}
-          value={state.monthlyPremium !== undefined ? `$${state.monthlyPremium}/mo` : undefined}
-        />
-        <SuccessBadge
-          label={t("insurance.success_badge_coverage")}
-          value={state.coverageAmount !== undefined ? `$${state.coverageAmount}` : undefined}
-        />
-      </dl>
+
+      {/* Policy Detail Dialog */}
+      <PolicyDetail
+        policy={selectedPolicy}
+        open={detailOpen}
+        onClose={handleCloseDetail}
+        t={t}
+      />
     </div>
   );
 }
 
-function SuccessBadge({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | number;
-}) {
-  if (value === undefined || value === null) return null;
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
-      <dt className="text-xs text-gray-400 uppercase tracking-wide">{label}</dt>
-      <dd className="mt-1 font-semibold text-white">{value}</dd>
-    </div>
-  );
-}
-
-// ─── PolicyCard ────────────────────────────────────────────────────────────────
+// ─── PolicyCard ───────────────────────────────────────────────────────────────
 
 function PolicyCard({
   policy,
   t,
+  onViewDetail,
 }: {
   policy: Policy;
-  t: (key: string) => string;
+  t: (key: string, interpolations?: Record<string, string | number>) => string;
+  onViewDetail: () => void;
 }) {
-  const paymentStatus = getPolicyPaymentPresentation(
-    policy.nextPaymentDate,
-    policy.active
-  );
+  const paymentStatus = getPolicyPaymentPresentation(policy.nextPaymentDate, policy.active);
   const StatusIcon = paymentStatus.icon;
 
   return (
-    <article className="rounded-2xl border border-white/[0.08] bg-[#111] p-6">
+    <div className="group p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-200">
       {/* Card header */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-red-400" aria-hidden />
-          <h3 className="text-lg font-semibold text-white">{policy.name}</h3>
-        </div>
-        <span
-          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${paymentStatus.badgeClassName}`}
-        >
-          <StatusIcon className="h-3.5 w-3.5" aria-hidden />
-          <span>{paymentStatus.label}</span>
-        </span>
-      </div>
-
-      {/* Policy details */}
-      <dl className="space-y-3">
-        <PolicyRow
-          label={t("insurance.card_coverage_type")}
-          value={<span className="capitalize">{policy.coverageType}</span>}
-        />
-        <PolicyRow
-          label={t("insurance.card_monthly_premium")}
-          value={`$${policy.monthlyPremium}`}
-        />
-        <PolicyRow
-          label={t("insurance.card_coverage_amount")}
-          value={`$${policy.coverageAmount}`}
-        />
-        <PolicyRow
-          label={t("insurance.card_next_payment")}
-          value={policy.nextPaymentDate}
-        />
-      </dl>
-
-      {/* Status panel */}
-      <div
-        className={`mt-4 rounded-xl border px-3 py-3 ${paymentStatus.panelClassName}`}
-      >
-        <div className="flex items-start gap-2">
-          <StatusIcon className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">{paymentStatus.label}</p>
-            <p className="text-sm">{paymentStatus.emphasis}</p>
-            <p className="mt-1 flex items-center gap-1 text-xs text-gray-400">
-              <CalendarClock className="h-3.5 w-3.5" aria-hidden />
-              <span>
-                {t("insurance.card_next_payment")}: {policy.nextPaymentDate}
-              </span>
-            </p>
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-white/[0.05]">
+            <Shield className="w-5 h-5 text-red-400" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-white text-sm sm:text-base">{policy.name}</h3>
+            <span
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border mt-1 ${paymentStatus.badgeClassName}`}
+            >
+              <StatusIcon className="w-3 h-3" />
+              {paymentStatus.label}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Pay now — kept disabled per current scope; wired payment flow is a separate task */}
-      {policy.active && (
-        <button
-          type="button"
-          disabled
-          aria-disabled="true"
-          className="mt-4 w-full cursor-not-allowed rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-2 text-sm font-semibold text-gray-500 transition"
-        >
-          {t("insurance.card_pay_now")}
-        </button>
-      )}
-    </article>
+      {/* Policy details */}
+      <div className="space-y-2 mb-4">
+        <PolicyRow
+          label={t("insurance.card_coverage_type")}
+          value={policy.coverageType}
+        />
+        <PolicyRow
+          label={t("insurance.card_monthly_premium")}
+          value={new Intl.NumberFormat(undefined, {
+            style: "currency",
+            currency: "USD",
+          }).format(policy.monthlyPremium)}
+        />
+        <PolicyRow
+          label={t("insurance.card_coverage_amount")}
+          value={new Intl.NumberFormat(undefined, {
+            style: "currency",
+            currency: "USD",
+          }).format(policy.coverageAmount)}
+        />
+        <PolicyRow
+          label={t("insurance.card_next_payment")}
+          value={new Date(policy.nextPaymentDate).toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })}
+        />
+      </div>
+
+      {/* Status panel */}
+      <div
+        className={`flex items-center gap-2 p-2.5 rounded-lg border mb-4 ${paymentStatus.panelClassName}`}
+      >
+        <StatusIcon className="w-4 h-4 shrink-0" />
+        <div className="min-w-0">
+          <p className="text-xs font-medium">{paymentStatus.label}</p>
+          <p className="text-[11px] opacity-80 truncate">{paymentStatus.emphasis}</p>
+        </div>
+      </div>
+
+      {/* View detail button */}
+      <button
+        onClick={onViewDetail}
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.15] text-sm text-gray-300 hover:text-white font-medium transition-all focus:outline-none focus:ring-2 focus:ring-red-500/30"
+      >
+        {t("insurance.card_view_detail")}
+      </button>
+    </div>
   );
 }
 
@@ -223,14 +350,14 @@ function PolicyRow({
   value: React.ReactNode;
 }) {
   return (
-    <div className="flex justify-between text-sm">
-      <dt className="text-gray-400">{label}</dt>
-      <dd className="font-semibold text-white">{value}</dd>
+    <div className="flex items-center justify-between text-sm">
+      <span className="text-gray-500">{label}</span>
+      <span className="text-gray-200 font-medium">{value}</span>
     </div>
   );
 }
 
-// ─── EmptyPolicies ─────────────────────────────────────────────────────────────
+// ─── EmptyPolicies ────────────────────────────────────────────────────────────
 
 function EmptyPolicies({
   title,
@@ -244,16 +371,17 @@ function EmptyPolicies({
   ctaLabel: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.12] bg-white/[0.02] py-16 text-center">
-      <Shield className="mb-4 h-10 w-10 text-gray-600" aria-hidden />
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
-      <p className="mt-2 max-w-sm text-sm text-gray-400">{body}</p>
+    <div className="text-center py-12 sm:py-16 px-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] border-dashed">
+      <div className="inline-flex p-3 rounded-xl bg-white/[0.05] mb-4">
+        <Shield className="w-8 h-8 text-gray-600" />
+      </div>
+      <h3 className="text-lg font-semibold text-gray-300 mb-2">{title}</h3>
+      <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6">{body}</p>
       <button
-        type="button"
         onClick={onCta}
-        className="mt-6 flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 font-medium text-white transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101]"
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium transition-colors"
       >
-        <Plus className="h-4 w-4" aria-hidden />
+        <Plus className="w-4 h-4" />
         {ctaLabel}
       </button>
     </div>
