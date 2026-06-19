@@ -192,6 +192,8 @@ remitwise-frontend/
 
 See [API Routes Documentation](./docs/API_ROUTES.md) for details on authentication and available endpoints.
 
+For authenticated browser-side requests, use the shared client API layer documented in [docs/client-api.md](docs/client-api.md). That guide covers when to use `apiClient` instead of raw `fetch`, the `401 -> refresh -> retry once` flow, session-expiry UI surfacing, and logout behavior.
+
 **Quick Reference:**
 
 - Public routes: `/api/health`, `/api/auth/*`

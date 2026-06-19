@@ -5,22 +5,36 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 export type SessionPhase = 'none' | 'warning' | 'expired';
 
 export interface SessionExpiryState {
+  /** Current notification phase. */
   phase: SessionPhase;
+  /** User-facing copy for the active notification phase. */
   message: string;
+  /** Seconds remaining in the warning phase countdown. */
   countdown: number;
+  /** Clears the UI state after dispatching a local `session-refresh` event. */
   staySignedIn: () => void;
+  /** Redirects the browser to the reconnect entry point (`/`). */
   reconnect: () => void;
+  /** Resets all local expiry UI state without redirecting. */
   clearExpiry: () => void;
 }
 
 /**
- * Hook to listen for session expiry events
- * Supports two phases:
- * - 'warning': session about to expire, shows countdown
- * - 'expired': session has expired, shows reconnect action
+ * Listens for global session-expiry window events and turns them into local UI state.
  *
- * Usage:
- * const { phase, message, countdown, staySignedIn, reconnect, clearExpiry } = useSessionExpiry();
+ * Phases:
+ * - `'warning'`: the app has received a `session-expiring` event and should show a countdown.
+ * - `'expired'`: the app has received `session-expired`, or the warning countdown reached zero.
+ *
+ * Event contract:
+ * - `session-expiring` sets the warning message and countdown.
+ * - `session-expired` switches immediately to the expired state.
+ * - `session-refresh` clears the local notification state.
+ *
+ * Note that `staySignedIn()` only dispatches `session-refresh`; it does not call
+ * `/api/auth/refresh` by itself.
+ *
+ * @returns The current expiry UI state plus actions for warning dismissal and reconnect.
  */
 export function useSessionExpiry(): SessionExpiryState {
   const [phase, setPhase] = useState<SessionPhase>('none');

@@ -58,10 +58,23 @@ async function fetchWithRetry(url: string, options: ApiClientOptions): Promise<R
 }
 
 /**
- * Make an API request with automatic session expiry handling and retries
- * @param url - The API endpoint URL
- * @param options - Fetch options
- * @returns Response object or null if session expired
+ * Makes a browser-side request to a RemitWise API route with shared retry and
+ * session handling.
+ *
+ * Use this instead of raw `fetch` for authenticated client requests so every
+ * page gets the same `401 -> refresh -> retry once` behavior.
+ *
+ * Flow:
+ * - Retries transport failures, `429`, and `5xx` responses with exponential backoff.
+ * - Detects expired sessions only when the response is a `401` whose JSON body
+ *   contains `{ message: 'Session expired' }`.
+ * - Attempts `POST /api/auth/refresh` once, then replays the original request once.
+ * - Falls back to the terminal session-expiry flow and returns `null` if refresh
+ *   cannot recover the request.
+ *
+ * @param url - API endpoint URL.
+ * @param options - Standard `fetch` options plus optional `retries` and `backoff`.
+ * @returns The raw `Response`, or `null` when the session-expiry flow has already been triggered.
  */
 async function request(url: string, options?: ApiClientOptions): Promise<Response | null> {
   try {
@@ -92,48 +105,55 @@ async function request(url: string, options?: ApiClientOptions): Promise<Respons
 }
 
 /**
- * Make a GET request
- * @param url - The API endpoint URL
- * @param options - Fetch options
- * @returns Response object or null if session expired
+ * Sends a `GET` request through {@link request}.
+ *
+ * @param url - API endpoint URL.
+ * @param options - `fetch` options except `method` and `body`.
+ * @returns The raw `Response`, or `null` when the session-expiry flow has already been triggered.
  */
 async function get(url: string, options?: Omit<ApiClientOptions, 'method' | 'body'>): Promise<Response | null> {
   return request(url, { ...options, method: 'GET' });
 }
 
 /**
- * Make a POST request
- * @param url - The API endpoint URL
- * @param options - Fetch options
- * @returns Response object or null if session expired
+ * Sends a `POST` request through {@link request}.
+ *
+ * @param url - API endpoint URL.
+ * @param options - `fetch` options except `method`.
+ * @returns The raw `Response`, or `null` when the session-expiry flow has already been triggered.
  */
 async function post(url: string, options?: Omit<ApiClientOptions, 'method'>): Promise<Response | null> {
   return request(url, { ...options, method: 'POST' });
 }
 
 /**
- * Make a PUT request
- * @param url - The API endpoint URL
- * @param options - Fetch options
- * @returns Response object or null if session expired
+ * Sends a `PUT` request through {@link request}.
+ *
+ * @param url - API endpoint URL.
+ * @param options - `fetch` options except `method`.
+ * @returns The raw `Response`, or `null` when the session-expiry flow has already been triggered.
  */
 async function put(url: string, options?: Omit<ApiClientOptions, 'method'>): Promise<Response | null> {
   return request(url, { ...options, method: 'PUT' });
 }
 
 /**
- * Make a DELETE request
- * @param url - The API endpoint URL
- * @param options - Fetch options
- * @returns Response object or null if session expired
+ * Sends a `DELETE` request through {@link request}.
+ *
+ * @param url - API endpoint URL.
+ * @param options - `fetch` options except `method` and `body`.
+ * @returns The raw `Response`, or `null` when the session-expiry flow has already been triggered.
  */
 async function del(url: string, options?: Omit<ApiClientOptions, 'method' | 'body'>): Promise<Response | null> {
   return request(url, { ...options, method: 'DELETE' });
 }
 
 /**
- * API client with session expiry handling
- * Use this instead of raw fetch for authenticated requests
+ * Shared browser API client for authenticated requests.
+ *
+ * Public methods return `Response | null`. `null` means the request ended in the
+ * session-expiry flow, so callers should stop work and avoid showing duplicate
+ * authentication errors.
  */
 export const apiClient = {
   request,

@@ -1,5 +1,7 @@
 # Frontend Session Handling
 
+This document is kept for historical context. For the current contributor-facing contract, use [docs/client-api.md](./client-api.md).
+
 This document describes the frontend session expiry handling implementation for the Remitwise application.
 
 ## Overview
