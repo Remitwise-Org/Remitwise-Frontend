@@ -7,6 +7,7 @@ import { ToastProvider } from "@/lib/context/ToastContext";
 import { ContractOperationsProvider } from "@/lib/context/ContractOperationsContext";
 import ToastRegion from "@/components/ToastRegion";
 import SessionExpiryProvider from "@/components/SessionExpiryProvider";
+import CommandPalette from "@/components/CommandPalette";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,6 +33,7 @@ export default function RootLayout({
                   {children}
                 </LayoutWrapper>
                 <ToastRegion />
+                <CommandPalette />
               </SessionExpiryProvider>
             </ContractOperationsProvider>
           </DensityProvider>
