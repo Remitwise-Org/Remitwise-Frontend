@@ -60,7 +60,9 @@ npm run dev
 
 ## Test Commands
 
-All commands below are verified against `package.json`.
+All commands below are verified against `package.json`. For the full multi-runner
+reference — when to use each runner, the `tests/` layout, coverage expectations, and a
+recipe for adding a test with each runner — see [docs/testing.md](docs/testing.md).
 
 ### Quick reference
 
