@@ -94,6 +94,11 @@ npm start
 
 The project includes unit tests and integration tests for API routes.
 
+> **Full guide:** see [docs/testing.md](docs/testing.md) for the complete multi-runner
+> reference — when to use Vitest vs. node:test vs. Playwright, a map of every
+> `package.json` test script, the `tests/` layout, coverage and gate expectations, and a
+> "how to add a test" recipe per runner.
+
 #### Running Tests
 
 ```bash
