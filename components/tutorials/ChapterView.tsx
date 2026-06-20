@@ -23,6 +23,10 @@ const STORAGE_KEY = (tutorialId: string) =>
 
 const defaultCheckpoints = [false, false, false];
 
+interface TutorialProgress {
+  chapters: Record<string, { checkpoints: boolean[] }>;
+}
+
 export default function ChapterView({
   tutorialId,
   chapterId,
@@ -33,35 +37,84 @@ export default function ChapterView({
   const router = useRouter();
   const [checkpoints, setCheckpoints] = useState<boolean[]>(defaultCheckpoints);
   const [savedChapters, setSavedChapters] = useState<Record<string, { checkpoints: boolean[] }>>({});
+  const [isSyncing, setIsSyncing] = useState(false);
 
+  // Load progress from server first, then fallback to localStorage
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY(tutorialId));
-      const parsed = raw ? JSON.parse(raw) : { chapters: {} };
-      const chapters = parsed?.chapters ?? {};
-      setSavedChapters(chapters);
-      if (chapters[chapterId]?.checkpoints) {
-        setCheckpoints(chapters[chapterId].checkpoints);
-      } else {
-        setCheckpoints(defaultCheckpoints);
+    const loadProgress = async () => {
+      try {
+        const response = await fetch(`/api/v1/tutorials/${tutorialId}/progress`);
+        if (response.ok) {
+          const data: TutorialProgress = await response.json();
+          const chapters = data?.chapters ?? {};
+          setSavedChapters(chapters);
+          if (chapters[chapterId]?.checkpoints) {
+            setCheckpoints(chapters[chapterId].checkpoints);
+          } else {
+            setCheckpoints(defaultCheckpoints);
+          }
+          // Sync to localStorage as backup
+          localStorage.setItem(STORAGE_KEY(tutorialId), JSON.stringify(data));
+        } else {
+          // Fallback to localStorage if server request fails
+          throw new Error("Server request failed");
+        }
+      } catch (e) {
+        // Fallback to localStorage
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY(tutorialId));
+          const parsed = raw ? JSON.parse(raw) : { chapters: {} };
+          const chapters = parsed?.chapters ?? {};
+          setSavedChapters(chapters);
+          if (chapters[chapterId]?.checkpoints) {
+            setCheckpoints(chapters[chapterId].checkpoints);
+          } else {
+            setCheckpoints(defaultCheckpoints);
+          }
+        } catch (localError) {
+          setSavedChapters({});
+          setCheckpoints(defaultCheckpoints);
+        }
       }
-    } catch (e) {
-      setSavedChapters({});
-      setCheckpoints(defaultCheckpoints);
-    }
+    };
+
+    loadProgress();
   }, [tutorialId, chapterId]);
 
+  // Save progress to server and localStorage
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY(tutorialId));
-      const base = raw ? JSON.parse(raw) : { chapters: {} };
-      base.chapters = { ...base.chapters, [chapterId]: { checkpoints } };
-      localStorage.setItem(STORAGE_KEY(tutorialId), JSON.stringify(base));
-      setSavedChapters(base.chapters);
-    } catch (e) {
-      // ignore write errors
-    }
-  }, [checkpoints, tutorialId, chapterId]);
+    const saveProgress = async () => {
+      setIsSyncing(true);
+      try {
+        // Save to localStorage first (immediate)
+        const base = { chapters: { ...savedChapters, [chapterId]: { checkpoints } } };
+        localStorage.setItem(STORAGE_KEY(tutorialId), JSON.stringify(base));
+        setSavedChapters(base.chapters);
+
+        // Then sync to server (async)
+        try {
+          const response = await fetch(`/api/v1/tutorials/${tutorialId}/progress`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(base),
+          });
+          if (response.ok) {
+            const data: TutorialProgress = await response.json();
+            setSavedChapters(data.chapters);
+          }
+        } catch (serverError) {
+          // Server sync failed, but localStorage save succeeded
+          console.error("Failed to sync progress to server:", serverError);
+        }
+      } catch (e) {
+        // ignore write errors
+      } finally {
+        setIsSyncing(false);
+      }
+    };
+
+    saveProgress();
+  }, [checkpoints, tutorialId, chapterId, savedChapters]);
 
   const chapterStates = useMemo(() => {
     return Array.from({ length: chaptersCount }, (_, index) => {
@@ -105,15 +158,6 @@ export default function ChapterView({
   const markComplete = () => {
     const complete = Array(checkpoints.length).fill(true);
     setCheckpoints(complete);
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY(tutorialId));
-      const base = raw ? JSON.parse(raw) : { chapters: {} };
-      base.chapters = { ...base.chapters, [chapterId]: { checkpoints: complete } };
-      localStorage.setItem(STORAGE_KEY(tutorialId), JSON.stringify(base));
-      setSavedChapters(base.chapters);
-    } catch (e) {
-      // ignore write errors
-    }
   };
 
   const handleChapterSelect = (index: number) => {
