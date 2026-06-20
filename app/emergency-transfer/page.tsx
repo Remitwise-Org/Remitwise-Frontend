@@ -3,6 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/lib/context/ToastContext";
+import useStellarAddressValidation, {
+  normalizeStellarAddress,
+} from "@/lib/hooks/useStellarAddressValidation";
 import {
   ArrowLeft,
   AlertTriangle,
@@ -33,9 +36,10 @@ export default function EmergencyTransferPage() {
 
   const priorityFee = speed === "emergency" ? 2.0 : 0.0;
   const total = amount + priorityFee;
+  const validation = useStellarAddressValidation(recipientAddress);
 
   const handleRecipientContinue = () => {
-    if (recipientName && recipientAddress) {
+    if (recipientName && validation.isValid) {
       setStep("amount");
     }
   };
@@ -212,10 +216,24 @@ export default function EmergencyTransferPage() {
                   <input
                     type="text"
                     value={recipientAddress}
-                    onChange={(e) => setRecipientAddress(e.target.value)}
+                    onChange={(e) => setRecipientAddress(normalizeStellarAddress(e.target.value))}
                     placeholder="GXXXXXXXXXXXXXXXXXXXXXXXX"
                     className="w-full rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 text-white placeholder:text-zinc-600 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 outline-none transition-all font-mono"
                   />
+                  {recipientAddress && (
+                    <p
+                      className={`mt-2 text-sm ${
+                        validation.tone === 'success'
+                          ? 'text-emerald-400'
+                          : validation.tone === 'error'
+                            ? 'text-red-400'
+                            : 'text-zinc-400'
+                      }`}
+                      aria-live="polite"
+                    >
+                      {validation.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -228,7 +246,7 @@ export default function EmergencyTransferPage() {
                 </Link>
                 <button
                   onClick={handleRecipientContinue}
-                  disabled={!recipientName || !recipientAddress}
+                  disabled={!recipientName || !validation.isValid}
                   className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-red-600 to-red-700 px-6 py-3 font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Continue

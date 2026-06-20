@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     include: [
       'lib/contracts/**/*.test.ts',
+      'lib/**/*.test.ts',
       'tests/unit/**/*.test.ts',
       'tests/unit/**/*.test.cjs',
       'tests/integration/**/*.test.ts',
@@ -13,16 +14,20 @@ export default defineConfig({
       'tests/property/**/*.test.cjs',
       'tests/session/**/*.test.ts',
       'tests/session/**/*.test.cjs',
+      'components/**/*.test.tsx',
     ],
-    environment: 'node',
+    environment: 'jsdom',
     globals: true,
+    setupFiles: ['./vitest.setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['lib/contracts/**/*.ts', 'app/**/*.ts', 'lib/**/*.ts'],
+      include: ['lib/contracts/**/*.ts', 'app/**/*.ts', 'lib/**/*.ts', 'components/**/*.tsx'],
       exclude: [
         'lib/contracts/**/*.test.ts',
+        'lib/**/*.test.ts',
         'tests/**',
+        'components/**/*.test.tsx',
       ],
     },
     alias: {

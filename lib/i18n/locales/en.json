@@ -1,4 +1,46 @@
 {
+  "insurance": {
+    "page_title": "Micro-Insurance",
+    "page_subtitle": "Manage your active coverage policies",
+    "new_policy": "New Policy",
+    "active_policies": "Active Policies",
+    "no_policies_title": "No active policies yet",
+    "no_policies_body": "Create your first policy to start protecting what matters most.",
+    "total_premium": "Total Monthly Premium",
+    "total_premium_sub": "Auto-paid from remittance allocation",
+    "form_title": "Create New Policy",
+    "form_eyebrow": "Policy creation",
+    "form_description": "This policy is built as an on-chain USDC smart contract payload. Your wallet signs and submits the transaction; RemitWise only prepares the payload.",
+    "field_policy_name": "Policy Name",
+    "field_policy_name_placeholder": "e.g., Health Insurance, Emergency Coverage",
+    "field_coverage_type": "Coverage Type",
+    "field_coverage_type_placeholder": "Select coverage type",
+    "field_monthly_premium": "Monthly Premium (USD)",
+    "field_monthly_premium_placeholder": "20.00",
+    "field_coverage_amount": "Coverage Amount (USD)",
+    "field_coverage_amount_placeholder": "1000.00",
+    "submit": "Create Policy",
+    "submitting": "Creating Policy…",
+    "status_idle_title": "Ready to submit",
+    "status_idle_desc": "Fill in the form above and click Create Policy to register your new coverage.",
+    "status_pending_title": "Preparing policy contract request",
+    "status_pending_desc": "Building the on-chain payload — this takes a moment.",
+    "status_success_title": "Policy created successfully",
+    "status_error_title": "Policy could not be created",
+    "success_badge_name": "Policy name",
+    "success_badge_type": "Coverage type",
+    "success_badge_premium": "Monthly premium",
+    "success_badge_coverage": "Coverage amount",
+    "integration_note": "Insurance actions are prepared as USDC smart contract payloads. Users sign transactions locally in their wallet, and RemitWise does not custody funds.",
+    "card_coverage_type": "Coverage Type",
+    "card_monthly_premium": "Monthly Premium",
+    "card_coverage_amount": "Coverage Amount",
+    "card_next_payment": "Next Payment",
+    "card_pay_now": "Pay Premium Now",
+    "coverage_health": "Health",
+    "coverage_emergency": "Emergency",
+    "coverage_life": "Life"
+  },
   "errors": {
     "missing_signature": "Missing signature",
     "invalid_signature": "Invalid signature",
@@ -26,15 +68,67 @@
     "failed_fetch_total_premium": "Failed to compute total premium",
     "address_signature_required": "Address and signature are required",
     "nonce_expired": "Nonce expired or missing. Please request a new nonce.",
-    "signature_verification_failed": "Signature verification failed"
-  },
-  "transactionHistory": {
+    "signature_verification_failed": "Signature verification failed",
+    "goal_name_required": "Goal name is required",
+    "goal_id_required": "Goal ID is required",
+    "goal_description_invalid": "Invalid description",
+    "goal_name_too_long": "Goal name cannot exceed 100 characters",
+    "goal_description_too_long": "Goal description cannot exceed 200 characters",
+    "goal_amount_positive": "Amount must be positive",
+    "goal_date_future": "Target date must be in the future",
+    "goal_invalid_date": "Invalid date format"
+    },
+    "savingsGoals": {
+    "title": "Savings Goals",
+    "subtitle": "Track and achieve your financial dreams",
+    "newGoal": "New Goal",
+    "editGoal": "Edit Goal",
+    "createGoal": "Create Goal",
+    "modal": {
+      "createTitle": "Create New Goal",
+      "editTitle": "Edit Savings Goal",
+      "titleLabel": "Goal Title",
+      "titlePlaceholder": "e.g. Children's Education",
+      "descriptionLabel": "Description (Optional)",
+      "descriptionPlaceholder": "What are you saving for?",
+      "amountLabel": "Target Amount (USDC)",
+      "dateLabel": "Target Date",
+      "iconLabel": "Choose Icon"
+    },
+    "stats": {
+      "totalGoals": "Total Goals",
+      "totalTarget": "Total Target",
+      "totalSaved": "Total Saved"
+    },
+    "card": {
+      "addFunds": "Add Funds",
+      "edit": "Edit",
+      "target": "Target",
+      "remaining": "{{amount}} remaining",
+      "needMore": "Need {{amount}} more",
+      "complete": "All set — target reached",
+      "daysLeft": "{{count}} days left",
+      "overdue": "Overdue",
+      "goalMet": "Goal met",
+      "nearComplete": "Almost there",
+      "onTrack": "On track",
+      "noDeadline": "No deadline"
+    }
+
+    },
+    "transactionHistory": {
+
     "title": "Transaction History",
+    "titleStandalone": "Transaction History",
+    "subtitleStandalone": "Search, filter, and review payment, split, bill, and insurance activity with grouped results by date.",
     "resultsCount": "{{count}} transactions found",
     "resultsCountZero": "No transactions found",
     "searchPlaceholder": "Search by transaction hash, address, or memo...",
     "searchPlaceholderMobile": "Search transactions...",
+    "searchStandalonePlaceholder": "Search ID, recipient, type, status, amount",
     "filters": "Filter Results",
+    "filtersHeading": "Filter transactions",
+    "filtersHelper": "Search combines with every selected type and status chip.",
     "export": "Export History",
     "tabs": {
       "all": "All Transactions",
@@ -42,8 +136,69 @@
       "pending": "Pending Review",
       "failed": "Needs Attention"
     },
+    "typeFilterLabel": "Type",
+    "statusFilterLabel": "Status",
+    "typeFilter": {
+      "all": "All types",
+      "send": "Send",
+      "split": "Split",
+      "bill": "Bills",
+      "insurance": "Insurance",
+      "savings": "Savings",
+      "family": "Family",
+      "received": "Received"
+    },
+    "statusFilter": {
+      "all": "All statuses",
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed"
+    },
+    "dateRange": {
+      "label": "Date range",
+      "from": "From date",
+      "to": "To date",
+      "clear": "Clear dates"
+    },
+    "dateGroups": {
+      "today": "Today",
+      "todayHelper": "Transactions from today",
+      "yesterday": "Yesterday",
+      "yesterdayHelper": "Transactions from yesterday",
+      "earlier": "Earlier",
+      "earlierHelper": "Older activity kept in chronological order"
+    },
+    "activeFilters": {
+      "label": "Active",
+      "none": "No filters applied",
+      "search": "Search: {{query}}",
+      "type": "Type: {{type}}",
+      "status": "Status: {{status}}",
+      "clearAll": "Clear all",
+      "clearSearch": "Clear transaction search",
+      "removeFilter": "Remove {{label}} filter"
+    },
     "empty": "No transactions matched your search.",
+    "noResults": {
+      "title": "No matching transactions",
+      "description": "Try clearing a filter, widening the status selection, or searching by recipient, ID, amount, or transaction type.",
+      "clearFilters": "Clear filters"
+    },
+    "emptyState": {
+      "title": "No transaction history yet",
+      "description": "Completed transfers, splits, bill payments, and insurance activity will appear here once you make your first transaction.",
+      "cta": "Send Money"
+    },
+    "resultsAriaLive": {
+      "one": "1 transaction found",
+      "many": "{{count}} transactions found",
+      "none": "No transactions found"
+    },
     "loadMore": "Load More Results",
+    "showing": "Showing {{count}} of {{total}} transactions",
+    "results_one": "{{count}} result",
+    "results_many": "{{count}} results",
+    "clearSearch": "Clear search",
     "alerts": {
       "filtersSoon": "Filter functionality coming soon!",
       "exportSoon": "Export functionality coming soon!",
@@ -52,62 +207,14 @@
     }
   },
   "send": {
-    "steps": {
-      "recipient": "Recipient",
-      "amount": "Amount",
-      "review": "Review"
-    },
-    "toast": {
-      "transferSubmitted": "Transfer submitted",
-      "transferSuccess": "Successfully sent {{amount}} {{currency}} to {{address}}."
-    }
-  },
-  "split": {
-    "allocationEditor": "Allocation editor",
-    "currentAllocation": "Current Allocation",
-    "currentAllocationDescription": "Customize how your remittances are distributed, then keep the contract submission states anchored to the same area so the workflow never feels detached.",
-    "allocationNote": "Allocation changes are saved as a USDC smart contract action. The payload is prepared in-app and the wallet signs it locally.",
-    "inputs": {
-      "dailySpending": "Daily Spending",
-      "dailySpendingDescription": "For immediate family expenses",
-      "savings": "Savings",
-      "savingsDescription": "Allocated to savings goals",
-      "bills": "Bills",
-      "billsDescription": "Automated bill payments",
-      "insurance": "Insurance",
-      "insuranceDescription": "Micro-insurance premiums"
-    },
-    "total": "Total",
-    "totalDescription": "Every contract build should block submission until this is exactly 100%.",
-    "asyncStatus": {
-      "idleTitle": "Contract submission placement",
-      "idleDescription": "Keep validation and build feedback inline with the form. Reserve stacked status cards for submit and confirmation so they can persist after navigation.",
-      "pendingTitle": "Building contract request",
-      "pendingDescription": "Show the user that the remittance_split payload is being prepared before the wallet step opens."
-    },
-    "buttons": {
-      "cancel": "Cancel",
-      "connectContract": "Connect Contract First",
-      "save": "Save"
-    },
-    "asyncPanel": {
-      "eyebrow": "Async behavior",
-      "title": "Duration, Stacking, and Placement",
-      "description": "This route is the clearest contract-configuration example, so it sets the pattern for where each submission state should appear.",
-      "queueTitle": "Stack behavior",
-      "queueDescription": "Keep no more than three visible submission cards at a time. Newest actions stay highest in the stack and mobile collapses the stack inline below the initiating form.",
-      "footer": "No new Tailwind tokens are required for this pattern. The implementation reuses existing reds, neutrals, focus rings, and arbitrary-value gradients already used in the app."
-    },
-    "stages": {
-      "validateAllocation": "Validate allocation",
-      "buildContractRequest": "Build contract request",
-      "requestWalletSignature": "Request wallet signature",
-      "submitAndConfirm": "Submit and confirm"
-    }
-  },
-  "localeSwitcher": {
-    "label": "Language",
-    "english": "English",
-    "spanish": "Español"
+    "confirm_button": "Confirm & Send Remittance",
+    "confirm_pending": "Processing…",
+    "success_title": "Transfer submitted",
+    "success_description": "Successfully sent {{amount}} {{currency}} to {{address}}.",
+    "error_title": "Transfer failed",
+    "error_network": "Network error. Please check your connection and try again.",
+    "error_empty_amount": "Amount must be greater than zero.",
+    "error_missing_recipient": "Recipient address is required.",
+    "error_api": "The server returned an error. Please try again."
   }
 }

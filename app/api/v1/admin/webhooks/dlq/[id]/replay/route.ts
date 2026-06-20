@@ -13,15 +13,14 @@ import { replayDLQEvent } from '@/lib/webhooks/processor';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: eventId } = await params;
   if (!isAdminAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    const eventId = params.id;
-
     if (!eventId || typeof eventId !== 'string') {
       return NextResponse.json(
         { error: 'Invalid event ID' },

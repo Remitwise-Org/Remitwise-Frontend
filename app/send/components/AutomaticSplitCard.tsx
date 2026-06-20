@@ -9,11 +9,13 @@ import {
   Shield,
   Info,
 } from "lucide-react";
+import { useClientLocale } from "@/lib/i18n/client";
+import { formatCurrency } from "@/lib/utils/format-currency";
 
 interface SplitCategoryProps {
   icon: React.ElementType;
   label: string;
-  amount: number;
+  amount: string;
   percentage: number;
 }
 
@@ -34,7 +36,7 @@ const SplitCategory = ({
         </div>
         <div className="flex items-baseline gap-2">
           <span className="text-sm font-bold text-white tabular-nums">
-            ${amount.toFixed(2)}
+            {amount}
           </span>
           <span className="text-[11px] text-gray-500 w-8 text-right">
             {percentage}%
@@ -53,9 +55,12 @@ const SplitCategory = ({
 
 interface AutomaticSplitCardProps {
   amount?: number;
+  currency?: string;
 }
 
-export default function AutomaticSplitCard({ amount: externalAmount }: AutomaticSplitCardProps) {
+export default function AutomaticSplitCard({ amount: externalAmount, currency }: AutomaticSplitCardProps) {
+  const locale = useClientLocale();
+  const resolvedCurrency = currency ?? "USD";
   const [internalAmount, setInternalAmount] = useState<string>("");
   
   const total = externalAmount !== undefined ? externalAmount : (parseFloat(internalAmount) || 0);
@@ -67,10 +72,7 @@ export default function AutomaticSplitCard({ amount: externalAmount }: Automatic
     { icon: Shield, label: "Insurance", percentage: 5 },
   ] as const;
 
-  const displayTotal = total.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  const displayTotal = formatCurrency(total, resolvedCurrency, locale);
 
   return (
     <div className="space-y-3 max-w-sm mx-auto font-sans">
@@ -100,15 +102,19 @@ export default function AutomaticSplitCard({ amount: externalAmount }: Automatic
 
           {/* Categories */}
           <div className="space-y-5">
-            {categories.map((cat, index) => (
-              <SplitCategory
-                key={index}
-                icon={cat.icon}
-                label={cat.label}
-                amount={(total * cat.percentage) / 100}
-                percentage={cat.percentage}
-              />
-            ))}
+            {categories.map((cat, index) => {
+              const splitValue = (total * cat.percentage) / 100;
+
+              return (
+                <SplitCategory
+                  key={index}
+                  icon={cat.icon}
+                  label={cat.label}
+                  amount={formatCurrency(splitValue, resolvedCurrency, locale)}
+                  percentage={cat.percentage}
+                />
+              );
+            })}
           </div>
 
           {/* Divider + Total */}
@@ -118,7 +124,7 @@ export default function AutomaticSplitCard({ amount: externalAmount }: Automatic
                 Total Amount
               </span>
               <span className="text-white text-3xl font-bold tabular-nums leading-none">
-                ${displayTotal}
+                {displayTotal}
               </span>
             </div>
 

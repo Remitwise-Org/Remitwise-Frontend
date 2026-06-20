@@ -5,6 +5,7 @@ import {
   validateFutureDate,
   validateGoalId,
   validateGoalName,
+  validateGoalDescription,
   validatePublicKey,
 } from '@/lib/validation/savings-goals';
 
@@ -20,37 +21,37 @@ describe('Validation Functions - Unit Tests', () => {
     it('should reject zero', () => {
       const result = validateAmount(0);
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Amount must be positive');
+      expect(result.error).toBe('goal_amount_positive');
     });
 
     it('should reject negative numbers', () => {
       const result = validateAmount(-1);
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Amount must be positive');
+      expect(result.error).toBe('goal_amount_positive');
     });
 
     it('should reject NaN', () => {
       const result = validateAmount(NaN);
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Amount cannot be NaN');
+      expect(result.error).toBe('goal_amount_positive');
     });
 
     it('should reject Infinity', () => {
       const result = validateAmount(Infinity);
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Amount must be finite');
+      expect(result.error).toBe('goal_amount_positive');
     });
 
     it('should reject negative Infinity', () => {
       const result = validateAmount(-Infinity);
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Amount must be finite');
+      expect(result.error).toBe('goal_amount_positive');
     });
 
     it('should reject non-number types', () => {
       const result = validateAmount('100' as any);
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Amount must be a number');
+      expect(result.error).toBe('goal_amount_positive');
     });
   });
 
@@ -68,7 +69,7 @@ describe('Validation Functions - Unit Tests', () => {
       const result = validateFutureDate(pastDate.toISOString());
       
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Target date must be in the future');
+      expect(result.error).toBe('goal_date_future');
     });
 
     it('should reject current date/time', () => {
@@ -76,25 +77,25 @@ describe('Validation Functions - Unit Tests', () => {
       const result = validateFutureDate(now.toISOString());
       
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Target date must be in the future');
+      expect(result.error).toBe('goal_date_future');
     });
 
     it('should reject invalid date strings', () => {
       const result = validateFutureDate('not-a-date');
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Invalid date format');
+      expect(result.error).toBe('goal_invalid_date');
     });
 
     it('should reject empty strings', () => {
       const result = validateFutureDate('');
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Date must be a non-empty string');
+      expect(result.error).toBe('goal_invalid_date');
     });
 
     it('should reject non-string types', () => {
       const result = validateFutureDate(123 as any);
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Date must be a non-empty string');
+      expect(result.error).toBe('goal_invalid_date');
     });
   });
 
@@ -108,19 +109,19 @@ describe('Validation Functions - Unit Tests', () => {
     it('should reject empty strings', () => {
       const result = validateGoalId('');
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Goal ID must be a non-empty string');
+      expect(result.error).toBe('goal_id_required');
     });
 
     it('should reject whitespace-only strings', () => {
       const result = validateGoalId('   ');
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Goal ID cannot be empty or whitespace');
+      expect(result.error).toBe('goal_id_required');
     });
 
     it('should reject non-string types', () => {
       const result = validateGoalId(123 as any);
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Goal ID must be a non-empty string');
+      expect(result.error).toBe('goal_id_required');
     });
   });
 
@@ -134,25 +135,45 @@ describe('Validation Functions - Unit Tests', () => {
     it('should reject empty strings', () => {
       const result = validateGoalName('');
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Goal name must be a non-empty string');
+      expect(result.error).toBe('goal_name_required');
     });
 
     it('should reject whitespace-only strings', () => {
       const result = validateGoalName('   ');
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Goal name cannot be empty or whitespace');
+      expect(result.error).toBe('goal_name_required');
     });
 
     it('should reject names longer than 100 characters', () => {
       const result = validateGoalName('A'.repeat(101));
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Goal name cannot exceed 100 characters');
+      expect(result.error).toBe('goal_name_too_long');
     });
 
     it('should reject non-string types', () => {
       const result = validateGoalName(123 as any);
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Goal name must be a non-empty string');
+      expect(result.error).toBe('goal_name_required');
+    });
+  });
+
+  describe('validateGoalDescription', () => {
+    it('should accept valid descriptions', () => {
+      expect(validateGoalDescription('Saving for a new car').isValid).toBe(true);
+      expect(validateGoalDescription('').isValid).toBe(true);
+      expect(validateGoalDescription('A'.repeat(200)).isValid).toBe(true);
+    });
+
+    it('should reject descriptions longer than 200 characters', () => {
+      const result = validateGoalDescription('A'.repeat(201));
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('goal_description_too_long');
+    });
+
+    it('should reject non-string types', () => {
+      const result = validateGoalDescription(123 as any);
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('goal_description_invalid');
     });
   });
 

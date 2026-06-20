@@ -12,7 +12,7 @@ import {
 	type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useContractOperations, type ContractOperation } from "@/lib/context/ContractOperationsContext";
+import { useAsyncOperations, OperationStatus } from "@/lib/context/AsyncOperationsContext";
 
 type AsyncStage = {
 	label: string;
@@ -20,7 +20,6 @@ type AsyncStage = {
 	detail: string;
 	placement: string;
 	icon?: LucideIcon;
-	status?: "pending" | "active" | "complete";
 };
 
 type QueueItem = {
@@ -31,15 +30,14 @@ type QueueItem = {
 };
 
 interface AsyncOperationsPanelProps {
-	eyebrow?: string;
-	title?: string;
-	description?: string;
-	stages?: AsyncStage[];
-	queueTitle?: string;
-	queueDescription?: string;
-	queueItems?: QueueItem[];
+	eyebrow: string;
+	title: string;
+	description: string;
+	stages: AsyncStage[];
+	queueTitle: string;
+	queueDescription: string;
+	queueItems?: QueueItem[]; // Optional now
 	footer?: string;
-	useLiveContext?: boolean;
 }
 
 const queueStatusStyles = {
@@ -74,79 +72,60 @@ const queueStatusStyles = {
 	},
 } as const;
 
+const mapStatus = (status: OperationStatus): QueueItem['status'] => {
+	switch (status) {
+		case 'building':
+		case 'awaiting-signature':
+		case 'submitting':
+			return 'active';
+		case 'confirmed':
+			return 'complete';
+		case 'failed':
+			return 'failed';
+		default:
+			return 'queued';
+	}
+};
+
 export default function AsyncOperationsPanel({
-	eyebrow = "Async behavior",
-	title = "Emergency Submission Pattern",
-	description = "Urgent transfers carry the highest stakes in the product. Each stage below shows what the user sees and how long to expect it to take.",
+	eyebrow,
+	title,
+	description,
 	stages,
-	queueTitle = "Stack behavior",
-	queueDescription = "The modal owns the review and build stages. After wallet signature, progress moves into the global stack so it stays visible if the user navigates away.",
-	queueItems,
+	queueTitle,
+	queueDescription,
+	queueItems: propQueueItems = [],
 	footer,
-	useLiveContext = false,
 }: AsyncOperationsPanelProps) {
+	const { state } = useAsyncOperations();
 	const [expanded, setExpanded] = useState(false);
 	const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-	// Use live context data when enabled
-	const contractOps = useLiveContext ? useContractOperations() : null;
-	
-	// Convert contract operations to queue items format
-	const liveQueueItems = useMemo(() => {
-		if (!contractOps || !useLiveContext) return queueItems || [];
-		
-		return contractOps.operations.map((op): QueueItem => {
-			const statusMap: Record<ContractOperation["status"], QueueItem["status"]> = {
-				pending: "queued",
-				building: "active",
-				signing: "active",
-				submitting: "active",
-				confirming: "active",
-				complete: "complete",
-				failed: "failed",
-			};
-			
-			const durationMap: Partial<Record<ContractOperation["status"], string>> = {
-				pending: "Queued",
-				building: "Building...",
-				signing: "Signing...",
-				submitting: "Submitting...",
-				confirming: "Confirming...",
-				complete: "< 1 min",
-				failed: "Failed",
-			};
-			
-			return {
+	const queueItems = useMemo(() => {
+		if (state.operations.length > 0) {
+			return state.operations.map(op => ({
 				title: op.title,
-				duration: durationMap[op.status] || op.duration,
+				duration: 'Just now', 
 				detail: op.detail,
-				status: statusMap[op.status],
-			};
-		});
-	}, [contractOps, useLiveContext, queueItems]);
+				status: mapStatus(op.status),
+			}));
+		}
+		return propQueueItems;
+	}, [state.operations, propQueueItems]);
 
-	// Use live stages when context is enabled
-	const liveStages = useMemo(() => {
-		if (!contractOps || !useLiveContext) return stages;
-		return contractOps.stages;
-	}, [contractOps, useLiveContext, stages]);
-
-	const finalQueueItems = liveQueueItems || [];
-	const finalStages = liveStages || [];
-
-	const activeIndex = useMemo(() => finalQueueItems.findIndex((i: QueueItem) => i.status === "active"), [finalQueueItems]);
+	const activeIndex = useMemo(() => queueItems.findIndex((i) => i.status === "active"), [queueItems]);
 
 	useEffect(() => {
 		// Close open detail if item list changes and index no longer valid
-		if (openIndex !== null && openIndex >= finalQueueItems.length) setOpenIndex(null);
-	}, [finalQueueItems, openIndex]);
+		if (openIndex !== null && openIndex >= queueItems.length) setOpenIndex(null);
+	}, [queueItems, openIndex]);
 
 	// Live announcement for major state: active started/completed/failed
 	const [liveText, setLiveText] = useState("");
 	useEffect(() => {
-		const active = finalQueueItems[activeIndex];
+		const active = queueItems[activeIndex];
 		if (active) setLiveText(`${active.title} ${active.status}`);
-	}, [finalQueueItems, activeIndex]);
+	}, [queueItems, activeIndex]);
 	return (
 		<section className='rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-6 sm:p-7'>
 			<div className='border-b border-white/[0.08] pb-5'>
@@ -158,7 +137,7 @@ export default function AsyncOperationsPanel({
 			</div>
 
 			<div className='mt-6 space-y-3'>
-				{finalStages.map((stage: AsyncStage, index: number) => {
+				{stages.map((stage, index) => {
 					const StageIcon = stage.icon ?? (index < 2 ? ShieldCheck : Wallet);
 
 					return (
@@ -206,11 +185,11 @@ export default function AsyncOperationsPanel({
 						</p>
 					</div>
 					<div className='flex items-center gap-2'>
-						<span className='hidden sm:inline-flex text-xs text-gray-400'>{finalQueueItems.length} total</span>
+						<span className='hidden sm:inline-flex text-xs text-gray-400'>{queueItems.length} total</span>
 						<button
 							aria-expanded={expanded}
 							aria-controls='ops-panel'
-							onClick={() => setExpanded((s: boolean) => !s)}
+							onClick={() => setExpanded((s) => !s)}
 							className='inline-flex items-center gap-2 rounded-md bg-white/[0.02] px-2 py-1 text-xs text-gray-300 hover:bg-white/[0.04]'>
 							{expanded ? (
 								<ChevronUp className='h-4 w-4' />
@@ -223,7 +202,7 @@ export default function AsyncOperationsPanel({
 				</div>
 
 				<div id='ops-panel' className={`mt-4 space-y-3 ${expanded ? "" : "max-h-[220px] overflow-hidden"}`}>
-					{finalQueueItems.map((item: QueueItem, index: number) => {
+					{queueItems.map((item, index) => {
 						const statusConfig = queueStatusStyles[item.status] ?? queueStatusStyles.queued;
 						const StatusIcon = statusConfig.Icon;
 						const isActive = item.status === "active";

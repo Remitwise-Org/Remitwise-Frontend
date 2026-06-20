@@ -16,6 +16,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { useDensity } from "@/lib/context/DensityContext";
+import { useToast } from "@/lib/context/ToastContext";
 
 
 const SECTIONS = [
@@ -224,7 +225,9 @@ function InsuranceReminderPreview() {
 
     async function loadReminders() {
       try {
-        const response = await fetch("/api/insurance/reminders");
+        const response = await apiClient.get("/api/insurance/reminders");
+        if (!response) return; // Handled by session expiry flow
+        
         if (!active) return;
 
         if (response.status === 401 || response.status === 403) {

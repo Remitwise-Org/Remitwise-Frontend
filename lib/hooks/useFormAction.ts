@@ -3,6 +3,7 @@
 
 import { useState, useTransition, useCallback } from "react";
 import { ActionState } from "@/lib/auth/middleware";
+import { apiClient } from "@/lib/client/apiClient";
 
 
 // Merge the base with whatever extra fields your specific route returns
@@ -17,7 +18,9 @@ export function useFormAction<T extends ActionState = ActionState>(
     (formData: FormData) => {
       startTransition(async () => {
         try {
-          const res = await fetch(url, { method, body: formData });
+          const res = await apiClient.request(url, { method, body: formData });
+          if (!res) return; // Handled by session expiry flow
+          
           const data: T = await res.json();
           setState(data);
         } catch {
