@@ -5,11 +5,12 @@ import en from "./locales/en.json";
 import es from "./locales/es.json";
 
 type SupportedLocale = "en" | "es";
-type TranslationTree = Record<string, string | TranslationTree>;
+type TranslationValue = string | { [key: string]: TranslationValue };
+type TranslationTree = Record<string, TranslationValue>;
 
 const resources: Record<SupportedLocale, TranslationTree> = {
-	en,
-	es,
+	en: en as TranslationTree,
+	es: es as TranslationTree,
 };
 
 function resolveLocale(language: string | null | undefined): SupportedLocale {
@@ -18,7 +19,7 @@ function resolveLocale(language: string | null | undefined): SupportedLocale {
 }
 
 function readPath(tree: TranslationTree, path: string): string | undefined {
-	return path.split(".").reduce<string | TranslationTree | undefined>((acc, key) => {
+	return path.split(".").reduce<any>((acc, key) => {
 		if (!acc || typeof acc === "string") return undefined;
 		return acc[key];
 	}, tree) as string | undefined;
@@ -44,11 +45,18 @@ export function useClientTranslator(defaultLocale: SupportedLocale = "en") {
 
 		return {
 			locale,
-			t: (path: string, fallback?: string) =>
-				readPath(currentTree, path) ??
-				readPath(fallbackTree, path) ??
-				fallback ??
-				path,
+			t: (path: string, options?: string | Record<string, any>) => {
+				let text = readPath(currentTree, path) ??
+					readPath(fallbackTree, path) ??
+					(typeof options === 'string' ? options : path);
+
+				if (typeof options === 'object' && typeof text === 'string') {
+					Object.entries(options).forEach(([key, value]) => {
+						text = text.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
+					});
+				}
+				return text;
+			}
 		};
 	}, [locale]);
 }

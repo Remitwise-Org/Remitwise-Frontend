@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   GraduationCap,
   HeartPulse,
@@ -10,9 +10,13 @@ import {
 import PageHeader from '@/components/PageHeader'
 import SavingsGoalCard from '@/components/Dashboard/SavingsGoalCard'
 import SavingsGoalsStatsCards from './components/SavingsGoalsStatsCards'
+import SavingsGoalModal from './components/SavingsGoalModal'
+import { SavingsGoal } from './types'
+import { calculateDaysLeft, checkIsOverdue } from './utils'
+import { useClientTranslator } from '@/lib/i18n/client'
 
 // Sample data matching Figma design
-const goalsData = [
+const initialGoals: SavingsGoal[] = [
   {
     id: 1,
     title: "Children's Education",
@@ -21,9 +25,7 @@ const goalsData = [
     iconGradient: { from: '#DC2626', to: '#B91C1C' },
     currentAmount: 3600,
     targetAmount: 5000,
-    targetDate: 'Dec 31, 2025',
-    daysLeft: 335,
-    isOverdue: false,
+    targetDate: '2026-12-31',
   },
   {
     id: 2,
@@ -33,9 +35,7 @@ const goalsData = [
     iconGradient: { from: '#F87171', to: '#EF4444' },
     currentAmount: 1800,
     targetAmount: 2000,
-    targetDate: 'Mar 15, 2025',
-    daysLeft: 44,
-    isOverdue: false,
+    targetDate: '2026-08-15',
   },
   {
     id: 3,
@@ -45,8 +45,7 @@ const goalsData = [
     iconGradient: { from: '#DC2626', to: '#B91C1C' },
     currentAmount: 8500,
     targetAmount: 25000,
-    targetDate: 'Jan 15, 2025',
-    isOverdue: true,
+    targetDate: '2026-05-15', // This will be overdue as of June 17, 2026
   },
   {
     id: 4,
@@ -56,46 +55,66 @@ const goalsData = [
     iconGradient: { from: '#F87171', to: '#EF4444' },
     currentAmount: 3000,
     targetAmount: 3000,
-    targetDate: 'Jul 1, 2025',
-    isOverdue: false,
+    targetDate: '2026-07-01',
   },
 ]
 
-// Calculate summary stats
-const totalGoals = goalsData.length
-const totalTarget = goalsData.reduce((sum, goal) => sum + goal.targetAmount, 0)
-const totalSaved = goalsData.reduce((sum, goal) => sum + goal.currentAmount, 0)
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
-
 export default function SavingsGoalsPage() {
-  const [showNewGoalModal, setShowNewGoalModal] = useState(false)
+  const { t } = useClientTranslator()
+  const [goals, setGoals] = useState<SavingsGoal[]>(initialGoals)
+  const [showModal, setShowModal] = useState(false)
+  const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null)
+
+  // Calculate summary stats dynamically
+  const stats = useMemo(() => {
+    const totalGoals = goals.length
+    const totalTarget = goals.reduce((sum, goal) => sum + goal.targetAmount, 0)
+    const totalSaved = goals.reduce((sum, goal) => sum + goal.currentAmount, 0)
+    return { totalGoals, totalTarget, totalSaved }
+  }, [goals])
+
+  const handleNewGoal = () => {
+    setEditingGoal(null)
+    setShowModal(true)
+  }
+
+  const handleEditGoal = (goal: SavingsGoal) => {
+    setEditingGoal(goal)
+    setShowModal(true)
+  }
+
+  const handleSaveGoal = (goalData: Partial<SavingsGoal>) => {
+    if (editingGoal) {
+      setGoals(goals.map(g => g.id === editingGoal.id ? { ...g, ...goalData } as SavingsGoal : g))
+    } else {
+      const newGoal: SavingsGoal = {
+        ...goalData,
+        id: Date.now(),
+        currentAmount: 0,
+      } as SavingsGoal
+      setGoals([...goals, newGoal])
+    }
+    setShowModal(false)
+  }
 
   return (
     <div className="min-h-screen bg-[#010101] safari-safe-bottom">
       {/* Header */}
       <PageHeader
-        title="Savings Goals"
-        subtitle="Track and achieve your financial dreams"
-        ctaLabel="New Goal"
-        onCtaClick={() => setShowNewGoalModal(true)}
+        title={t('savingsGoals.title')}
+        subtitle={t('savingsGoals.subtitle')}
+        ctaLabel={t('savingsGoals.newGoal')}
+        onCtaClick={handleNewGoal}
         showBottomDivider
       />
 
-      <main className="max-w-7xl mx-auto px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 py-7 375:py-8">
+      <main className="max-w-7xl mx-auto px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 py-7 375:py-8 overflow-x-hidden">
         {/* Savings Goals Stats Cards */}
         <div className="mb-7 375:mb-8">
           <SavingsGoalsStatsCards
-            totalGoals={totalGoals}
-            totalTarget={totalTarget}
-            totalSaved={totalSaved}
+            totalGoals={stats.totalGoals}
+            totalTarget={stats.totalTarget}
+            totalSaved={stats.totalSaved}
           />
         </div>
 
@@ -105,7 +124,7 @@ export default function SavingsGoalsPage() {
 
         {/* Goals Grid */}
         <div className="grid grid-cols-1 450:grid-cols-2 xl:grid-cols-3 gap-5 375:gap-6">
-          {goalsData.map((goal) => (
+          {goals.map((goal) => (
             <SavingsGoalCard
               key={goal.id}
               title={goal.title}
@@ -115,46 +134,23 @@ export default function SavingsGoalsPage() {
               currentAmount={goal.currentAmount}
               targetAmount={goal.targetAmount}
               targetDate={goal.targetDate}
-              daysLeft={goal.daysLeft}
-              isOverdue={goal.isOverdue}
+              daysLeft={calculateDaysLeft(goal.targetDate)}
+              isOverdue={checkIsOverdue(goal.targetDate)}
               onAddFunds={() => console.log('Add funds to', goal.title)}
-              onDetails={() => console.log('View details for', goal.title)}
+              onEdit={() => handleEditGoal(goal)}
             />
           ))}
         </div>
       </main>
 
-      {/* New Goal Modal Placeholder */}
-      {showNewGoalModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
-          onClick={() => setShowNewGoalModal(false)}
-        >
-          <div
-            className="rounded-2xl p-7 375:p-8 max-w-md w-full mx-4"
-            style={{
-              background: 'linear-gradient(180deg, #0F0F0F 0%, #0A0A0A 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg 375:text-xl font-bold text-white mb-4">Create New Goal</h2>
-            <p className="text-sm 375:text-base text-white/50 mb-6">
-              Goal creation form will be implemented here. Connect to savings_goals smart contract.
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowNewGoalModal(false)}
-              className="touch-target-wide w-full rounded-[14px] text-sm 375:text-base font-semibold text-white"
-              style={{
-                background: 'linear-gradient(180deg, #DC2626 0%, #B91C1C 100%)',
-              }}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Savings Goal Modal */}
+      <SavingsGoalModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSave={handleSaveGoal}
+        editingGoal={editingGoal}
+      />
     </div>
   )
 }
+

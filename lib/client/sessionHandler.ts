@@ -43,11 +43,20 @@ export interface SessionHandler {
   dispatchSessionExpiring(countdown?: number, message?: string): void;
   
   /**
+   * Attempt to refresh the session
+   * @returns true if session was refreshed, false otherwise
+   */
+  refreshSession(): Promise<boolean>;
+  
+  /**
    * Clear local authentication state
    * Removes stored wallet address and connection status
    */
   clearAuthState(): void;
 }
+
+// Store the active refresh promise to deduplicate concurrent requests
+let refreshPromise: Promise<boolean> | null = null;
 
 /**
  * Check if a response indicates session expiry
@@ -68,6 +77,35 @@ async function isSessionExpired(response: Response): Promise<boolean> {
     // If we can't parse JSON, it's not a session expiry response
     return false;
   }
+}
+
+/**
+ * Attempt to refresh the current session by calling the refresh endpoint
+ * Deduplicates concurrent calls to ensure only one refresh request is made at a time.
+ * @returns true if session was refreshed, false otherwise
+ */
+async function refreshSession(): Promise<boolean> {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = (async () => {
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response.ok;
+    } catch {
+      return false;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
 
 /**
@@ -138,6 +176,7 @@ function handleSessionExpiry(intendedPath?: string): void {
  */
 export const sessionHandler: SessionHandler = {
   isSessionExpired,
+  refreshSession,
   handleSessionExpiry,
   dispatchSessionExpiring,
   clearAuthState,

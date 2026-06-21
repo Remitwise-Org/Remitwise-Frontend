@@ -8,8 +8,9 @@ import {
   FileText,
   FilterIcon,
   GitBranch,
-  Info,
+  Inbox,
   Search,
+  SearchX,
   Send,
   Shield,
   X,
@@ -20,6 +21,9 @@ import TransactionHistoryItem, {
   TransactionType,
 } from "@/components/Dashboard/TransactionHistoryItem";
 import { useDensity } from "@/lib/context/DensityContext";
+import { useClientTranslator } from "@/lib/i18n/client";
+import { useDebounce } from "@/lib/hooks/useDebounce";
+import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
 
 const allTransactions: Transaction[] = [
   {
@@ -231,47 +235,24 @@ const statusStyles: Record<
   },
 };
 
-type GroupKey = "today" | "this-week" | "earlier";
-
-const groupLabels: Record<GroupKey, { label: string; helper: string }> = {
-  today: {
-    label: "Today",
-    helper: "Transactions from the latest activity day",
-  },
-  "this-week": {
-    label: "This Week",
-    helper: "Activity within 7 days of the latest transaction",
-  },
-  earlier: {
-    label: "Earlier",
-    helper: "Older activity kept in chronological order",
-  },
-};
-
-function parseTransactionDate(date: string) {
-  return new Date(date.replace(" ", "T"));
-}
+type GroupKey = "today" | "yesterday" | "earlier";
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-function getLatestTransactionDate(transactions: Transaction[]) {
-  return transactions.reduce((latest, transaction) => {
-    const transactionDate = parseTransactionDate(transaction.date);
-    return transactionDate > latest ? transactionDate : latest;
-  }, parseTransactionDate(transactions[0]?.date ?? "2026-06-02 00:00:00"));
+function getGroupKey(date: Date): GroupKey {
+  const d = startOfDay(date);
+  const today = startOfDay(new Date());
+  const yesterday = startOfDay(new Date(Date.now() - 86400000));
+
+  if (d.getTime() === today.getTime()) return "today";
+  if (d.getTime() === yesterday.getTime()) return "yesterday";
+  return "earlier";
 }
 
-function getGroupKey(transaction: Transaction, referenceDate: Date): GroupKey {
-  const transactionDay = startOfDay(parseTransactionDate(transaction.date));
-  const referenceDay = startOfDay(referenceDate);
-  const dayDifference =
-    (referenceDay.getTime() - transactionDay.getTime()) / (1000 * 60 * 60 * 24);
-
-  if (dayDifference === 0) return "today";
-  if (dayDifference > 0 && dayDifference <= 7) return "this-week";
-  return "earlier";
+function parseTransactionDate(date: string) {
+  return new Date(date.replace(" ", "T"));
 }
 
 function formatShortDate(date: string) {
@@ -287,18 +268,32 @@ function normalizeQuery(value: string) {
 }
 
 export default function TransactionsPage() {
+  const { t } = useClientTranslator();
   const { density } = useDensity();
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedTypes, setSelectedTypes] = useState<TransactionType[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<TransactionStatus[]>([]);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
-  const referenceDate = useMemo(
-    () => getLatestTransactionDate(allTransactions),
-    []
-  );
+  const groupLabels: Record<GroupKey, { label: string; helper: string }> = {
+    today: {
+      label: t("transactionHistory.dateGroups.today"),
+      helper: t("transactionHistory.dateGroups.todayHelper"),
+    },
+    yesterday: {
+      label: t("transactionHistory.dateGroups.yesterday"),
+      helper: t("transactionHistory.dateGroups.yesterdayHelper"),
+    },
+    earlier: {
+      label: t("transactionHistory.dateGroups.earlier"),
+      helper: t("transactionHistory.dateGroups.earlierHelper"),
+    },
+  };
 
   const filteredTransactions = useMemo(() => {
-    const query = normalizeQuery(searchQuery);
+    const query = normalizeQuery(debouncedSearch);
 
     return allTransactions.filter((transaction) => {
       const searchableText = [
@@ -319,28 +314,44 @@ export default function TransactionsPage() {
         selectedStatuses.length === 0 ||
         selectedStatuses.includes(transaction.status);
 
-      return matchesSearch && matchesType && matchesStatus;
+      let matchesDate = true;
+      const txDate = parseTransactionDate(transaction.date);
+      if (dateFrom) {
+        const from = new Date(dateFrom);
+        if (txDate < from) matchesDate = false;
+      }
+      if (dateTo) {
+        const to = new Date(dateTo);
+        to.setHours(23, 59, 59, 999);
+        if (txDate > to) matchesDate = false;
+      }
+
+      return matchesSearch && matchesType && matchesStatus && matchesDate;
     });
-  }, [searchQuery, selectedStatuses, selectedTypes]);
+  }, [debouncedSearch, selectedStatuses, selectedTypes, dateFrom, dateTo]);
 
   const groupedTransactions = useMemo(() => {
     const groups: Record<GroupKey, Transaction[]> = {
       today: [],
-      "this-week": [],
+      yesterday: [],
       earlier: [],
     };
 
     filteredTransactions.forEach((transaction) => {
-      groups[getGroupKey(transaction, referenceDate)].push(transaction);
+      groups[getGroupKey(parseTransactionDate(transaction.date))].push(
+        transaction
+      );
     });
 
     return groups;
-  }, [filteredTransactions, referenceDate]);
+  }, [filteredTransactions]);
 
   const activeFilterCount =
     selectedTypes.length +
     selectedStatuses.length +
-    (normalizeQuery(searchQuery).length > 0 ? 1 : 0);
+    (normalizeQuery(debouncedSearch).length > 0 ? 1 : 0) +
+    (dateFrom.length > 0 ? 1 : 0) +
+    (dateTo.length > 0 ? 1 : 0);
 
   const hasTransactions = allTransactions.length > 0;
   const hasNoResults = hasTransactions && filteredTransactions.length === 0;
@@ -365,6 +376,8 @@ export default function TransactionsPage() {
     setSearchQuery("");
     setSelectedTypes([]);
     setSelectedStatuses([]);
+    setDateFrom("");
+    setDateTo("");
   };
 
   const handleExportClick = () => {
@@ -404,14 +417,13 @@ export default function TransactionsPage() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-red-300">
-                Transaction history
+                {t("transactionHistory.titleStandalone")}
               </p>
               <h1 className="mt-3 text-2xl font-semibold text-white sm:text-3xl">
                 USDC activity
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
-                Search, filter, and review payment, split, bill, and insurance
-                activity with grouped results by date.
+                {t("transactionHistory.subtitleStandalone")}
               </p>
             </div>
             <button
@@ -421,7 +433,7 @@ export default function TransactionsPage() {
               className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-red-400/30 bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101] disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-gray-500"
             >
               <Download className="h-4 w-4" />
-              Export current view
+              {t("transactionHistory.export")}
             </button>
           </div>
 
@@ -437,18 +449,20 @@ export default function TransactionsPage() {
                     id="transaction-filters-heading"
                     className="text-sm font-semibold text-white"
                   >
-                    Filter transactions
+                    {t("transactionHistory.filtersHeading")}
                   </h2>
                 </div>
                 <label className="relative block">
-                  <span className="sr-only">Search transactions</span>
+                  <span className="sr-only">
+                    {t("transactionHistory.searchStandalonePlaceholder")}
+                  </span>
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
                   <input
                     type="search"
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     className="min-h-[48px] w-full rounded-xl border border-white/10 bg-black/40 py-3 pl-12 pr-12 text-sm text-white placeholder:text-gray-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-red-400"
-                    placeholder="Search ID, recipient, type, status, amount"
+                    placeholder={t("transactionHistory.searchStandalonePlaceholder")}
                     aria-describedby="transaction-results-count"
                   />
                   {searchQuery.length > 0 && (
@@ -456,7 +470,7 @@ export default function TransactionsPage() {
                       type="button"
                       onClick={() => setSearchQuery("")}
                       className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
-                      aria-label="Clear transaction search"
+                      aria-label={t("transactionHistory.activeFilters.clearSearch")}
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -470,11 +484,12 @@ export default function TransactionsPage() {
                   className="font-medium text-white"
                   aria-live="polite"
                 >
-                  Showing {filteredTransactions.length} of{" "}
-                  {allTransactions.length} transactions
+                  {t("transactionHistory.showing")
+                    .replace("{{count}}", String(filteredTransactions.length))
+                    .replace("{{total}}", String(allTransactions.length))}
                 </div>
                 <p className="mt-1 text-xs leading-5 text-gray-500">
-                  Search combines with every selected type and status chip.
+                  {t("transactionHistory.filtersHelper")}
                 </p>
               </div>
             </div>
@@ -482,7 +497,7 @@ export default function TransactionsPage() {
             <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_0.9fr]">
               <fieldset>
                 <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
-                  Type
+                  {t("transactionHistory.typeFilterLabel", "Type")}
                 </legend>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <FilterChip
@@ -515,7 +530,7 @@ export default function TransactionsPage() {
 
               <fieldset>
                 <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
-                  Status
+                  {t("transactionHistory.statusFilterLabel", "Status")}
                 </legend>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <FilterChip
@@ -536,37 +551,110 @@ export default function TransactionsPage() {
               </fieldset>
             </div>
 
+            {/* Date Range Filter */}
+            <div className="mt-5 border-t border-white/10 pt-4">
+              <fieldset>
+                <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+                  {t("transactionHistory.dateRange.label")}
+                </legend>
+                <div className="mt-3 flex flex-wrap items-end gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor="tx-date-from"
+                      className="text-xs text-gray-400"
+                    >
+                      {t("transactionHistory.dateRange.from")}
+                    </label>
+                    <input
+                      id="tx-date-from"
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="min-h-[40px] rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-red-400/40 focus:outline-none focus:ring-1 focus:ring-red-400/40"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor="tx-date-to"
+                      className="text-xs text-gray-400"
+                    >
+                      {t("transactionHistory.dateRange.to")}
+                    </label>
+                    <input
+                      id="tx-date-to"
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      min={dateFrom || undefined}
+                      className="min-h-[40px] rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-red-400/40 focus:outline-none focus:ring-1 focus:ring-red-400/40"
+                    />
+                  </div>
+                  {(dateFrom || dateTo) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDateFrom("");
+                        setDateTo("");
+                      }}
+                      className="min-h-[40px] rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+                      aria-label={t("transactionHistory.dateRange.clear")}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </fieldset>
+            </div>
+
             <div className="mt-5 flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
-                  Active
+                  {t("transactionHistory.activeFilters.label")}
                 </span>
                 {activeFilterCount === 0 ? (
                   <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gray-400">
-                    No filters applied
+                    {t("transactionHistory.activeFilters.none")}
                   </span>
                 ) : (
                   <>
-                    {normalizeQuery(searchQuery).length > 0 && (
+                    {normalizeQuery(debouncedSearch).length > 0 && (
                       <ActivePill
-                        label={`Search: ${searchQuery}`}
+                        label={t("transactionHistory.activeFilters.search").replace(
+                          "{{query}}",
+                          debouncedSearch
+                        )}
                         onRemove={() => setSearchQuery("")}
                       />
                     )}
                     {selectedTypes.map((type) => (
                       <ActivePill
                         key={type}
-                        label={`Type: ${type}`}
+                        label={t("transactionHistory.activeFilters.type").replace(
+                          "{{type}}",
+                          type
+                        )}
                         onRemove={() => toggleType(type)}
                       />
                     ))}
                     {selectedStatuses.map((status) => (
                       <ActivePill
                         key={status}
-                        label={`Status: ${status}`}
+                        label={t("transactionHistory.activeFilters.status").replace(
+                          "{{status}}",
+                          status
+                        )}
                         onRemove={() => toggleStatus(status)}
                       />
                     ))}
+                    {(dateFrom || dateTo) && (
+                      <ActivePill
+                        label={`${dateFrom || "..."} \u2013 ${dateTo || "..."}`}
+                        onRemove={() => {
+                          setDateFrom("");
+                          setDateTo("");
+                        }}
+                      />
+                    )}
                   </>
                 )}
               </div>
@@ -576,37 +664,44 @@ export default function TransactionsPage() {
                 disabled={activeFilterCount === 0}
                 className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-gray-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 disabled:cursor-not-allowed disabled:text-gray-600 disabled:hover:bg-transparent"
               >
-                Clear all
+                {t("transactionHistory.activeFilters.clearAll")}
               </button>
             </div>
           </section>
 
           <div className="mt-8">
             {!hasTransactions && (
-              <StateCard
-                title="No transaction history yet"
-                body="Completed transfers, splits, bill payments, and insurance activity will appear here once you make your first transaction."
+              <WidgetEmptyState
+                icon={Inbox}
+                title={t("transactionHistory.emptyState.title")}
+                description={t("transactionHistory.emptyState.description")}
+                ctaLabel={t("transactionHistory.emptyState.cta")}
+                ctaHref="/send"
               />
             )}
 
             {hasNoResults && (
-              <StateCard
-                title="No matching transactions"
-                body="Try clearing a chip, widening the status selection, or searching by recipient, ID, amount, or transaction type."
-                actionLabel="Clear filters"
+              <WidgetEmptyState
+                icon={SearchX}
+                title={t("transactionHistory.noResults.title")}
+                description={t("transactionHistory.noResults.description")}
+                ctaLabel={t("transactionHistory.noResults.clearFilters")}
                 onAction={clearAllFilters}
               />
             )}
 
             {filteredTransactions.length > 0 && (
               <div className={density === "compact" ? "space-y-7" : "space-y-8"}>
-                {(["today", "this-week", "earlier"] as GroupKey[]).map(
+                {(["today", "yesterday", "earlier"] as GroupKey[]).map(
                   (groupKey) => {
                     const transactions = groupedTransactions[groupKey];
                     if (transactions.length === 0) return null;
 
                     return (
-                      <section key={groupKey} aria-labelledby={`${groupKey}-heading`}>
+                      <section
+                        key={groupKey}
+                        aria-labelledby={`${groupKey}-heading`}
+                      >
                         <div className="mb-3 flex flex-col gap-1 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
                           <div>
                             <h2
@@ -621,7 +716,15 @@ export default function TransactionsPage() {
                           </div>
                           <p className="text-xs font-medium text-gray-400">
                             {transactions.length}{" "}
-                            {transactions.length === 1 ? "result" : "results"}
+                            {transactions.length === 1
+                              ? t("transactionHistory.results_one").replace(
+                                  "{{count}}",
+                                  "1"
+                                )
+                              : t("transactionHistory.results_many").replace(
+                                  "{{count}}",
+                                  String(transactions.length)
+                                )}
                           </p>
                         </div>
                         <div
@@ -714,38 +817,5 @@ function ActivePill({
         <X className="h-3.5 w-3.5" />
       </button>
     </span>
-  );
-}
-
-function StateCard({
-  actionLabel,
-  body,
-  onAction,
-  title,
-}: {
-  actionLabel?: string;
-  body: string;
-  onAction?: () => void;
-  title: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-10 text-center sm:px-8">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-red-400/20 bg-red-500/10 text-red-200">
-        <Info className="h-5 w-5" />
-      </div>
-      <h2 className="mt-4 text-lg font-semibold text-white">{title}</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-400">
-        {body}
-      </p>
-      {actionLabel && onAction && (
-        <button
-          type="button"
-          onClick={onAction}
-          className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
-        >
-          {actionLabel}
-        </button>
-      )}
-    </div>
   );
 }

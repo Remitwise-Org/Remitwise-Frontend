@@ -1,7 +1,12 @@
+"use client";
+
 import Link from 'next/link';
 import { Settings } from 'lucide-react';
+import { useClientLocale } from '@/lib/i18n/client';
+import { formatCurrency } from '@/lib/utils/format-currency';
 
 export default function CurrentMoneySplitWidget() {
+    const locale = useClientLocale();
     const allocations = [
         { label: 'Daily Spending', amount: 600, percentage: 50 },
         { label: 'Savings', amount: 360, percentage: 30 },
@@ -36,7 +41,7 @@ export default function CurrentMoneySplitWidget() {
                                 <span className="font-medium text-sm text-gray-100">{item.label}</span>
                             </div>
                             <div className="flex items-center gap-4">
-                                <span className="font-bold text-lg text-white">${item.amount}</span>
+                                <span className="font-bold text-lg text-white">{formatCurrency(item.amount, 'USD', locale)}</span>
                                 <span className="text-gray-600 text-sm font-medium w-8 text-right">{item.percentage}%</span>
                             </div>
                         </div>

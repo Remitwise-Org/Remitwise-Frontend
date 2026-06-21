@@ -1,9 +1,22 @@
 'use client'
 
+import { lazy, Suspense } from 'react'
 import FinancialInsightsHeader from '@/components/FinancialInsightsHeader'
 import { SpendingVsSavingsChart } from '@/components/Insights/spendingVsSavingChart'
-import { RemittanceTrendChart }   from '@/components/Insights/remittanceTrendChart'
-import { CategoryDonutChart }     from '@/components/Insights/categoryDonutChart'
+
+const RemittanceTrendChart = lazy(() =>
+  import('@/components/Insights/remittanceTrendChart').then(m => ({ default: m.RemittanceTrendChart }))
+)
+const CategoryDonutChart = lazy(() =>
+  import('@/components/Insights/categoryDonutChart').then(m => ({ default: m.CategoryDonutChart }))
+)
+
+const SUMMARY_STATS = [
+  { label: 'Total Sent',   value: '$3,240', change: '+12%', up: true  },
+  { label: 'Avg per Week', value: '$810',   change: '+5%',  up: true  },
+  { label: 'Transactions', value: '24',     change: '+3',   up: true  },
+  { label: 'Savings Rate', value: '22%',    change: '-2pp', up: false },
+] as const
 
 export default function FinancialInsightsPage() {
   const handleExport = () => {
@@ -27,12 +40,7 @@ export default function FinancialInsightsPage() {
 
         {/* Summary stats row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          {[
-            { label: 'Total Sent',    value: '$3,240', change: '+12%',  up: true  },
-            { label: 'Avg per Week',  value: '$810',   change: '+5%',   up: true  },
-            { label: 'Transactions',  value: '24',     change: '+3',    up: true  },
-            { label: 'Savings Rate',  value: '22%',    change: '-2pp',  up: false },
-          ].map(({ label, value, change, up }) => (
+          {SUMMARY_STATS.map(({ label, value, change, up }) => (
             <div
               key={label}
               className="bg-black/40 border border-white/10 rounded-2xl p-4 backdrop-blur-sm"
@@ -55,10 +63,14 @@ export default function FinancialInsightsPage() {
           </div>
 
           {/* Trend line */}
-          <RemittanceTrendChart />
+          <Suspense fallback={<div className="h-[308px] rounded-3xl bg-white/5 animate-pulse" />}>
+            <RemittanceTrendChart />
+          </Suspense>
 
           {/* Category donut */}
-          <CategoryDonutChart />
+          <Suspense fallback={<div className="h-[308px] rounded-3xl bg-white/5 animate-pulse" />}>
+            <CategoryDonutChart />
+          </Suspense>
 
         </div>
 

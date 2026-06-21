@@ -1,5 +1,6 @@
 'use client'
 
+import { useClientTranslator } from '@/lib/i18n/client'
 import {
   Users,
   DollarSign,
@@ -38,6 +39,7 @@ export default function FamilyWalletsStatsCards({
 }: {
   stats?: FamilyStatsData
 }) {
+  const { t } = useClientTranslator()
   const remainingBudget = stats.totalSpendingLimit - stats.spentThisMonth
 
   const cards: Array<{
@@ -49,34 +51,40 @@ export default function FamilyWalletsStatsCards({
     highlighted?: boolean
   }> = [
     {
-      title: 'Active members',
+      title: t('family_wallets_stats.active_members_title'),
       value: `${stats.familyMembers}`,
-      supporting: `${stats.admins} admin overseeing permissions`,
-      footnote: 'Recipients and senders stay visible at a glance.',
+      supporting: t('family_wallets_stats.active_members_supporting', {
+        admins: stats.admins
+      }),
+      footnote: t('family_wallets_stats.active_members_footnote'),
       icon: Users,
     },
     {
-      title: 'Monthly spend tracked',
+      title: t('family_wallets_stats.monthly_spend_title'),
       value: currencyFormatter.format(stats.spentThisMonth),
-      supporting: `${currencyFormatter.format(remainingBudget)} remaining budget`,
-      footnote: `${currencyFormatter.format(
-        stats.totalSpendingLimit
-      )} total limit across the wallet`,
+      supporting: t('family_wallets_stats.monthly_spend_supporting', {
+        remaining: currencyFormatter.format(remainingBudget)
+      }),
+      footnote: t('family_wallets_stats.monthly_spend_footnote', {
+        total: currencyFormatter.format(stats.totalSpendingLimit)
+      }),
       icon: DollarSign,
       highlighted: true,
     },
     {
-      title: 'Average utilization',
+      title: t('family_wallets_stats.average_utilization_title'),
       value: `${stats.averageUtilization}%`,
-      supporting: 'Healthy headroom across member limits',
-      footnote: 'Use this to spot which members need limit reviews first.',
+      supporting: t('family_wallets_stats.average_utilization_supporting'),
+      footnote: t('family_wallets_stats.average_utilization_footnote'),
       icon: Activity,
     },
     {
-      title: 'Coverage',
-      value: 'Permissions set',
-      supporting: `${stats.familyMembers - stats.admins} managed members`,
-      footnote: 'Reserve admin access for the smallest possible group.',
+      title: t('family_wallets_stats.coverage_title'),
+      value: t('family_wallets_stats.coverage_value'),
+      supporting: t('family_wallets_stats.coverage_supporting', {
+        managed: stats.familyMembers - stats.admins
+      }),
+      footnote: t('family_wallets_stats.coverage_footnote'),
       icon: ShieldCheck,
     },
   ]
@@ -98,7 +106,7 @@ export default function FamilyWalletsStatsCards({
                 <Icon className="h-5 w-5" strokeWidth={1.5} />
               </div>
               <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.24em] text-gray-400">
-                Snapshot
+                {t('family_wallets_stats.snapshot_badge')}
               </span>
             </div>
 

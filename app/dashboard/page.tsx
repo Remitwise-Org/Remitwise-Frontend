@@ -1,3 +1,5 @@
+"use client"
+
 import { Send, PiggyBank, FileText, Shield } from "lucide-react";
 import CurrentMoneySplitWidget from '@/components/CurrentMoneySplitWidget'
 import GoalProgress from "@/components/Dashboard/GoalProgress";
@@ -9,69 +11,89 @@ import TransactionHistoryItem, { Transaction } from "@/components/Dashboard/Tran
 import MoneyDistributionWidget from "@/components/Dashboard/MoneyDistributionWidget";
 import RecentTransactionsWidget from "@/components/Dashboard/RecentTransactionsWidget";
 import QuickActions from "@/components/Dashboard/QuickActions";
+import WidgetErrorBoundary from '@/components/ui/WidgetErrorBoundary'
 
 export default function Dashboard() {
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            title="Total Sent"
-            value="$1,200"
-            percentage="+25%"
-            icon={<Send className="w-5 h-5" />}
-            trend="up"
-          />
-          <StatCard
-            title="Savings"
-            value="$360"
-            percentage="+33%"
-            icon={<PiggyBank className="w-5 h-5" />}
-            trend="up"
-          />
-          <StatCard
-            title="Bills Paid"
-            value="$180"
-            percentage="3 bills"
-            icon={<FileText className="w-5 h-5" />}
-            trend="none"
-          />
-          <StatCard
-            title="Insurance"
-            value="$60"
-            percentage="2 policies"
-            icon={<Shield className="w-5 h-5" />}
-            trend="none"
-          />
+          <WidgetErrorBoundary widgetName="StatCard-TotalSent">
+            <StatCard
+              title="Total Sent"
+              value="$1,200"
+              percentage="+25%"
+              icon={<Send className="w-5 h-5" />}
+              trend="up"
+            />
+          </WidgetErrorBoundary>
+          <WidgetErrorBoundary widgetName="StatCard-Savings">
+            <StatCard
+              title="Savings"
+              value="$360"
+              percentage="+33%"
+              icon={<PiggyBank className="w-5 h-5" />}
+              trend="up"
+            />
+          </WidgetErrorBoundary>
+          <WidgetErrorBoundary widgetName="StatCard-BillsPaid">
+            <StatCard
+              title="Bills Paid"
+              value="$180"
+              percentage="3 bills"
+              icon={<FileText className="w-5 h-5" />}
+              trend="none"
+            />
+          </WidgetErrorBoundary>
+          <WidgetErrorBoundary widgetName="StatCard-Insurance">
+            <StatCard
+              title="Insurance"
+              value="$60"
+              percentage="2 policies"
+              icon={<Shield className="w-5 h-5" />}
+              trend="none"
+            />
+          </WidgetErrorBoundary>
         </div>
 
         {/* Quick Actions Panel */}
         <div className="mb-8">
-          <QuickActions />
+          <WidgetErrorBoundary widgetName="QuickActions">
+            <QuickActions />
+          </WidgetErrorBoundary>
         </div>
 
         {/* Money Split Visualization */}
         <div className="mb-8">
-          <CurrentMoneySplitWidget />
+          <WidgetErrorBoundary widgetName="CurrentMoneySplitWidget">
+            <CurrentMoneySplitWidget />
+          </WidgetErrorBoundary>
         </div>
         <div className="mb-8">
-          <MoneyDistributionWidget />
+          <WidgetErrorBoundary widgetName="MoneyDistributionWidget">
+            <MoneyDistributionWidget />
+          </WidgetErrorBoundary>
         </div>
 
         {/* Recent Transactions */}
         <div className="mb-8">
-          <RecentTransactionsWidget />
+          <WidgetErrorBoundary widgetName="RecentTransactionsWidget">
+            <RecentTransactionsWidget />
+          </WidgetErrorBoundary>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Savings Goals Progress */}
-          <SavingsByGoalWidget />
+          <WidgetErrorBoundary widgetName="SavingsByGoalWidget">
+            <SavingsByGoalWidget />
+          </WidgetErrorBoundary>
 
           {/* Bills by Type */}
-          <div
-            className="rounded-2xl shadow-md p-6 border border-[#FFFFFF14] hover:border-white/30 transition-colors duration-300"
-            style={{ backgroundImage: "var(--card)" }}
-          >
+          <WidgetErrorBoundary widgetName="BillsByType">
+            <div
+              className="rounded-2xl shadow-md p-6 border border-[#FFFFFF14] hover:border-white/30 transition-colors duration-300"
+              style={{ backgroundImage: "var(--card)" }}
+            >
             <div className="flex items-center gap-2 mb-4">
               <span>
                 <FileText className="w-6 h-6 text-[var(--accent)]" />
@@ -106,7 +128,8 @@ export default function Dashboard() {
                 gradient={{ from: "#5F1515", to: "#4F1111" }}
               />
             </div>
-          </div>
+            </div>
+          </WidgetErrorBoundary>
         </div>
       </main>
   );

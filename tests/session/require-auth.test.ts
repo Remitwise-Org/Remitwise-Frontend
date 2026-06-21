@@ -3,18 +3,18 @@
  * Tests validation, error handling, and authenticated user data return
  */
 
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { requireAuth, createSession, SessionData } from '../../lib/session';
 import { sealData } from 'iron-session';
 
 // Mock Next.js cookies
 const mockCookies = {
-  get: jest.fn(),
-  set: jest.fn(),
+  get: vi.fn(),
+  set: vi.fn(),
 };
 
-jest.mock('next/headers', () => ({
-  cookies: jest.fn(() => Promise.resolve(mockCookies)),
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(() => Promise.resolve(mockCookies)),
 }));
 
 // Mock environment variables
@@ -24,7 +24,7 @@ beforeEach(() => {
   process.env = { ...originalEnv };
   process.env.SESSION_PASSWORD = 'test-password-at-least-32-characters-long';
   process.env.SESSION_MAX_AGE = '604800'; // 7 days
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 afterEach(() => {
@@ -62,7 +62,7 @@ describe('requireAuth', () => {
 
     try {
       await requireAuth();
-      fail('Should have thrown Response');
+      expect.fail('Should have thrown Response');
     } catch (error) {
       expect(error).toBeInstanceOf(Response);
       const response = error as Response;
@@ -99,7 +99,7 @@ describe('requireAuth', () => {
 
     try {
       await requireAuth();
-      fail('Should have thrown Response');
+      expect.fail('Should have thrown Response');
     } catch (error) {
       expect(error).toBeInstanceOf(Response);
       const response = error as Response;
@@ -124,7 +124,7 @@ describe('requireAuth', () => {
 
     try {
       await requireAuth();
-      fail('Should have thrown Response');
+      expect.fail('Should have thrown Response');
     } catch (error) {
       expect(error).toBeInstanceOf(Response);
       const response = error as Response;
@@ -160,7 +160,7 @@ describe('requireAuth', () => {
 
     try {
       await requireAuth();
-      fail('Should have thrown Response');
+      expect.fail('Should have thrown Response');
     } catch (error) {
       expect(error).toBeInstanceOf(Response);
       const response = error as Response;
@@ -191,7 +191,7 @@ describe('requireAuth', () => {
 
     try {
       await requireAuth();
-      fail('Should have thrown Response');
+      expect.fail('Should have thrown Response');
     } catch (error) {
       expect(error).toBeInstanceOf(Response);
       const response = error as Response;
@@ -216,7 +216,7 @@ describe('requireAuth', () => {
 
       try {
         await requireAuth();
-        fail(`Should have thrown Response for ${testCase.name}`);
+        expect.fail(`Should have thrown Response for ${testCase.name}`);
       } catch (error) {
         expect(error).toBeInstanceOf(Response);
         const response = error as Response;

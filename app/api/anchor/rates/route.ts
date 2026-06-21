@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server';
 import { anchorClient } from '@/lib/anchor/client';
-import { getAnchorRatesCache, setAnchorRatesCache } from '@/lib/anchor/rates-cache';
+import {
+    getAnchorRatesCache,
+    setAnchorRatesCache,
+    isCacheFresh,
+    isCacheStale,
+} from '@/lib/anchor/rates-cache';
 
 export const dynamic = 'force-dynamic';
 
-// 5 minutes in milliseconds
-const CACHE_TTL = 5 * 60 * 1000;
-
 export async function GET() {
-    const rateCache = getAnchorRatesCache();
-    const now = Date.now();
-    const isCacheValid = rateCache.rates !== null && (now - rateCache.timestamp) < CACHE_TTL;
-
-    if (isCacheValid) {
+    if (isCacheFresh()) {
+        const rateCache = getAnchorRatesCache();
         return NextResponse.json({
             rates: rateCache.rates,
             stale: false,
@@ -21,9 +20,7 @@ export async function GET() {
 
     try {
         const fetchedRates = await anchorClient.getExchangeRates();
-
-        // Update the cache
-        setAnchorRatesCache(fetchedRates, now);
+        setAnchorRatesCache(fetchedRates, Date.now());
 
         return NextResponse.json({
             rates: fetchedRates,
@@ -32,8 +29,8 @@ export async function GET() {
     } catch (error) {
         console.error('API /anchor/rates - Error fetching from Anchor Client:', error);
 
-        // Fallback: If cache exists but is stale, return the stale cache.
-        if (rateCache.rates !== null) {
+        if (isCacheStale()) {
+            const rateCache = getAnchorRatesCache();
             console.warn('API /anchor/rates - Returning stale rate cache due to anchor failure.');
             return NextResponse.json({
                 rates: rateCache.rates,
@@ -41,7 +38,6 @@ export async function GET() {
             });
         }
 
-        // No cache exists and the fetch failed
         return NextResponse.json(
             { error: 'Service Unavailable' },
             { status: 503 }

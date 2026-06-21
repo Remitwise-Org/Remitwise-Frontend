@@ -88,7 +88,7 @@ function StatusBadge({ status }: { status: Bill["status"] }) {
   );
 }
 
-// ─── Recurring chain badge ────────────────────────────────────────────────────
+// ─── Exported Component ─────────────────────────────────────────────────────────
 
 function RecurringBadge({
   recurrenceLabel,

@@ -1,12 +1,15 @@
 "use client";
 
 import { useRef } from "react";
+import { useClientTranslator } from '@/lib/i18n/client'
 import PageHeader from "@/components/PageHeader";
 import FamilyWalletsStatsCards from "./components/FamilyWalletsStatsCards";
 import UnderstandingRolesSection from "./components/UnderstandingRolesSection";
 import FamilyMemberSection from "./components/FamilyMemberSection";
+import ApprovalsQueue from "./components/ApprovalsQueue";
 
 export default function FamilyWallets() {
+	const { t } = useClientTranslator();
 	const addMemberSectionRef = useRef<HTMLDivElement>(null);
 
 	function handleAddMember() {
@@ -19,9 +22,9 @@ export default function FamilyWallets() {
 	return (
 		<div className='min-h-screen bg-[#010101]'>
 			<PageHeader
-				title='Family Wallets'
-				subtitle='Manage members and permissions'
-				ctaLabel='Add Member'
+				title={t("family_wallets.page_title")}
+				subtitle={t("family_wallets.page_subtitle")}
+				ctaLabel={t("family_wallets.add_member_cta")}
 				onCtaClick={handleAddMember}
 				showBottomDivider
 			/>
@@ -37,6 +40,8 @@ export default function FamilyWallets() {
 					</div>
 
 					<aside className='space-y-8 xl:sticky xl:top-6'>
+						<ApprovalsQueue />
+
 						<UnderstandingRolesSection />
 
 						<div
@@ -44,26 +49,24 @@ export default function FamilyWallets() {
 							className='rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.96),rgba(10,10,10,0.96))] p-6 sm:p-8'>
 							<div className='border-b border-white/[0.08] pb-6'>
 								<p className='text-xs font-semibold uppercase tracking-[0.24em] text-red-300'>
-									Member controls
+									{t("family_wallets.member_controls_label")}
 								</p>
 								<h2 className='mt-3 text-2xl font-semibold text-white'>
-									Add Family Member
+									{t("family_wallets.add_member_title")}
 								</h2>
 								<p className='mt-2 text-sm leading-6 text-gray-300'>
-									The form is visually ready for engineering handoff and keeps
-									the disabled state explicit until contract integration is
-									connected.
+									{t("family_wallets.add_member_description")}
 								</p>
 							</div>
 
 							<form className='mt-6 space-y-6'>
 								<div>
 									<label className='mb-2 block text-sm font-medium text-gray-300'>
-										Name
+										{t("family_wallets.form.name_label")}
 									</label>
 									<input
 										type='text'
-										placeholder='Family member name'
+										placeholder={t("family_wallets.form.name_placeholder")}
 										className='w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-red-500'
 										disabled
 									/>
@@ -71,11 +74,11 @@ export default function FamilyWallets() {
 
 								<div>
 									<label className='mb-2 block text-sm font-medium text-gray-300'>
-										Stellar Address
+										{t("family_wallets.form.stellar_address_label")}
 									</label>
 									<input
 										type='text'
-										placeholder='GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+										placeholder={t("family_wallets.form.stellar_address_placeholder")}
 										className='w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-3 font-mono text-sm text-white placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-red-500'
 										disabled
 									/>
@@ -84,20 +87,20 @@ export default function FamilyWallets() {
 								<div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
 									<div>
 										<label className='mb-2 block text-sm font-medium text-gray-300'>
-											Role
+											{t("family_wallets.form.role_label")}
 										</label>
 										<select
 											className='w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white focus:border-transparent focus:ring-2 focus:ring-red-500'
 											disabled>
-											<option>Sender</option>
-											<option>Recipient</option>
-											<option>Admin</option>
+											<option>{t("family_wallets.form.role_sender")}</option>
+											<option>{t("family_wallets.form.role_recipient")}</option>
+											<option>{t("family_wallets.form.role_admin")}</option>
 										</select>
 									</div>
 
 									<div>
 										<label className='mb-2 block text-sm font-medium text-gray-300'>
-											Spending Limit (USD)
+											{t("family_wallets.form.spending_limit_label")}
 										</label>
 										<div className='relative'>
 											<span className='absolute left-4 top-3 text-gray-500'>
@@ -105,7 +108,7 @@ export default function FamilyWallets() {
 											</span>
 											<input
 												type='number'
-												placeholder='1000.00'
+												placeholder={t("family_wallets.form.spending_limit_placeholder")}
 												step='0.01'
 												min='0'
 												className='w-full rounded-xl border border-white/10 bg-[#1a1a1a] py-3 pl-8 pr-4 text-white placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-red-500'
@@ -119,7 +122,7 @@ export default function FamilyWallets() {
 									type='submit'
 									className='w-full rounded-xl bg-red-600 px-6 py-3 font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60'
 									disabled>
-									Add Member
+									{t("family_wallets.form.submit_button")}
 								</button>
 							</form>
 						</div>
@@ -127,9 +130,9 @@ export default function FamilyWallets() {
 						<div className='rounded-2xl border border-amber-700/30 bg-amber-950/20 p-4'>
 							<p className='text-sm leading-6 text-amber-100'>
 								<strong className='font-semibold text-amber-50'>
-									Integration required:
+									{t("family_wallets.integration_required_label")}
 								</strong>{" "}
-							Connect the `family_wallet` smart contract and wallet to add members, update spending limits, and enforce permissions non-custodially. Each change is prepared as an on-chain payload and signed locally.
+								{t("family_wallets.integration_required_text")}
 							</p>
 						</div>
 					</aside>

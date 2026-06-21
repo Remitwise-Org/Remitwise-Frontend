@@ -1,5 +1,9 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import FamilyMemberStatCard, { FamilyMember } from "./FamilyMemberStatCard";
+import FamilyMemberDetailDrawer from "./FamilyMemberDetailDrawer";
+import { useClientTranslator } from "@/lib/i18n/client";
 
 export const familyMembers: FamilyMember[] = [
 	{
@@ -53,6 +57,8 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 });
 
 const FamilyMemberSection: React.FC = () => {
+	const { t } = useClientTranslator();
+	const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null);
 	const activeCount = getActiveMemberCount();
 	const totalLimit = familyMembers.reduce(
 		(sum, member) => sum + member.spendingLimit,
@@ -71,45 +77,52 @@ const FamilyMemberSection: React.FC = () => {
 			<div className='flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between'>
 				<div>
 					<p className='text-xs font-semibold uppercase tracking-[0.24em] text-red-300'>
-						Member overview
+						{t("family_member_section.member_overview_label")}
 					</p>
 					<h2 className='mt-3 text-2xl font-semibold text-white'>
-						Family Members
+						{t("family_member_section.title")}
 					</h2>
 					<p className='mt-2 max-w-2xl text-sm leading-6 text-gray-300'>
-						Highest-utilization members surface first so limit reviews are
-						faster on mobile and desktop alike.
+						{t("family_member_section.description")}
 					</p>
 				</div>
 
 				<div className='grid grid-cols-1 gap-3 sm:grid-cols-3 lg:min-w-[540px]'>
 					<div className='rounded-2xl border border-white/[0.08] bg-[#101010] p-4'>
-						<p className='text-sm text-gray-400'>Active members</p>
+						<p className='text-sm text-gray-400'>
+							{t("family_member_section.stats.active_members_label")}
+						</p>
 						<p className='mt-2 text-2xl font-semibold text-white'>
 							{activeCount}
 						</p>
 						<p className='mt-1 text-sm text-gray-500'>
-							Currently assigned roles
+							{t("family_member_section.stats.active_members_sub")}
 						</p>
 					</div>
 
 					<div className='rounded-2xl border border-white/[0.08] bg-[#101010] p-4'>
-						<p className='text-sm text-gray-400'>Remaining budget</p>
+						<p className='text-sm text-gray-400'>
+							{t("family_member_section.stats.remaining_budget_label")}
+						</p>
 						<p className='mt-2 text-2xl font-semibold text-white'>
 							{currencyFormatter.format(totalLimit - totalUsed)}
 						</p>
 						<p className='mt-1 text-sm text-gray-500'>
-							{currencyFormatter.format(totalUsed)} used this month
+							{t("family_member_section.stats.remaining_budget_sub", {
+								used: currencyFormatter.format(totalUsed)
+							})}
 						</p>
 					</div>
 
 					<div className='rounded-2xl border border-white/[0.08] bg-[#101010] p-4'>
-						<p className='text-sm text-gray-400'>Needs review</p>
+						<p className='text-sm text-gray-400'>
+							{t("family_member_section.stats.needs_review_label")}
+						</p>
 						<p className='mt-2 text-2xl font-semibold text-white'>
 							{nearLimitCount}
 						</p>
 						<p className='mt-1 text-sm text-gray-500'>
-							Members at 75% usage or higher
+							{t("family_member_section.stats.needs_review_sub")}
 						</p>
 					</div>
 				</div>
@@ -117,13 +130,15 @@ const FamilyMemberSection: React.FC = () => {
 
 			<div className='flex flex-wrap gap-2'>
 				<span className='rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-100'>
-					Highest usage first
+					{t("family_member_section.tags.highest_usage")}
 				</span>
 				<span className='rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-gray-300'>
-					{activeCount} active members
+					{t("family_member_section.tags.active_members", { count: activeCount })}
 				</span>
 				<span className='rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-gray-300'>
-					{currencyFormatter.format(totalLimit)} total monthly limit
+					{t("family_member_section.tags.total_limit", {
+						limit: currencyFormatter.format(totalLimit)
+					})}
 				</span>
 			</div>
 
@@ -132,9 +147,16 @@ const FamilyMemberSection: React.FC = () => {
 						<FamilyMemberStatCard
 							key={member.id}
 							member={member}
+							onViewDetails={() => setSelectedMember(member)}
 						/>
 					))}
 			</div>
+
+			<FamilyMemberDetailDrawer
+				member={selectedMember}
+				open={selectedMember !== null}
+				onClose={() => setSelectedMember(null)}
+			/>
 		</section>
 	);
 };

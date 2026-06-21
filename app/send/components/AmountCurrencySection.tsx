@@ -1,7 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, RefreshCw } from "lucide-react"
+import { useExchangeRates } from "@/lib/context/RatesContext"
+import { useClientTranslator } from "@/lib/i18n/client"
 
 interface AmountCurrencySectionProps {
   onReview?: (amount: number, currency: string) => void
@@ -13,14 +15,19 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
   const [currency, setCurrency] = useState<string>("USDC")
   const [error, setError] = useState<string>("")
 
-  // Currency conversion rates (can be replaced with API data)
-  const conversionRates: Record<string, number> = {
-    USDC: 1.0,
-    XLM: 0.28,
-    EUR: 0.92,
+  const { rates, loading, stale, error: ratesError, refresh } = useExchangeRates()
+  const { t } = useClientTranslator()
+
+  // Build conversion map from live rates (sell USD, buy asset)
+  const conversionRates: Record<string, number> = { USDC: 1.0 }
+  for (const r of rates) {
+    if (r.sell_asset === "USD" || r.sell_asset === "USDC") {
+      conversionRates[r.buy_asset] = parseFloat(r.price)
+    }
   }
 
-  const currencies = ["USDC", "XLM", "EUR"]
+  // Supported currencies: USDC always first, plus anything in the rates
+  const currencies = ["USDC", ...Object.keys(conversionRates).filter((c) => c !== "USDC")]
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -51,16 +58,32 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
     parseFloat(amount) >= 1 &&
     parseFloat(amount) <= 10000
 
+  const rate = conversionRates[currency] ?? 0
+
   return (
     <div className="mx-auto bg-black rounded-2xl">
+      {/* Rates status bar */}
+      {(ratesError || stale) && (
+        <div className="flex items-center justify-between mb-4 px-1">
+          <p className="text-xs text-amber-400">
+            {ratesError ? t("rates.error") : t("rates.stale")}
+          </p>
+          <button
+            onClick={refresh}
+            className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white transition-colors"
+            aria-label={t("rates.refresh")}
+          >
+            <RefreshCw className="w-3 h-3" />
+            {t("rates.refresh")}
+          </button>
+        </div>
+      )}
+
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Amount Card */}
         <div className="relative overflow-hidden rounded-2xl">
-          {/* Gradient Glow */}
           <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-red-900/20 blur-[120px] rounded-full -mr-24 -mt-24 pointer-events-none z-0" />
-
-          {/* Card Content */}
           <div className="relative z-10 bg-zinc-900/50 rounded-2xl p-6 border border-zinc-800 ">
             <label className="text-sm font-medium mb-3 block text-white">
               Amount (USD) <span className="text-red-500">*</span>
@@ -83,17 +106,15 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
 
         {/* Currency Card */}
         <div className="relative overflow-hidden rounded-2xl">
-          {/* Gradient Glow */}
           <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-red-900/20 blur-[120px] rounded-full -mr-24 -mt-24 pointer-events-none z-0" />
-
-          {/* Card Content */}
           <div className="relative z-10 bg-zinc-900/50 rounded-2xl p-6 border border-zinc-800">
             <label className="text-sm font-medium mb-3 block text-white">Currency</label>
             <div className="relative">
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full bg-zinc-800/50 border border-zinc-700 rounded-xl px-4 py-3.5 text-lg focus:outline-none focus:border-red-500/50 transition-colors appearance-none text-white"
+                disabled={loading}
+                className="w-full bg-zinc-800/50 border border-zinc-700 rounded-xl px-4 py-3.5 text-lg focus:outline-none focus:border-red-500/50 transition-colors appearance-none text-white disabled:opacity-60"
               >
                 {currencies.map((c) => (
                   <option key={c} value={c} className="bg-zinc-900 text-white">
@@ -104,7 +125,9 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
               <ChevronDown className="w-5 h-5 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
             <p className="text-xs text-zinc-500 mt-2">
-              {`1 ${currency} = $${(conversionRates[currency] ?? 0).toFixed(2)} USD`}
+              {loading
+                ? t("rates.loading")
+                : `1 ${currency} = $${rate.toFixed(2)} USD`}
             </p>
           </div>
         </div>
@@ -115,11 +138,11 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
         <button
           onClick={handleReview}
           disabled={!isValid}
-          className={`w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 flex items-center justify-center gap-2`}
+          className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 flex items-center justify-center gap-2"
         >
           Review Transaction
         </button>
-        
+
         <button
           onClick={onBack}
           className="w-full py-4 bg-transparent hover:bg-white/5 rounded-2xl text-sm font-medium text-zinc-400 transition-colors border border-zinc-800/50"

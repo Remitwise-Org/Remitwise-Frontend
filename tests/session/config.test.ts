@@ -3,6 +3,7 @@
  * Tests Requirements 6.1, 6.2, 6.3, 6.4, 6.5
  */
 
+import { vi } from 'vitest';
 import { validateSessionConfig } from '@/lib/session';
 
 describe('Session Configuration', () => {
@@ -10,7 +11,7 @@ describe('Session Configuration', () => {
 
   beforeEach(() => {
     // Reset environment before each test
-    jest.resetModules();
+    vi.resetModules();
     process.env = { ...originalEnv };
   });
 
@@ -57,7 +58,7 @@ describe('Session Configuration', () => {
 
       it('should log warning for invalid SESSION_MAX_AGE (non-numeric)', () => {
         process.env.SESSION_MAX_AGE = 'invalid';
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         
         validateSessionConfig();
         
@@ -72,7 +73,7 @@ describe('Session Configuration', () => {
 
       it('should log warning for invalid SESSION_MAX_AGE (negative)', () => {
         process.env.SESSION_MAX_AGE = '-100';
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         
         validateSessionConfig();
         
@@ -84,7 +85,7 @@ describe('Session Configuration', () => {
 
       it('should log warning for invalid SESSION_MAX_AGE (zero)', () => {
         process.env.SESSION_MAX_AGE = '0';
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         
         validateSessionConfig();
         
@@ -96,7 +97,7 @@ describe('Session Configuration', () => {
 
       it('should not log warning for valid SESSION_MAX_AGE', () => {
         process.env.SESSION_MAX_AGE = '3600';
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         
         validateSessionConfig();
         
@@ -106,7 +107,7 @@ describe('Session Configuration', () => {
 
       it('should not log warning when SESSION_MAX_AGE is not set', () => {
         delete process.env.SESSION_MAX_AGE;
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         
         validateSessionConfig();
         
@@ -122,7 +123,7 @@ describe('Session Configuration', () => {
 
       it('should log info when SESSION_REFRESH_ENABLED is true', () => {
         process.env.SESSION_REFRESH_ENABLED = 'true';
-        const infoSpy = jest.spyOn(console, 'info').mockImplementation();
+        const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
         
         validateSessionConfig();
         
@@ -134,7 +135,7 @@ describe('Session Configuration', () => {
 
       it('should log info when SESSION_REFRESH_ENABLED is false', () => {
         process.env.SESSION_REFRESH_ENABLED = 'false';
-        const infoSpy = jest.spyOn(console, 'info').mockImplementation();
+        const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
         
         validateSessionConfig();
         
@@ -146,7 +147,7 @@ describe('Session Configuration', () => {
 
       it('should log disabled info when SESSION_REFRESH_ENABLED is not set', () => {
         delete process.env.SESSION_REFRESH_ENABLED;
-        const infoSpy = jest.spyOn(console, 'info').mockImplementation();
+        const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
         
         validateSessionConfig();
         
@@ -158,7 +159,7 @@ describe('Session Configuration', () => {
 
       it('should log disabled info when SESSION_REFRESH_ENABLED is invalid value', () => {
         process.env.SESSION_REFRESH_ENABLED = 'yes';
-        const infoSpy = jest.spyOn(console, 'info').mockImplementation();
+        const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
         
         validateSessionConfig();
         
@@ -175,8 +176,8 @@ describe('Session Configuration', () => {
         process.env.SESSION_MAX_AGE = '86400';
         process.env.SESSION_REFRESH_ENABLED = 'true';
         
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-        const infoSpy = jest.spyOn(console, 'info').mockImplementation();
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
         
         expect(() => validateSessionConfig()).not.toThrow();
         expect(warnSpy).not.toHaveBeenCalled();
@@ -193,8 +194,8 @@ describe('Session Configuration', () => {
         delete process.env.SESSION_MAX_AGE;
         delete process.env.SESSION_REFRESH_ENABLED;
         
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-        const infoSpy = jest.spyOn(console, 'info').mockImplementation();
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
         
         expect(() => validateSessionConfig()).not.toThrow();
         expect(warnSpy).not.toHaveBeenCalled();
@@ -211,8 +212,8 @@ describe('Session Configuration', () => {
         process.env.SESSION_MAX_AGE = 'invalid';
         process.env.SESSION_REFRESH_ENABLED = 'true';
         
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-        const infoSpy = jest.spyOn(console, 'info').mockImplementation();
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
         
         expect(() => validateSessionConfig()).not.toThrow();
         expect(warnSpy).toHaveBeenCalledWith(

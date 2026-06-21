@@ -3,7 +3,7 @@
  * Tests the getSessionWithRefresh function behavior
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { getSessionWithRefresh, createSession, SessionData } from '../../lib/session';
 import { sealData, unsealData } from 'iron-session';
 

@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { Wallet, ChevronDown } from 'lucide-react';
 import WalletDropdown from './WalletDropdown';
 import { logout } from '@/lib/client/logout';
+import { useWallet } from 'stellar-wallet-kit';
 
 const truncateAddress = (address: string) => {
   if (!address) return '';
@@ -12,25 +13,22 @@ const truncateAddress = (address: string) => {
 
 const WalletButton = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState(
-    'GDEMOXQ3D5AFX4K7IQ3XR5ZYQ2H7F4QO2N7F4R6STJHK2QMZ7CNC3',
-  );
-  const [network, setNetwork] = useState('Testnet');
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const { account, isConnected: connected, connect, disconnect, network } = useWallet();
+  const address = account?.address ?? '';
 
   const closeDropdown = () => {
     setIsOpen(false);
     buttonRef.current?.focus();
   };
 
-  const handleConnect = () => {
-    setIsConnected(true);
+  const handleConnect = async () => {
+    await connect();
     setIsOpen(false);
   };
 
   const handleDisconnect = async () => {
-    setIsConnected(false);
+    await disconnect();
     setIsOpen(false);
     await logout();
   };
@@ -44,18 +42,18 @@ const WalletButton = () => {
         aria-haspopup="menu"
         aria-expanded={isOpen}
         className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-red/40 focus:ring-offset-2 focus:ring-offset-transparent ${
-          isConnected
+          connected
             ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
             : 'bg-gradient-to-r from-brand-red to-[#B01C1C] text-white shadow-[0_0_24px_rgba(215,35,35,0.24)] hover:opacity-95'
         }`}
       >
         <Wallet className="w-4 h-4 text-current" />
         <span className="font-medium text-sm whitespace-nowrap">
-          {isConnected ? truncateAddress(walletAddress) : 'Connect Wallet'}
+          {connected ? truncateAddress(address || '') : 'Connect Wallet'}
         </span>
-        {isConnected && (
+        {connected && (
           <span className="hidden sm:inline-flex rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] uppercase tracking-[0.18em] text-white/80">
-            {network}
+            {network || 'Testnet'}
           </span>
         )}
         <ChevronDown
@@ -66,9 +64,9 @@ const WalletButton = () => {
 
       <WalletDropdown
         isOpen={isOpen}
-        isConnected={isConnected}
-        walletAddress={walletAddress}
-        network={network}
+        isConnected={connected}
+        walletAddress={address || ''}
+        network={network || 'Testnet'}
         buttonRef={buttonRef}
         onClose={closeDropdown}
         onConnect={handleConnect}

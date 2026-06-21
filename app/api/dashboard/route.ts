@@ -33,7 +33,7 @@ const DASHBOARD_TTL_S = Number(process.env.DASHBOARD_TTL_SECONDS) || 30;
 
 
 
-export const getHandler = async (req: NextRequest) => {
+const getHandler = async (req: NextRequest) => {
     const session = await getSession();
 
     const dashboard = await getDashboardData(session?.address || "");

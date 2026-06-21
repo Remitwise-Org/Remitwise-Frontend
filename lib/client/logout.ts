@@ -20,8 +20,8 @@ import { sessionHandler } from './sessionHandler';
 
 export interface LogoutOptions {
   /**
-   * Redirect path after logout
-   * Defaults to '/' (home page)
+   * Browser location to navigate to after the logout attempt completes.
+   * Defaults to `'/'`.
    */
   redirectTo?: string;
 }
@@ -43,12 +43,18 @@ export function safeRedirectPath(path: string | null | undefined): string {
 }
 
 /**
- * Perform logout
- * Awaits server confirmation before clearing local auth state and redirecting.
- * On timeout or network failure, still clears local state so the client is
- * never stuck "logged in".
- * @param options - Logout options including redirect path
- * @returns Promise that resolves when logout is complete
+ * Performs an explicit sign-out from the browser.
+ *
+ * Behavior:
+ * - Sends `POST /api/auth/logout`.
+ * - Clears local auth state even if the request fails.
+ * - Always redirects the browser in `finally`.
+ *
+ * This is the helper to use for sign-out buttons and menus. It is separate from
+ * the automatic session-expiry flow used by {@link apiClient}.
+ *
+ * @param options - Optional redirect target after logout.
+ * @returns A promise that settles after the logout attempt and redirect assignment.
  */
 export async function logout(options: LogoutOptions = {}): Promise<void> {
   const { redirectTo = '/' } = options;
@@ -92,10 +98,12 @@ export async function logout(options: LogoutOptions = {}): Promise<void> {
 }
 
 /**
- * Check if user should be redirected after authentication
- * Returns the stored redirect path if available, validated to be a safe
- * same-origin relative path.
- * @returns Redirect path or null
+ * Reads and clears the path captured by the session-expiry flow.
+ *
+ * Call this after a successful wallet reconnect or login to restore the user's
+ * last protected route.
+ *
+ * @returns The stored redirect path, or `null` when none is present.
  */
 export function getPostAuthRedirect(): string | null {
   if (typeof window === 'undefined') return null;

@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/footer";
 import FinalCallToAction from "@/components/FinalCallToAction";
+import RootErrorBoundary from "@/components/RootErrorBoundary";
 
 export default function LayoutWrapper({
   children,
@@ -17,18 +18,17 @@ export default function LayoutWrapper({
     excludedRoutes.includes(pathname) || pathname.startsWith("/dashboard");
 
   if (isExcluded) {
-    return <>{children}</>;
+    return <RootErrorBoundary>{children}</RootErrorBoundary>;
   }
 
   return (
-    <>
+    <RootErrorBoundary>
       <Header />
-      {/* Add padding-top to account for fixed header */}
       <div className="pt-20">
         {children}
         <FinalCallToAction />
         <Footer />
       </div>
-    </>
+    </RootErrorBoundary>
   );
 }
