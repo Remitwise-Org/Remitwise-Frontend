@@ -1,16 +1,16 @@
 /**
  * Logout helper for frontend
  * Handles logout API call, state clearing, and redirect
- * 
+ *
  * @example Usage in a component
  * ```typescript
  * import { logout } from '@/lib/client/logout';
- * 
+ *
  * function LogoutButton() {
  *   const handleLogout = async () => {
  *     await logout();
  *   };
- *   
+ *
  *   return <button onClick={handleLogout}>Logout</button>;
  * }
  * ```
@@ -26,29 +26,48 @@ export interface LogoutOptions {
   redirectTo?: string;
 }
 
+const LOGOUT_TIMEOUT_MS = 5000;
+
+/**
+ * Validates that a redirect target is a safe, same-origin relative path.
+ * Rejects absolute URLs (https://evil.com) and protocol-relative (//evil.com).
+ * Falls back to '/' for null, undefined, or any invalid input.
+ */
+export function safeRedirectPath(path: string | null | undefined): string {
+  if (!path || typeof path !== 'string') return '/';
+  // Must start with '/' but not '//' (protocol-relative)
+  if (!path.startsWith('/') || path.startsWith('//')) return '/';
+  // Catch any URL-encoded or embedded absolute URLs
+  if (path.includes('://')) return '/';
+  return path;
+}
+
 /**
  * Perform logout
- * Calls logout API, clears local auth state, and redirects to home/login page
+ * Awaits server confirmation before clearing local auth state and redirecting.
+ * On timeout or network failure, still clears local state so the client is
+ * never stuck "logged in".
  * @param options - Logout options including redirect path
  * @returns Promise that resolves when logout is complete
  */
 export async function logout(options: LogoutOptions = {}): Promise<void> {
   const { redirectTo = '/' } = options;
-  
+  const safeTarget = safeRedirectPath(redirectTo);
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), LOGOUT_TIMEOUT_MS);
+
   try {
-    // Call logout API endpoint
     const response = await fetch('/api/auth/logout', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      signal: controller.signal,
     });
-    
-    // Clear local authentication state regardless of API response
-    // This ensures the user is logged out even if the API call fails
-    sessionHandler.clearAuthState();
-    
-    // Check if logout was successful
+
+    clearTimeout(timeoutId);
+
     if (response.ok) {
       const data = await response.json();
       console.info('Logout successful:', data.message);
@@ -56,32 +75,36 @@ export async function logout(options: LogoutOptions = {}): Promise<void> {
       console.warn('Logout API returned non-OK status:', response.status);
     }
   } catch (error) {
-    // Network error or other issue
-    // Still clear local state to ensure user is logged out
-    console.error('Logout error:', error);
-    sessionHandler.clearAuthState();
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.warn(`Logout request timed out after ${LOGOUT_TIMEOUT_MS}ms`);
+    } else {
+      console.error('Logout error:', error);
+    }
   } finally {
-    // Always redirect after logout attempt
+    // Always clear local auth state so the client is never stuck "logged in"
+    sessionHandler.clearAuthState();
+
     if (typeof window !== 'undefined') {
-      window.location.href = redirectTo;
+      window.location.href = safeTarget;
     }
   }
 }
 
 /**
  * Check if user should be redirected after authentication
- * Returns the stored redirect path if available
+ * Returns the stored redirect path if available, validated to be a safe
+ * same-origin relative path.
  * @returns Redirect path or null
  */
 export function getPostAuthRedirect(): string | null {
   if (typeof window === 'undefined') return null;
-  
+
   const redirectPath = localStorage.getItem('redirect_after_auth');
   if (redirectPath) {
-    // Clear the stored redirect path
     localStorage.removeItem('redirect_after_auth');
-    return redirectPath;
+    return safeRedirectPath(redirectPath);
   }
-  
+
   return null;
 }
