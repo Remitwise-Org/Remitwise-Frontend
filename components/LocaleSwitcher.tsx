@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useClientTranslator, useClientLocale } from "@/lib/i18n/client";
+import { setLocaleCookie } from "@/lib/i18n/cookie";
 import { Globe } from "lucide-react";
 
 type SupportedLocale = "en" | "es";
@@ -19,6 +20,7 @@ export default function LocaleSwitcher() {
   const currentLocale = locales.find((l) => l.code === locale) || locales[0];
 
   const handleLocaleChange = (newLocale: SupportedLocale) => {
+    setLocaleCookie(newLocale);
     localStorage.setItem("locale", newLocale);
     window.location.reload();
   };

@@ -22,12 +22,12 @@ export async function GET(
       error !== null &&
       (error as { code?: string }).code === "NOT_FOUND"
     ) {
-      const t = getTranslator(request.headers.get("accept-language"));
+      const t = getTranslator(request.headers.get("cookie"), request.headers.get("accept-language"));
       return NextResponse.json({ error: t("errors.policy_not_found") }, { status: 404 });
     }
 
     console.error("[GET /api/insurance/[id]]", error);
-    const t = getTranslator(request.headers.get("accept-language"));
+    const t = getTranslator(request.headers.get("cookie"), request.headers.get("accept-language"));
     return NextResponse.json(
       { error: t("errors.internal_server_error") },
       { status: 502 }
