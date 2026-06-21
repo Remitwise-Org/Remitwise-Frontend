@@ -3,6 +3,7 @@
 Thank you for contributing! This guide covers everything you need to get started: branch conventions, the verified test commands, and PR expectations.
 
 For a deeper look at how the codebase is structured, see [docs/architecture.md](docs/architecture.md).
+For authenticated browser data fetching, also read [docs/client-api.md](docs/client-api.md) before adding new `fetch` calls.
 
 ---
 
@@ -59,7 +60,9 @@ npm run dev
 
 ## Test Commands
 
-All commands below are verified against `package.json`.
+All commands below are verified against `package.json`. For the full multi-runner
+reference — when to use each runner, the `tests/` layout, coverage expectations, and a
+recipe for adding a test with each runner — see [docs/testing.md](docs/testing.md).
 
 ### Quick reference
 

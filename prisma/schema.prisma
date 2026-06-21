@@ -24,6 +24,19 @@ model UserPreference {
   notifications_enabled Boolean @default(true)
 }
 
+model TutorialProgress {
+  id         String   @id @default(cuid())
+  userId     String
+  tutorialId String
+  data       String   // JSON string containing chapters progress
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, tutorialId])
+  @@index([userId])
+  @@index([tutorialId])
+}
+
 model WebhookEvent {
   id          String    @id @default(cuid())
   source      String    // e.g. "anchor", "stripe"

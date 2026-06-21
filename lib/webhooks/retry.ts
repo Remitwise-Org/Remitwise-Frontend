@@ -59,7 +59,7 @@ export async function processPendingWebhooks(
     );
 
     const results = await Promise.allSettled(
-      pendingEvents.map((event) => processEvent(event.id, event.source))
+      pendingEvents.map((event: any) => processEvent(event.id, event.source))
     );
 
     const failed = results.filter((r) => r.status === 'rejected').length;

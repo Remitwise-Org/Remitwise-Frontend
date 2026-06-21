@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { clearSessionCookie } from '@/lib/session';
 
-export async function POST(request: NextRequest) {
-  const cookieStore = await cookies();
-  cookieStore.delete('session');
-  return NextResponse.json({ success: true });
+export async function POST(_request: NextRequest) {
+  // Clear the session cookie via the centralized helper so the cookie name,
+  // path, and flags stay consistent with how the session is created.
+  const response = NextResponse.json({
+    ok: true,
+    message: 'Logged out successfully',
+  });
+  response.headers.set('Set-Cookie', clearSessionCookie());
+  return response;
 }

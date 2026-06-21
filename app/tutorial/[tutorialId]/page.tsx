@@ -1,10 +1,11 @@
 import Link from "next/link";
 
 type Props = {
-  params: { tutorialId: string };
+  params: Promise<{ tutorialId: string }>;
 };
 
-export default function TutorialOverviewPage({ params }: Props) {
+export default async function TutorialOverviewPage({ params }: Props) {
+  const { tutorialId } = await params;
   const chapters = Array.from({ length: 5 }).map((_, i) => ({
     id: String(i),
     title: `Chapter ${i + 1}`,
@@ -30,7 +31,7 @@ export default function TutorialOverviewPage({ params }: Props) {
             <Link href="/tutorial" className="text-sm font-medium text-brand-red hover:text-brand-redHover">
               Back to tutorials
             </Link>
-            <h1 className="mt-3 text-3xl font-bold text-foreground">{params.tutorialId}</h1>
+            <h1 className="mt-3 text-3xl font-bold text-foreground">{tutorialId}</h1>
             <p className="mt-2 text-sm text-muted max-w-2xl">
               Continue your learning path and resume the next available chapter when you’re ready.
             </p>
@@ -40,7 +41,7 @@ export default function TutorialOverviewPage({ params }: Props) {
             <p className="text-sm text-muted">Overall progress</p>
             <p className="mt-2 text-3xl font-bold text-foreground">{overallProgress}%</p>
             <Link
-              href={`/tutorial/${params.tutorialId}/chapter/${resumeChapter}`}
+              href={`/tutorial/${tutorialId}/chapter/${resumeChapter}`}
               className="mt-4 inline-flex items-center justify-center rounded-lg bg-brand-red px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-brand-redHover"
             >
               Resume chapter {resumeChapter + 1}
@@ -64,7 +65,7 @@ export default function TutorialOverviewPage({ params }: Props) {
               return (
                 <Link
                   key={chapter.id}
-                  href={`/tutorial/${params.tutorialId}/chapter/${index}`}
+                  href={`/tutorial/${tutorialId}/chapter/${index}`}
                   className={`block rounded-2xl border px-4 py-4 transition duration-200 ${
                     isComplete
                       ? "border-brand-red/20 bg-surface"

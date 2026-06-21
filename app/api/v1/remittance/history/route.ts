@@ -5,10 +5,10 @@ import { fetchTransactionHistory } from '../../../../../lib/remittance/horizon';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/remittance/history (protected)
+ * GET /api/v1/remittance/history (protected)
  * Returns list of transactions for session user.
- * 
- * Query params: 
+ *
+ * Query params:
  * - limit: number (default 10, max 200)
  * - cursor: string (pagination)
  * - status: 'completed' | 'failed' | 'pending'
@@ -35,7 +35,10 @@ export async function GET(req: NextRequest) {
       status: status || undefined,
     });
 
-    return NextResponse.json(history);
+    return NextResponse.json({
+      ...history,
+      userAddress: session.address,
+    });
   } catch (error: any) {
     console.error('Error fetching remittance history:', error);
     return NextResponse.json(

@@ -88,6 +88,8 @@ Response data is automatically sanitized before logging.
 
 ## Sanitization Rules
 
+Sensitive field names are matched case-insensitively, so uppercase and mixed-case variants are redacted too.
+
 ### Fully Redacted Fields
 
 The following fields are completely redacted with `[REDACTED]`:
@@ -105,6 +107,10 @@ The following fields are partially masked to preserve format while hiding sensit
 - **address** (Stellar/wallet): `GBXXXXX...` → `GBXXXX***`
 - **phone**: `+1234567890` → `+12***7890`
 - **publicKey**: `GBXXXXX...` → `GBXXXX***`
+
+### Inline Secret Patterns
+
+Free-form log messages are also scrubbed for pi_key=..., 	oken=..., password=..., and Bearer ... patterns. The sanitizer keeps surrounding text so logs stay useful without exposing raw secrets.
 
 ### Safe Fields
 
@@ -260,6 +266,9 @@ npm run test:unit
 ```
 
 Tests are located in `tests/unit/sanitize.test.ts` and cover:
+
+Tests also cover every fully redacted field, uppercase and mixed-case key variants, deeply nested arrays and objects, circular inputs, inline secret strings, and logger output sanitization.
+
 - Redaction of sensitive fields
 - Partial masking of emails and addresses
 - Nested object sanitization

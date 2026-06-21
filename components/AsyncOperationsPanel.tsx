@@ -12,6 +12,7 @@ import {
 	type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useAsyncOperations, OperationStatus } from "@/lib/context/AsyncOperationsContext";
 
 type AsyncStage = {
 	label: string;
@@ -35,7 +36,7 @@ interface AsyncOperationsPanelProps {
 	stages: AsyncStage[];
 	queueTitle: string;
 	queueDescription: string;
-	queueItems: QueueItem[];
+	queueItems?: QueueItem[]; // Optional now
 	footer?: string;
 }
 
@@ -71,6 +72,21 @@ const queueStatusStyles = {
 	},
 } as const;
 
+const mapStatus = (status: OperationStatus): QueueItem['status'] => {
+	switch (status) {
+		case 'building':
+		case 'awaiting-signature':
+		case 'submitting':
+			return 'active';
+		case 'confirmed':
+			return 'complete';
+		case 'failed':
+			return 'failed';
+		default:
+			return 'queued';
+	}
+};
+
 export default function AsyncOperationsPanel({
 	eyebrow,
 	title,
@@ -78,11 +94,24 @@ export default function AsyncOperationsPanel({
 	stages,
 	queueTitle,
 	queueDescription,
-	queueItems,
+	queueItems: propQueueItems = [],
 	footer,
 }: AsyncOperationsPanelProps) {
+	const { state } = useAsyncOperations();
 	const [expanded, setExpanded] = useState(false);
 	const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+	const queueItems = useMemo(() => {
+		if (state.operations.length > 0) {
+			return state.operations.map(op => ({
+				title: op.title,
+				duration: 'Just now', 
+				detail: op.detail,
+				status: mapStatus(op.status),
+			}));
+		}
+		return propQueueItems;
+	}, [state.operations, propQueueItems]);
 
 	const activeIndex = useMemo(() => queueItems.findIndex((i) => i.status === "active"), [queueItems]);
 
