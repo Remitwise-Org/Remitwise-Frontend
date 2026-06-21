@@ -4,7 +4,8 @@ import { requireAuth } from '@/lib/session';
 import { StrKey } from '@stellar/stellar-sdk';
 
 // PATCH /api/remittance/recurring/[id]
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   let auth;
   try {
     auth = await requireAuth();
@@ -27,13 +28,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: 'Invalid frequency' }, { status: 400 });
   }
   // Only allow update if schedule belongs to user
-  const updated = updateRecurringRemittance(params.id, updates);
+  const updated = updateRecurringRemittance(id, updates);
   if (!updated || updated.userAddress !== auth.address) return NextResponse.json({ error: 'Not found or forbidden' }, { status: 404 });
   return NextResponse.json(updated);
 }
 
 // DELETE /api/remittance/recurring/[id]
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   let auth;
   try {
     auth = await requireAuth();
@@ -42,9 +44,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     throw res;
   }
   // Only allow delete if schedule belongs to user
-  const updated = updateRecurringRemittance(params.id, {});
+  const updated = updateRecurringRemittance(id, {});
   if (!updated || updated.userAddress !== auth.address) return NextResponse.json({ error: 'Not found or forbidden' }, { status: 404 });
-  const deleted = deleteRecurringRemittance(params.id);
+  const deleted = deleteRecurringRemittance(id);
   if (!deleted) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ success: true });
 }

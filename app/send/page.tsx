@@ -2,14 +2,44 @@
 
 import { useState } from "react";
 import { useToast } from "@/lib/context/ToastContext";
+import { useClientTranslator } from "@/lib/i18n/client";
+import { apiClient } from "@/lib/client/apiClient";
+import { computeAllocation, getSplitConfig } from "@/lib/remittance/split";
+import type { SendTransactionResult } from "@/lib/types/api";
 import EmergencyTransferModal from "./components/EmergencyTransferModal";
 import SendHeader from "./components/SendHeader";
 import RecipientAddressInput from "./components/RecipientAddressInput";
 import AmountCurrencySection from "./components/AmountCurrencySection";
 import ReviewStep from "./components/ReviewStep";
 import TransactionSuccessReceipt from "@/components/TransactionSuccessReceipt";
+import { useClientLocale } from "@/lib/i18n/client";
+import { formatCurrency } from "@/lib/utils/format-currency";
 
 type Step = "recipient" | "amount" | "review";
+
+/** Stellar base reserve fee in the asset being sent (0.00001 XLM equivalent). */
+const STELLAR_BASE_FEE = 0.00001;
+
+/**
+ * Typed shape matching TransactionSuccessReceiptProps (minus onClose).
+ * Built from the /api/send response combined with client-side derived fields.
+ */
+interface ReceiptData {
+  hash: string;
+  amount: number;
+  currency: string;
+  /** Displayed name — falls back to truncated address until a contacts DB exists. */
+  recipientName: string;
+  recipientAddress: string;
+  date: string;
+  fee: number;
+  splits: {
+    spending: number;
+    savings: number;
+    bills: number;
+    insurance: number;
+  };
+}
 
 export default function SendMoney() {
   const [step, setStep] = useState<Step>("recipient");
@@ -17,10 +47,13 @@ export default function SendMoney() {
   const [amount, setAmount] = useState<number>(0);
   const [currency, setCurrency] = useState<string>("USDC");
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
-  
+
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [transactionData, setTransactionData] = useState<any>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [transactionData, setTransactionData] = useState<ReceiptData | null>(null);
+
   const { toast } = useToast();
+  const { t } = useClientTranslator();
 
   const handleRecipientContinue = () => {
     if (recipient) {
@@ -34,32 +67,109 @@ export default function SendMoney() {
     setStep("review");
   };
 
-  const handleConfirm = () => {
-    // Simulate transaction processing
-    const mockData = {
-      hash: "GCF27P3Q" + Math.random().toString(36).substring(2, 15).toUpperCase(), // Simulated hash
-      amount: amount,
-      currency: currency,
-      recipientName: "Maria Santos",
-      recipientAddress: recipient || "GCF2...7P3Q",
-      date: new Date().toLocaleString(),
-      fee: 0.0001,
-      splits: {
-        dailySpending: amount * 0.5,
-        savings: amount * 0.3,
-        bills: amount * 0.15,
-        insurance: amount * 0.05,
+  /**
+   * Submits the remittance to POST /api/send.
+   *
+   * Request  — {@link SendTransactionRequest}: `{ recipient, amount, currency }`
+   * Response — {@link SendTransactionResult}: `{ success, transactionId }` on 200,
+   *            or `{ success: false, error }` on 4xx/5xx.
+   *
+   * On success:
+   *  - Derives split breakdown via `computeAllocation()` (no inline math).
+   *  - Populates `transactionData` with the real `transactionId` as the receipt hash.
+   *  - Fires a success toast, then shows `TransactionSuccessReceipt`.
+   *
+   * On failure:
+   *  - Session expiry  → `apiClient` redirects automatically; we do nothing.
+   *  - Network error   → error toast with `send.error_network` key.
+   *  - API 4xx/5xx     → error toast with `send.error_title` + server message.
+   *
+   * The confirm button stays disabled (`isConfirming`) until the promise settles.
+   */
+  const handleConfirm = async () => {
+    // --- Input guards ---
+    if (!recipient || recipient.trim() === "") {
+      toast({
+        variant: "error",
+        title: t("send.error_title"),
+        description: t("send.error_missing_recipient"),
+      });
+      return;
+    }
+
+    if (!amount || amount <= 0) {
+      toast({
+        variant: "error",
+        title: t("send.error_title"),
+        description: t("send.error_empty_amount"),
+      });
+      return;
+    }
+
+    setIsConfirming(true);
+
+    try {
+      // --- Call /api/send ---
+      const response = await apiClient.post("/api/send", {
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipient, amount, currency }),
+      });
+
+      // null → session expired; apiClient already triggered redirect
+      if (response === null) return;
+
+      const data: SendTransactionResult = await response.json();
+
+      if (!response.ok || !data.success) {
+        const errorMsg = !data.success ? data.error : t("send.error_api");
+        toast({
+          variant: "error",
+          title: t("send.error_title"),
+          description: errorMsg,
+        });
+        return;
       }
-    };
-    
-    setTransactionData(mockData);
-    setIsSubmitted(true);
-    toast({
-      variant: "success",
-      title: "Transfer submitted",
-      description: `Successfully sent ${amount} ${currency} to ${mockData.recipientAddress}.`,
-    });
-    console.log(`Send ${amount} ${currency} to ${recipient}`);
+
+      // --- Build receipt from real response + derived fields ---
+      const splits = computeAllocation(amount, getSplitConfig(recipient));
+
+      const truncate = (addr: string) =>
+        addr.length > 12
+          ? `${addr.substring(0, 6)}…${addr.substring(addr.length - 6)}`
+          : addr;
+
+      const receipt: ReceiptData = {
+        hash: data.transactionId,
+        amount,
+        currency,
+        recipientName: truncate(recipient),
+        recipientAddress: recipient,
+        date: new Date().toLocaleString(),
+        fee: STELLAR_BASE_FEE,
+        splits,
+      };
+
+      setTransactionData(receipt);
+      setIsSubmitted(true);
+
+      toast({
+        variant: "success",
+        title: t("send.success_title"),
+        description: t("send.success_description")
+          .replace("{{amount}}", String(amount))
+          .replace("{{currency}}", currency)
+          .replace("{{address}}", truncate(recipient)),
+      });
+    } catch {
+      // Network-level failure (fetch rejected)
+      toast({
+        variant: "error",
+        title: t("send.error_title"),
+        description: t("send.error_network"),
+      });
+    } finally {
+      setIsConfirming(false);
+    }
   };
 
   return (
@@ -73,7 +183,7 @@ export default function SendMoney() {
           <div className="flex items-center justify-between relative">
             {/* Background Line */}
             <div className="absolute top-1/2 left-0 w-full h-0.5 bg-zinc-800 -translate-y-1/2 z-0" />
-            
+
             {/* Step 1 */}
             <div className="relative z-10 flex flex-col items-center gap-2">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
@@ -116,7 +226,7 @@ export default function SendMoney() {
         <div className="animate-in fade-in duration-500">
           {step === "recipient" && (
             <div className="max-w-2xl mx-auto">
-              <RecipientAddressInput 
+              <RecipientAddressInput
                 initialAddress={recipient}
                 onAddressChange={setRecipient}
                 onContinue={handleRecipientContinue}
@@ -126,7 +236,7 @@ export default function SendMoney() {
 
           {step === "amount" && (
             <div className="max-w-2xl mx-auto">
-              <AmountCurrencySection 
+              <AmountCurrencySection
                 onReview={handleAmountReview}
                 onBack={() => setStep("recipient")}
               />
@@ -134,20 +244,21 @@ export default function SendMoney() {
           )}
 
           {step === "review" && (
-            <ReviewStep 
+            <ReviewStep
               recipient={recipient}
               amount={amount}
               currency={currency}
               onConfirm={handleConfirm}
               onBack={() => setStep("amount")}
               onEmergencyAction={() => setShowEmergencyModal(true)}
+              isPending={isConfirming}
             />
           )}
         </div>
       </main>
 
       {/* Modals */}
-      <EmergencyTransferModal 
+      <EmergencyTransferModal
         isOpen={showEmergencyModal}
         onClose={() => setShowEmergencyModal(false)}
       />

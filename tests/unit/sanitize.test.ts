@@ -3,8 +3,9 @@
  * Ensures sensitive data is properly redacted or masked in logs
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { sanitizeObject, sanitizeString } from '@/lib/sanitize';
+import { logResponse } from '@/lib/logger';
 
 describe('sanitizeObject', () => {
   it('redacts password field', () => {
@@ -271,5 +272,157 @@ describe('sanitizeString', () => {
     expect(result).toContain('api_key=[REDACTED]');
     expect(result).toContain('password=[REDACTED]');
     expect(result).toContain('token=[REDACTED]');
+  });
+});
+describe('adversarial redaction coverage', () => {
+  const fullyRedactedFields = [
+    'password',
+    'secret',
+    'token',
+    'apiKey',
+    'api_key',
+    'privateKey',
+    'private_key',
+    'sessionId',
+    'session_id',
+    'refreshToken',
+    'refresh_token',
+    'accessToken',
+    'access_token',
+    'authorization',
+    'creditCard',
+    'credit_card',
+    'ssn',
+    'pin',
+  ];
+
+  const casingVariants = (field: string) => [
+    field,
+    field.toUpperCase(),
+    field
+      .split('')
+      .map((char, index) => (index % 2 === 0 ? char.toLowerCase() : char.toUpperCase()))
+      .join(''),
+  ];
+
+  it('redacts all fully redacted sensitive field names in every supported casing', () => {
+    for (const field of fullyRedactedFields) {
+      for (const variant of casingVariants(field)) {
+        const sanitized = sanitizeObject({ [variant]: `${field}-secret-value` }) as Record<string, unknown>;
+
+        expect(sanitized[variant]).toBe('[REDACTED]');
+      }
+    }
+  });
+
+  it('sanitizes deeply nested objects and arrays without changing safe fields', () => {
+    const sanitized = sanitizeObject({
+      status: 'ready',
+      transfers: [
+        {
+          amount: 250,
+          token: 'transfer-token',
+          profile: {
+            email: 'user@example.com',
+            privateKey: 'stellar-private-key',
+          },
+        },
+        {
+          notes: [
+            {
+              session_id: 'session-secret',
+              currency: 'USD',
+            },
+          ],
+        },
+      ],
+    }) as {
+      status: string;
+      transfers: Array<{
+        amount?: number;
+        token?: string;
+        profile?: { email: string; privateKey: string };
+        notes?: Array<{ session_id: string; currency: string }>;
+      }>;
+    };
+
+    expect(sanitized.status).toBe('ready');
+    expect(sanitized.transfers[0].amount).toBe(250);
+    expect(sanitized.transfers[0].token).toBe('[REDACTED]');
+    expect(sanitized.transfers[0].profile?.email).toBe('us***@***');
+    expect(sanitized.transfers[0].profile?.privateKey).toBe('[REDACTED]');
+    expect(sanitized.transfers[1].notes?.[0].session_id).toBe('[REDACTED]');
+    expect(sanitized.transfers[1].notes?.[0].currency).toBe('USD');
+  });
+
+  it('does not throw on circular or odd inputs and does not leak circular secrets', () => {
+    const circular: Record<string, unknown> = {
+      name: 'visible-name',
+      token: 'circular-token',
+    };
+    circular.self = circular;
+
+    expect(() => sanitizeObject(circular)).not.toThrow();
+
+    const sanitized = sanitizeObject(circular) as Record<string, unknown>;
+
+    expect(sanitized.name).toBe('visible-name');
+    expect(sanitized.token).toBe('[REDACTED]');
+    expect(JSON.stringify(sanitized)).not.toContain('circular-token');
+    expect(sanitizeObject(null)).toBeNull();
+    expect(sanitizeObject(undefined)).toBeUndefined();
+    expect(sanitizeObject('safe-string')).toBe('safe-string');
+    expect(sanitizeObject(42)).toBe(42);
+  });
+
+  it('masks inline secrets while preserving surrounding log text', () => {
+    const sanitized = sanitizeString(
+      'before token=inline-token middle password=inline-password after Bearer inline-bearer-token done',
+    );
+
+    expect(sanitized).toContain('before');
+    expect(sanitized).toContain('middle');
+    expect(sanitized).toContain('after');
+    expect(sanitized).toContain('done');
+    expect(sanitized).not.toContain('inline-token');
+    expect(sanitized).not.toContain('inline-password');
+    expect(sanitized).not.toContain('inline-bearer-token');
+  });
+});
+
+describe('logger sanitization integration', () => {
+  const originalLogLevel = process.env.LOG_LEVEL;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+
+    if (originalLogLevel === undefined) {
+      delete process.env.LOG_LEVEL;
+    } else {
+      process.env.LOG_LEVEL = originalLogLevel;
+    }
+  });
+
+  it('routes response log data through sanitizeObject before writing logs', () => {
+    process.env.LOG_LEVEL = 'info';
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    logResponse('request-123', 'POST', '/api/auth/login', 200, 34, {
+      token: 'response-token',
+      nested: {
+        authorization: 'Bearer response-bearer-token',
+      },
+      safeStatus: 'completed',
+    });
+
+    expect(logSpy).toHaveBeenCalledTimes(1);
+
+    const entry = JSON.parse(String(logSpy.mock.calls[0][0]));
+
+    expect(entry.data.token).toBe('[REDACTED]');
+    expect(entry.data.nested.authorization).toBe('[REDACTED]');
+    expect(entry.data.safeStatus).toBe('completed');
+    expect(JSON.stringify(entry)).not.toContain('response-token');
+    expect(JSON.stringify(entry)).not.toContain('response-bearer-token');
   });
 });

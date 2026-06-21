@@ -14,6 +14,39 @@ This feature provides backend services for building unsigned Soroban transaction
 - ✅ Optional custodial mode support
 - ✅ Comprehensive error handling
 
+## Send Flow Integration
+
+The `POST /api/send` flow in `app/send/page.tsx` uses `computeAllocation()` from
+`lib/remittance/split.ts` to compute the split breakdown **client-side** after a
+successful API response:
+
+```typescript
+// app/send/page.tsx – handleConfirm (simplified)
+const data = await response.json();          // { success, transactionId }
+const splits = computeAllocation(amount, getSplitConfig(recipient));
+// → { spending, savings, bills, insurance }  (sums exactly to amount)
+
+// Feed into TransactionSuccessReceipt:
+<TransactionSuccessReceipt
+  hash={data.transactionId}
+  splits={splits}           // ← real allocation, not inline amount * 0.5 math
+  ...
+/>
+```
+
+**Why client-side?** The `/api/send` endpoint returns `{ success, transactionId }` —
+a "build transaction" stub. Keeping split math in `computeAllocation()` means:
+
+- The allocation is consistent between the Send page and the Split settings page.
+- `computeAllocation()` guarantees integer rounding with no float drift (spending
+  bucket absorbs the remainder).
+- When the backend eventually returns fee/exchange-rate adjustments, only
+  `getSplitConfig()` needs updating.
+
+See `lib/remittance/split.ts` for the full API.
+
+
+
 ## Architecture
 
 ```

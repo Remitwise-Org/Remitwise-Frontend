@@ -2,22 +2,25 @@
  * Tests for example protected routes demonstrating auth middleware patterns
  */
 
+import { vi, type Mock } from 'vitest';
+import { cookies as cookiesImport } from 'next/headers';
 import { GET as getExampleRefresh } from '../../app/api/protected/example-refresh/route';
 import { GET as getExampleRequireAuth } from '../../app/api/protected/example-require-auth/route';
 import { createSession, getSessionCookieHeader } from '../../lib/session';
 
 // Mock Next.js cookies
-jest.mock('next/headers', () => ({
-  cookies: jest.fn(),
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(),
 }));
 
-const { cookies } = require('next/headers');
+// Loosely typed so tests can supply a partial cookie-store mock.
+const cookies = vi.mocked(cookiesImport) as unknown as Mock;
 
 describe('Protected Routes - Example Implementations', () => {
   const testAddress = 'GDEMOXABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890XXXX';
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.SESSION_PASSWORD = 'test-password-at-least-32-characters-long';
     process.env.SESSION_MAX_AGE = '604800'; // 7 days
     delete process.env.SESSION_REFRESH_ENABLED;
@@ -28,8 +31,8 @@ describe('Protected Routes - Example Implementations', () => {
       const sealed = await createSession(testAddress);
       
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue({ value: sealed }),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
       });
 
       const response = await getExampleRefresh();
@@ -59,8 +62,8 @@ describe('Protected Routes - Example Implementations', () => {
       });
       
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue({ value: sealed }),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
       });
 
       const response = await getExampleRefresh();
@@ -77,8 +80,8 @@ describe('Protected Routes - Example Implementations', () => {
 
     it('should return 401 for missing session', async () => {
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue(undefined),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue(undefined),
+        set: vi.fn(),
       });
 
       const response = await getExampleRefresh();
@@ -95,8 +98,8 @@ describe('Protected Routes - Example Implementations', () => {
       const sealed = await createSession(testAddress);
       
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue({ value: sealed }),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
       });
 
       const response = await getExampleRequireAuth();
@@ -125,8 +128,8 @@ describe('Protected Routes - Example Implementations', () => {
       });
       
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue({ value: sealed }),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
       });
 
       const response = await getExampleRequireAuth();
@@ -139,8 +142,8 @@ describe('Protected Routes - Example Implementations', () => {
 
     it('should return 401 for missing session', async () => {
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue(undefined),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue(undefined),
+        set: vi.fn(),
       });
 
       const response = await getExampleRequireAuth();

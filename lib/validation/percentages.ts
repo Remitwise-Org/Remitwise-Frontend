@@ -1,5 +1,7 @@
 // Validation utilities for split percentages
 
+import { StrKey } from '@stellar/stellar-sdk';
+
 export interface SplitPercentages {
   spending: number;
   savings: number;
@@ -47,8 +49,10 @@ export function validatePercentages(percentages: SplitPercentages): void {
   }
 }
 
+const STELLAR_ADDRESS_REGEX = /^G[A-Z2-7]{55}$/;
+
 /**
- * Validates Stellar address format
+ * Validates Stellar address format and checksum.
  * @throws {ValidationError} if address is invalid
  */
 export function validateStellarAddress(address: string): void {
@@ -56,8 +60,13 @@ export function validateStellarAddress(address: string): void {
     throw new ValidationError('Address must be a non-empty string');
   }
 
-  // Basic Stellar address validation (starts with G and is 56 characters)
-  if (!address.match(/^G[A-Z0-9]{55}$/)) {
+  const normalizedAddress = address.trim().toUpperCase();
+
+  if (!STELLAR_ADDRESS_REGEX.test(normalizedAddress)) {
     throw new ValidationError('Invalid Stellar address format');
+  }
+
+  if (!StrKey.isValidEd25519PublicKey(normalizedAddress)) {
+    throw new ValidationError('Invalid Stellar address checksum');
   }
 }

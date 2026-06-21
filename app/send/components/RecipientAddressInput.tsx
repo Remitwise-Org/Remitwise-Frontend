@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { CheckCircle2, Copy, ClipboardPaste, QrCode, AlertCircle } from "lucide-react";
-import { StrKey } from "@stellar/stellar-sdk";
+import useStellarAddressValidation, {
+  normalizeStellarAddress,
+} from "@/lib/hooks/useStellarAddressValidation";
 
 interface RecipientAddressInputProps {
   onAddressChange?: (address: string) => void;
@@ -24,7 +26,7 @@ export default function RecipientAddressInput({
   const inputId = useId();
   const hintId = `${inputId}-hint`;
   const statusId = `${inputId}-status`;
-  const [address, setAddress] = useState(initialAddress);
+  const [address, setAddress] = useState(() => normalizeStellarAddress(initialAddress));
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const [pasteState, setPasteState] = useState<"idle" | "pasted" | "error">("idle");
 
@@ -46,61 +48,16 @@ export default function RecipientAddressInput({
     return () => window.clearTimeout(timer);
   }, [pasteState]);
 
-  const normalizeAddress = (value: string) => value.toUpperCase().replace(/\s+/g, "").trim();
-
-  const validation = useMemo(() => {
-    if (!address) {
-      return {
-        tone: "idle" as const,
-        message: "Paste a Stellar wallet address to verify its checksum before sending.",
-      };
-    }
-
-    const normalizedAddress = normalizeAddress(address);
-
-    if (!normalizedAddress.startsWith("G")) {
-      return {
-        tone: "error" as const,
-        message: "Recipient address must start with G.",
-      };
-    }
-
-    if (normalizedAddress.length !== 56) {
-      return {
-        tone: "error" as const,
-        message: `Recipient address must be 56 characters. ${normalizedAddress.length}/56 entered.`,
-      };
-    }
-
-    if (!/^[A-Z2-7]+$/.test(normalizedAddress)) {
-      return {
-        tone: "error" as const,
-        message: "Recipient address contains unsupported characters.",
-      };
-    }
-
-    if (!StrKey.isValidEd25519PublicKey(normalizedAddress)) {
-      return {
-        tone: "error" as const,
-        message: "Checksum failed. Double-check the address before sending.",
-      };
-    }
-
-    return {
-      tone: "success" as const,
-      message: "Checksum verified. This is a valid Stellar public key.",
-    };
-  }, [address]);
-
+  const validation = useStellarAddressValidation(address);
   const isInvalid = validation.tone === "error";
-  const isValid = validation.tone === "success";
+  const isValid = validation.isValid;
 
   const handleRecentClick = (recentAddress: string) => {
-    setAddress(normalizeAddress(recentAddress));
+    setAddress(normalizeStellarAddress(recentAddress));
   };
 
   const handleInputChange = (value: string) => {
-    setAddress(normalizeAddress(value));
+    setAddress(normalizeStellarAddress(value));
   };
 
   const handlePasteFromClipboard = async () => {
@@ -111,7 +68,7 @@ export default function RecipientAddressInput({
         return;
       }
 
-      setAddress(normalizeAddress(clipboardText));
+      setAddress(normalizeStellarAddress(clipboardText));
       setPasteState("pasted");
     } catch (error) {
       console.error("Failed to paste address from clipboard:", error);
@@ -131,7 +88,7 @@ export default function RecipientAddressInput({
     }
   };
 
-  const isContinueEnabled = address !== "" && isValid;
+  const isContinueEnabled = validation.isValid;
 
   return (
     <div className="mx-auto relative overflow-hidden bg-[#0c0c0c] border border-white/5 rounded-[2rem] p-8 sm:p-10 mb-8 shadow-2xl">
