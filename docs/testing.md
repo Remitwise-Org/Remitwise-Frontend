@@ -225,24 +225,14 @@ not just the headline percentage.
 
 ## The CI gate
 
-Before opening a PR, run the same checks CI runs (see
-[.github/workflows/ci.yml](../.github/workflows/ci.yml) and
-[.github/workflows/e2e.yml](../.github/workflows/e2e.yml)):
+The GitHub Actions workflows are enforcing gates: `npm ci`, lint, unit tests,
+integration tests, `npx tsc --noEmit`, `npm run build`, and Playwright e2e should fail
+the job when they fail. Do not add blanket `continue-on-error` to install, lint, test,
+typecheck, build, or e2e steps. If a genuinely optional diagnostic step is added later,
+limit `continue-on-error` to that single step and explain why in a YAML comment.
 
-```bash
-npm run lint            # ESLint must pass
-npx tsc --noEmit        # type-check (npm run build runs this as part of next build)
-npm run test            # unit suites
-npm run test:integration# integration suites (needs DATABASE_URL)
-npm run test:e2e        # Playwright (CI installs chromium first)
-```
-
-For local development the fast loop is `npm run lint && npx tsc --noEmit && npm run test`;
-run `npm run test:coverage`, `test:integration`, and `test:e2e` before pushing anything
-that touches API routes, validation, or user flows.
-
----
-
+Playwright report upload is the exception: it keeps `if: always()` so failed e2e runs
+still publish artifacts for debugging, but it does not hide the failed test step.
 ## How to add a test
 
 A minimal recipe per runner. Copy the matching existing example, then adapt.
