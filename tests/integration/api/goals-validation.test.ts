@@ -24,9 +24,9 @@ describe('API Error Handling - Integration Tests', () => {
     
     const body = await response.json();
     expect(body).toHaveProperty('error');
-    expect(body).toHaveProperty('details');
-    expect(body.error).toBe('Invalid input');
-    expect(body.details).toBe('Amount must be positive');
+    expect(body.success).toBe(false);
+    expect(body.error.code).toBe('VALIDATION_ERROR');
+    expect(body.error.message).toBe('Invalid input: "Amount must be positive"');
   });
 
   it('createValidationError works without details', async () => {
@@ -36,7 +36,9 @@ describe('API Error Handling - Integration Tests', () => {
     
     const body = await response.json();
     expect(body).toHaveProperty('error');
-    expect(body.error).toBe('Missing field');
+    expect(body.success).toBe(false);
+    expect(body.error.code).toBe('VALIDATION_ERROR');
+    expect(body.error.message).toBe('Missing field');
   });
 
   /**
@@ -50,9 +52,9 @@ describe('API Error Handling - Integration Tests', () => {
     
     const body = await response.json();
     expect(body).toHaveProperty('error');
-    expect(body).toHaveProperty('details');
-    expect(body.error).toBe('Authentication required');
-    expect(body.details).toBe('Please provide a valid session');
+    expect(body.success).toBe(false);
+    expect(body.error.code).toBe('AUTHENTICATION_ERROR');
+    expect(body.error.message).toBe('Authentication required');
   });
 
   it('createAuthenticationError uses default message', async () => {
@@ -61,7 +63,8 @@ describe('API Error Handling - Integration Tests', () => {
     expect(response.status).toBe(401);
     
     const body = await response.json();
-    expect(body.error).toBe('Authentication required');
+    expect(body.error.code).toBe('AUTHENTICATION_ERROR');
+    expect(body.error.message).toBe('Authentication Required');
   });
 
   /**
@@ -76,8 +79,9 @@ describe('API Error Handling - Integration Tests', () => {
     
     const body = await response.json();
     expect(body).toHaveProperty('error');
-    expect(body.error).toBe('An unexpected error occurred');
-    expect(body.details).toBe('Something went wrong');
+    expect(body.success).toBe(false);
+    expect(body.error.code).toBe('UNEXPECTED_ERROR');
+    expect(body.error.message).toBe('Something went wrong');
   });
 
   it('handleUnexpectedError handles non-Error objects', async () => {
@@ -87,7 +91,9 @@ describe('API Error Handling - Integration Tests', () => {
     
     const body = await response.json();
     expect(body).toHaveProperty('error');
-    expect(body.error).toBe('An unexpected error occurred');
+    expect(body.success).toBe(false);
+    expect(body.error.code).toBe('UNEXPECTED_ERROR');
+    expect(body.error.message).toBe('string error');
   });
 
   it('all error responses have consistent structure', async () => {
@@ -100,8 +106,10 @@ describe('API Error Handling - Integration Tests', () => {
     for (const response of errors) {
       const body = await response.json();
       expect(body).toHaveProperty('error');
-      expect(typeof body.error).toBe('string');
-      expect(body.error.length).toBeGreaterThan(0);
+      expect(body.success).toBe(false);
+      expect(typeof body.error).toBe('object');
+      expect(body.error).toHaveProperty('code');
+      expect(body.error).toHaveProperty('message');
     }
   });
 });
