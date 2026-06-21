@@ -4,10 +4,10 @@ import { replayDLQEvent } from '@/lib/webhooks/processor';
 
 /**
  * POST /api/v1/admin/webhooks/dlq/[id]/replay
- * 
+ *
  * Replay a dead-letter queue webhook event (admin only).
  * Resets the event status to 'pending' to be processed again.
- * 
+ *
  * URL Parameters:
  *   - id: the webhook event ID
  */
