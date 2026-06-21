@@ -123,10 +123,11 @@ npm run test:e2e   # Playwright — requires the dev server to be running
 2. **One concern per PR** — keep scope tight; large PRs stall in review.
 3. **Lint must pass** — run `npm run lint` locally before pushing. CI will reject lint failures.
 4. **Build must pass** — run `npm run build` to catch TypeScript errors early.
-5. **Tests** — add or update tests that cover your change. Prefer the existing runner for the file type (`.cjs` → node:test, `.ts` → Vitest).
-6. **PR description** — summarise what changed and why. Link the issue (`Closes #NNN`).
-7. **No commented-out code** — remove dead code rather than commenting it out.
-8. **i18n** — any user-visible string must use the i18n system (see [Adding an i18n Key](#adding-an-i18n-key)).
+5. **Tests** — add or update tests that cover your change. Prefer the existing runner for the file type (`.cjs` -> node:test, `.ts` -> Vitest).
+6. **CI gate** — CI is enforcing: install, lint, unit, integration, typecheck, build, and Playwright failures must fail GitHub Actions. Keep Playwright report upload on `if: always()` for debugging artifacts, but do not mask failed commands with `continue-on-error` or `|| true` unless the step is explicitly optional and documented.
+7. **PR description** — summarise what changed and why. Link the issue (`Closes #NNN`).
+8. **No commented-out code** — remove dead code rather than commenting it out.
+9. **i18n** — any user-visible string must use the i18n system (see [Adding an i18n Key](#adding-an-i18n-key)).
 
 Example commit message style used in this repo:
 
