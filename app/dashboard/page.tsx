@@ -1,136 +1,30 @@
-"use client"
+'use client';
 
-import { Send, PiggyBank, FileText, Shield } from "lucide-react";
-import CurrentMoneySplitWidget from '@/components/CurrentMoneySplitWidget'
-import GoalProgress from "@/components/Dashboard/GoalProgress";
-import SplitBar from "@/components/Dashboard/SplitBar";
-import StatCard from "@/components/Dashboard/StatCard";
+import { useClientTranslator } from '@/lib/i18n/client';
 
-import SavingsByGoalWidget from "@/components/Dashboard/SavingsByGoalWidget";
-import TransactionHistoryItem, { Transaction } from "@/components/Dashboard/TransactionHistoryItem";
-import MoneyDistributionWidget from "@/components/Dashboard/MoneyDistributionWidget";
-import RecentTransactionsWidget from "@/components/Dashboard/RecentTransactionsWidget";
-import QuickActions from "@/components/Dashboard/QuickActions";
-import WidgetErrorBoundary from '@/components/ui/WidgetErrorBoundary'
+export default function DashboardPage() {
+  const { t } = useClientTranslator();
 
-export default function Dashboard() {
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <WidgetErrorBoundary widgetName="StatCard-TotalSent">
-            <StatCard
-              title="Total Sent"
-              value="$1,200"
-              percentage="+25%"
-              icon={<Send className="w-5 h-5" />}
-              trend="up"
-            />
-          </WidgetErrorBoundary>
-          <WidgetErrorBoundary widgetName="StatCard-Savings">
-            <StatCard
-              title="Savings"
-              value="$360"
-              percentage="+33%"
-              icon={<PiggyBank className="w-5 h-5" />}
-              trend="up"
-            />
-          </WidgetErrorBoundary>
-          <WidgetErrorBoundary widgetName="StatCard-BillsPaid">
-            <StatCard
-              title="Bills Paid"
-              value="$180"
-              percentage="3 bills"
-              icon={<FileText className="w-5 h-5" />}
-              trend="none"
-            />
-          </WidgetErrorBoundary>
-          <WidgetErrorBoundary widgetName="StatCard-Insurance">
-            <StatCard
-              title="Insurance"
-              value="$60"
-              percentage="2 policies"
-              icon={<Shield className="w-5 h-5" />}
-              trend="none"
-            />
-          </WidgetErrorBoundary>
+    <div className="p-6 space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100 min-w-[140px]">
+          <p className="text-sm text-slate-500 font-medium truncate">{t('dashboard.totalSent')}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">$1,240.00</p>
         </div>
-
-        {/* Quick Actions Panel */}
-        <div className="mb-8">
-          <WidgetErrorBoundary widgetName="QuickActions">
-            <QuickActions />
-          </WidgetErrorBoundary>
+        <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100 min-w-[140px]">
+          <p className="text-sm text-slate-500 font-medium truncate">{t('dashboard.savings')}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">$450.00</p>
         </div>
-
-        {/* Money Split Visualization */}
-        <div className="mb-8">
-          <WidgetErrorBoundary widgetName="CurrentMoneySplitWidget">
-            <CurrentMoneySplitWidget />
-          </WidgetErrorBoundary>
+        <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100 min-w-[140px]">
+          <p className="text-sm text-slate-500 font-medium truncate">{t('dashboard.billsPaid')}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">$85.00</p>
         </div>
-        <div className="mb-8">
-          <WidgetErrorBoundary widgetName="MoneyDistributionWidget">
-            <MoneyDistributionWidget />
-          </WidgetErrorBoundary>
+        <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100 min-w-[140px]">
+          <p className="text-sm text-slate-500 font-medium truncate">{t('dashboard.insurance')}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">Active</p>
         </div>
-
-        {/* Recent Transactions */}
-        <div className="mb-8">
-          <WidgetErrorBoundary widgetName="RecentTransactionsWidget">
-            <RecentTransactionsWidget />
-          </WidgetErrorBoundary>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Savings Goals Progress */}
-          <WidgetErrorBoundary widgetName="SavingsByGoalWidget">
-            <SavingsByGoalWidget />
-          </WidgetErrorBoundary>
-
-          {/* Bills by Type */}
-          <WidgetErrorBoundary widgetName="BillsByType">
-            <div
-              className="rounded-2xl shadow-md p-6 border border-[#FFFFFF14] hover:border-white/30 transition-colors duration-300"
-              style={{ backgroundImage: "var(--card)" }}
-            >
-            <div className="flex items-center gap-2 mb-4">
-              <span>
-                <FileText className="w-6 h-6 text-[var(--accent)]" />
-              </span>
-              <h2 className="text-xl font-bold text-(--foreground)">
-                Bills by Type
-              </h2>
-            </div>
-            <div className="space-y-4">
-              <GoalProgress
-                name="Electricity"
-                current={133}
-                target={285}
-                gradient={{ from: "#991B1B", to: "#7F1D1D" }}
-              />
-              <GoalProgress
-                name="Water"
-                current={48}
-                target={180}
-                gradient={{ from: "#7F1D1D", to: "#5F1515" }}
-              />
-              <GoalProgress
-                name="Internet"
-                current={22}
-                target={120}
-                gradient={{ from: "#5F1515", to: "#4F1111" }}
-              />
-              <GoalProgress
-                name="Phone"
-                current={14}
-                target={100}
-                gradient={{ from: "#5F1515", to: "#4F1111" }}
-              />
-            </div>
-            </div>
-          </WidgetErrorBoundary>
-        </div>
-      </main>
+      </div>
+    </div>
   );
 }
