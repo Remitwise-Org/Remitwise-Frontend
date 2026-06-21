@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type Density = 'comfortable' | 'compact';
+export type Density = 'comfortable' | 'compact';
 
 interface DensityContextType {
   density: Density;

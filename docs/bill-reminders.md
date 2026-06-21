@@ -53,6 +53,34 @@ Copy is calibrated per urgency tier to avoid alert fatigue:
 - Do not repeat the same reminder within the same session unless the user
   navigates away and returns.
 
+## Recurring bill UI contract
+
+The add-bill form exposes recurring bills as an explicit switch, not a checkbox.
+Use the shared `Toggle` component with `role="switch"`, `aria-checked`, a visible
+On/Off badge, and an associated label (`Repeat this bill`). The switch must be
+keyboard operable by default as a button and keep the schedule fields collapsed
+while off.
+
+When the switch is on, show the schedule editor directly below the switch:
+
+- Frequency: `Monthly` or `Weekly`
+- Monthly day: `1st` through `28th`
+- Weekly day: weekday selector
+- Reminder lead time: `1 day before`, `3 days before`, or `5 days before`
+- Card label preview: the exact recurrence label that will appear on bill cards
+
+Bill cards use this recurrence label format:
+
+| Schedule | Card label |
+|----------|------------|
+| Monthly day of month | `Monthly on the 1st` |
+| Weekly day of week | `Weekly on Monday` |
+
+Unpaid recurring bills remain in the same urgency-sorted unpaid list as one-time
+bills. Their recurrence appears as a compact badge on comfortable cards and in
+the metadata line on compact rows, while the unpaid section summary includes a
+recurring count such as `5 bills pending payment - 4 recurring`.
+
 ## Strategy
 
 Current implementation is **polling** (on dashboard load / daily). The same

@@ -1,54 +1,27 @@
 {
   "errors": {
-    "missing_signature": "Falta la firma",
-    "invalid_signature": "Firma invalida",
-    "unauthorized_missing_header": "No autorizado: falta o es invalido el encabezado x-user",
-    "unauthorized": "No autorizado",
-    "invalid_name": "Nombre invalido",
-    "invalid_coverage_type": "Tipo de cobertura invalido",
-    "invalid_monthly_premium": "Prima mensual invalida; debe ser > 0",
-    "invalid_coverage_amount": "Monto de cobertura invalido; debe ser > 0",
-    "missing_policy_id": "Falta el id de la poliza",
-    "forbidden_owner_deactivate": "Prohibido: solo el propietario puede desactivar",
-    "missing_bill_id": "Falta el id del recibo",
-    "invalid_amount": "Monto invalido; debe ser > 0",
-    "invalid_frequency_days": "Dias de frecuencia invalidos para el recibo recurrente",
-    "invalid_due_date": "Fecha de vencimiento invalida",
-    "forbidden_owner_cancel": "Prohibido: solo el propietario puede cancelar",
-    "invalid_stellar_address": "Direccion Stellar invalida",
-    "policy_not_found": "Poliza no encontrada",
-    "address_required": "Se requiere la direccion",
-    "internal_server_error": "Error interno del servidor",
-    "bad_request": "Solicitud incorrecta",
-    "missing_query_owner": "Falta el parametro de consulta requerido: owner",
-    "failed_fetch_policy": "Error al obtener la poliza del contrato",
-    "failed_fetch_policies": "Error al obtener las polizas del contrato",
-    "failed_fetch_total_premium": "Error al calcular la prima total",
-    "address_signature_required": "Se requieren la direccion y la firma",
-    "nonce_expired": "El nonce expiro o falta. Solicita uno nuevo.",
-    "signature_verification_failed": "La verificacion de la firma fallo"
+    "generic": "Algo salió mal. Por favor, inténtelo de nuevo.",
+    "network": "Error de conexión de red. Compruebe su conexión.",
+    "unauthorized": "Sesión expirada. Por favor, inicie sesión de nuevo."
   },
   "transactionHistory": {
-    "title": "Historial de transacciones",
-    "resultsCount": "{{count}} transacciones encontradas",
-    "resultsCountZero": "No se encontraron transacciones",
-    "searchPlaceholder": "Busca por hash de transaccion, direccion o memo...",
-    "searchPlaceholderMobile": "Busca transacciones...",
-    "filters": "Filtrar resultados",
-    "export": "Exportar historial",
-    "tabs": {
-      "all": "Todas las transacciones",
-      "completed": "Completadas",
-      "pending": "Pendientes de revision",
-      "failed": "Requieren atencion"
-    },
-    "empty": "Ninguna transaccion coincide con tu busqueda.",
-    "loadMore": "Cargar mas resultados",
-    "alerts": {
-      "filtersSoon": "La funcion de filtros estara disponible pronto.",
-      "exportSoon": "La exportacion estara disponible pronto.",
-      "fetchFailed": "No se pudieron obtener las transacciones",
-      "genericError": "Ocurrio un error"
-    }
+    "title": "Historial de Transacciones",
+    "empty": "No se encontraron transacciones",
+    "amount": "Monto",
+    "status": "Estado",
+    "date": "Fecha"
+  },
+  "dashboard": {
+    "totalSent": "Total Enviado",
+    "savings": "Ahorros",
+    "billsPaid": "Facturas Pagadas",
+    "insurance": "Seguro"
+  },
+  "quickActions": {
+    "emergencyTransfer": "Transferencia de Emergencia",
+    "send": "Enviar",
+    "goals": "Metas",
+    "bills": "Facturas",
+    "urgentBadge": "URGENTE"
   }
 }

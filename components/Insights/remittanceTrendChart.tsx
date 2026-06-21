@@ -1,16 +1,25 @@
+import { ResponsiveContainer, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceLine, Area } from 'recharts';
+import { TrendingUp, Activity } from 'lucide-react';
 'use client'
 
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from 'recharts'
-import { Activity } from 'lucide-react'
+import { useMemo, memo } from 'react'
+import { Activity } from 'lucide-react';
+import { 
+  ResponsiveContainer, 
+  AreaChart, 
+  CartesianGrid, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  ReferenceLine, 
+  Area 
+} from 'recharts';
+import { INSIGHTS_PALETTE } from './palette';
+
+function useReducedMotion() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
@@ -39,7 +48,6 @@ export const MOCK_TREND_DATA: TrendDataPoint[] = [
 
 const AXIS_COLOR  = '#6b7280'
 const GRID_COLOR  = 'rgba(255,255,255,0.06)'
-const LINE_COLOR  = '#D72323'
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 interface CustomTooltipProps {
@@ -53,7 +61,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   const point = payload[0]?.payload as TrendDataPoint
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-3 shadow-2xl text-sm">
+    <div className="rounded-xl border border-white/10 bg-black/80 px-4 py-3 shadow-2xl text-sm" aria-live="polite" role="region" aria-label="Remittance trend tooltip">
       <p className="text-gray-400 font-medium mb-2">{label}</p>
       <div className="space-y-1">
         <div className="flex justify-between gap-6">
@@ -75,14 +83,15 @@ interface RemittanceTrendChartProps {
   data?: TrendDataPoint[]
 }
 
-export function RemittanceTrendChart({
+function RemittanceTrendChartInner({
   data = MOCK_TREND_DATA,
 }: RemittanceTrendChartProps) {
-  const total   = data.reduce((s, d) => s + d.amount, 0)
-  const average = Math.round(total / data.length)
-  const peak    = Math.max(...data.map(d => d.amount))
-  const latest  = data[data.length - 1]?.amount ?? 0
-  const prev    = data[data.length - 2]?.amount ?? latest
+  const reducedMotion = useReducedMotion()
+  const total   = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
+  const average = useMemo(() => Math.round(total / data.length), [total, data.length])
+  const peak    = useMemo(() => Math.max(...data.map(d => d.amount)), [data])
+  const latest  = useMemo(() => data[data.length - 1]?.amount ?? 0, [data])
+  const prev    = useMemo(() => data[data.length - 2]?.amount ?? latest, [data, latest])
   const trend   = latest >= prev ? 'up' : 'down'
 
   return (
@@ -175,10 +184,17 @@ export function RemittanceTrendChart({
             strokeWidth={2.5}
             fill="url(#trendGradient)"
             dot={false}
+            isAnimationActive={!reducedMotion}
             activeDot={{ r: 5, fill: LINE_COLOR, stroke: '#0A0A0A', strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>
+      {/* Screen‑reader summary */}
+      <p className="sr-only" aria-live="polite">
+        {data.map(d => `${d.date}: $${d.amount.toLocaleString()} (${d.transactions} transactions)`).join(', ')}
+      </p>
     </div>
   )
 }
+
+export const RemittanceTrendChart = memo(RemittanceTrendChartInner)

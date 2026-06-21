@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { LRUCache } from "lru-cache";
+import { logRequest, logResponse, logError, normalizeRequestId } from "@/lib/logger";
+import { generateRequestId } from "@/lib/requestId";
 
 // In-memory metrics store
 const metrics: Record<string, { count: number; errorCount: number }> = {};
@@ -144,7 +146,7 @@ export async function middleware(request: NextRequest) {
   const start = Date.now();
   const method = request.method;
   const url = request.nextUrl.pathname;
-  const requestId = Math.random().toString(36).substring(2, 10);
+  const requestId = generateRequestId();
 
   // Extract IP or fallback for key
   const forwardedFor = request.headers.get("x-forwarded-for");
@@ -170,6 +172,13 @@ export async function middleware(request: NextRequest) {
   if (url === "/api/health" || url.startsWith("/api/health/")) {
     return NextResponse.next();
   }
+
+  // Log incoming request (only for /api/* routes)
+  const headersObj: Record<string, string> = {};
+  request.headers.forEach((value, key) => {
+    headersObj[key] = value;
+  });
+  logRequest(requestId, method, url, headersObj);
 
   // CORS & Security headers early
   let apiResponse: NextResponse;
@@ -244,16 +253,7 @@ export async function middleware(request: NextRequest) {
     if (!metrics[key]) metrics[key] = { count: 0, errorCount: 0 };
     metrics[key].count++;
     metrics[key].errorCount++;
-    console.log(
-      JSON.stringify({
-        requestId,
-        method,
-        path: url,
-        statusCode: 429,
-        durationMs,
-        timestamp: new Date().toISOString(),
-      }),
-    );
+    logResponse(requestId, method, url, 429, durationMs);
     rateLimitError.headers.set("X-Request-ID", requestId);
     return rateLimitError;
   }
@@ -269,22 +269,13 @@ export async function middleware(request: NextRequest) {
     tokenRecord.expiresAt.toString(),
   );
 
-  // Metrics logging
+  // Log response
   const durationMs = Date.now() - start;
   const key = `${method} ${url}`;
   if (!metrics[key]) metrics[key] = { count: 0, errorCount: 0 };
   metrics[key].count++;
   if (statusCode >= 400) metrics[key].errorCount++;
-  console.log(
-    JSON.stringify({
-      requestId,
-      method,
-      path: url,
-      statusCode,
-      durationMs,
-      timestamp: new Date().toISOString(),
-    }),
-  );
+  logResponse(requestId, method, url, statusCode, durationMs);
   apiResponse.headers.set("X-Request-ID", requestId);
 
   return apiResponse;

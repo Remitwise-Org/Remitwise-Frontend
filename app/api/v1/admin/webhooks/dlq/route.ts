@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        events: dlqData.items.map((event) => ({
+        events: dlqData.items.map((event: any) => ({
           id: event.id,
           source: event.source,
           eventType: event.eventType,

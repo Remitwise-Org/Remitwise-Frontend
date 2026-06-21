@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import { CHANGELOG, ChangelogEntry } from "@/lib/changelog";
 
-const STORAGE_KEY = "remitwise_whats_new_read";
+const STORAGE_KEY = "remitwise_whats_new_last_seen";
 
 interface WhatsNewContextValue {
     isOpen: boolean;
@@ -26,7 +26,7 @@ const WhatsNewContext = createContext<WhatsNewContextValue | null>(null);
 
 export function WhatsNewProvider({ children }: { children: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
-    const [readIds, setReadIds] = useState<Set<string>>(new Set());
+    const [lastSeenId, setLastSeenId] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -34,9 +34,8 @@ export function WhatsNewProvider({ children }: { children: React.ReactNode }) {
         try {
             const stored = localStorage.getItem(STORAGE_KEY);
             if (stored) {
-                setReadIds(new Set(JSON.parse(stored)));
+                setLastSeenId(stored || null);
             } else {
-                // First visit: auto-open the panel
                 setIsOpen(true);
             }
         } catch {
@@ -45,31 +44,41 @@ export function WhatsNewProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const unreadCount = mounted
-        ? CHANGELOG.filter((e) => !readIds.has(e.id)).length
+        ? (() => {
+              const newestId = CHANGELOG[0]?.id;
+              if (!newestId) return 0;
+              if (lastSeenId === null) return CHANGELOG.length;
+              const seenIndex = CHANGELOG.findIndex((entry) => entry.id === lastSeenId);
+              return seenIndex === -1 ? CHANGELOG.length : seenIndex;
+          })()
         : 0;
 
+    const readIds = new Set<string>(
+        CHANGELOG.slice(unreadCount).map((entry) => entry.id)
+    );
+
     const markAllRead = useCallback(() => {
-        const allIds = CHANGELOG.map((e) => e.id);
-        const newSet = new Set(allIds);
-        setReadIds(newSet);
+        const newestId = CHANGELOG[0]?.id || null;
+        setLastSeenId(newestId);
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(allIds));
+            if (newestId) {
+                localStorage.setItem(STORAGE_KEY, newestId);
+            } else {
+                localStorage.removeItem(STORAGE_KEY);
+            }
         } catch {
             // ignore storage errors
         }
     }, []);
 
-    const open = useCallback(() => setIsOpen(true), []);
-    const close = useCallback(() => {
-        setIsOpen(false);
+    useEffect(() => {
+        if (!mounted || !isOpen) return;
         markAllRead();
-    }, [markAllRead]);
-    const toggle = useCallback(() => {
-        setIsOpen((prev) => {
-            if (prev) markAllRead();
-            return !prev;
-        });
-    }, [markAllRead]);
+    }, [mounted, isOpen, markAllRead]);
+
+    const open = useCallback(() => setIsOpen(true), []);
+    const close = useCallback(() => setIsOpen(false), []);
+    const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
 
     return (
         <WhatsNewContext.Provider
@@ -86,4 +95,7 @@ export function useWhatsNew(): WhatsNewContextValue {
         throw new Error("useWhatsNew must be used within a WhatsNewProvider");
     }
     return ctx;
+}
+export function useWhatsNewOptional(): WhatsNewContextValue | null {
+    return useContext(WhatsNewContext);
 }

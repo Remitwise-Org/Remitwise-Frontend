@@ -1,12 +1,50 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { X, ExternalLink, CheckCheck } from "lucide-react";
 import { useWhatsNew } from "@/lib/context/WhatsNewContext";
 
 export default function WhatsNewPanel() {
     const { isOpen, close, entries, readIds, unreadCount, markAllRead } =
         useWhatsNew();
+        const panelRef = useRef<HTMLElement>(null);
+    const previouslyFocused = useRef<HTMLElement | null>(null);
+
+    useEffect(() => {
+        if (!isOpen) return;
+
+        previouslyFocused.current = document.activeElement as HTMLElement;
+        const panel = panelRef.current;
+        const focusables = panel?.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        focusables?.[0]?.focus();
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                close();
+                return;
+            }
+            if (e.key !== "Tab" || !focusables || focusables.length === 0) return;
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        };
+
+        document.addEventListener("keydown", onKeyDown);
+        return () => {
+            document.removeEventListener("keydown", onKeyDown);
+            previouslyFocused.current?.focus();
+        };
+    }, [isOpen, close]);
+
+    const unreadEntries = entries.filter((entry) => !readIds.has(entry.id));
 
     return (
         <>
@@ -22,6 +60,7 @@ export default function WhatsNewPanel() {
 
             {/* Side Panel */}
             <aside
+                ref={panelRef}
                 role="dialog"
                 aria-modal="true"
                 aria-label="What's New"
@@ -58,24 +97,27 @@ export default function WhatsNewPanel() {
 
                 {/* Entries */}
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin">
-                    {entries.map((entry) => {
-                        const isUnread = !readIds.has(entry.id);
-                        return (
+                    {unreadEntries.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center px-6">
+                            <span className="text-4xl mb-3" aria-hidden="true">✨</span>
+                            <h3 className="text-sm font-semibold text-white mb-1">
+                                You&apos;re all caught up
+                            </h3>
+                            <p className="text-[12px] text-gray-500 leading-relaxed">
+                                No new updates right now. Check back later for new features and improvements.
+                            </p>
+                        </div>
+                    ) : (
+                        unreadEntries.map((entry) => (
                             <article
                                 key={entry.id}
                                 className={`relative rounded-xl p-4 border transition-colors duration-200
-                  ${isUnread
-                                        ? "bg-brand-red/5 border-brand-red/25"
-                                        : "bg-white/[0.03] border-white/[0.07] hover:border-white/15"
-                                    }`}
+                  bg-brand-red/5 border-brand-red/25`}
                             >
-                                {/* Unread indicator bar */}
-                                {isUnread && (
-                                    <span
-                                        aria-label="Unread"
-                                        className="absolute left-0 top-4 bottom-4 w-[3px] bg-brand-red rounded-full"
-                                    />
-                                )}
+                                <span
+                                    aria-label="Unread"
+                                    className="absolute left-0 top-4 bottom-4 w-[3px] bg-brand-red rounded-full"
+                                />
 
                                 {/* Meta row */}
                                 <div className="flex items-center gap-2 mb-2 pl-1">
@@ -87,11 +129,9 @@ export default function WhatsNewPanel() {
                                     </span>
                                     <span className="w-1 h-1 rounded-full bg-gray-600" aria-hidden="true" />
                                     <span className="text-[10px] text-gray-500">{entry.date}</span>
-                                    {isUnread && (
-                                        <span className="ml-auto text-[9px] font-bold tracking-wider text-brand-red uppercase bg-brand-red/10 border border-brand-red/20 px-1.5 py-0.5 rounded-full">
-                                            New
-                                        </span>
-                                    )}
+                                    <span className="ml-auto text-[9px] font-bold tracking-wider text-brand-red uppercase bg-brand-red/10 border border-brand-red/20 px-1.5 py-0.5 rounded-full">
+                                        New
+                                    </span>
                                 </div>
 
                                 {/* Title */}
@@ -120,8 +160,8 @@ export default function WhatsNewPanel() {
                                     </a>
                                 )}
                             </article>
-                        );
-                    })}
+                        ))
+                    )}
                 </div>
 
                 {/* Footer */}

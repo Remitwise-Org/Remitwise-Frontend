@@ -1,27 +1,32 @@
+// @ts-nocheck
+import { vi, expect, describe, it, beforeEach, afterEach } from 'vitest';
 /**
  * Tests for session expiry and refresh logging
  * Validates Requirements 9.1, 9.2, 9.3, 9.4
  */
 
+import { vi, type MockInstance, type Mock } from 'vitest';
+import { cookies as cookiesImport } from 'next/headers';
 import { getSession, getSessionWithRefresh } from '../../lib/session';
 import { sealData } from 'iron-session';
 
 // Mock Next.js cookies
-jest.mock('next/headers', () => ({
-  cookies: jest.fn(),
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(),
 }));
 
-const { cookies } = require('next/headers');
+// Loosely typed so tests can supply a partial cookie-store mock.
+const cookies = vi.mocked(cookiesImport) as unknown as Mock;
 
 describe('Session Logging', () => {
   const testAddress = 'GDEMOXABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890XXXX';
-  let consoleInfoSpy: jest.SpyInstance;
+  let consoleInfoSpy: MockInstance;
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.SESSION_PASSWORD = 'test-password-at-least-32-characters-long';
     process.env.SESSION_MAX_AGE = '604800'; // 7 days
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation();
+    consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -44,8 +49,8 @@ describe('Session Logging', () => {
       });
       
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue({ value: sealed }),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
       });
 
       const session = await getSession();
@@ -76,8 +81,8 @@ describe('Session Logging', () => {
       });
       
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue({ value: sealed }),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
       });
 
       await getSession();
@@ -105,8 +110,8 @@ describe('Session Logging', () => {
       });
       
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue({ value: sealed }),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
       });
 
       await getSession();
@@ -139,8 +144,8 @@ describe('Session Logging', () => {
       });
       
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue({ value: sealed }),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
       });
 
       const session = await getSessionWithRefresh();
@@ -172,8 +177,8 @@ describe('Session Logging', () => {
       });
       
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue({ value: sealed }),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
       });
 
       await getSessionWithRefresh();
@@ -203,8 +208,8 @@ describe('Session Logging', () => {
       });
       
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue({ value: sealed }),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
       });
 
       await getSessionWithRefresh();
@@ -235,8 +240,8 @@ describe('Session Logging', () => {
       });
       
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue({ value: sealed }),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
       });
 
       await getSessionWithRefresh();
@@ -261,8 +266,8 @@ describe('Session Logging', () => {
       });
       
       cookies.mockResolvedValue({
-        get: jest.fn().mockReturnValue({ value: sealed }),
-        set: jest.fn(),
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
       });
 
       await getSession();

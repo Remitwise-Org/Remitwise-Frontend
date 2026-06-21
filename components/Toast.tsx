@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useEffect, useRef, useState } from "react";
 import { AlertCircle, CheckCircle2, Info, X, AlertTriangle } from "lucide-react";
 import type { Toast as ToastType } from "@/lib/context/ToastContext";
 
@@ -36,12 +37,52 @@ interface ToastProps {
 
 export default function Toast({ toast, onDismiss }: ToastProps) {
   const { panel, icon, Icon } = VARIANT_STYLES[toast.variant];
+  const { duration } = toast;
+
+  const [remaining, setRemaining] = useState(duration ?? 5000);
+  const [isPaused, setIsPaused] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
+
+  useEffect(() => {
+    if (duration === 0) return;
+
+    if (isPaused) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
+
+    startTimeRef.current = Date.now();
+    timerRef.current = setTimeout(() => {
+      onDismiss(toast.id);
+    }, remaining);
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      const elapsed = Date.now() - startTimeRef.current;
+      setRemaining((prev) => Math.max(0, prev - elapsed));
+    };
+  }, [isPaused, remaining, duration, toast.id, onDismiss]);
+
+  const handleMouseEnter = () => setIsPaused(true);
+  const handleMouseLeave = () => setIsPaused(false);
+  const handleFocus = () => setIsPaused(true);
+  const handleBlur = () => setIsPaused(false);
 
   return (
     <div
       role="status"
       aria-atomic="true"
-      className={`flex w-full max-w-sm items-start gap-3 rounded-2xl border p-4 shadow-lg ${panel}`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      className={`flex w-full max-w-sm items-start gap-3 rounded-2xl border p-4 shadow-lg backdrop-blur-md animate-slide-in-bottom sm:animate-slide-in-right ${panel}`}
     >
       <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${icon}`} aria-hidden="true" />
 

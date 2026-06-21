@@ -1,13 +1,16 @@
+// @ts-nocheck
+import { vi, expect, describe, it, beforeEach, afterEach } from 'vitest';
 /**
  * Tests for logout endpoint
  * Validates Requirements 5.1, 5.2, 5.3
  */
 
+import { vi } from 'vitest';
 import { POST as postLogout } from '../../app/api/auth/logout/route';
 
 describe('Logout Endpoint', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.SESSION_PASSWORD = 'test-password-at-least-32-characters-long';
     process.env.SESSION_MAX_AGE = '604800'; // 7 days
   });

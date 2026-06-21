@@ -1,11 +1,11 @@
 import ChapterView from "../../../../../components/tutorials/ChapterView";
 
 type Props = {
-  params: { tutorialId: string; chapterId: string };
+  params: Promise<{ tutorialId: string; chapterId: string }>;
 };
 
-export default function TutorialChapterPage({ params }: Props) {
-  const { tutorialId, chapterId } = params;
+export default async function TutorialChapterPage({ params }: Props) {
+  const { tutorialId, chapterId } = await params;
   const chapterIndex = parseInt(chapterId, 10) || 0;
 
   // In a full implementation you'd fetch chapter data here.
@@ -13,7 +13,7 @@ export default function TutorialChapterPage({ params }: Props) {
   const chaptersCount = 5; // placeholder; replace with real length
 
   return (
-    <div className="min-h-screen bg-bg1 py-8">
+    <div className="min-h-screen bg-bg1 py-8 overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ChapterView
           tutorialId={tutorialId}

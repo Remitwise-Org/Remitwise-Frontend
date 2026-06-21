@@ -1,36 +1,32 @@
-'use client';
+import { useState, useCallback } from 'react';
+import { apiClient } from './apiClient';
 
-import { useEffect, useState } from 'react';
+export const useSessionExpiry = () => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-/**
- * Hook to listen for session expiry events
- * Returns state indicating if session has expired
- * 
- * Usage example:
- * const { isExpired, message, clearExpiry } = useSessionExpiry();
- */
-export function useSessionExpiry() {
-  const [isExpired, setIsExpired] = useState(false);
-  const [message, setMessage] = useState('');
+  const staySignedIn = useCallback(async () => {
+    // Check if refresh is enabled (or handle as needed)
+    if (process.env.NEXT_PUBLIC_SESSION_REFRESH_ENABLED !== 'true') {
+      console.warn('Session refresh is disabled.');
+      return false;
+    }
 
-  useEffect(() => {
-    const handleSessionExpired = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      setIsExpired(true);
-      setMessage(customEvent.detail?.message || 'Your session has expired. Please reconnect your wallet.');
-    };
-
-    window.addEventListener('session-expired', handleSessionExpired);
-
-    return () => {
-      window.removeEventListener('session-expired', handleSessionExpired);
-    };
+    setIsRefreshing(true);
+    try {
+      // Use the server-aware apiClient to ensure 401s are handled
+      await apiClient.post('/api/auth/refresh');
+      
+      // Dispatch success to clear UI warnings
+      window.dispatchEvent(new CustomEvent('session-refresh'));
+      return true;
+    } catch (error) {
+      console.error('Session refresh failed', error);
+      // Logic for transition to expired phase if failure occurs
+      return false;
+    } finally {
+      setIsRefreshing(false);
+    }
   }, []);
 
-  const clearExpiry = () => {
-    setIsExpired(false);
-    setMessage('');
-  };
-
-  return { isExpired, message, clearExpiry };
-}
+  return { staySignedIn, isRefreshing };
+};
