@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
+  ChevronDown,
   CircleDollarSign,
   Download,
   FileText,
@@ -24,6 +25,11 @@ import { useDensity } from "@/lib/context/DensityContext";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
+import {
+  serializeToCsv,
+  serializeToJson,
+  getExportFilename,
+} from "@/lib/utils/export-serializer";
 
 const allTransactions: Transaction[] = [
   {
@@ -380,7 +386,44 @@ export default function TransactionsPage() {
     setDateTo("");
   };
 
-  const handleExportClick = () => {
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const exportButtonRef = useRef<HTMLButtonElement>(null);
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside or escape key
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (exportButtonRef.current?.contains(target)) return;
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(target)) {
+        setIsExportDropdownOpen(false);
+      }
+    };
+    if (isExportDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isExportDropdownOpen]);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsExportDropdownOpen(false);
+      }
+    };
+    if (isExportDropdownOpen) {
+      document.addEventListener("keydown", handleEscape);
+    }
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isExportDropdownOpen]);
+
+  const handleExport = (format: "csv" | "json") => {
+    if (filteredTransactions.length === 0) return;
+
     const rows = filteredTransactions.map((transaction) => ({
       id: transaction.id,
       type: transaction.type,
@@ -392,21 +435,25 @@ export default function TransactionsPage() {
       fee: transaction.fee,
     }));
 
-    const csv = [
-      Object.keys(rows[0] ?? {}).join(","),
-      ...rows.map((row) =>
-        Object.values(row)
-          .map((value) => `"${String(value).replace(/"/g, '""')}"`)
-          .join(",")
-      ),
-    ].join("\n");
+    let dataString = "";
+    let mimeType = "";
+    if (format === "csv") {
+      dataString = serializeToCsv(rows);
+      mimeType = "text/csv;charset=utf-8;";
+    } else {
+      dataString = serializeToJson(rows);
+      mimeType = "application/json;charset=utf-8;";
+    }
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const filename = getExportFilename(format, dateFrom, dateTo);
+    const blob = new Blob([dataString], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "remitwise-transactions.csv";
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
@@ -426,15 +473,62 @@ export default function TransactionsPage() {
                 {t("transactionHistory.subtitleStandalone")}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleExportClick}
-              disabled={filteredTransactions.length === 0}
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-red-400/30 bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101] disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-gray-500"
-            >
-              <Download className="h-4 w-4" />
-              {t("transactionHistory.export")}
-            </button>
+            <div className="relative">
+              <button
+                ref={exportButtonRef}
+                type="button"
+                onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+                disabled={filteredTransactions.length === 0}
+                aria-expanded={isExportDropdownOpen}
+                aria-haspopup="true"
+                aria-label="Export filtered transactions"
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-red-400/30 bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101] disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-gray-500"
+              >
+                <Download className="h-4 w-4" />
+                {t("transactionHistory.export")}
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isExportDropdownOpen ? "rotate-180" : ""}`} />
+              </button>
+              
+              {isExportDropdownOpen && filteredTransactions.length > 0 && (
+                <div
+                  ref={exportDropdownRef}
+                  className="absolute right-0 mt-2 w-64 rounded-xl border border-white/10 bg-[#121212] p-2 shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                  role="menu"
+                  aria-label="Export formats"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleExport("csv");
+                      setIsExportDropdownOpen(false);
+                    }}
+                    className="flex w-full items-start gap-3 rounded-lg p-2 text-left transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                    role="menuitem"
+                  >
+                    <FileText className="mt-0.5 h-4 w-4 text-red-400 shrink-0" />
+                    <div>
+                      <div className="text-sm font-medium text-white">Export as CSV</div>
+                      <div className="text-xs text-gray-500">For spreadsheets and reports</div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleExport("json");
+                      setIsExportDropdownOpen(false);
+                    }}
+                    className="flex w-full items-start gap-3 rounded-lg p-2 text-left transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                    role="menuitem"
+                  >
+                    <CircleDollarSign className="mt-0.5 h-4 w-4 text-red-400 shrink-0" />
+                    <div>
+                      <div className="text-sm font-medium text-white">Export as JSON</div>
+                      <div className="text-xs text-gray-500">For developers and raw data</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <section

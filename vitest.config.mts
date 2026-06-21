@@ -9,6 +9,7 @@ export default defineConfig({
       'lib/**/*.test.ts',
       'lib/**/*.test.tsx',
       'tests/unit/**/*.test.ts',
+      'tests/unit/**/*.test.tsx',
       'tests/unit/**/*.test.cjs',
       'tests/integration/**/*.test.ts',
       'tests/integration/**/*.test.cjs',
@@ -24,7 +25,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['lib/contracts/**/*.ts', 'app/**/*.ts', 'lib/**/*.ts', 'components/**/*.tsx'],
+      include: ['lib/contracts/**/*.ts', 'app/**/*.ts', 'app/**/*.tsx', 'lib/**/*.ts', 'components/**/*.tsx'],
       exclude: [
         'lib/contracts/**/*.test.ts',
         'lib/**/*.test.ts',
