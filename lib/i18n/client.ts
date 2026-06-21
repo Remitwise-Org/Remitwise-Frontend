@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import en from "./locales/en.json";
 import es from "./locales/es.json";
+import { getLocaleCookieClient, type SupportedLocale } from "./cookie";
+import { resolveLocale } from "./resolve-locale";
 
-type SupportedLocale = "en" | "es";
 type TranslationValue = string | { [key: string]: TranslationValue };
 type TranslationTree = Record<string, TranslationValue>;
 
@@ -12,11 +13,6 @@ const resources: Record<SupportedLocale, TranslationTree> = {
 	en: en as TranslationTree,
 	es: es as TranslationTree,
 };
-
-function resolveLocale(language: string | null | undefined): SupportedLocale {
-	const parsed = language?.split(",")[0]?.split("-")[0]?.trim().toLowerCase();
-	return parsed === "es" ? "es" : "en";
-}
 
 function readPath(tree: TranslationTree, path: string): string | undefined {
 	return path.split(".").reduce<any>((acc, key) => {
@@ -29,8 +25,15 @@ export function useClientLocale(defaultLocale: SupportedLocale = "en") {
 	const [locale, setLocale] = useState<SupportedLocale>(defaultLocale);
 
 	useEffect(() => {
-		if (typeof navigator === "undefined") return;
-		setLocale(resolveLocale(navigator.language));
+		const cookieLocale = getLocaleCookieClient();
+		const navLang = typeof navigator !== "undefined" ? navigator.language : null;
+
+		const { locale: resolved } = resolveLocale({
+			cookieLocale,
+			navigatorLocale: navLang,
+		});
+
+		setLocale(resolved);
 	}, []);
 
 	return locale;

@@ -5,7 +5,7 @@ import { StrKey } from '@stellar/stellar-sdk'
 import { ApiRouteError, withApiErrorHandler } from '@/lib/api/error-handler'
 
 export const POST = withApiErrorHandler(async function POST(req: Request) {
-  const t = getTranslator(req.headers.get('accept-language'));
+  const t = getTranslator(req);
 
   const caller = req.headers.get('x-user')
   if (!caller || !StrKey.isValidEd25519PublicKey(caller)) {

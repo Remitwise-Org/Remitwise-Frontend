@@ -32,7 +32,7 @@ const addInsuranceHandler = validatedRoute(billSchema, "body", async (req, data)
 const getInsuranceHandler = async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const owner = searchParams.get("owner");
-  const t = getTranslator(request.headers.get("accept-language"));
+  const t = getTranslator(request);
 
   if (!owner) {
     return NextResponse.json(

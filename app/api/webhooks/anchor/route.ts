@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const t = getTranslator(request.headers.get('accept-language'));
+    const t = getTranslator(request);
 
     if (!signature) {
       return NextResponse.json({ error: t('errors.missing_signature') }, { status: 401 })
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true, eventId }, { status: 200 })
   } catch (error) {
     console.error('[Webhook] Error handling request:', error)
-    const t = getTranslator(request.headers.get('accept-language'));
+    const t = getTranslator(request);
     return NextResponse.json(
       { error: t('errors.internal_server_error') },
       { status: 500 }
