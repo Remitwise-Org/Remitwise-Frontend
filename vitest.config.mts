@@ -36,5 +36,10 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './'),
     },
+    server: {
+      deps: {
+        inline: [/@reduxjs\/toolkit/, /recharts/, /d3-/, /internmap/],
+      },
+    },
   },
 })

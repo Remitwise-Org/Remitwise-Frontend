@@ -1,18 +1,18 @@
 'use client'
 
-import { useState, useMemo, memo } from 'react'
+import { useState, useMemo, memo, useCallback } from 'react'
 import {
   PieChart,
   Pie,
   Cell,
   Tooltip,
   ResponsiveContainer,
-  type TooltipProps,
+  type TooltipContentProps,
 } from 'recharts'
 import { PieChart as PieChartIcon, Info } from 'lucide-react'
-import { INSIGHTS_PALETTE } from './palette';
+import { INSIGHTS_PALETTE } from './palette'
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
+// ── Types and Interfaces ──────────────────────────────────────────────────────
 
 export interface CategoryDataPoint {
   name: string
@@ -20,10 +20,7 @@ export interface CategoryDataPoint {
   percentage: number
 }
 
-interface CustomTooltipProps {
-  active?: boolean
-  payload?: Array<{ color?: string; payload: CategoryDataPoint }>
-}
+// ── Mock data ─────────────────────────────────────────────────────────────────
 
 export const MOCK_CATEGORY_DATA: CategoryDataPoint[] = [
   { name: 'Family Support', amount: 1800, percentage: 56 },
@@ -36,11 +33,15 @@ const SLICE_COLORS = INSIGHTS_PALETTE.slice(0, 8); // use first 8 colors
 
 const AXIS_COLOR = '#6b7280'
 
-// ── Custom tooltip ────────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
+// ── Custom tooltip (Memoized) ──────────────────────────────────────────────────
+/**
+ * Memoized custom tooltip for the Category Donut Chart to prevent unnecessary
+ * re-renders of the tooltip overlay.
+ */
+const CustomTooltip = memo(function CustomTooltip({ active, payload }: TooltipContentProps<number, string>) {
   if (!active || !payload?.length) return null
   const entry = payload[0]
-  const data  = entry.payload as CategoryDataPoint
+  const data  = entry.payload as any as CategoryDataPoint
 
   return (
     <div className="rounded-xl border border-white/10 bg-black/80 px-4 py-3 shadow-2xl text-sm" aria-live="polite" role="region" aria-label="Category donut chart tooltip">
@@ -63,9 +64,9 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
       </div>
     </div>
   )
-}
+})
 
-// ── Custom label inside donut center ─────────────────────────────────────────
+// ── Custom label inside donut center (Memoized) ────────────────────────────────
 interface CenterLabelProps {
   cx: number
   cy: number
@@ -73,7 +74,10 @@ interface CenterLabelProps {
   total: number
 }
 
-function CenterLabel({ cx, cy, active, total }: CenterLabelProps) {
+/**
+ * Memoized center label component displaying selected category amount or total sent.
+ */
+const CenterLabel = memo(function CenterLabel({ cx, cy, active, total }: CenterLabelProps) {
   return (
     <g>
       {active ? (
@@ -97,7 +101,79 @@ function CenterLabel({ cx, cy, active, total }: CenterLabelProps) {
       )}
     </g>
   )
+})
+
+// ── Interactive Legend Rows Component (Memoized) ────────────────────────────────
+interface CategoryLegendProps {
+  data: CategoryDataPoint[]
+  activeCategory: CategoryDataPoint | null
+  setActiveCategory: React.Dispatch<React.SetStateAction<CategoryDataPoint | null>>
+  sliceColors: string[]
+  reducedMotion: boolean
 }
+
+/**
+ * Memoized legend component displaying individual categories, amounts, and progress bars.
+ * Clicking items toggles active highlights.
+ */
+const CategoryLegend = memo(function CategoryLegend({
+  data,
+  activeCategory,
+  setActiveCategory,
+  sliceColors,
+  reducedMotion,
+}: CategoryLegendProps) {
+  return (
+    <div className="w-full space-y-3">
+      {data.map((item, index) => {
+        const color     = sliceColors[index % sliceColors.length]
+        const isActive  = activeCategory?.name === item.name
+        const isDimmed  = activeCategory !== null && !isActive
+
+        return (
+          <button
+            key={item.name}
+            type="button"
+            onClick={() =>
+              setActiveCategory(prev =>
+                prev?.name === item.name ? null : item
+              )
+            }
+            className={`w-full text-left space-y-1.5 transition-opacity ${
+              isDimmed ? 'opacity-40' : 'opacity-100'
+            }`}
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: color }}
+                />
+                <span className="text-white text-sm font-medium">{item.name}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-white font-bold text-sm">
+                  ${item.amount.toLocaleString()}
+                </span>
+                <span className="text-gray-500 text-xs w-8 text-right">
+                  {item.percentage}%
+                </span>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full ${reducedMotion ? '' : 'transition-all duration-700 ease-out'}`}
+                style={{ width: `${item.percentage}%`, backgroundColor: color }}
+              />
+            </div>
+          </button>
+        )
+      })}
+    </div>
+  )
+})
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -114,8 +190,32 @@ function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutCha
   const [activeCategory, setActiveCategory] = useState<CategoryDataPoint | null>(null)
   const reducedMotion = useReducedMotion()
 
+  /**
+   * Memoized total remittance amount calculation.
+   */
   const total  = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
+
+  /**
+   * Memoized top category identifier.
+   */
   const topCat = useMemo(() => data[0], [data])
+
+  /**
+   * Memoized mouse events for Recharts Pie to prevent recreating callbacks on every render.
+   */
+  const handleMouseEnter = useCallback((_: unknown, index: number) => {
+    setActiveCategory(data[index])
+  }, [data])
+
+  const handleMouseLeave = useCallback(() => {
+    setActiveCategory(null)
+  }, [])
+
+  const handleCellClick = useCallback((_: unknown, index: number) => {
+    setActiveCategory(prev =>
+      prev?.name === data[index].name ? null : data[index]
+    )
+  }, [data])
 
   return (
     <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
@@ -146,13 +246,9 @@ function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutCha
                 paddingAngle={3}
                 dataKey="amount"
                 stroke="none"
-                onMouseEnter={(_, index) => setActiveCategory(data[index])}
-                onMouseLeave={() => setActiveCategory(null)}
-                onClick={(_, index) =>
-                  setActiveCategory(prev =>
-                    prev?.name === data[index].name ? null : data[index]
-                  )
-                }
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                onClick={handleCellClick}
                 style={{ cursor: 'pointer' }}
               >
                 {data.map((entry, index) => (
@@ -174,60 +270,19 @@ function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutCha
                 <CenterLabel cx={0} cy={0} active={activeCategory} total={total} />
               </text>
 
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={CustomTooltip} />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Legend rows — interactive */}
-        <div className="w-full space-y-3">
-          {data.map((item, index) => {
-            const color     = SLICE_COLORS[index % SLICE_COLORS.length]
-            const isActive  = activeCategory?.name === item.name
-            const isDimmed  = activeCategory !== null && !isActive
-
-            return (
-              <button
-                key={item.name}
-                type="button"
-                onClick={() =>
-                  setActiveCategory(prev =>
-                    prev?.name === item.name ? null : item
-                  )
-                }
-                className={`w-full text-left space-y-1.5 transition-opacity ${
-                  isDimmed ? 'opacity-40' : 'opacity-100'
-                }`}
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: color }}
-                    />
-                    <span className="text-white text-sm font-medium">{item.name}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-white font-bold text-sm">
-                      ${item.amount.toLocaleString()}
-                    </span>
-                    <span className="text-gray-500 text-xs w-8 text-right">
-                      {item.percentage}%
-                    </span>
-                  </div>
-                </div>
-
-                {/* Progress bar */}
-                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${reducedMotion ? '' : 'transition-all duration-700 ease-out'}`}
-                    style={{ width: `${item.percentage}%`, backgroundColor: color }}
-                  />
-                </div>
-              </button>
-            )
-          })}
-        </div>
+        {/* Legend rows — interactive (Memoized) */}
+        <CategoryLegend
+          data={data}
+          activeCategory={activeCategory}
+          setActiveCategory={setActiveCategory}
+          sliceColors={SLICE_COLORS}
+          reducedMotion={reducedMotion}
+        />
       </div>
 
       {/* Insight alert */}

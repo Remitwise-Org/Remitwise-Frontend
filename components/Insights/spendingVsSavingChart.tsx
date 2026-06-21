@@ -2,179 +2,195 @@
 
 import { useMemo, memo } from 'react'
 import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    type TooltipContentProps,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  type TooltipContentProps,
 } from 'recharts'
 import { TrendingUp } from 'lucide-react'
+import { INSIGHTS_PALETTE } from './palette'
 
-// ── Mock data ───────────────────────────
+// ── Types and Interfaces ──────────────────────────────────────────────────────
 
 export interface SpendingVsSavingsDataPoint {
-    month: string
-    spending: number
-    savings: number
+  month: string
+  spending: number
+  savings: number
 }
 
+// ── Mock data ─────────────────────────────────────────────────────────────────
+
 export const MOCK_SPENDING_VS_SAVINGS: SpendingVsSavingsDataPoint[] = [
-    { month: 'Sep', spending: 2400, savings: 600 },
-    { month: 'Oct', spending: 2800, savings: 700 },
-    { month: 'Nov', spending: 3200, savings: 500 },
-    { month: 'Dec', spending: 3800, savings: 400 },
-    { month: 'Jan', spending: 2600, savings: 800 },
-    { month: 'Feb', spending: 2900, savings: 750 },
-    { month: 'Mar', spending: 3100, savings: 900 },
+  { month: 'Sep', spending: 2400, savings: 600 },
+  { month: 'Oct', spending: 2800, savings: 700 },
+  { month: 'Nov', spending: 3200, savings: 500 },
+  { month: 'Dec', spending: 3800, savings: 400 },
+  { month: 'Jan', spending: 2600, savings: 800 },
+  { month: 'Feb', spending: 2900, savings: 750 },
+  { month: 'Mar', spending: 3100, savings: 900 },
 ]
 
 // ── Color tokens — match the existing dark theme ──────────────────────────────
-import { INSIGHTS_PALETTE } from './palette';
+
 const SPENDING_COLOR = INSIGHTS_PALETTE[0]; // blue‑teal
 const SAVINGS_COLOR = INSIGHTS_PALETTE[1]; // light blue
 const GRID_COLOR = 'rgba(255,255,255,0.06)';
 const AXIS_COLOR = '#6b7280';
 
-// ── Custom tooltip ────────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
-    if (!active || !payload?.length) return null
+// ── Custom tooltip (Memoized) ──────────────────────────────────────────────────
+/**
+ * Memoized custom tooltip for the Spending vs Savings Bar Chart.
+ * Prevents unnecessary re-renders of the tooltip overlay.
+ */
+const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
+  if (!active || !payload?.length) return null
 
-    return (
-        <div className="rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-3 shadow-2xl text-sm min-w-[160px]">
-            <p className="text-gray-400 font-medium mb-2">{label ?? ''}</p>
-            {payload.map((entry) => (
-                <div key={entry.name} className="flex items-center justify-between gap-4 py-0.5">
-                    <div className="flex items-center gap-2">
-                        <span
-                            className="inline-block w-2.5 h-2.5 rounded-full"
-                            style={{ backgroundColor: entry.color }}
-                        />
-                        <span className="text-gray-300 capitalize">{entry.name}</span>
-                    </div>
-                    <span className="font-bold text-white">
-                        ${(entry.value as number).toLocaleString()}
-                    </span>
-                </div>
-            ))}
-            {payload.length === 2 && (
-                <div className="mt-2 pt-2 border-t border-white/10 flex justify-between text-xs">
-                    <span className="text-gray-500">Ratio</span>
-                    <span className="text-gray-300">
-                        {Math.round(
-                            ((payload[1].value as number) /
-                                ((payload[0].value as number) + (payload[1].value as number))) *
-                            100
-                        )}% saved
-                    </span>
-                </div>
-            )}
+  return (
+    <div className="rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-3 shadow-2xl text-sm min-w-[160px]">
+      <p className="text-gray-400 font-medium mb-2">{label ?? ''}</p>
+      {payload.map((entry) => (
+        <div key={entry.name} className="flex items-center justify-between gap-4 py-0.5">
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-block w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-gray-300 capitalize">{entry.name}</span>
+          </div>
+          <span className="font-bold text-white">
+            ${(entry.value as number).toLocaleString()}
+          </span>
         </div>
-    )
-}
+      ))}
+      {payload.length === 2 && (
+        <div className="mt-2 pt-2 border-t border-white/10 flex justify-between text-xs">
+          <span className="text-gray-500">Ratio</span>
+          <span className="text-gray-300">
+            {Math.round(
+              ((payload[1].value as number) /
+                ((payload[0].value as number) + (payload[1].value as number))) *
+              100
+            )}% saved
+          </span>
+        </div>
+      )}
+    </div>
+  )
+})
 
-// ── Custom legend ─────────────────────────────────────────────────────────────
-function CustomLegend() {
-    return (
-        <div className="flex items-center justify-center gap-6 mt-2">
-            {[
-                { color: SPENDING_COLOR, label: 'Spending' },
-                { color: SAVINGS_COLOR, label: 'Savings' },
-            ].map(({ color, label }) => (
-                <div key={label} className="flex items-center gap-2">
-                    <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
-                    <span className="text-xs text-gray-400">{label}</span>
-                </div>
-            ))}
+// ── Custom legend (Memoized) ───────────────────────────────────────────────────
+/**
+ * Memoized CustomLegend component to prevent re-rendering when parent renders
+ * with stable data.
+ */
+const CustomLegend = memo(function CustomLegend() {
+  return (
+    <div className="flex items-center justify-center gap-6 mt-2">
+      {[
+        { color: SPENDING_COLOR, label: 'Spending' },
+        { color: SAVINGS_COLOR, label: 'Savings' },
+      ].map(({ color, label }) => (
+        <div key={label} className="flex items-center gap-2">
+          <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
+          <span className="text-xs text-gray-400">{label}</span>
         </div>
-    )
-}
+      ))}
+    </div>
+  )
+})
 
 function useReducedMotion() {
-    if (typeof window === 'undefined') return false
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface SpendingVsSavingsChartProps {
-    data?: SpendingVsSavingsDataPoint[]
+  data?: SpendingVsSavingsDataPoint[]
 }
 
 function SpendingVsSavingsChartInner({
-    data = MOCK_SPENDING_VS_SAVINGS,
+  data = MOCK_SPENDING_VS_SAVINGS,
 }: SpendingVsSavingsChartProps) {
-    const reducedMotion = useReducedMotion()
-    const savingsRate = useMemo(() => {
-        const spending = data.reduce((s, d) => s + d.spending, 0)
-        const savings  = data.reduce((s, d) => s + d.savings, 0)
-        return Math.round((savings / (spending + savings)) * 100)
-    }, [data])
+  const reducedMotion = useReducedMotion()
 
-    return (
-        <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
-            {/* Header */}
-            <div className="flex items-start justify-between mb-6">
-                <div className="flex items-start gap-3">
-                    <div className="bg-red-500/10 p-2 rounded-lg shrink-0">
-                        <TrendingUp className="w-5 h-5 text-red-500" />
-                    </div>
-                    <div>
-                        <h2 className="text-white text-base sm:text-lg font-semibold">
-                            Spending vs Savings
-                        </h2>
-                        <p className="text-gray-500 text-xs sm:text-sm">Monthly comparison</p>
-                    </div>
-                </div>
+  /**
+   * Memoized savings rate calculation based on total savings and spending.
+   */
+  const savingsRate = useMemo(() => {
+    const spending = data.reduce((s, d) => s + d.spending, 0)
+    const savings  = data.reduce((s, d) => s + d.savings, 0)
+    if (spending + savings === 0) return 0
+    return Math.round((savings / (spending + savings)) * 100)
+  }, [data])
 
-                {/* Savings rate badge */}
-                <div className="text-right shrink-0">
-                    <p className="text-[#0ea5e9] font-bold text-lg sm:text-xl">{savingsRate}%</p>
-                    <p className="text-gray-500 text-xs">savings rate</p>
-                </div>
-            </div>
-
-            {/* Chart */}
-            <ResponsiveContainer width="100%" height={220}>
-                <BarChart
-                    data={data}
-                    barCategoryGap="30%"
-                    barGap={4}
-                    margin={{ top: 4, right: 4, bottom: 0, left: -16 }}
-                >
-                    <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke={GRID_COLOR}
-                        vertical={false}
-                    />
-                    <XAxis
-                        dataKey="month"
-                        tick={{ fill: AXIS_COLOR, fontSize: 11 }}
-                        axisLine={false}
-                        tickLine={false}
-                    />
-                    <YAxis
-                        tick={{ fill: AXIS_COLOR, fontSize: 11 }}
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={(v: number) => `$${v >= 1000 ? `${v / 1000}k` : v}`}
-                        width={40}
-                        className="hidden sm:block"
-                    />
-                    <Tooltip content={CustomTooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                    <Bar dataKey="spending" name="spending" fill={SPENDING_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
-                    <Bar dataKey="savings" name="savings" fill={SAVINGS_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
-                </BarChart>
-            </ResponsiveContainer>
-            {/* Screen‑reader summary */}
-            <p className="sr-only" aria-live="polite">
-                {data.map(d => `${d.month}: spending $${d.spending.toLocaleString()}, savings $${d.savings.toLocaleString()}`).join(', ')}
-            </p>
-            <CustomLegend />
+  return (
+    <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
+        <div className="flex items-start gap-3">
+          <div className="bg-red-500/10 p-2 rounded-lg shrink-0">
+            <TrendingUp className="w-5 h-5 text-red-500" />
+          </div>
+          <div>
+            <h2 className="text-white text-base sm:text-lg font-semibold">
+              Spending vs Savings
+            </h2>
+            <p className="text-gray-500 text-xs sm:text-sm">Monthly comparison</p>
+          </div>
         </div>
-    )
+
+        {/* Savings rate badge */}
+        <div className="text-right shrink-0">
+          <p className="text-[#0ea5e9] font-bold text-lg sm:text-xl">{savingsRate}%</p>
+          <p className="text-gray-500 text-xs">savings rate</p>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart
+          data={data}
+          barCategoryGap="30%"
+          barGap={4}
+          margin={{ top: 4, right: 4, bottom: 0, left: -16 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke={GRID_COLOR}
+            vertical={false}
+          />
+          <XAxis
+            dataKey="month"
+            tick={{ fill: AXIS_COLOR, fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tick={{ fill: AXIS_COLOR, fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(v: number) => `$${v >= 1000 ? `${v / 1000}k` : v}`}
+            width={40}
+            className="hidden sm:block"
+          />
+          <Tooltip content={CustomTooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+          <Bar dataKey="spending" name="spending" fill={SPENDING_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
+          <Bar dataKey="savings" name="savings" fill={SAVINGS_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
+        </BarChart>
+      </ResponsiveContainer>
+      {/* Screen‑reader summary */}
+      <p className="sr-only" aria-live="polite">
+        {data.map(d => `${d.month}: spending $${d.spending.toLocaleString()}, savings $${d.savings.toLocaleString()}`).join(', ')}
+      </p>
+      <CustomLegend />
+    </div>
+  )
 }
 
 export const SpendingVsSavingsChart = memo(SpendingVsSavingsChartInner)

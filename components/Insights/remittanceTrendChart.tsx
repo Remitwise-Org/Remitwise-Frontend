@@ -1,9 +1,7 @@
-import { ResponsiveContainer, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceLine, Area } from 'recharts';
-import { TrendingUp, Activity } from 'lucide-react';
 'use client'
 
 import { useMemo, memo } from 'react'
-import { Activity } from 'lucide-react';
+import { Activity } from 'lucide-react'
 import { 
   ResponsiveContainer, 
   AreaChart, 
@@ -13,8 +11,10 @@ import {
   Tooltip, 
   ReferenceLine, 
   Area 
-} from 'recharts';
-import { INSIGHTS_PALETTE } from './palette';
+} from 'recharts'
+import { INSIGHTS_PALETTE } from './palette'
+
+const LINE_COLOR = INSIGHTS_PALETTE[0]
 
 function useReducedMotion() {
   if (typeof window === 'undefined') return false
