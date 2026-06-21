@@ -16,7 +16,6 @@ jobs:
     env:
       TEST_WALLET_ADDRESS: "GDEMOXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
       TEST_SIGNATURE: "mock-signature"
-      # --- ADDED MOCK ENV VARS FOR CI ---
       SESSION_PASSWORD: "dummy-test-session-password-must-be-32-chars"
       SOROBAN_RPC_URL: "https://soroban-testnet.stellar.org"
       SOROBAN_NETWORK_PASSPHRASE: "Test SDF Network ; September 2015"
@@ -32,20 +31,16 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm ci || true
-        continue-on-error: true
+        run: npm ci
 
       - name: Run Unit Tests
-        run: npm run test || true
-        continue-on-error: true
+        run: npm run test
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium || true
-        continue-on-error: true
+        run: npx playwright install --with-deps chromium
 
       - name: Run Playwright tests
-        run: npm run test:e2e || true
-        continue-on-error: true
+        run: npm run test:e2e
 
       - name: Upload test results
         if: always()
