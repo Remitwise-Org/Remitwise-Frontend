@@ -158,20 +158,20 @@ export function sanitizeString(str: string): string {
 
   // Mask API keys (generic pattern)
   sanitized = sanitized.replace(
-    /api[_-]?key[=:\s]+[^\s,}]+/gi,
-    'api_key=[REDACTED]',
+    /(^|[^\w-])api[_-]?key[=:\s]+[^\s,}]+/gi,
+    '$1api_key=[REDACTED]',
   );
 
   // Mask tokens
   sanitized = sanitized.replace(
-    /token[=:\s]+[^\s,}]+/gi,
-    'token=[REDACTED]',
+    /(^|[^\w-])token[=:\s]+[^\s,}]+/gi,
+    '$1token=[REDACTED]',
   );
 
   // Mask passwords
   sanitized = sanitized.replace(
-    /password[=:\s]+[^\s,}]+/gi,
-    'password=[REDACTED]',
+    /(^|[^\w-])password[=:\s]+[^\s,}]+/gi,
+    '$1password=[REDACTED]',
   );
 
   // Mask Bearer tokens

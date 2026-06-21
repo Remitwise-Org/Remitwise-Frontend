@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { BillCards } from './BillsCard';
 import { mockBills } from '@/lib/mockdata/bills';
@@ -38,10 +40,10 @@ export function UnpaidBillsSection() {
                 const bills = billsByStatus[status] ?? [];
                 if (!bills.length) return null;
                 const headerStyles: Record<string, string> = {
-                    paid: 'text-green-700 bg-green-50 border-green-200',
-                    overdue: 'text-red-700 bg-red-50 border-red-200',
+                    overdue: "text-red-400",
                     urgent: "text-amber-400",
                     upcoming: "text-white/60",
+                    paid: "text-green-400",
                 };
                 return (
                     <section key={status} className="mb-4">

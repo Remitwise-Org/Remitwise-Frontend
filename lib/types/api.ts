@@ -1,5 +1,34 @@
 // API response types
 
+/** POST /api/send — request body */
+export interface SendTransactionRequest {
+  /** Stellar public key of the recipient (G…) */
+  recipient: string;
+  /** Token amount to send, in token units (must be > 0) */
+  amount: number;
+  /** Token/asset symbol, e.g. "USDC" */
+  currency: string;
+}
+
+/** POST /api/send — successful response */
+export interface SendTransactionResponse {
+  success: true;
+  /** XDR hash / placeholder until Stellar broadcasting is wired */
+  transactionId: string;
+}
+
+/** POST /api/send — error response */
+export interface SendTransactionErrorResponse {
+  success: false;
+  error: string;
+}
+
+/**
+ * Union of all possible /api/send response shapes.
+ * Discriminate via the `success` field.
+ */
+export type SendTransactionResult = SendTransactionResponse | SendTransactionErrorResponse;
+
 export interface APIResponse {
   success: boolean;
   xdr?: string;

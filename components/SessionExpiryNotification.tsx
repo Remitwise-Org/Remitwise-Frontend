@@ -30,6 +30,7 @@ export default function SessionExpiryNotification({
   const primaryActionRef = useRef<HTMLButtonElement>(null);
   const isWarning = phase === 'warning';
   const isExpired = phase === 'expired';
+
   useEffect(() => {
     if (phase === 'warning' || phase === 'expired') {
       primaryActionRef.current?.focus();

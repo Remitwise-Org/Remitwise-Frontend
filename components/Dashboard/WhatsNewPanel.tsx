@@ -44,6 +44,8 @@ export default function WhatsNewPanel() {
         };
     }, [isOpen, close]);
 
+    const unreadEntries = entries.filter((entry) => !readIds.has(entry.id));
+
     return (
         <>
             {/* Backdrop */}
@@ -95,7 +97,7 @@ export default function WhatsNewPanel() {
 
                 {/* Entries */}
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin">
-                    {entries.length === 0 ? (
+                    {unreadEntries.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-center px-6">
                             <span className="text-4xl mb-3" aria-hidden="true">✨</span>
                             <h3 className="text-sm font-semibold text-white mb-1">
@@ -106,24 +108,16 @@ export default function WhatsNewPanel() {
                             </p>
                         </div>
                     ) : (
-                        entries.map((entry) => {
-                            const isUnread = !readIds.has(entry.id);
-                            return (
+                        unreadEntries.map((entry) => (
                             <article
                                 key={entry.id}
                                 className={`relative rounded-xl p-4 border transition-colors duration-200
-                  ${isUnread
-                                        ? "bg-brand-red/5 border-brand-red/25"
-                                        : "bg-white/[0.03] border-white/[0.07] hover:border-white/15"
-                                    }`}
+                  bg-brand-red/5 border-brand-red/25`}
                             >
-                                {/* Unread indicator bar */}
-                                {isUnread && (
-                                    <span
-                                        aria-label="Unread"
-                                        className="absolute left-0 top-4 bottom-4 w-[3px] bg-brand-red rounded-full"
-                                    />
-                                )}
+                                <span
+                                    aria-label="Unread"
+                                    className="absolute left-0 top-4 bottom-4 w-[3px] bg-brand-red rounded-full"
+                                />
 
                                 {/* Meta row */}
                                 <div className="flex items-center gap-2 mb-2 pl-1">
@@ -135,11 +129,9 @@ export default function WhatsNewPanel() {
                                     </span>
                                     <span className="w-1 h-1 rounded-full bg-gray-600" aria-hidden="true" />
                                     <span className="text-[10px] text-gray-500">{entry.date}</span>
-                                    {isUnread && (
-                                        <span className="ml-auto text-[9px] font-bold tracking-wider text-brand-red uppercase bg-brand-red/10 border border-brand-red/20 px-1.5 py-0.5 rounded-full">
-                                            New
-                                        </span>
-                                    )}
+                                    <span className="ml-auto text-[9px] font-bold tracking-wider text-brand-red uppercase bg-brand-red/10 border border-brand-red/20 px-1.5 py-0.5 rounded-full">
+                                        New
+                                    </span>
                                 </div>
 
                                 {/* Title */}
@@ -168,8 +160,7 @@ export default function WhatsNewPanel() {
                                     </a>
                                 )}
                             </article>
-                        );
-                        })
+                        ))
                     )}
                 </div>
 

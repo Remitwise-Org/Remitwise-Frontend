@@ -1,12 +1,18 @@
-// @ts-nocheck
-import { describe, it } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
+import { Keypair } from '@stellar/stellar-sdk';
 import {
   validateAmount,
   validateFutureDate,
   validateGoalId,
   validateGoalName,
 } from '@/lib/validation/savings-goals';
+import {
+  validatePercentages,
+  validateStellarAddress,
+  ValidationError,
+  SplitPercentages,
+} from '@/lib/validation/percentages';
 
 /**
  * Property-Based Tests for Validation Functions
@@ -106,7 +112,13 @@ describe('Validation Properties - Property-Based Tests', () => {
         fc.string({ minLength: 101, maxLength: 200 }),
         (longName) => {
           const result = validateGoalName(longName);
-          return result.isValid === false && result.error?.includes('100 characters');
+          // Names longer than 100 chars are rejected as "too long"; a string of
+          // only whitespace is rejected earlier as "required" (it trims empty).
+          return (
+            result.isValid === false &&
+            (result.error === 'goal_name_too_long' ||
+              result.error === 'goal_name_required')
+          );
         }
       ),
       { numRuns: 100 }
@@ -152,9 +164,10 @@ describe('Validation Properties - Property-Based Tests', () => {
    * the date validation should return isValid: false.
    */
   it('Property 5: Future date validation rejects past dates', () => {
+    const now = Date.now();
     fc.assert(
       fc.property(
-        fc.date({ max: new Date(Date.now() - 1000) }), // At least 1 second in the past
+        fc.date({ max: new Date(now - 1000) }).filter(d => !isNaN(d.getTime())), // At least 1 second in the past
         (pastDate) => {
           const result = validateFutureDate(pastDate.toISOString());
           return result.isValid === false && result.error?.includes('future');
@@ -165,12 +178,129 @@ describe('Validation Properties - Property-Based Tests', () => {
   });
 
   it('Property 5 (positive case): Future date validation accepts future dates', () => {
+    const now = Date.now();
     fc.assert(
       fc.property(
-        fc.date({ min: new Date(Date.now() + 60000) }), // At least 1 minute in the future
+        fc.date({ min: new Date(now + 60000) }).filter(d => !isNaN(d.getTime())), // At least 1 minute in the future
         (futureDate) => {
           const result = validateFutureDate(futureDate.toISOString());
           return result.isValid === true;
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  /**
+   * Property 10: Percentage validation accepts sets that sum to ~100
+   */
+  it('Property 10: validatePercentages accepts sets that sum to 100', () => {
+    fc.assert(
+      fc.property(
+        // Use a sane lower bound so the array never sums to a sub-normal value;
+        // normalizing denormalized doubles (e.g. 5e-324) is numerically unstable
+        // and would drift outside validatePercentages' 0.01 tolerance.
+        fc.array(fc.double({ min: 0.01, max: 100, noNaN: true, noDefaultInfinity: true }), { minLength: 4, maxLength: 4 }),
+        (arr) => {
+          const total = arr.reduce((s, v) => s + v, 0);
+          const factor = total === 0 ? 0 : 100 / total;
+          const percentages: SplitPercentages = {
+            spending: total === 0 ? 25 : arr[0] * factor,
+            savings: total === 0 ? 25 : arr[1] * factor,
+            bills: total === 0 ? 25 : arr[2] * factor,
+            insurance: total === 0 ? 25 : arr[3] * factor,
+          };
+          
+          // Should not throw
+          expect(() => validatePercentages(percentages)).not.toThrow();
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('Property 11: validatePercentages rejects negative values', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 0, max: 3 }),
+        fc.double({ min: -100, max: -0.01, noNaN: true, noDefaultInfinity: true }),
+        (negativeIndex, negativeValue) => {
+          const p: SplitPercentages = { spending: 25, savings: 25, bills: 25, insurance: 25 };
+          const keys = ['spending', 'savings', 'bills', 'insurance'] as const;
+          p[keys[negativeIndex]] = negativeValue;
+          
+          expect(() => validatePercentages(p)).toThrow('must be non-negative');
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('Property 12: validatePercentages rejects sums not equal to 100', () => {
+    fc.assert(
+      fc.property(
+        fc.double({ noNaN: true, noDefaultInfinity: true }).filter(s => Math.abs(s - 100) > 0.1),
+        (invalidSum) => {
+          const p: SplitPercentages = { 
+            spending: invalidSum / 4, 
+            savings: invalidSum / 4, 
+            bills: invalidSum / 4, 
+            insurance: invalidSum / 4 
+          };
+          // Filter out negative results which might trigger the negative value check first
+          if (p.spending < 0) return true; 
+
+          try {
+            validatePercentages(p);
+            return false;
+          } catch (e) {
+            return (e as Error).message.includes('sum');
+          }
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  /**
+   * Property 13: validateStellarAddress accepts genuinely valid addresses
+   *
+   * `validateStellarAddress` performs a structural regex check AND verifies the
+   * StrKey CRC16 checksum via `StrKey.isValidEd25519PublicKey`. A random Base32
+   * string of the right shape will almost never have a valid checksum, so we
+   * generate real keypairs (which are checksum-valid by construction) to assert
+   * that legitimate addresses are accepted.
+   */
+  it('Property 13: validateStellarAddress accepts genuinely valid addresses', () => {
+    fc.assert(
+      fc.property(
+        // The integer is just a source of entropy to force fresh runs; each run
+        // produces a brand-new, checksum-valid Ed25519 public key.
+        fc.integer(),
+        () => {
+          const address = Keypair.random().publicKey();
+          expect(() => validateStellarAddress(address)).not.toThrow();
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('Property 14: validateStellarAddress rejects adversarial inputs', () => {
+    fc.assert(
+      fc.property(
+        fc.oneof(
+          fc.string().filter(s => s.length !== 56), // Wrong length
+          fc.string({ minLength: 56, maxLength: 56 }).filter(s => !s.startsWith('G')), // Wrong prefix
+          fc.string({ minLength: 56, maxLength: 56, unit: fc.constantFrom(...'abcdefghijklmnopqrstuvwxyz'.split('')) }), // Lowercase
+          fc.string({ minLength: 56, maxLength: 56 }).filter(s => /[^A-Z0-9]/.test(s)), // Illegal characters
+          fc.constant(''), // Empty
+          fc.constant(null as any), // Non-string
+          fc.constant(undefined as any) // Non-string
+        ),
+        (invalidAddress) => {
+          // All these should throw ValidationError
+          expect(() => validateStellarAddress(invalidAddress)).toThrow();
         }
       ),
       { numRuns: 100 }
@@ -194,7 +324,8 @@ describe('Validation Properties - Property-Based Tests', () => {
           fc.constant({ fn: validateFutureDate, input: '2020-01-01' })
         ),
         (testCase) => {
-          const result = testCase.fn(testCase.input as any);
+          const validate = testCase.fn as (input: unknown) => { isValid: boolean; error?: string };
+          const result = validate(testCase.input);
           return (
             result.isValid === false &&
             typeof result.error === 'string' &&
@@ -206,3 +337,4 @@ describe('Validation Properties - Property-Based Tests', () => {
     );
   });
 });
+

@@ -1,5 +1,7 @@
 # Session Expiry Integration Example
 
+For the current canonical guide, use [docs/client-api.md](./client-api.md). This file remains as a worked example.
+
 This document provides a quick integration example for adding session expiry handling to your application.
 
 ## Quick Start

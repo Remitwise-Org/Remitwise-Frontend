@@ -5,6 +5,7 @@ import { vi, expect, describe, it, beforeEach, afterEach } from 'vitest';
  * Validates Requirements 5.1, 5.2, 5.3
  */
 
+import { vi } from 'vitest';
 import { POST as postLogout } from '../../app/api/auth/logout/route';
 
 describe('Logout Endpoint', () => {

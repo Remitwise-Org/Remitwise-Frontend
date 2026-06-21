@@ -4,7 +4,7 @@
  * Tests validation, error handling, and authenticated user data return
  */
 
-import { vi, expect, describe, it, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { requireAuth, createSession, SessionData } from '../../lib/session';
 import { sealData } from 'iron-session';
 

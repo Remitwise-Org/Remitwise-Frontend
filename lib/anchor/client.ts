@@ -36,19 +36,27 @@ export interface AnchorFlowResponse {
     [key: string]: unknown;
 }
 
-const DEFAULT_TIMEOUT_MS = 5000;
+export const DEFAULT_TIMEOUT_MS = 5000;
+export const MAX_RETRY_ATTEMPTS = 3;
+export const RETRY_BASE_DELAY_MS = 200;
+
+function isTransientHttpStatus(status: number): boolean {
+    return status >= 500;
+}
 
 export class AnchorClient {
     private baseUrl: string;
     private apiKey: string;
     private depositPath: string;
     private withdrawPath: string;
+    private maxRetryAttempts: number;
 
-    constructor() {
+    constructor(options?: { maxRetryAttempts?: number }) {
         this.baseUrl = process.env.ANCHOR_API_BASE_URL || '';
         this.apiKey = process.env.ANCHOR_API_KEY || '';
         this.depositPath = process.env.ANCHOR_DEPOSIT_PATH || '/transactions/deposit/interactive';
         this.withdrawPath = process.env.ANCHOR_WITHDRAW_PATH || '/transactions/withdraw/interactive';
+        this.maxRetryAttempts = options?.maxRetryAttempts ?? MAX_RETRY_ATTEMPTS;
         if (!this.baseUrl) {
             console.warn('ANCHOR_API_BASE_URL is not set. Anchor API calls may fail.');
         }
@@ -58,9 +66,6 @@ export class AnchorClient {
         return Boolean(this.baseUrl);
     }
 
-    /**
-     * Helper method to perform fetch with timeout
-     */
     private async fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<Response> {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeoutMs);
@@ -81,10 +86,46 @@ export class AnchorClient {
         }
     }
 
+    private async sleep(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     /**
-     * Fetches the current exchange rates from the Anchor API.
-     * Based on SEP-38: /info or /prices depending on the implementation.
-     * Assuming a simplified /rates endpoint for this client.
+     * Retries transient failures (network errors, timeout, 5xx) with exponential backoff.
+     * 4xx responses are returned immediately without retrying.
+     */
+    private async fetchWithRetry(url: string, options: RequestInit = {}): Promise<Response> {
+        let lastError: Error | undefined;
+
+        for (let attempt = 0; attempt < this.maxRetryAttempts; attempt++) {
+            if (attempt > 0) {
+                const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
+                await this.sleep(delay);
+            }
+
+            try {
+                const response = await this.fetchWithTimeout(url, options);
+
+                if (response.status >= 400 && response.status < 500) {
+                    return response;
+                }
+
+                if (isTransientHttpStatus(response.status)) {
+                    lastError = new Error(`Server error: HTTP ${response.status}`);
+                    continue;
+                }
+
+                return response;
+            } catch (error) {
+                lastError = error instanceof Error ? error : new Error(String(error));
+            }
+        }
+
+        throw lastError ?? new Error('Anchor request failed after max retry attempts');
+    }
+
+    /**
+     * Fetches the current exchange rates from the Anchor API with retry/backoff.
      */
     async getExchangeRates(): Promise<ExchangeRate[]> {
         if (!this.baseUrl) throw new Error('Anchor Base URL not configured');
@@ -92,14 +133,12 @@ export class AnchorClient {
         const url = `${this.baseUrl}/rates`;
 
         try {
-            const response = await this.fetchWithTimeout(url);
+            const response = await this.fetchWithRetry(url);
 
             if (!response.ok) {
                 throw new Error(`Failed to fetch rates: HTTP ${response.status}`);
             }
 
-            // We expect the anchor to return an array of rates or an object containing an array.
-            // Adjust according to the actual anchor API specification.
             const data = await response.json();
             return data.rates || data;
         } catch (error) {
@@ -109,7 +148,7 @@ export class AnchorClient {
     }
 
     /**
-     * Fetches a quote for a specific pair and amount.
+     * Fetches a quote for a specific pair and amount with retry/backoff.
      */
     async getQuote({ from, to, amount }: QuoteRequest): Promise<QuoteResponse> {
         if (!this.baseUrl) throw new Error('Anchor Base URL not configured');
@@ -120,7 +159,7 @@ export class AnchorClient {
         url.searchParams.append('sell_amount', amount);
 
         try {
-            const response = await this.fetchWithTimeout(url.toString());
+            const response = await this.fetchWithRetry(url.toString());
 
             if (!response.ok) {
                 throw new Error(`Failed to fetch quote: HTTP ${response.status}`);
@@ -172,5 +211,4 @@ export class AnchorClient {
     }
 }
 
-// Export a singleton instance for direct utility usage
 export const anchorClient = new AnchorClient();

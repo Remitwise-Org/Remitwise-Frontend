@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo, memo } from 'react'
 import {
     BarChart,
     Bar,
@@ -91,18 +92,26 @@ function CustomLegend() {
     )
 }
 
+function useReducedMotion() {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface SpendingVsSavingsChartProps {
     data?: SpendingVsSavingsDataPoint[]
 }
 
-export function SpendingVsSavingsChart({
+function SpendingVsSavingsChartInner({
     data = MOCK_SPENDING_VS_SAVINGS,
 }: SpendingVsSavingsChartProps) {
-    const totalSpending = data.reduce((s, d) => s + d.spending, 0)
-    const totalSavings = data.reduce((s, d) => s + d.savings, 0)
-    const savingsRate = Math.round((totalSavings / (totalSpending + totalSavings)) * 100)
+    const reducedMotion = useReducedMotion()
+    const savingsRate = useMemo(() => {
+        const spending = data.reduce((s, d) => s + d.spending, 0)
+        const savings  = data.reduce((s, d) => s + d.savings, 0)
+        return Math.round((savings / (spending + savings)) * 100)
+    }, [data])
 
     return (
         <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
@@ -155,8 +164,8 @@ export function SpendingVsSavingsChart({
                         className="hidden sm:block"
                     />
                     <Tooltip content={CustomTooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                    <Bar dataKey="spending" name="spending" fill={SPENDING_COLOR} radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="savings" name="savings" fill={SAVINGS_COLOR} radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="spending" name="spending" fill={SPENDING_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
+                    <Bar dataKey="savings" name="savings" fill={SAVINGS_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
                 </BarChart>
             </ResponsiveContainer>
             {/* Screen‑reader summary */}
@@ -167,3 +176,5 @@ export function SpendingVsSavingsChart({
         </div>
     )
 }
+
+export const SpendingVsSavingsChart = memo(SpendingVsSavingsChartInner)

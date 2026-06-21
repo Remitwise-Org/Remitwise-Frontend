@@ -1,9 +1,10 @@
 "use client";
 
 import { AlertCircle, CheckCircle2, Clock3, Loader2 } from "lucide-react";
+import { useAsyncOperations } from "@/lib/context/AsyncOperationsContext";
 
 interface AsyncSubmissionStatusProps {
-	pending: boolean;
+	pending?: boolean; // Made optional
 	error?: string;
 	success?: string;
 	idleTitle: string;
@@ -48,7 +49,7 @@ const statusStyles = {
 } as const;
 
 export default function AsyncSubmissionStatus({
-	pending,
+	pending: propPending,
 	error,
 	success,
 	idleTitle,
@@ -59,6 +60,12 @@ export default function AsyncSubmissionStatus({
 	successDescription,
 	errorTitle,
 }: AsyncSubmissionStatusProps) {
+	const { state } = useAsyncOperations();
+	
+	// Pending if an operation is active
+	const isActive = state.operations.some(op => op.status !== 'confirmed' && op.status !== 'failed');
+	const pending = propPending ?? isActive;
+
 	const status = error ? "error" : success ? "success" : pending ? "pending" : "idle";
 	const style = statusStyles[status];
 	const Icon = style.Icon;

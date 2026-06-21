@@ -3,7 +3,7 @@
  * Keeps mock data and API responses in sync with the same logic.
  */
 
-export type BillUrgency = 'overdue' | 'urgent' | 'upcoming' | 'paid';
+export type BillUrgency = "overdue" | "urgent" | "upcoming" | "paid";
 
 /** Returns days difference: negative = overdue, 0 = today, positive = future */
 export function daysDiff(dueDateStr: string): number {
@@ -17,15 +17,15 @@ export function daysDiff(dueDateStr: string): number {
 
 export function computeUrgency(dueDateStr: string): BillUrgency {
   const diff = daysDiff(dueDateStr);
-  if (diff < 0) return 'overdue';
-  if (diff <= 3) return 'urgent';
-  return 'upcoming';
+  if (diff < 0) return "overdue";
+  if (diff <= 3) return "urgent";
+  return "upcoming";
 }
 
 export function computeDaysInfo(dueDateStr: string): string {
   const diff = daysDiff(dueDateStr);
   if (diff < 0) return `${Math.abs(diff)}d overdue`;
-  if (diff === 0) return 'Due today';
-  if (diff === 1) return 'Due tomorrow';
+  if (diff === 0) return "Due today";
+  if (diff === 1) return "Due tomorrow";
   return `${diff}d left`;
 }

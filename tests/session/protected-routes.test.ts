@@ -4,6 +4,8 @@ import { vi, expect, describe, it, beforeEach, afterEach } from 'vitest';
  * Tests for example protected routes demonstrating auth middleware patterns
  */
 
+import { vi, type Mock } from 'vitest';
+import { cookies as cookiesImport } from 'next/headers';
 import { GET as getExampleRefresh } from '../../app/api/protected/example-refresh/route';
 import { GET as getExampleRequireAuth } from '../../app/api/protected/example-require-auth/route';
 import { createSession, getSessionCookieHeader } from '../../lib/session';
@@ -13,7 +15,8 @@ vi.mock('next/headers', () => ({
   cookies: vi.fn(),
 }));
 
-import { cookies } from 'next/headers';
+// Loosely typed so tests can supply a partial cookie-store mock.
+const cookies = vi.mocked(cookiesImport) as unknown as Mock;
 
 describe('Protected Routes - Example Implementations', () => {
   const testAddress = 'GDEMOXABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890XXXX';
@@ -29,7 +32,10 @@ describe('Protected Routes - Example Implementations', () => {
     it('should return protected data for valid session', async () => {
       const sealed = await createSession(testAddress);
       
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
+      });
 
       const response = await getExampleRefresh();
       const data = await response.json();
@@ -57,7 +63,10 @@ describe('Protected Routes - Example Implementations', () => {
         ttl: 604800,
       });
       
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
+      });
 
       const response = await getExampleRefresh();
       const data = await response.json();
@@ -72,7 +81,10 @@ describe('Protected Routes - Example Implementations', () => {
     });
 
     it('should return 401 for missing session', async () => {
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue(undefined),
+        set: vi.fn(),
+      });
 
       const response = await getExampleRefresh();
       const data = await response.json();
@@ -87,7 +99,10 @@ describe('Protected Routes - Example Implementations', () => {
     it('should return protected data for valid session', async () => {
       const sealed = await createSession(testAddress);
       
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
+      });
 
       const response = await getExampleRequireAuth();
       const data = await response.json();
@@ -114,7 +129,10 @@ describe('Protected Routes - Example Implementations', () => {
         ttl: 604800,
       });
       
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
+      });
 
       const response = await getExampleRequireAuth();
       const data = await response.json();
@@ -125,7 +143,10 @@ describe('Protected Routes - Example Implementations', () => {
     });
 
     it('should return 401 for missing session', async () => {
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue(undefined),
+        set: vi.fn(),
+      });
 
       const response = await getExampleRequireAuth();
       const data = await response.json();

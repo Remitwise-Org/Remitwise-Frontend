@@ -5,6 +5,8 @@ import { vi, expect, describe, it, beforeEach, afterEach } from 'vitest';
  * Validates Requirements 9.1, 9.2, 9.3, 9.4
  */
 
+import { vi, type MockInstance, type Mock } from 'vitest';
+import { cookies as cookiesImport } from 'next/headers';
 import { getSession, getSessionWithRefresh } from '../../lib/session';
 import { sealData } from 'iron-session';
 
@@ -13,17 +15,18 @@ vi.mock('next/headers', () => ({
   cookies: vi.fn(),
 }));
 
-import { cookies } from 'next/headers';
+// Loosely typed so tests can supply a partial cookie-store mock.
+const cookies = vi.mocked(cookiesImport) as unknown as Mock;
 
 describe('Session Logging', () => {
   const testAddress = 'GDEMOXABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890XXXX';
-  let consoleInfoSpy: jest.SpyInstance;
+  let consoleInfoSpy: MockInstance;
   
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.SESSION_PASSWORD = 'test-password-at-least-32-characters-long';
     process.env.SESSION_MAX_AGE = '604800'; // 7 days
-    consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation();
+    consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -45,7 +48,10 @@ describe('Session Logging', () => {
         ttl: 604800,
       });
       
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
+      });
 
       const session = await getSession();
       
@@ -74,7 +80,10 @@ describe('Session Logging', () => {
         ttl: 604800,
       });
       
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
+      });
 
       await getSession();
       
@@ -100,7 +109,10 @@ describe('Session Logging', () => {
         ttl: 604800,
       });
       
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
+      });
 
       await getSession();
       
@@ -131,7 +143,10 @@ describe('Session Logging', () => {
         ttl: 604800,
       });
       
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
+      });
 
       const session = await getSessionWithRefresh();
       
@@ -161,7 +176,10 @@ describe('Session Logging', () => {
         ttl: 604800,
       });
       
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
+      });
 
       await getSessionWithRefresh();
       
@@ -189,7 +207,10 @@ describe('Session Logging', () => {
         ttl: 604800,
       });
       
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
+      });
 
       await getSessionWithRefresh();
       
@@ -218,7 +239,10 @@ describe('Session Logging', () => {
         ttl: 604800,
       });
       
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
+      });
 
       await getSessionWithRefresh();
       
@@ -241,7 +265,10 @@ describe('Session Logging', () => {
         ttl: 604800,
       });
       
-      vi.mocked(cookies).mockResolvedValue({} as any);
+      cookies.mockResolvedValue({
+        get: vi.fn().mockReturnValue({ value: sealed }),
+        set: vi.fn(),
+      });
 
       await getSession();
       

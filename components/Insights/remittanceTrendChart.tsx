@@ -2,7 +2,24 @@ import { ResponsiveContainer, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, R
 import { TrendingUp, Activity } from 'lucide-react';
 'use client'
 
+import { useMemo, memo } from 'react'
+import { Activity } from 'lucide-react';
+import { 
+  ResponsiveContainer, 
+  AreaChart, 
+  CartesianGrid, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  ReferenceLine, 
+  Area 
+} from 'recharts';
 import { INSIGHTS_PALETTE } from './palette';
+
+function useReducedMotion() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
@@ -31,7 +48,6 @@ export const MOCK_TREND_DATA: TrendDataPoint[] = [
 
 const AXIS_COLOR  = '#6b7280'
 const GRID_COLOR  = 'rgba(255,255,255,0.06)'
-const LINE_COLOR  = '#D72323'
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 interface CustomTooltipProps {
@@ -67,14 +83,15 @@ interface RemittanceTrendChartProps {
   data?: TrendDataPoint[]
 }
 
-export function RemittanceTrendChart({
+function RemittanceTrendChartInner({
   data = MOCK_TREND_DATA,
 }: RemittanceTrendChartProps) {
-  const total   = data.reduce((s, d) => s + d.amount, 0)
-  const average = Math.round(total / data.length)
-  const peak    = Math.max(...data.map(d => d.amount))
-  const latest  = data[data.length - 1]?.amount ?? 0
-  const prev    = data[data.length - 2]?.amount ?? latest
+  const reducedMotion = useReducedMotion()
+  const total   = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
+  const average = useMemo(() => Math.round(total / data.length), [total, data.length])
+  const peak    = useMemo(() => Math.max(...data.map(d => d.amount)), [data])
+  const latest  = useMemo(() => data[data.length - 1]?.amount ?? 0, [data])
+  const prev    = useMemo(() => data[data.length - 2]?.amount ?? latest, [data, latest])
   const trend   = latest >= prev ? 'up' : 'down'
 
   return (
@@ -167,6 +184,7 @@ export function RemittanceTrendChart({
             strokeWidth={2.5}
             fill="url(#trendGradient)"
             dot={false}
+            isAnimationActive={!reducedMotion}
             activeDot={{ r: 5, fill: LINE_COLOR, stroke: '#0A0A0A', strokeWidth: 2 }}
           />
         </AreaChart>
@@ -178,3 +196,5 @@ export function RemittanceTrendChart({
     </div>
   )
 }
+
+export const RemittanceTrendChart = memo(RemittanceTrendChartInner)

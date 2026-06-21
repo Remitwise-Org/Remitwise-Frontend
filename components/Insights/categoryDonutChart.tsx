@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, memo } from 'react'
 import {
   PieChart,
   Pie,
@@ -105,11 +105,17 @@ interface CategoryDonutChartProps {
   data?: CategoryDataPoint[]
 }
 
-export function CategoryDonutChart({ data = MOCK_CATEGORY_DATA }: CategoryDonutChartProps) {
-  const [activeCategory, setActiveCategory] = useState<CategoryDataPoint | null>(null)
+function useReducedMotion() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
 
-  const total   = data.reduce((s, d) => s + d.amount, 0)
-  const topCat  = data[0]
+function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutChartProps) {
+  const [activeCategory, setActiveCategory] = useState<CategoryDataPoint | null>(null)
+  const reducedMotion = useReducedMotion()
+
+  const total  = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
+  const topCat = useMemo(() => data[0], [data])
 
   return (
     <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
@@ -158,7 +164,7 @@ export function CategoryDonutChart({ data = MOCK_CATEGORY_DATA }: CategoryDonutC
                         ? 1
                         : 0.35
                     }
-                    style={{ transition: 'opacity 0.2s ease' }}
+                    style={reducedMotion ? undefined : { transition: 'opacity 0.2s ease' }}
                   />
                 ))}
               </Pie>
@@ -214,7 +220,7 @@ export function CategoryDonutChart({ data = MOCK_CATEGORY_DATA }: CategoryDonutC
                 {/* Progress bar */}
                 <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all duration-700 ease-out"
+                    className={`h-full rounded-full ${reducedMotion ? '' : 'transition-all duration-700 ease-out'}`}
                     style={{ width: `${item.percentage}%`, backgroundColor: color }}
                   />
                 </div>
@@ -241,3 +247,5 @@ export function CategoryDonutChart({ data = MOCK_CATEGORY_DATA }: CategoryDonutC
     </div>
   )
 }
+
+export const CategoryDonutChart = memo(CategoryDonutChartInner)

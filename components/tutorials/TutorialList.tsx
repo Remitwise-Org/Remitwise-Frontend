@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import TutorialCard from "./TutorialCard";
 import { useDensity } from "@/lib/context/DensityContext";
