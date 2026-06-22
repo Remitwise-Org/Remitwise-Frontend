@@ -8,8 +8,14 @@ import {
 /**
  * Integration Tests for API Error Handling
  * Feature: savings-goals-transactions
- * 
- * These tests verify that error handling functions create proper responses.
+ *
+ * These tests verify that the shared error helpers in lib/errors/api-errors.ts
+ * produce the canonical response envelope used across the goals routes:
+ *
+ *   { success: false, error: { code: string, message: string } }
+ *
+ * (Updated from an earlier `{ error, details }` shape that had drifted from the
+ * current implementation — see docs/savings-goals-lifecycle.md.)
  */
 
 describe('API Error Handling - Integration Tests', () => {
@@ -17,11 +23,11 @@ describe('API Error Handling - Integration Tests', () => {
    * Property 8: Invalid input returns 400 with error details
    * Validates: Requirements 7.1, 7.2, 7.3, 7.4
    */
-  it('createValidationError returns 400 with error structure', async () => {
+  it('createValidationError returns 400 with error envelope', async () => {
     const response = createValidationError('Invalid input', 'Amount must be positive');
-    
+
     expect(response.status).toBe(400);
-    
+
     const body = await response.json();
     expect(body).toHaveProperty('error');
     expect(body.success).toBe(false);
@@ -31,9 +37,9 @@ describe('API Error Handling - Integration Tests', () => {
 
   it('createValidationError works without details', async () => {
     const response = createValidationError('Missing field');
-    
+
     expect(response.status).toBe(400);
-    
+
     const body = await response.json();
     expect(body).toHaveProperty('error');
     expect(body.success).toBe(false);
@@ -45,11 +51,11 @@ describe('API Error Handling - Integration Tests', () => {
    * Property 6: Unauthenticated requests return 401
    * Validates: Requirements 6.1, 6.2
    */
-  it('createAuthenticationError returns 401 with error structure', async () => {
+  it('createAuthenticationError returns 401 with error envelope', async () => {
     const response = createAuthenticationError('Authentication required', 'Please provide a valid session');
-    
+
     expect(response.status).toBe(401);
-    
+
     const body = await response.json();
     expect(body).toHaveProperty('error');
     expect(body.success).toBe(false);
@@ -59,9 +65,9 @@ describe('API Error Handling - Integration Tests', () => {
 
   it('createAuthenticationError uses default message', async () => {
     const response = createAuthenticationError();
-    
+
     expect(response.status).toBe(401);
-    
+
     const body = await response.json();
     expect(body.error.code).toBe('AUTHENTICATION_ERROR');
     expect(body.error.message).toBe('Authentication Required');
@@ -71,12 +77,12 @@ describe('API Error Handling - Integration Tests', () => {
    * Property 9: Error responses have consistent structure
    * Validates: Requirements 8.2
    */
-  it('handleUnexpectedError returns 500 with error structure', async () => {
+  it('handleUnexpectedError returns 500 with error envelope', async () => {
     const error = new Error('Something went wrong');
     const response = handleUnexpectedError(error);
-    
+
     expect(response.status).toBe(500);
-    
+
     const body = await response.json();
     expect(body).toHaveProperty('error');
     expect(body.success).toBe(false);
@@ -86,9 +92,9 @@ describe('API Error Handling - Integration Tests', () => {
 
   it('handleUnexpectedError handles non-Error objects', async () => {
     const response = handleUnexpectedError('string error');
-    
+
     expect(response.status).toBe(500);
-    
+
     const body = await response.json();
     expect(body).toHaveProperty('error');
     expect(body.success).toBe(false);
@@ -96,7 +102,7 @@ describe('API Error Handling - Integration Tests', () => {
     expect(body.error.message).toBe('string error');
   });
 
-  it('all error responses have consistent structure', async () => {
+  it('all error responses share a consistent envelope', async () => {
     const errors = [
       createValidationError('test'),
       createAuthenticationError('test'),
