@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
 import { buildUpdateSplitTx } from '@/lib/contracts/remittance-split';
-import { SplitPercentages, ValidationError } from '@/lib/validation/percentages';
+import { ValidationError } from '@/lib/validation/percentages';
+import { splitPercentagesSchema } from '@/lib/validation/split-schemas';
+import { createValidationError } from '@/lib/errors/api-errors';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,28 +17,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Parse request body
-    let body: SplitPercentages;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json(
-        { success: false, error: 'Invalid JSON in request body' },
-        { status: 400 }
-      );
+    // 2. Parse and validate request body with Zod
+    const rawBody = await request.json().catch(() => null);
+    if (rawBody === null) {
+      return createValidationError('Invalid JSON in request body');
     }
 
-    // 3. Extract percentages
-    const { spending, savings, bills, insurance } = body;
+    const parsed = splitPercentagesSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+      return createValidationError('Request validation failed', fieldErrors);
+    }
 
-    // 4. Build transaction using session address as caller
+    const { spending, savings, bills, insurance } = parsed.data;
+
+    // 3. Build transaction using session address as caller
     const result = await buildUpdateSplitTx(
       session.address,
       { spending, savings, bills, insurance },
-      { simulate: true } // Include simulation for cost estimation
+      { simulate: true }
     );
 
-    // 5. Return success response
+    // 4. Return success response
     return NextResponse.json({
       success: true,
       xdr: result.xdr,
@@ -47,10 +49,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     // Handle validation errors
     if (error instanceof ValidationError) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 400 }
-      );
+      return createValidationError(error.message);
     }
 
     // Handle other errors

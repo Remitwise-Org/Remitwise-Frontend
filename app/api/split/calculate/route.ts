@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, ApiError } from '@/lib/auth';
 import { calculateSplit } from '@/lib/contracts/remittance-split';
+import { splitCalculateQuerySchema } from '@/lib/validation/split-schemas';
+import { createValidationError } from '@/lib/errors/api-errors';
 
 async function handler(request: NextRequest, session: string) {
   try {
     const { searchParams } = new URL(request.url);
-    const amountStr = searchParams.get('amount');
-    
-    if (!amountStr) {
-      throw new ApiError(400, 'Amount parameter required');
+    const raw = { amount: searchParams.get('amount') };
+
+    const parsed = splitCalculateQuerySchema.safeParse(raw);
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+      return createValidationError('Query parameter validation failed', fieldErrors);
     }
-    
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount <= 0) {
-      throw new ApiError(400, 'Invalid amount');
-    }
-    
+
+    const { amount } = parsed.data;
+
     const env = (process.env.STELLAR_NETWORK as 'testnet' | 'mainnet') || 'testnet';
     const amounts = await calculateSplit(amount, env);
     
