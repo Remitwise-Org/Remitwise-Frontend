@@ -32,7 +32,7 @@ export async function GET() {
   try {
     await Promise.race([
       prisma.$queryRaw`SELECT 1`,
-      new Promise((_, reject) => 
+      new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Database query timeout')), 5000)
       )
     ]);
@@ -71,10 +71,29 @@ export async function GET() {
   }
 
   // ── 3. Anchor ────────────────────────────────────────────────────
-  // Placeholder — swap for a real HTTP probe once an anchor URL is configured
-  const anchor: { reachable: boolean; error?: string } = { reachable: true };
+  // Probe the anchor platform URL if configured (non-critical check)
+  let anchor: { reachable: boolean; error?: string };
+  const anchorUrl = process.env.ANCHOR_PLATFORM_URL;
+  if (anchorUrl) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(`${anchorUrl}/info`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        anchor = { reachable: true };
+      } else {
+        anchor = { reachable: false, error: `Anchor returned status ${res.status}` };
+      }
+    } catch (err: any) {
+      anchor = { reachable: false, error: err?.message ?? "unreachable" };
+    }
+  } else {
+    anchor = { reachable: false, error: "ANCHOR_PLATFORM_URL not configured" };
+  }
 
   // ── 4. Overall status ────────────────────────────────────────────
+  // Anchor is non-critical: only database and RPC determine overall health
   const healthy = database.reachable && rpc.reachable;
 
   return NextResponse.json(
