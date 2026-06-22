@@ -779,3 +779,7 @@ Sentry error monitoring is integrated for client, server, and edge runtimes.
 **Source maps**:
 - Uploaded during build when `SENTRY_AUTH_TOKEN` and CI are present.
 - `hideSourceMaps: true` prevents browser exposure.
+
+## Data Model
+
+The persistence layer — models, indexes, durability boundary (on-chain / in-memory / DB), and connection notes — is documented in [docs/data-model.md](docs/data-model.md).
