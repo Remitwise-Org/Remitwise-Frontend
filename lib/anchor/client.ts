@@ -79,7 +79,7 @@ export class AnchorClient {
             return response;
         } catch (error: unknown) {
             clearTimeout(id);
-            if (error instanceof Error && error.name === 'AbortError') {
+            if (typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError') {
                 throw new Error(`Request timed out after ${timeoutMs}ms`);
             }
             throw error;
@@ -124,6 +124,15 @@ export class AnchorClient {
         throw lastError ?? new Error('Anchor request failed after max retry attempts');
     }
 
+    private async parseJsonResponse<T>(response: Response, context: string): Promise<T> {
+        try {
+            return await response.json() as T;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new Error(`Failed to parse ${context}: ${message}`);
+        }
+    }
+
     /**
      * Fetches the current exchange rates from the Anchor API with retry/backoff.
      */
@@ -139,8 +148,8 @@ export class AnchorClient {
                 throw new Error(`Failed to fetch rates: HTTP ${response.status}`);
             }
 
-            const data = await response.json();
-            return data.rates || data;
+            const data = await this.parseJsonResponse<{ rates?: ExchangeRate[] } | ExchangeRate[]>(response, 'anchor rates response');
+            return Array.isArray(data) ? data : data.rates || [];
         } catch (error) {
             console.error('AnchorClient: Error fetching exchange rates:', error);
             throw error;
@@ -165,7 +174,7 @@ export class AnchorClient {
                 throw new Error(`Failed to fetch quote: HTTP ${response.status}`);
             }
 
-            return await response.json();
+            return await this.parseJsonResponse<QuoteResponse>(response, 'anchor quote response');
         } catch (error) {
             console.error('AnchorClient: Error fetching quote:', error);
             throw error;
@@ -199,7 +208,7 @@ export class AnchorClient {
             throw new Error(`Anchor flow failed: HTTP ${response.status}${detail ? ` - ${detail}` : ''}`);
         }
 
-        return await response.json();
+        return await this.parseJsonResponse<AnchorFlowResponse>(response, 'anchor flow response');
     }
 
     async startDepositFlow(payload: AnchorFlowRequest): Promise<AnchorFlowResponse> {
