@@ -1,4 +1,4 @@
-import { sanitizeWalletAddress } from '../lib/sanitize';
+import { sanitizeWalletAddress } from '../sanitize';
 
 interface Reporter {
   captureException: (err: unknown, context?: Record<string, any>) => void;

@@ -15,7 +15,13 @@
     "totalSent": "Total Sent",
     "savings": "Savings",
     "billsPaid": "Bills Paid",
-    "insurance": "Insurance"
+    "insurance": "Insurance",
+    "transfers": "{{count}} transfers",
+    "goals": "{{count}} goals",
+    "billsCount": "{{count}} paid",
+    "policies": "{{count}} policies",
+    "loadError": "We couldn't load your dashboard summary.",
+    "unavailable": "—"
   },
   "quickActions": {
     "emergencyTransfer": "Emergency Transfer",

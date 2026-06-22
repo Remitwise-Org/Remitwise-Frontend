@@ -15,7 +15,13 @@
     "totalSent": "Total Enviado",
     "savings": "Ahorros",
     "billsPaid": "Facturas Pagadas",
-    "insurance": "Seguro"
+    "insurance": "Seguro",
+    "transfers": "{{count}} transferencias",
+    "goals": "{{count}} metas",
+    "billsCount": "{{count}} pagadas",
+    "policies": "{{count}} pólizas",
+    "loadError": "No pudimos cargar el resumen de tu panel.",
+    "unavailable": "—"
   },
   "quickActions": {
     "emergencyTransfer": "Transferencia de Emergencia",
