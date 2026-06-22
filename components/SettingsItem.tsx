@@ -15,6 +15,7 @@ interface SettingsItemProps {
   onClick?: () => void;
   rightIcon?: React.ReactNode;
   comingSoon?: boolean;
+  comingSoonLabel?: string;
   hasDropdownBar?: boolean;
   hasIconBackground?: boolean;
   /** Styling variants; default preserves existing look. */
@@ -34,20 +35,48 @@ export default function SettingsItem({
   onClick,
   rightIcon,
   comingSoon = false,
+  comingSoonLabel = "Coming Soon",
   hasDropdownBar = false,
   hasIconBackground = false,
   variant = "default",
   divider = false,
 }: SettingsItemProps) {
   const isNotificationRow = variant === "notification-row";
+  const isDisabled = comingSoon;
+  const dropdownRegionId = React.useId();
+  const [isDropdownOpen, setIsDropdownOpen] = React.useState(hasDropdownBar);
+
+  React.useEffect(() => {
+    setIsDropdownOpen(hasDropdownBar);
+  }, [hasDropdownBar]);
+
+  const handleActivate = () => {
+    if (isDisabled) {
+      return;
+    }
+
+    if (type === "dropdown") {
+      setIsDropdownOpen((current) => !current);
+    }
+
+    onClick?.();
+  };
+
+  const sharedDisabledProps = isDisabled
+    ? ({
+        "aria-disabled": true,
+        tabIndex: -1,
+      } as const)
+    : {};
 
   if (isNotificationRow) {
     return (
       <div
         className={`flex items-center justify-between border border-[#FFFFFF14] h-[77px] p-3 sm:p-4 transition-colors bg-zinc-800/50 ${
           divider ? "border-b border-zinc-800" : ""
-        } ${type !== "toggle" && onClick ? "cursor-pointer" : ""}`}
-        onClick={type !== "toggle" ? onClick : undefined}
+        } ${type !== "toggle" && onClick && !isDisabled ? "cursor-pointer" : ""}`}
+        onClick={type !== "toggle" && !isDisabled ? onClick : undefined}
+        {...sharedDisabledProps}
       >
         {/* Left side: Icon + Text */}
         <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -80,11 +109,18 @@ export default function SettingsItem({
 
   return (
     <div className="bg-[#0f0f0f]">
-      <div
+      {type !== "toggle" && type !== "text" ? (
+      <button
+        type="button"
         className={`flex items-center justify-between p-4 hover:bg-gray-800/20 transition-colors ${
-          type !== "toggle" && type !== "text" ? "cursor-pointer" : ""
-        } group`}
-        onClick={type !== "toggle" && type !== "text" ? onClick : undefined}
+          isDisabled ? "cursor-default" : "cursor-pointer"
+        } group w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f0f] disabled:hover:bg-transparent`}
+        onClick={handleActivate}
+        disabled={isDisabled}
+        tabIndex={isDisabled ? -1 : undefined}
+        aria-disabled={isDisabled || undefined}
+        aria-expanded={type === "dropdown" ? isDropdownOpen : undefined}
+        aria-controls={type === "dropdown" ? dropdownRegionId : undefined}
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {icon && (
@@ -107,14 +143,8 @@ export default function SettingsItem({
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           {comingSoon && (
             <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-red-500 bg-red-500/10 rounded border border-red-500/20 uppercase tracking-wide">
-              Coming Soon
+              {comingSoonLabel}
             </span>
-          )}
-          {type === "toggle" && onToggle && (
-            <Toggle enabled={enabled} onChange={onToggle} />
-          )}
-          {type === "text" && value && (
-            <span className="text-sm text-gray-500">{value}</span>
           )}
           {type === "navigation" && rightIcon && (
             <div className="text-gray-500">
@@ -124,12 +154,57 @@ export default function SettingsItem({
           {type === "navigation" && !rightIcon && (
             <ChevronRight className="w-5 h-5 text-gray-500" />
           )}
+          {type === "dropdown" && (
+            <ChevronDown className="w-5 h-5 text-gray-500" />
+          )}
+        </div>
+      </button>
+      ) : (
+      <div
+        className="flex items-center justify-between p-4 transition-colors group"
+        {...sharedDisabledProps}
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {icon && (
+            <div className={`flex-shrink-0 ${
+              hasIconBackground
+                ? "w-9 h-9 rounded-lg bg-[#161616] border border-gray-700/20 flex items-center justify-center text-gray-400"
+                : "text-gray-400"
+            }`}>
+              {icon}
+            </div>
+          )}
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="text-sm font-medium text-white">{title}</span>
+            {description && (
+              <span className="text-xs text-gray-500">{description}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          {comingSoon && (
+            <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-red-500 bg-red-500/10 rounded border border-red-500/20 uppercase tracking-wide">
+              {comingSoonLabel}
+            </span>
+          )}
+          {type === "toggle" && onToggle && (
+            <Toggle enabled={enabled} onChange={onToggle} />
+          )}
+          {type === "text" && value && (
+            <span className="text-sm text-gray-500">{value}</span>
+          )}
         </div>
       </div>
+      )}
       
       {/* Dropdown bar for dropdown type items */}
-      {hasDropdownBar && (
-        <div className="px-4 pb-4">
+      {type === "dropdown" && (
+        <div
+          className="px-4 pb-4"
+          id={dropdownRegionId}
+          hidden={!isDropdownOpen}
+        >
           <div className="flex items-center gap-2 bg-[#161616] rounded-lg px-3 py-2.5 border border-gray-700/20">
             <ChevronDown className="w-4 h-4 text-gray-500" />
           </div>
