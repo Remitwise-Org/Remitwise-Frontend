@@ -55,3 +55,16 @@ model WebhookEvent {
   @@index([source])
   @@index([nextRetryAt])
 }
+
+model AdminAuditEvent {
+  id        String   @id @default(cuid())
+  eventType String
+  actor     String
+  message   String
+  metadata  String?  // JSON string
+  createdAt DateTime @default(now())
+
+  @@index([eventType])
+  @@index([actor])
+  @@index([createdAt])
+}
