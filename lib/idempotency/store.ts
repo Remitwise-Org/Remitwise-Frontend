@@ -1,10 +1,11 @@
 /**
  * Idempotency Store
- * 
+ *
  * In-memory cache for idempotency keys with TTL support.
  * For production, replace with Redis or database storage.
  */
 
+import { registerShutdownHook } from '../background/runtime';
 import { IdempotencyRecord, IdempotencyCheckResult } from './types';
 
 // In-memory store (replace with Redis/DB in production)
@@ -25,8 +26,18 @@ function cleanupExpired() {
     }
 }
 
-// Run cleanup every hour
-setInterval(cleanupExpired, 60 * 60 * 1000);
+// Run cleanup every hour; capture the timer so shutdown can clear it
+const cleanupTimer = setInterval(cleanupExpired, 60 * 60 * 1000);
+
+/** Stop the background cleanup timer (idempotent). */
+export function stopIdempotencyCleanup(): void {
+    clearInterval(cleanupTimer);
+}
+
+// Register with graceful shutdown so the timer doesn't keep the process alive
+registerShutdownHook('idempotency-store', () => {
+    stopIdempotencyCleanup();
+});
 
 /**
  * Store an idempotency record
