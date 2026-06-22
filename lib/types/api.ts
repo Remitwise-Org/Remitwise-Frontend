@@ -56,17 +56,12 @@ export interface SuccessResponse {
 }
 
 // Error types
+export { ContractError } from '../errors/contract-errors';
+
 export class AuthenticationError extends Error {
   constructor(message: string = 'Unauthorized') {
     super(message);
     this.name = 'AuthenticationError';
-  }
-}
-
-export class ContractError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ContractError';
   }
 }
 
