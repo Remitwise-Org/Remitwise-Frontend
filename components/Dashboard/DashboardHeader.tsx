@@ -46,7 +46,7 @@ const DashboardHeader = () => {
         <div className="flex items-center gap-4">
 
           <Link
-            href="/insights"
+            href="/financial-insights"
             className="hidden sm:flex group relative items-center gap-2 px-4 py-2 shadow-lg shadow-red-600/50 rounded-full overflow-hidden transition-all duration-300 hover:shadow-[0_0_20px_rgba(215,35,35,0.3)]"
           >
 

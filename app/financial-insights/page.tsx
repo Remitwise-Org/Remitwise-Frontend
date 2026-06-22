@@ -1,8 +1,11 @@
 'use client'
 
 import { lazy, Suspense } from 'react'
+import { Send, PiggyBank, FileText, Shield } from 'lucide-react'
 import FinancialInsightsHeader from '@/components/FinancialInsightsHeader'
+import StatCard from '@/components/Dashboard/StatCard'
 import { SpendingVsSavingsChart } from '@/components/Insights/spendingVsSavingChart'
+import { TopCategoriesWidget } from '@/components/Insights/TopCategoriesWidget'
 
 const RemittanceTrendChart = lazy(() =>
   import('@/components/Insights/remittanceTrendChart').then(m => ({ default: m.RemittanceTrendChart }))
@@ -11,11 +14,14 @@ const CategoryDonutChart = lazy(() =>
   import('@/components/Insights/categoryDonutChart').then(m => ({ default: m.CategoryDonutChart }))
 )
 
+// Summary overview — merges the StatCard breakdown (Total Remittances / Saved /
+// Bills / Insurance) with the "vs last period" change deltas. These map to the
+// totals returned by /api/insights (spending / savings / bills / insurance).
 const SUMMARY_STATS = [
-  { label: 'Total Sent',   value: '$3,240', change: '+12%', up: true  },
-  { label: 'Avg per Week', value: '$810',   change: '+5%',  up: true  },
-  { label: 'Transactions', value: '24',     change: '+3',   up: true  },
-  { label: 'Savings Rate', value: '22%',    change: '-2pp', up: false },
+  { title: 'Total Remittances', value: '$3,240', change: '+18%', neutral: false, icon: <Send className="w-5 h-5" /> },
+  { title: 'Total Saved',       value: '$1,580', change: '+24%', neutral: false, icon: <PiggyBank className="w-5 h-5" /> },
+  { title: 'Bills Paid',        value: '$685',   change: '+5%',  neutral: false, icon: <FileText className="w-5 h-5" /> },
+  { title: 'Insurance Premiums',value: '$125',   change: '0%',   neutral: true,  icon: <Shield className="w-5 h-5" /> },
 ] as const
 
 export default function FinancialInsightsPage() {
@@ -38,19 +44,20 @@ export default function FinancialInsightsPage() {
 
       <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
 
-        {/* Summary stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          {SUMMARY_STATS.map(({ label, value, change, up }) => (
-            <div
-              key={label}
-              className="bg-black/40 border border-white/10 rounded-2xl p-4 backdrop-blur-sm"
-            >
-              <p className="text-gray-500 text-xs mb-1">{label}</p>
-              <p className="text-white font-bold text-lg sm:text-xl leading-tight">{value}</p>
-              <p className={`text-xs mt-1 font-medium ${up ? 'text-emerald-400' : 'text-red-400'}`}>
-                {up ? '↑' : '↓'} {change} vs last period
-              </p>
-            </div>
+        {/* Summary overview */}
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-400 mb-4 sm:mb-6">Summary Overview</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          {SUMMARY_STATS.map(({ title, value, change, neutral, icon }) => (
+            <StatCard
+              key={title}
+              title={title}
+              value={value}
+              icon={icon}
+              showTrend={!neutral}
+              detail1={change}
+              detail1Color={neutral ? 'text-gray-400' : 'text-emerald-400'}
+              detail2="vs last period"
+            />
           ))}
         </div>
 
@@ -71,6 +78,11 @@ export default function FinancialInsightsPage() {
           <Suspense fallback={<div className="h-[308px] rounded-3xl bg-white/5 animate-pulse" />}>
             <CategoryDonutChart />
           </Suspense>
+
+          {/* Top categories breakdown (migrated from the former /insights route) */}
+          <div className="lg:col-span-2 flex justify-center">
+            <TopCategoriesWidget />
+          </div>
 
         </div>
 

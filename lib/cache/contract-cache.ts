@@ -114,6 +114,23 @@ const VALID_CONTRACT_IDS: ReadonlySet<string> = new Set(Object.values(CONTRACT_I
 // Initialize LRU cache with proper typing
 const cache = new LRUCache<string, CacheEntry<unknown>>({ max: CACHE_MAX_SIZE });
 
+/**
+ * In-flight request coalescing map.
+ *
+ * Maps a cache key to the single pending fetch promise for that key. When
+ * several callers miss the cache for the same key concurrently (e.g. the
+ * dashboard fanning out parallel reads), only the first ("leader") invokes
+ * `fetchFn`; the rest await this shared promise — collapsing N redundant RPC
+ * calls into one.
+ *
+ * @invariant Entries are removed in a `finally` block on BOTH resolve and
+ * reject, so a failed fetch never leaves a dangling pending entry (no stuck
+ * pending state, no cache poisoning). A rejected flight rejects every waiter
+ * with the same error, and the next call retries from scratch.
+ * @performance O(1) lookup/insert/delete; keyed identically to the LRU cache.
+ */
+const inFlight = new Map<string, Promise<unknown>>();
+
 // Metrics tracking for observability (not exposed in production logs)
 let cacheHits = 0;
 let cacheMisses = 0;
@@ -334,43 +351,61 @@ export async function cachedContractCall<T>(
 
   // Cache miss - fetch fresh data
   cacheMisses++;
-  let data: T;
+
+  // In-flight coalescing: if another caller is already fetching this exact key,
+  // await their pending promise instead of issuing a duplicate network call.
+  // This collapses concurrent cold-cache misses into a single RPC round-trip.
+  const pending = inFlight.get(cacheKey) as Promise<T> | undefined;
+  if (pending) {
+    return pending;
+  }
+
+  // We are the leader for this key. Build a single shared flight that performs
+  // the fetch, validates, and populates the cache. Any concurrent callers that
+  // miss while this is pending will await the very same promise above.
+  const flight = (async (): Promise<T> => {
+    // Fetch failed - the original (business-logic) error propagates to every
+    // waiter unwrapped; nothing is cached, so there is no poisoning.
+    const data = await fetchFn();
+
+    // Validate fetched data is not undefined/null before caching
+    if (data === undefined || data === null) {
+      throw new CacheError(
+        'fetchFn returned null or undefined - cannot cache',
+        CacheErrorCode.INVALID_INPUT,
+        { contractId, method }
+      );
+    }
+
+    // Store in cache with error handling
+    try {
+      const entry: CacheEntry<T> = {
+        data,
+        timestamp: Date.now(),
+        ttl: ttlSeconds,
+        contractId,
+        method,
+      };
+
+      cache.set(cacheKey, entry as CacheEntry<unknown>);
+    } catch (error) {
+      // Cache write error - log but return data
+      // In production, this should be sent to monitoring system
+      // Don't throw - data was fetched successfully
+    }
+
+    return data;
+  })();
+
+  inFlight.set(cacheKey, flight);
 
   try {
-    data = await fetchFn();
-  } catch (error) {
-    // Fetch failed - throw original error
-    // Don't wrap in CacheError as this is a business logic error
-    throw error;
+    return await flight;
+  } finally {
+    // Clear the in-flight entry on BOTH resolve and reject so the map never
+    // retains a settled/dangling promise. On rejection the next call retries.
+    inFlight.delete(cacheKey);
   }
-
-  // Validate fetched data is not undefined/null before caching
-  if (data === undefined || data === null) {
-    throw new CacheError(
-      'fetchFn returned null or undefined - cannot cache',
-      CacheErrorCode.INVALID_INPUT,
-      { contractId, method }
-    );
-  }
-
-  // Store in cache with error handling
-  try {
-    const entry: CacheEntry<T> = {
-      data,
-      timestamp: Date.now(),
-      ttl: ttlSeconds,
-      contractId,
-      method,
-    };
-
-    cache.set(cacheKey, entry as CacheEntry<unknown>);
-  } catch (error) {
-    // Cache write error - log but return data
-    // In production, this should be sent to monitoring system
-    // Don't throw - data was fetched successfully
-  }
-
-  return data;
 }
 
 /**
@@ -457,11 +492,17 @@ export function invalidatePattern(pattern: string): number {
 
 /**
  * Clears all cache entries from memory and resets cache hits/misses metrics.
- * 
+ *
+ * Also drops any tracked in-flight promises so a clear (including a
+ * registry-driven `clearRegisteredCaches()`) fully resets cache state. Already
+ * pending flights still settle and clean up their own entry harmlessly via the
+ * `finally` in {@link cachedContractCall}; subsequent callers start fresh.
+ *
  * @security Should be restricted in production environments to avoid performance degradation.
  */
 export function clearCache(): void {
   cache.clear();
+  inFlight.clear();
   // Reset metrics
   cacheHits = 0;
   cacheMisses = 0;

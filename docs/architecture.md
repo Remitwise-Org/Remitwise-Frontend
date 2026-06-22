@@ -55,9 +55,10 @@ All pages live under `app/` and use the Next.js App Router convention (`page.tsx
 /family                  app/family/page.tsx         — Family wallets
 /insurance               app/insurance/page.tsx      — Micro-insurance
 /transactions            app/transactions/page.tsx
-/insights                app/insights/page.tsx
-/financial-insight       app/financial-insight/page.tsx
-/financial-insights      app/financial-insights/page.tsx
+/financial-insights      app/financial-insights/page.tsx  — Canonical insights page
+/insights                → 308 redirect to /financial-insights (next.config.js)
+/financial-insight       → 308 redirect to /financial-insights (next.config.js)
+/dashboard/insight       app/dashboard/insight/page.tsx   — Dashboard mini-view (6-month trends), links out to /financial-insights
 /emergency-transfer      app/emergency-transfer/page.tsx
 /settings                app/settings/page.tsx
 /tutorial                app/tutorial/page.tsx
@@ -66,6 +67,13 @@ All pages live under `app/` and use the Next.js App Router convention (`page.tsx
 ```
 
 The shared layout (`app/layout.tsx`) wraps every page with providers, fonts, and the global nav.
+
+**Insights consolidation:** The previously duplicated `/insights` and `/financial-insight`
+routes were merged into the single canonical `/financial-insights` page (header + summary
+overview + spending/savings, remittance trend, category donut, and top-categories widgets).
+The duplicates now issue permanent (308) redirects defined in `next.config.js`, so old
+bookmarks keep working. `/dashboard/insight` is retained as an intentional dashboard
+mini-view and links out to the canonical page rather than duplicating its charts.
 
 **Adding a new page:** create `app/<route-name>/page.tsx`. If it needs server-side auth, call `requireAuth()` from `lib/session.ts` at the top of the async server component.
 
