@@ -5,6 +5,8 @@
  * For production, replace with Redis or database storage.
  */
 
+import { registerShutdownHook } from '../background/runtime';
+import { registerCache } from '../cache/registry';
 import { IdempotencyRecord, IdempotencyCheckResult } from './types';
 
 // In-memory store (replace with Redis/DB in production)
@@ -12,6 +14,13 @@ const store = new Map<string, IdempotencyRecord>();
 
 // Default TTL: 24 hours
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
+const CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
+const CLEANUP_TIMER_KEY = '__remitwiseIdempotencyCleanupTimer';
+
+type CleanupTimer = ReturnType<typeof setInterval>;
+type CleanupTimerGlobal = typeof globalThis & {
+    [CLEANUP_TIMER_KEY]?: CleanupTimer;
+};
 
 /**
  * Clean up expired records periodically
@@ -25,8 +34,29 @@ function cleanupExpired() {
     }
 }
 
-// Run cleanup every hour
-setInterval(cleanupExpired, 60 * 60 * 1000);
+function startCleanupTimer(): CleanupTimer {
+    const cleanupGlobal = globalThis as CleanupTimerGlobal;
+    if (cleanupGlobal[CLEANUP_TIMER_KEY]) {
+        return cleanupGlobal[CLEANUP_TIMER_KEY];
+    }
+
+    const cleanupTimer = setInterval(cleanupExpired, CLEANUP_INTERVAL_MS);
+    if (typeof cleanupTimer.unref === 'function') {
+        cleanupTimer.unref();
+    }
+
+    cleanupGlobal[CLEANUP_TIMER_KEY] = cleanupTimer;
+    return cleanupTimer;
+}
+
+const cleanupTimer = startCleanupTimer();
+
+registerShutdownHook('idempotency_store_cleanup', () => {
+    clearInterval(cleanupTimer);
+    delete (globalThis as CleanupTimerGlobal)[CLEANUP_TIMER_KEY];
+});
+
+registerCache('idempotency_store', clearIdempotencyStore);
 
 /**
  * Store an idempotency record
