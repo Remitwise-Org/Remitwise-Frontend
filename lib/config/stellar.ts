@@ -14,3 +14,24 @@ export const CONTRACTS = {
     mainnet: process.env.REMITTANCE_SPLIT_CONTRACT_ID || 'CXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
   }
 };
+
+/**
+ * Returns the Stellar explorer segment ('testnet' | 'public') for the active network.
+ * Uses NEXT_PUBLIC_STELLAR_NETWORK for client-side code, falls back to STELLAR_NETWORK
+ * for server-side, defaulting to 'testnet'.
+ */
+export function getExplorerNetworkSegment(): 'testnet' | 'public' {
+  const network =
+    process.env.NEXT_PUBLIC_STELLAR_NETWORK ||
+    process.env.STELLAR_NETWORK ||
+    'testnet';
+  return network === 'mainnet' || network === 'public' ? 'public' : 'testnet';
+}
+
+/**
+ * Returns a full Stellar Expert explorer URL for a transaction hash.
+ */
+export function getExplorerTxUrl(hash: string): string {
+  const segment = getExplorerNetworkSegment();
+  return `https://stellar.expert/explorer/${segment}/tx/${hash}`;
+}
