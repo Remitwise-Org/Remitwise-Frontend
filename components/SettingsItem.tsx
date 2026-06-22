@@ -41,6 +41,13 @@ export default function SettingsItem({
 }: SettingsItemProps) {
   const isNotificationRow = variant === "notification-row";
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClick?.();
+    }
+  };
+
   if (isNotificationRow) {
     return (
       <div
@@ -48,6 +55,10 @@ export default function SettingsItem({
           divider ? "border-b border-zinc-800" : ""
         } ${type !== "toggle" && onClick ? "cursor-pointer" : ""}`}
         onClick={type !== "toggle" ? onClick : undefined}
+        role={type !== "toggle" && onClick ? "button" : undefined}
+        tabIndex={type !== "toggle" && onClick ? 0 : undefined}
+        onKeyDown={type !== "toggle" && onClick ? handleKeyDown : undefined}
+        aria-label={type !== "toggle" && onClick ? title : undefined}
       >
         {/* Left side: Icon + Text */}
         <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -83,13 +94,17 @@ export default function SettingsItem({
       <div
         className={`flex items-center justify-between p-4 hover:bg-gray-800/20 transition-colors ${
           type !== "toggle" && type !== "text" ? "cursor-pointer" : ""
-        } group`}
+        } group focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f0f] rounded`}
         onClick={type !== "toggle" && type !== "text" ? onClick : undefined}
+        role={type !== "toggle" && type !== "text" && onClick ? "button" : undefined}
+        tabIndex={type !== "toggle" && type !== "text" && onClick ? 0 : undefined}
+        onKeyDown={type !== "toggle" && type !== "text" && onClick ? handleKeyDown : undefined}
+        aria-label={type !== "toggle" && type !== "text" && onClick ? title : undefined}
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {icon && (
             <div className={`flex-shrink-0 ${
-              hasIconBackground 
+              hasIconBackground
                 ? "w-9 h-9 rounded-lg bg-[#161616] border border-gray-700/20 flex items-center justify-center text-gray-400"
                 : "text-gray-400"
             }`}>
@@ -126,7 +141,7 @@ export default function SettingsItem({
           )}
         </div>
       </div>
-      
+
       {/* Dropdown bar for dropdown type items */}
       {hasDropdownBar && (
         <div className="px-4 pb-4">
