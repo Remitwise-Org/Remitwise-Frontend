@@ -16,6 +16,36 @@ interface SavingsByGoalWidgetProps {
   goals?: SavingsGoal[]
   /** Pass true to show the error state */
   hasError?: boolean
+  /** Pass true to show the loading skeleton state */
+  isLoading?: boolean
+}
+
+function SavingsByGoalSkeleton() {
+  return (
+    <div className="bg-[#0f0f0f] rounded-2xl p-6 border border-gray-800 w-full animate-pulse">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="h-6 w-6 rounded bg-white/10" />
+        <div className="h-7 w-36 rounded bg-white/10" />
+      </div>
+      <div className="h-4 w-28 rounded bg-white/5 mb-6" />
+      <div className="space-y-6">
+        {[0, 1, 2].map((i) => (
+          <div key={i}>
+            <div className="flex justify-between items-center mb-2">
+              <div className="h-4 w-28 rounded bg-white/10" />
+              <div className="flex items-center gap-3">
+                <div className="h-4 w-14 rounded bg-white/10" />
+                <div className="h-3 w-8 rounded bg-white/5" />
+              </div>
+            </div>
+            <div className="w-full bg-gray-800 rounded-full h-2.5 overflow-hidden">
+              <div className="bg-white/10 h-2.5 rounded-full w-3/4" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function SavingsByGoalWidget({
@@ -25,9 +55,14 @@ export default function SavingsByGoalWidget({
     { name: 'Medical Fund', amount: 310, percentage: 19 },
   ],
   hasError = false,
+  isLoading = false,
 }: SavingsByGoalWidgetProps) {
   const [retryKey, setRetryKey] = useState(0)
   const handleRetry = useCallback(() => setRetryKey((k) => k + 1), [])
+
+  if (isLoading) {
+    return <SavingsByGoalSkeleton />;
+  }
 
   const isEmpty = !hasError && goals.length === 0
 

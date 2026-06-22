@@ -88,14 +88,56 @@ interface MoneyDistributionWidgetProps {
   distributionData?: typeof data;
   /** Pass true to show the error state */
   hasError?: boolean;
+  /** Pass true to show the loading skeleton state */
+  isLoading?: boolean;
+}
+
+function MoneyDistributionSkeleton() {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-[#0f0f0f] via-[#0b0b0b] to-[#090909] p-8 text-white shadow-[0_30px_60px_rgba(0,0,0,0.45)] lg:w-[50%] w-full animate-pulse">
+      <div className="flex flex-wrap items-start justify-between gap-6">
+        <div className="space-y-3">
+          <div className="h-9 w-9 rounded-full bg-white/10" />
+          <div className="h-7 w-48 rounded bg-white/10" />
+          <div className="h-4 w-36 rounded bg-white/5" />
+        </div>
+        <div className="space-y-2 text-right">
+          <div className="h-4 w-12 rounded bg-white/5" />
+          <div className="h-9 w-28 rounded bg-white/10" />
+        </div>
+      </div>
+      <div className="mt-8 flex flex-col gap-10 items-start">
+        <div className="h-[280px] w-full rounded-2xl bg-white/5" />
+        <div className="w-[90%] sm:w-full">
+          <div className="grid w-full grid-cols-2 gap-x-10 gap-y-4">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="flex items-start gap-3">
+                <div className="mt-2 h-3 w-3 rounded-full bg-white/10" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-3 w-16 rounded bg-white/5" />
+                  <div className="h-4 w-20 rounded bg-white/10" />
+                  <div className="h-3 w-12 rounded bg-white/5" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function MoneyDistributionWidget({
   distributionData = data,
   hasError = false,
+  isLoading = false,
 }: MoneyDistributionWidgetProps) {
   const [retryKey, setRetryKey] = useState(0);
   const handleRetry = useCallback(() => setRetryKey((k) => k + 1), []);
+
+  if (isLoading) {
+    return <MoneyDistributionSkeleton />;
+  }
 
   const isEmpty = !hasError && distributionData.length === 0;
   const total = distributionData.reduce(

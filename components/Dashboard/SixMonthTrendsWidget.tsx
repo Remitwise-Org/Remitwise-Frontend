@@ -97,7 +97,38 @@ function SummaryCard({ icon, label, value, subtitle, variant = 'default', valueC
     )
 }
 
-export default function SixMonthTrendsWidget() {
+export default function SixMonthTrendsWidget({ isLoading = false }: { isLoading?: boolean }) {
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-start pt-[25px] px-[25px] pb-[16px] gap-6 rounded-2xl border border-[rgba(255,255,255,0.08)] w-full max-w-[928px] animate-pulse" style={{ background: 'linear-gradient(180deg, #0F0F0F 0%, #0A0A0A 100%)' }}>
+                <div className="flex flex-row items-center justify-between gap-4 w-full">
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                            <div className="h-5 w-5 rounded bg-white/10" />
+                            <div className="h-7 w-36 rounded bg-white/10" />
+                        </div>
+                        <div className="h-4 w-44 rounded bg-white/5" />
+                    </div>
+                    <div className="h-7 w-24 rounded-lg bg-white/10" />
+                </div>
+                <div className="w-full h-[280px] sm:h-[320px] rounded-2xl bg-white/5" />
+                <div className="w-full border-t border-[rgba(255,255,255,0.08)] pt-[25px]">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {[0, 1, 2].map((i) => (
+                            <div key={i} className="flex flex-col items-start gap-2 pt-[17px] px-[17px] pb-[1px] rounded-[14px] bg-white/5 border border-white/5">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-4 w-4 rounded bg-white/10" />
+                                    <div className="h-3 w-20 rounded bg-white/10" />
+                                </div>
+                                <div className="h-7 w-24 rounded bg-white/10" />
+                                <div className="h-3 w-16 rounded bg-white/5" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
     return (
         <div
             className="flex flex-col items-start pt-[25px] px-[25px] pb-[16px] gap-6 rounded-2xl border border-[rgba(255,255,255,0.08)] w-full max-w-[928px]"
