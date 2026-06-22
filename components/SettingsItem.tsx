@@ -48,6 +48,7 @@ export default function SettingsItem({
           divider ? "border-b border-zinc-800" : ""
         } ${type !== "toggle" && onClick ? "cursor-pointer" : ""}`}
         onClick={type !== "toggle" ? onClick : undefined}
+        aria-disabled={comingSoon ? "true" : undefined}
       >
         {/* Left side: Icon + Text */}
         <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -85,6 +86,11 @@ export default function SettingsItem({
           type !== "toggle" && type !== "text" ? "cursor-pointer" : ""
         } group`}
         onClick={type !== "toggle" && type !== "text" ? onClick : undefined}
+        role={type === "dropdown" ? "button" : undefined}
+        aria-disabled={comingSoon ? "true" : undefined}
+        aria-expanded={type === "dropdown" ? hasDropdownBar : undefined}
+        aria-controls={type === "dropdown" && hasDropdownBar ? `dropdown-${title.replace(/\s+/g, "-").toLowerCase()}` : undefined}
+        tabIndex={comingSoon ? -1 : 0}
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {icon && (
@@ -129,7 +135,12 @@ export default function SettingsItem({
       
       {/* Dropdown bar for dropdown type items */}
       {hasDropdownBar && (
-        <div className="px-4 pb-4">
+        <div
+          id={`dropdown-${title.replace(/\s+/g, "-").toLowerCase()}`}
+          className="px-4 pb-4"
+          role="region"
+          aria-label={`${title} dropdown`}
+        >
           <div className="flex items-center gap-2 bg-[#161616] rounded-lg px-3 py-2.5 border border-gray-700/20">
             <ChevronDown className="w-4 h-4 text-gray-500" />
           </div>
