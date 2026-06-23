@@ -4,6 +4,19 @@
     "network": "Network connection error. Check your connection.",
     "unauthorized": "Session expired. Please log in again."
   },
+  "contractErrors": {
+    "generic": "Contract execution failed. Please try again.",
+    "invalidInput": "Invalid input provided.",
+    "invalidAmount": "Invalid contract amount.",
+    "invalidRecipient": "Invalid contract recipient.",
+    "unauthorized": "Unauthorized access to contract.",
+    "forbidden": "Action forbidden by contract.",
+    "notFound": "Contract resource not found.",
+    "executionFailed": "Contract execution failed.",
+    "contractExecError": "Contract execution failed.",
+    "systemError": "Internal system error.",
+    "limitExceeded": "Contract operation limit exceeded."
+  },
   "transactionHistory": {
     "title": "Transaction History",
     "empty": "No transactions found",

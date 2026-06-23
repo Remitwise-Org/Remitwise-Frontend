@@ -4,6 +4,19 @@
     "network": "Error de conexión de red. Compruebe su conexión.",
     "unauthorized": "Sesión expirada. Por favor, inicie sesión de nuevo."
   },
+  "contractErrors": {
+    "generic": "Falló la ejecución del contrato. Por favor, inténtelo de nuevo.",
+    "invalidInput": "Entrada inválida proporcionada.",
+    "invalidAmount": "Monto del contrato inválido.",
+    "invalidRecipient": "Destinatario del contrato inválido.",
+    "unauthorized": "Acceso no autorizado al contrato.",
+    "forbidden": "Acción prohibida por el contrato.",
+    "notFound": "Recurso del contrato no encontrado.",
+    "executionFailed": "Falló la ejecución del contrato.",
+    "contractExecError": "Falló la ejecución del contrato.",
+    "systemError": "Error interno del sistema.",
+    "limitExceeded": "Límite de operación del contrato excedido."
+  },
   "transactionHistory": {
     "title": "Historial de Transacciones",
     "empty": "No se encontraron transacciones",
