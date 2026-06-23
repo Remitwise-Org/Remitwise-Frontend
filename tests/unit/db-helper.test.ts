@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { getDatabaseUrl } from '@/lib/db';
+import { getDatabaseUrl } from '@/lib/prisma';
 
 const originalEnv = process.env;
 

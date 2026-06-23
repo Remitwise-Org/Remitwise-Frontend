@@ -11,7 +11,17 @@ import {
 } from '@/lib/webhooks/retry';
 
 // Mock Prisma so tests run without a real database
-vi.mock('@/lib/db', () => ({
+vi.mock('@/lib/prisma', () => ({
+  __esModule: true,
+  prisma: {
+    webhookEvent: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
+  },
   default: {
     webhookEvent: {
       create: vi.fn(),
@@ -27,7 +37,7 @@ vi.mock('@/lib/admin/audit', () => ({
   recordAuditEvent: vi.fn(),
 }));
 
-import prisma from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 
 const mockPrisma = prisma as unknown as {
   webhookEvent: {

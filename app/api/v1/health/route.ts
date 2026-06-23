@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import * as StellarSdk from '@stellar/stellar-sdk';
-import prisma from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import {
   getResolvedContractIds,
   getSorobanNetwork,
