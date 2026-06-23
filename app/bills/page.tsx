@@ -11,7 +11,6 @@ import { ActionState } from "@/lib/auth/middleware";
 import { useFormAction } from "@/lib/hooks/useFormAction";
 import AsyncOperationsPanel from "@/components/AsyncOperationsPanel";
 import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
-<<<<<<< HEAD
 import { apiClient } from "@/lib/client/apiClient";
 import { Bill } from "@/lib/contracts/bill-payments";
 import { WidgetErrorState } from "@/components/ui/WidgetStates";
@@ -115,23 +114,7 @@ export default function Bills() {
 		return `Monthly on the ${ordinalDay(monthlyDay)}`;
 	}, [frequency, isRecurring, monthlyDay, weeklyDay]);
 
-	useEffect(() => {
-		const overdueBill = mockBills.find((b) => b.status === "overdue");
-		if (overdueBill) {
-			toast({
-				variant: "warning",
-				title: "Bill overdue",
-				description: `${overdueBill.title} was due on ${overdueBill.dueDate}.`,
-				action: {
-					label: "Pay now",
-					onClick: () => {
-						const formElement = document.getElementById("name");
-						if (formElement) formElement.scrollIntoView({ behavior: "smooth" });
-					},
-				},
-			});
-		}
-	}, [toast]);
+
 
 	const [bills, setBills] = useState<Bill[]>([]);
 	const [stats, setStats] = useState<any>(null);
@@ -160,7 +143,7 @@ export default function Bills() {
 
 			const paidBills = fetchedBills.filter((b: Bill) => b.status === 'paid');
 			const paidAmount = paidBills.reduce((acc: number, b: Bill) => acc + b.amount, 0);
-			const overdueCount = fetchedBills.filter((b: Bill) => b.status === 'overdue' || b.status === 'urgent').length;
+			const overdueCount = fetchedBills.filter((b: Bill) => (b.status as string) === 'overdue' || (b.status as string) === 'urgent').length;
 
 			setStats({
 				totalUnpaid: {
