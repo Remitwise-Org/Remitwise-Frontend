@@ -12,6 +12,7 @@ import {
     type TooltipContentProps,
 } from 'recharts'
 import { TrendingUp } from 'lucide-react'
+import { generateBarChartLabel, generateBarChartSummary } from '@/lib/a11y'
 
 // ── Mock data ───────────────────────────
 
@@ -113,6 +114,17 @@ function SpendingVsSavingsChartInner({
         return Math.round((savings / (spending + savings)) * 100)
     }, [data])
 
+    // Generate accessible label and summary
+    const chartLabel = useMemo(
+        () => generateBarChartLabel("Spending vs Savings", data, "spending", "savings"),
+        [data]
+    )
+
+    const chartSummary = useMemo(
+        () => generateBarChartSummary(data, "spending", "savings"),
+        [data]
+    )
+
     return (
         <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
             {/* Header */}
@@ -137,40 +149,43 @@ function SpendingVsSavingsChartInner({
             </div>
 
             {/* Chart */}
-            <ResponsiveContainer width="100%" height={220}>
-                <BarChart
-                    data={data}
-                    barCategoryGap="30%"
-                    barGap={4}
-                    margin={{ top: 4, right: 4, bottom: 0, left: -16 }}
-                >
-                    <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke={GRID_COLOR}
-                        vertical={false}
-                    />
-                    <XAxis
-                        dataKey="month"
-                        tick={{ fill: AXIS_COLOR, fontSize: 11 }}
-                        axisLine={false}
-                        tickLine={false}
-                    />
-                    <YAxis
-                        tick={{ fill: AXIS_COLOR, fontSize: 11 }}
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={(v: number) => `$${v >= 1000 ? `${v / 1000}k` : v}`}
-                        width={40}
-                        className="hidden sm:block"
-                    />
-                    <Tooltip content={CustomTooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                    <Bar dataKey="spending" name="spending" fill={SPENDING_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
-                    <Bar dataKey="savings" name="savings" fill={SAVINGS_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
-                </BarChart>
-            </ResponsiveContainer>
+            <div role="img" aria-label={chartLabel}>
+                <ResponsiveContainer width="100%" height={220}>
+                    <BarChart
+                        data={data}
+                        barCategoryGap="30%"
+                        barGap={4}
+                        margin={{ top: 4, right: 4, bottom: 0, left: -16 }}
+                        aria-hidden="true"
+                    >
+                        <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke={GRID_COLOR}
+                            vertical={false}
+                        />
+                        <XAxis
+                            dataKey="month"
+                            tick={{ fill: AXIS_COLOR, fontSize: 11 }}
+                            axisLine={false}
+                            tickLine={false}
+                        />
+                        <YAxis
+                            tick={{ fill: AXIS_COLOR, fontSize: 11 }}
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(v: number) => `$${v >= 1000 ? `${v / 1000}k` : v}`}
+                            width={40}
+                            className="hidden sm:block"
+                        />
+                        <Tooltip content={CustomTooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                        <Bar dataKey="spending" name="spending" fill={SPENDING_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
+                        <Bar dataKey="savings" name="savings" fill={SAVINGS_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
             {/* Screen‑reader summary */}
             <p className="sr-only" aria-live="polite">
-                {data.map(d => `${d.month}: spending $${d.spending.toLocaleString()}, savings $${d.savings.toLocaleString()}`).join(', ')}
+                {chartSummary}
             </p>
             <CustomLegend />
         </div>

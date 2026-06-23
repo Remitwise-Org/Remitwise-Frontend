@@ -85,7 +85,7 @@ async function handleAnchorEvent(payload: any): Promise<WebhookProcessResult> {
     switch (event_type) {
       case 'deposit_completed':
         if (txId) {
-          updateAnchorFlowStatusByTransactionId(txId, 'completed')
+          await updateAnchorFlowStatusByTransactionId(txId, 'completed')
         }
         recordAuditEvent({
           type: 'anchor.webhook.deposit_completed',
@@ -98,11 +98,7 @@ async function handleAnchorEvent(payload: any): Promise<WebhookProcessResult> {
       
       case 'withdrawal_failed':
         if (txId) {
-          updateAnchorFlowStatusByTransactionId(txId, 'failed')
-        }
-        recordAuditEvent({
-          type: 'anchor.webhook.withdrawal_failed',
-          actor: 'anchor-webhook',
+          await updateAnchorFlowStatusByTransactionId(txId, 'failed')
           message: `Withdrawal failed for ${txId || 'unknown'}`,
           metadata: { transaction_id: txId || null, status },
         })
