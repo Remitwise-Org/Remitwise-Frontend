@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useId, useMemo, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Clock, PieChart as PieChartIcon } from "lucide-react";
 import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
 import WidgetErrorState from "@/components/ui/WidgetErrorState";
+import { useClientTranslator } from "@/lib/i18n/client";
+import { buildChartImageLabel, buildChartSummary } from "@/lib/a11y/chart";
 
 const data = [
   {
@@ -95,12 +97,31 @@ export default function MoneyDistributionWidget({
   hasError = false,
 }: MoneyDistributionWidgetProps) {
   const [retryKey, setRetryKey] = useState(0);
+  const summaryId = useId();
+  const { t } = useClientTranslator();
+
+  const labelItems = useMemo(
+    () => distributionData.map((item) => `${item.name} ${item.displayPercent ?? `${item.value}%`}`),
+    [distributionData],
+  );
+
+  const summaryItems = useMemo(
+    () => distributionData.map((item) => `${item.name}: ${item.amount} (${item.displayPercent ?? `${item.value}%`})`),
+    [distributionData],
+  );
+
+  const ariaLabel = buildChartImageLabel("Money distribution", labelItems, t);
+  const summaryText = buildChartSummary(summaryItems, t);
   const handleRetry = useCallback(() => setRetryKey((k) => k + 1), []);
 
   const isEmpty = !hasError && distributionData.length === 0;
-  const total = distributionData.reduce(
-    (sum, d) => sum + parseFloat(d.amount.replace(/[^0-9.]/g, "")),
-    0
+  const total = useMemo(
+    () =>
+      distributionData.reduce(
+        (sum, d) => sum + parseFloat(d.amount.replace(/[^0-9.]/g, "")),
+        0,
+      ),
+    [distributionData],
   );
 
   return (
@@ -143,9 +164,14 @@ export default function MoneyDistributionWidget({
         />
       ) : (
         <div className="mt-8 flex flex-col gap-10 items-start">
-          <div className="h-[280px] w-full">
+          <div
+            className="h-[280px] w-full"
+            role="img"
+            aria-label={ariaLabel}
+            aria-describedby={summaryId}
+          >
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart aria-hidden="true">
                 <Pie
                   data={distributionData}
                   dataKey="value"
@@ -168,6 +194,10 @@ export default function MoneyDistributionWidget({
               </PieChart>
             </ResponsiveContainer>
           </div>
+
+          <p id={summaryId} className="sr-only">
+            {summaryText}
+          </p>
 
           <div className="w-[90%] sm:w-full">
             <div className="grid w-full grid-cols-2 gap-x-10 gap-y-4 text-left">

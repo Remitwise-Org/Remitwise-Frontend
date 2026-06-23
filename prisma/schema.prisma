@@ -56,12 +56,17 @@ model WebhookEvent {
   @@index([nextRetryAt])
 }
 
-model AuditEvent {
-  id        String   @id @default(cuid())
-  timestamp DateTime @default(now())
-  event     String
-  identity  String
-  details   String?
+model RecurringRemittance {
+  id               String   @id @default(cuid())
+  userAddress      String
+  recipientAddress String
+  amount           Float
+  currency         String
+  frequency        String // weekly | biweekly | monthly
+  nextRunAt        DateTime
+  lastRunAt        DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  @@index([timestamp])
+  @@index([userAddress])
 }

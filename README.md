@@ -8,6 +8,8 @@ Frontend application for the RemitWise remittance and financial planning platfor
 
 This is a Next.js-based frontend skeleton that provides the UI structure for all RemitWise features. The application is built with:
 
+- [Prisma data model and durability boundary](./docs/data-model.md)
+
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Utility-first styling
@@ -69,7 +71,7 @@ npm install
 
 # Setup Database
 # 1. Ensure you have `.env` file with `DATABASE_URL="file:./dev.db"`
-# Note: For serverless environments (like Vercel), connection pooling limits (default min 1, max 10) 
+# Note: For serverless environments (like Vercel), connection pooling limits (default min 1, max 10)
 # and timeouts (5s) are automatically configured on the Prisma DB client.
 # 2. Run initial Prisma migration
 npx prisma migrate dev
@@ -470,8 +472,8 @@ RemitWise uses wallet-based authentication with the following flow:
 
 The application interacts with the following Soroban smart contracts on Stellar:
 
-| Contract         | Purpose                       | Preferred Environment Variable                    |
-| ---------------- | ----------------------------- | ------------------------------------------------- |
+| Contract         | Purpose                       | Preferred Environment Variable                  |
+| ---------------- | ----------------------------- | ----------------------------------------------- |
 | Remittance Split | Automatic money allocation    | `REMITTANCE_SPLIT_CONTRACT_ID_TESTNET/_MAINNET` |
 | Savings Goals    | Goal-based savings management | `SAVINGS_GOALS_CONTRACT_ID_TESTNET/_MAINNET`    |
 | Bill Payments    | Bill tracking and payments    | `BILL_PAYMENTS_CONTRACT_ID_TESTNET/_MAINNET`    |
@@ -775,7 +777,7 @@ Example environment variables:
 
 RemitWise exposes an OpenAPI discovery endpoint:
 
- /api/.well-known/openapi
+/api/.well-known/openapi
 
 This allows integrators and wallets to automatically discover
 the RemitWise API specification.
@@ -785,6 +787,7 @@ the RemitWise API specification.
 Sentry error monitoring is integrated for client, server, and edge runtimes.
 
 **Required environment variables** (see `.env.example`):
+
 - `NEXT_PUBLIC_SENTRY_DSN` — public DSN for browser and client
 - `SENTRY_DSN` — server/edge DSN (same value)
 - `SENTRY_ORG`, `SENTRY_PROJECT` — project identifiers for source map uploads
@@ -793,17 +796,21 @@ Sentry error monitoring is integrated for client, server, and edge runtimes.
 - `NEXT_PUBLIC_APP_ENV` — `development` | `staging` | `production`
 
 **Sample rates**:
+
 - `NEXT_PUBLIC_APP_ENV=production` sets lower rates: `tracesSampleRate: 0.1`, `replaysSessionSampleRate: 0.05`
 - Non-production uses higher rates for visibility
 
 **Tunnel route**:
+
 - All Sentry requests are proxied through `/monitoring` (configured in `next.config.js`) to avoid ad blockers.
 
 **PII scrubbing**:
+
 - Client (`scrubStellarPII`): Stellar addresses (`G[A-Z2-7]{55}`) and amounts (`\d+ XLM|USDC|USD`) are replaced before send.
 - Server (`scrubServerPII`): same + `iron-session` tokens are redacted.
 - Scrubbers live inside each config file for edge compatibility.
 
 **Source maps**:
+
 - Uploaded during build when `SENTRY_AUTH_TOKEN` and CI are present.
 - `hideSourceMaps: true` prevents browser exposure.
