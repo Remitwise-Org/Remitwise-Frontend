@@ -47,5 +47,9 @@
     "goals": "Metas",
     "bills": "Facturas",
     "urgentBadge": "URGENTE"
+  },
+  "charts": {
+    "imageLabel": "{{title}}: {{summary}}",
+    "noData": "No hay datos disponibles."
   }
 }

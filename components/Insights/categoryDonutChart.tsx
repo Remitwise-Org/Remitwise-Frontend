@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, memo } from 'react'
+import { useId, useState, useMemo, memo } from 'react'
 import {
   PieChart,
   Pie,
@@ -10,7 +10,9 @@ import {
   type TooltipProps,
 } from 'recharts'
 import { PieChart as PieChartIcon, Info } from 'lucide-react'
-import { INSIGHTS_PALETTE } from './palette';
+import { INSIGHTS_PALETTE } from './palette'
+import { useClientTranslator } from '@/lib/i18n/client'
+import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart'
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
@@ -111,11 +113,28 @@ function useReducedMotion() {
 }
 
 function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutChartProps) {
+  const summaryId = useId()
+  const { t } = useClientTranslator()
   const [activeCategory, setActiveCategory] = useState<CategoryDataPoint | null>(null)
   const reducedMotion = useReducedMotion()
 
   const total  = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
   const topCat = useMemo(() => data[0], [data])
+
+  const summaryItems = useMemo(
+    () => data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage}%)`),
+    [data],
+  )
+
+  const ariaLabel = useMemo(
+    () => buildChartImageLabel('Top categories', summaryItems, t),
+    [summaryItems, t],
+  )
+
+  const summaryText = useMemo(
+    () => buildChartSummary(summaryItems, t),
+    [summaryItems, t],
+  )
 
   return (
     <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
@@ -134,9 +153,9 @@ function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutCha
       <div className="flex flex-col sm:flex-row items-center gap-6">
 
         {/* Donut */}
-        <div className="w-full sm:w-auto flex-shrink-0">
+        <div className="w-full sm:w-auto flex-shrink-0" role="img" aria-label={ariaLabel} aria-describedby={summaryId}>
           <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
+            <PieChart aria-hidden="true">
               <Pie
                 data={data}
                 cx="50%"
@@ -241,8 +260,8 @@ function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutCha
         </div>
       )}
       {/* Screen‑reader summary for the chart */}
-      <p className="sr-only" aria-live="polite">
-        {data.map(d => `${d.name}: ${d.percentage}% amount $${d.amount.toLocaleString()}`).join(', ')}
+      <p id={summaryId} className="sr-only" aria-live="polite">
+        {chartSummary}
       </p>
     </div>
   )

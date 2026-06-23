@@ -47,5 +47,9 @@
     "goals": "Goals",
     "bills": "Bills",
     "urgentBadge": "URGENT"
+  },
+  "charts": {
+    "imageLabel": "{{title}}: {{summary}}",
+    "noData": "No data available."
   }
 }
