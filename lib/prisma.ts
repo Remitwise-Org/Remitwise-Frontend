@@ -1,7 +1,7 @@
 // lib/prisma.ts
 import { PrismaClient } from '@prisma/client';
 
-function getDatabaseUrl(): string | undefined {
+export function getDatabaseUrl(): string | undefined {
   const urlString = process.env.DATABASE_URL;
   if (!urlString) return undefined;
   try {
