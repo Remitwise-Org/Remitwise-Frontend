@@ -1,4 +1,4 @@
-import { getGoal } from "@/lib/contracts/savings-goal";
+import { getGoal, ContractReadError } from "@/lib/contracts/savings-goal";
 import { NextResponse, NextRequest } from "next/server";
 
 export async function GET(
@@ -29,6 +29,12 @@ export async function GET(
     return NextResponse.json(goal, { status: 200 });
   } catch (error) {
     console.error(`GET /api/goals/${await context.params} error:`, error);
+    if (error instanceof ContractReadError) {
+      return NextResponse.json(
+        { error: "Unable to read goal data. Please try again.", retryable: true },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
       { error: "Failed to fetch goal" },
       { status: 500 }
