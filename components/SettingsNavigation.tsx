@@ -45,49 +45,53 @@ export default function SettingsNavigation({ items }: SettingsNavigationProps) {
           Jump to
         </p>
 
-        <div className="mt-4 space-y-2">
+        <ul className="mt-4 space-y-2">
           {items.map((item) => {
             const isActive = item.id === activeId;
             return (
-              <a
-                key={item.id}
-                href={`#${item.id}`}
-                className={`block rounded-2xl border px-4 py-3 text-sm transition-colors ${
-                  isActive
-                    ? "border-red-500/40 bg-red-500/10 text-white"
-                    : "border-transparent text-gray-300 hover:border-white/10 hover:bg-white/5"
-                }`}
-              >
-                <div className="font-medium">{item.title}</div>
-                <div className="text-xs text-gray-500">{item.description}</div>
-              </a>
+              <li key={item.id}>
+                <a
+                  href={`#${item.id}`}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`block rounded-2xl border px-4 py-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 ${
+                    isActive
+                      ? "border-red-500/40 bg-red-500/10 text-white"
+                      : "border-transparent text-gray-300 hover:border-white/10 hover:bg-white/5"
+                  }`}
+                >
+                  <div className="font-medium">{item.title}</div>
+                  <div className="text-xs text-gray-500">{item.description}</div>
+                </a>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
 
       <div className="rounded-[28px] border border-gray-800/70 bg-[#0f0f0f]/90 p-5 xl:hidden">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gray-400">
           Sections
         </p>
-        <div className="mt-4 flex snap-x gap-3 overflow-x-auto pb-2">
+        <ul className="mt-4 flex snap-x gap-3 overflow-x-auto pb-2">
           {items.map((item) => {
             const isActive = item.id === activeId;
             return (
-              <a
-                key={item.id}
-                href={`#${item.id}`}
-                className={`shrink-0 rounded-2xl border px-4 py-3 text-sm transition-colors ${
-                  isActive
-                    ? "border-red-500/40 bg-red-500/10 text-white"
-                    : "border-white/10 text-gray-300 hover:border-white/20 hover:bg-white/5"
-                }`}
-              >
-                {item.title}
-              </a>
+              <li key={item.id} className="shrink-0">
+                <a
+                  href={`#${item.id}`}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`block rounded-2xl border px-4 py-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 ${
+                    isActive
+                      ? "border-red-500/40 bg-red-500/10 text-white"
+                      : "border-white/10 text-gray-300 hover:border-white/20 hover:bg-white/5"
+                  }`}
+                >
+                  {item.title}
+                </a>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
     </nav>
   );
