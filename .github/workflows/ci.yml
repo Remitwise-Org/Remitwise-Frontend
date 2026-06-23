@@ -1,5 +1,9 @@
-# CI: lint + unit tests + optional integration tests.
+# CI: lint + typecheck + unit tests + integration tests + build.
 # Runs on push/PR to main and dev. Loads .env.test when present; TEST_* can also come from GitHub Secrets.
+#
+# This is an ENFORCING gate: any failing step fails the job. Do not add a blanket
+# `continue-on-error: true` — if a single step is genuinely flaky, scope it to that
+# one step with a comment explaining why.
 name: CI
 
 on:
@@ -26,10 +30,10 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci || true
-        continue-on-error: true
+        run: npm ci
 
       - name: Load .env.test
+        shell: bash
         run: |
           if [ -f .env.test ]; then
             while IFS= read -r line; do
@@ -39,21 +43,22 @@ jobs:
               echo "${name}=${value}" >> "$GITHUB_ENV"
             done < .env.test
           fi
-        shell: bash || true
-        continue-on-error: true
 
       - name: Run lint
-        run: npm run lint || true
-        continue-on-error: true
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
 
       - name: Run unit tests
-        run: npm run test || true
-        continue-on-error: true
+        run: npm run test
 
       - name: Run integration tests
-        run: npm run test:integration || true
-        continue-on-error: true
+        run: npm run test:integration
         env:
           # Optional: set in GitHub Secrets to override or supply when .env.test is not committed
           TEST_SOROBAN_RPC_URL: ${{ secrets.TEST_SOROBAN_RPC_URL }}
           TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+
+      - name: Build
+        run: npm run build
