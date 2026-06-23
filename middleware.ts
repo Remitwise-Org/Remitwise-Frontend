@@ -33,6 +33,8 @@ const CORS_ALLOWED_HEADERS = [
 const MAX_BODY_SIZE = parseInt(process.env.API_MAX_BODY_SIZE || "1048576", 10); // Default 1MB
 
 const SECURITY_HEADERS: Record<string, string> = {
+  "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "X-XSS-Protection": "1; mode=block",
