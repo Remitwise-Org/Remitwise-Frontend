@@ -745,18 +745,16 @@ Notes:
 
 ## Stellar TOML discovery
 
-RemitWise exposes wallet and anchor discovery support through the Stellar TOML standard.
+RemitWise exposes wallet and anchor discovery support through the Stellar TOML standard (SEP-1).
 
 - `GET /.well-known/stellar.toml`
-- optional redirect via `STELLAR_TOML_REDIRECT`
+- Optional redirect via `STELLAR_TOML_REDIRECT`
 
-The endpoint returns a valid Stellar TOML file with discovery fields such as:
+The endpoint returns a valid Stellar TOML file (complying with SEP-1 standards) with the required `Access-Control-Allow-Origin: *` CORS header and structured tables:
 
-- `DOCUMENTATION`
-- `SIGNING_KEY`
-- `TRANSFER_SERVER`
-- `WEB_AUTH_ENDPOINT`
-- `KYC_SERVER`
+- **Global Fields**: `VERSION`, `NETWORK_PASSPHRASE` (resolved dynamically to match active environment from `lib/contracts/network-resolution.ts`), and `SIGNING_KEY`.
+- **Anchor & Server Endpoints**: `TRANSFER_SERVER`, `WEB_AUTH_ENDPOINT`, and `KYC_SERVER`.
+- **`[DOCUMENTATION]` Table**: Legal/org identification fields including `ORG_NAME`, `ORG_URL`, `ORG_DESCRIPTION`, and `DOCUMENTATION` (direct URL of the TOML).
 
 To configure a custom domain, set environment variables in production or host a static TOML at the domain root. If the domain is not ready yet, use `STELLAR_TOML_REDIRECT` to point wallets to a hosted TOML.
 
@@ -768,6 +766,10 @@ Example environment variables:
 - `STELLAR_TRANSFER_SERVER`
 - `STELLAR_WEB_AUTH_ENDPOINT`
 - `STELLAR_KYC_SERVER`
+- `STELLAR_ORG_NAME`
+- `STELLAR_ORG_URL`
+- `STELLAR_ORG_DESCRIPTION`
+- `STELLAR_NETWORK_PASSPHRASE` (optional override)
 
 ## API Discovery
 

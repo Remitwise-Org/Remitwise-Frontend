@@ -11,11 +11,35 @@
     "status": "Estado",
     "date": "Fecha"
   },
+  "transactionStatus": {
+    "pending": {
+      "label": "Confirmando",
+      "emphasis": "Esperando la confirmación de la red"
+    },
+    "confirmed": {
+      "label": "Confirmada",
+      "emphasis": "Liquidada en la red Stellar"
+    },
+    "failed": {
+      "label": "Fallida",
+      "emphasis": "La transacción no se completó"
+    },
+    "unknown": {
+      "label": "Estado desconocido",
+      "emphasis": "Aún sin confirmar — revise el explorador"
+    }
+  },
   "dashboard": {
     "totalSent": "Total Enviado",
     "savings": "Ahorros",
     "billsPaid": "Facturas Pagadas",
-    "insurance": "Seguro"
+    "insurance": "Seguro",
+    "transfers": "{{count}} transferencias",
+    "goals": "{{count}} metas",
+    "billsCount": "{{count}} pagadas",
+    "policies": "{{count}} pólizas",
+    "loadError": "No pudimos cargar el resumen de tu panel.",
+    "unavailable": "—"
   },
   "quickActions": {
     "emergencyTransfer": "Transferencia de Emergencia",

@@ -60,6 +60,14 @@ function maskAddress(address: string): string {
 }
 
 /**
+ * Partially masks a wallet address for safe inclusion in logs/telemetry.
+ * Public wrapper around the internal {@link maskAddress} helper.
+ */
+export function sanitizeWalletAddress(address: string): string {
+  return maskAddress(address);
+}
+
+/**
  * Partially masks a phone number
  * +1234567890 → +123***7890
  */

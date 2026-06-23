@@ -15,7 +15,7 @@
     "test:unit:node": "node --test tests/unit/webhooks-verify.test.cjs tests/unit/middleware.test.cjs tests/unit/contract-cache.test.cjs",
     "test:unit:vitest": "vitest run tests/unit/validation/savings-goals.test.ts",
     "test:property": "vitest run tests/property",
-    "test:integration": "node --test tests/integration/auth.test.cjs tests/integration/health.test.cjs tests/integration/validation.test.cjs && vitest run tests/integration/api/goals-validation.test.ts",
+    "test:integration": "node --test tests/integration/auth.test.cjs tests/integration/health.test.cjs tests/integration/validation.test.cjs && vitest run tests/integration/api",
     "test:e2e": "playwright test"
   },
   "dependencies": {

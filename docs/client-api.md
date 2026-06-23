@@ -37,23 +37,41 @@ Real call sites in the repo:
 
 - `apiClient.request(url, options?)`
 - `apiClient.get(url, options?)`
+- `apiClient.head(url, options?)`
 - `apiClient.post(url, options?)`
 - `apiClient.put(url, options?)`
+- `apiClient.patch(url, options?)`
 - `apiClient.delete(url, options?)`
+- `apiClient.getJson<T>(url, options?)`
 
 `ApiClientOptions` extends `RequestInit` and adds:
 
-- `retries?: number`
-- `backoff?: number`
+- `retries?: number` — max retry attempts for idempotent (`GET`/`HEAD`) requests. Default `3`. Ignored for writes.
+- `backoff?: number` — base backoff in ms; doubles each attempt and is jittered. Default `1000`.
+- `timeout?: number` — per-request timeout in ms before the request is aborted. Default `10000`. Pass `0` to disable.
 
 Return type:
 
-- `Promise<Response | null>`
+- `Promise<Response | null>` for the verb helpers and `request`.
+- `Promise<T | null>` for `getJson<T>` (parsed/validated body, or `null` on session expiry).
 
 Interpret the result like this:
 
 - `Response`: the request completed and did not enter the terminal session-expiry flow.
 - `null`: the session-expiry flow already ran, local auth state was cleared, and the UI was notified and scheduled for redirect. Callers should stop work and not show a duplicate auth error.
+
+### Timeout
+
+Every request (regardless of method) runs under a per-request timeout enforced
+with an `AbortController`. The default is `10000` ms and is configurable via the
+`timeout` option (`0` disables it). When the timeout fires, the in-flight fetch
+is aborted. For idempotent requests this counts as a retryable failure; once
+retries are exhausted (or for writes) the call rejects with a `TimeoutError`
+`DOMException`.
+
+The timeout is composed with any caller-supplied `signal`, so a component
+unmount or `useFormAction`'s latest-wins abort still cancels the request
+immediately (see [Aborting requests](#aborting-requests)).
 
 ### Retry Behavior
 
@@ -61,18 +79,56 @@ Before session-expiry logic runs, `apiClient` uses `fetchWithRetry`.
 
 Defaults:
 
-- `retries = 3`
+- `retries = 3` (idempotent methods only)
 - `backoff = 1000`
+- `timeout = 10000`
 
-Automatic retries happen for:
+Automatic retries happen **only for idempotent methods (`GET` and `HEAD`)**, on:
 
 - HTTP `5xx`
 - HTTP `429`
-- Rejected fetches such as network failures
+- Rejected fetches such as network failures and timeouts
 
-Backoff is exponential: each retry doubles the delay.
+Write methods (`POST`, `PUT`, `PATCH`, `DELETE`) are **never** auto-retried, even
+on `5xx`/`429`/network errors. This is deliberate: replaying a write could cause
+a double-submit (e.g. sending a remittance twice). Writes still get a timeout;
+they just fail fast instead of retrying.
 
-Responses such as `400`, `403`, and non-expiry `401` values are returned to the caller without this retry loop treating them as session failures.
+Backoff is exponential with jitter: the delay for each retry is
+`base * 2^attempt`, of which half is fixed and half is randomized ("equal
+jitter") so many clients don't reconverge on the server. When a response carries
+a `Retry-After` header (e.g. on `429`), that value is honored instead of the
+computed backoff (clamped to 30s).
+
+A caller-initiated abort is never retried — it rejects immediately.
+
+Responses such as `400`, `403`, and non-expiry `401` values are returned to the
+caller without this retry loop treating them as session failures.
+
+> Note: this is the **browser** client. Do not confuse it with the server-side
+> RPC retry in [`lib/soroban/client.ts`](../lib/soroban/client.ts); the two layers
+> are independent and should not be stacked on the same call path.
+
+### Typed reads with `getJson<T>()`
+
+`getJson<T>(url, options?)` is a convenience wrapper over `get` for JSON reads:
+
+1. Sends an idempotent `GET` (with the shared timeout + retry behavior).
+2. Returns `null` if the session-expiry flow ran.
+3. Throws `ApiClientError` if the response is not OK or the body is not valid JSON.
+4. Optionally runs a `validate(data) => T` function (e.g. a Zod schema's `parse`)
+   and returns the typed, validated result.
+
+```ts
+import { apiClient, ApiClientError } from '@/lib/client/apiClient';
+
+const insights = await apiClient.getJson('/api/insights', {
+  validate: (raw) => InsightsSchema.parse(raw),
+});
+
+if (insights === null) return; // session-expiry flow already handled
+// insights is typed and validated here
+```
 
 ## `401 -> refresh -> retry once`
 
@@ -315,11 +371,15 @@ You can pass an `AbortSignal` through `ApiClientOptions` because the options ext
 
 Current implementation detail:
 
-- aborted fetches are caught by the generic retry wrapper
-- if `retries > 0`, the client will retry even aborted requests
-- once retries are exhausted, the fetch rejection is thrown to the caller
+- The caller's `signal` is combined with the internal per-request timeout signal,
+  so either source can cancel the in-flight fetch.
+- A caller-initiated abort fails fast: it is surfaced to the caller immediately
+  and is **never** retried, regardless of `retries`.
+- A timeout abort, by contrast, is treated as a retryable failure for idempotent
+  `GET`/`HEAD` requests.
 
-If you need aborts to fail fast without retrying, pass `retries: 0`.
+This makes `apiClient` safe to use with abort-on-unmount patterns such as
+`useFormAction`, where the latest submit aborts the previous in-flight request.
 
 ### Concurrent `401`s
 

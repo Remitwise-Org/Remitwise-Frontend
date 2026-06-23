@@ -1,20 +1,19 @@
-import { ResponsiveContainer, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceLine, Area } from 'recharts';
-import { TrendingUp, Activity } from 'lucide-react';
 'use client'
 
 import { useMemo, memo } from 'react'
 import { Activity } from 'lucide-react';
-import { 
-  ResponsiveContainer, 
-  AreaChart, 
-  CartesianGrid, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  ReferenceLine, 
-  Area 
+import {
+  ResponsiveContainer,
+  AreaChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ReferenceLine,
+  Area
 } from 'recharts';
 import { INSIGHTS_PALETTE } from './palette';
+const LINE_COLOR = INSIGHTS_PALETTE[0];
 
 function useReducedMotion() {
   if (typeof window === 'undefined') return false
@@ -23,6 +22,18 @@ function useReducedMotion() {
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
+/**
+ * A single point on the remittance trend timeline.
+ *
+ * The chart plots one entry per period (typically weekly), ordered oldest →
+ * newest. `amount` drives the area/`YAxis` and the average `ReferenceLine`;
+ * `date` is the `XAxis` category; `transactions` is surfaced in the tooltip and
+ * the screen-reader summary only.
+ *
+ * @property date         Period label shown on the X axis (e.g. `"Sep 1"`).
+ * @property amount       Remittance volume for the period, in USD.
+ * @property transactions Number of transactions in the period.
+ */
 export interface TrendDataPoint {
   date: string
   amount: number
@@ -80,19 +91,56 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 // ── Component ───────────────────────────────────────
 
 interface RemittanceTrendChartProps {
+  /** Trend points, oldest → newest. Defaults to {@link MOCK_TREND_DATA}. */
   data?: TrendDataPoint[]
 }
 
+/**
+ * Remittance volume area chart for the Insights surface.
+ *
+ * Renders a Recharts `AreaChart` of {@link TrendDataPoint} amounts over time,
+ * with an average `ReferenceLine`, peak / vs-previous stats, a custom tooltip,
+ * and an `sr-only` summary of every point. Animation is disabled for users who
+ * prefer reduced motion. An empty `data` array renders a non-crashing empty
+ * state rather than `NaN`/`-Infinity` stats.
+ *
+ * @param data Trend points consumed by the chart. See {@link TrendDataPoint}.
+ */
 function RemittanceTrendChartInner({
   data = MOCK_TREND_DATA,
 }: RemittanceTrendChartProps) {
   const reducedMotion = useReducedMotion()
+  const isEmpty = data.length === 0
   const total   = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
-  const average = useMemo(() => Math.round(total / data.length), [total, data.length])
-  const peak    = useMemo(() => Math.max(...data.map(d => d.amount)), [data])
+  const average = useMemo(() => (data.length ? Math.round(total / data.length) : 0), [total, data.length])
+  const peak    = useMemo(() => (data.length ? Math.max(...data.map(d => d.amount)) : 0), [data])
   const latest  = useMemo(() => data[data.length - 1]?.amount ?? 0, [data])
   const prev    = useMemo(() => data[data.length - 2]?.amount ?? latest, [data, latest])
   const trend   = latest >= prev ? 'up' : 'down'
+
+  if (isEmpty) {
+    return (
+      <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
+        <div className="flex items-start gap-3 mb-6">
+          <div className="bg-red-500/10 p-2 rounded-lg shrink-0">
+            <Activity className="w-5 h-5 text-red-500" />
+          </div>
+          <div>
+            <h2 className="text-white text-base sm:text-lg font-semibold">
+              Remittance Trend
+            </h2>
+            <p className="text-gray-500 text-xs sm:text-sm">Volume over time</p>
+          </div>
+        </div>
+        <div className="flex h-[220px] items-center justify-center text-center">
+          <p className="text-gray-500 text-sm">No remittance data yet.</p>
+        </div>
+        <p className="sr-only" aria-live="polite">
+          No remittance trend data available.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">

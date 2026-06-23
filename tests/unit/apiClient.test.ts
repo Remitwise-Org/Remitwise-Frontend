@@ -6,6 +6,7 @@ import { sessionHandler } from '../../lib/client/sessionHandler';
 vi.mock('../../lib/client/sessionHandler', () => ({
   sessionHandler: {
     isSessionExpired: vi.fn(),
+    refreshSession: vi.fn().mockResolvedValue(false),
     handleSessionExpiry: vi.fn(),
   }
 }));

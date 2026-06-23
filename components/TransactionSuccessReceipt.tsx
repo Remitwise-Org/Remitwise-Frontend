@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { useClientLocale } from "@/lib/i18n/client";
 import { formatCurrency } from "@/lib/utils/format-currency";
+import TransactionStatusIndicator from "@/components/TransactionStatusIndicator";
 
 interface SplitDetail {
   icon: React.ElementType;
@@ -102,6 +103,11 @@ export default function TransactionSuccessReceipt({
             </div>
             <h2 className="text-2xl font-bold text-white mb-1">Transfer Successful</h2>
             <p className="text-gray-500 text-sm">Your money is on its way!</p>
+
+            {/* Live network-confirmation status — polls the hash to a terminal state */}
+            <div className="mt-4 flex justify-center">
+              <TransactionStatusIndicator txHash={hash} />
+            </div>
           </div>
 
           {/* Amount Hero */}

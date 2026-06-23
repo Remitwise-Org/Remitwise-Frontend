@@ -39,7 +39,7 @@ const GRID_COLOR = 'rgba(255,255,255,0.06)';
 const AXIS_COLOR = '#6b7280';
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
+function CustomTooltip({ active, payload, label }: TooltipContentProps) {
     if (!active || !payload?.length) return null
 
     return (

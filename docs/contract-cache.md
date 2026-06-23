@@ -31,6 +31,23 @@ The Remitwise frontend utilizes a cached contract layer (`lib/cache/contract-cac
   ```
 - **Cache Hit**: If the entry exists and the timestamp is within the TTL window, the cached data is returned directly.
 - **Cache Miss / Expiry**: If the entry is absent, expired, or a TTL mismatch is detected, the wrapper executes the underlying RPC fetch function, validates that it returned a non-null/non-undefined value, updates the cache, and returns the fresh data.
+- **In-Flight Coalescing**: On a miss, the layer records the pending fetch promise in an in-flight map keyed by the cache key. If additional callers miss the **same** key while that fetch is still pending, they `await` the existing promise instead of issuing their own RPC call. This collapses N concurrent cold-cache misses (e.g. the dashboard fanning out parallel reads) into a single RPC round-trip.
+
+### In-Flight Request Coalescing
+
+The dashboard aggregate (`lib/contracts/dashboard-aggregate.ts`) issues several contract reads in parallel. With a cold cache, each would otherwise trigger its own Soroban RPC call for the same key. Coalescing guarantees **one fetch per key per in-flight window**:
+
+```
+[caller A miss] ─┐
+[caller B miss] ─┼─►  inFlight[key]  ──►  fetchFn()  ──►  cache.set(key)
+[caller C miss] ─┘        (one shared promise; A/B/C all resolve from it)
+```
+
+Guarantees (all transparent to consumers — no API change):
+- **Single fetch**: Concurrent misses for the same key share one `fetchFn` invocation.
+- **Cleanup on settle**: The in-flight entry is removed in a `finally` block on **both** resolve and reject, so a failed fetch never leaves a dangling/stuck pending entry.
+- **No poisoning on failure**: A rejected fetch caches nothing and rejects every coalesced waiter with the same error; the next call retries from scratch.
+- **TTL / registry preserved**: TTL validation, TTL-confusion protection, and registry-driven clears are unchanged. `clearCache()` (including via `clearRegisteredCaches()`) also drops the in-flight map; any already-pending flight still settles and cleans up its own entry harmlessly, and callers arriving after the clear start fresh.
 
 ### 2. Cache Invalidation Flow
 Caches can be invalidated in two ways:
@@ -89,6 +106,8 @@ Retrieves cache statistics.
 - **Manual Invalidation**: Used after state-changing write operations. The entry is removed instantly so the next read fetches fresh data.
 - **TTL Expiry**: The key has passed its time-to-live threshold. It is deleted on the next read attempt and refreshed.
 - **TTL Confusion Protection**: If a cached entry is fetched with a different TTL than the current call's TTL, the cache layer invalidates the old entry and triggers a fresh fetch to prevent TTL confusion.
+- **Concurrent Misses (Coalescing)**: Simultaneous misses for the same key await a single shared fetch rather than each calling the RPC. See [In-Flight Request Coalescing](#in-flight-request-coalescing).
+- **Failed In-Flight Fetch**: A rejected coalesced fetch clears its in-flight entry, caches nothing, and rejects all waiters; the subsequent call retries cleanly.
 
 ---
 

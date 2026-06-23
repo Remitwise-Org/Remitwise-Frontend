@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
     Menu, X, Home, 
     Send, LayoutDashboard, FileText, 
@@ -50,6 +50,20 @@ const MobileNav = () => {
             ]
         }
     ];
+
+    useEffect(() => {
+  const handleEsc = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') setIsOpen(false);
+  };
+  if (isOpen) {
+    document.addEventListener('keydown', handleEsc);
+    document.body.style.overflow = 'hidden'; // Prevent background scroll
+  }
+  return () => {
+    document.removeEventListener('keydown', handleEsc);
+    document.body.style.overflow = '';
+  };
+}, [isOpen]);
 
     const isActive = (href: string) => {
         if (href === "/" || href === "/dashboard") return pathname === href;

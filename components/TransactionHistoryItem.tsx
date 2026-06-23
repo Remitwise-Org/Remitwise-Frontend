@@ -1,0 +1,385 @@
+"use client";
+
+import { useState } from "react";
+import {
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  X,
+  Send,
+  GitBranch,
+  FileText,
+  Shield,
+  TrendingUp,
+  Users,
+  ArrowDownLeft,
+} from "lucide-react";
+import Link from "next/link";
+import TransactionStatusIndicator from "@/components/TransactionStatusIndicator";
+
+export type TransactionStatus = "Completed" | "Pending" | "Failed";
+
+export type TransactionType =
+  | "Send Money"
+  | "Smart Split"
+  | "Bill Payment"
+  | "Insurance"
+  | "Savings"
+  | "Family Transfer"
+  | "Received";
+
+export interface Transaction {
+  id: string; // e.g. "TX001"
+  hash?: string; // Full transaction hash for explorer link
+  type: TransactionType;
+  amount: number;
+  currency: string;
+  counterpartyName: string; // recipient or source
+  counterpartyLabel: string; // "To" or "From"
+  date: string; // "2024-01-28 14:32:15"
+  fee: number;
+  status: TransactionStatus;
+}
+
+const typeVisuals: Record<
+  TransactionType,
+  { background: string; border: string; icon: string }
+> = {
+  "Send Money": {
+    background: "bg-sky-500/10",
+    border: "border-sky-400/20",
+    icon: "text-sky-300",
+  },
+  "Smart Split": {
+    background: "bg-violet-500/10",
+    border: "border-violet-400/20",
+    icon: "text-violet-300",
+  },
+  "Bill Payment": {
+    background: "bg-amber-500/10",
+    border: "border-amber-400/20",
+    icon: "text-amber-300",
+  },
+  Insurance: {
+    background: "bg-emerald-500/10",
+    border: "border-emerald-400/20",
+    icon: "text-emerald-300",
+  },
+  Savings: {
+    background: "bg-lime-500/10",
+    border: "border-lime-400/20",
+    icon: "text-lime-300",
+  },
+  "Family Transfer": {
+    background: "bg-cyan-500/10",
+    border: "border-cyan-400/20",
+    icon: "text-cyan-300",
+  },
+  Received: {
+    background: "bg-fuchsia-500/10",
+    border: "border-fuchsia-400/20",
+    icon: "text-fuchsia-300",
+  },
+};
+
+const getIcon = (type: TransactionType, className?: string) => {
+  const iconClassName = className ?? `w-5 h-5 ${typeVisuals[type].icon}`;
+
+  switch (type) {
+    case "Send Money":
+      return <Send className={iconClassName} />;
+    case "Smart Split":
+      return <GitBranch className={iconClassName} />;
+    case "Bill Payment":
+      return <FileText className={iconClassName} />;
+    case "Insurance":
+      return <Shield className={iconClassName} />;
+    case "Savings":
+      return <TrendingUp className={iconClassName} />;
+    case "Family Transfer":
+      return <Users className={iconClassName} />;
+    case "Received":
+      return <ArrowDownLeft className={iconClassName} />;
+    default:
+      return <Send className={iconClassName} />;
+  }
+};
+
+/** Bridges the list's display status to the shared lifecycle vocabulary. */
+const STATUS_TO_LIFECYCLE: Record<
+  TransactionStatus,
+  "confirmed" | "pending" | "failed"
+> = {
+  Completed: "confirmed",
+  Pending: "pending",
+  Failed: "failed",
+};
+
+/**
+ * Status badge backed by the shared status-semantics tones. Still-pending rows
+ * that carry a real hash poll the network live; everything else is rendered from
+ * the known status (no wasted polling on settled history).
+ */
+const StatusBadge = ({
+  status,
+  hash,
+}: {
+  status: TransactionStatus;
+  hash?: string;
+}) => {
+  const lifecycle = STATUS_TO_LIFECYCLE[status];
+  const live = lifecycle === "pending" && Boolean(hash);
+
+  return (
+    <TransactionStatusIndicator
+      status={lifecycle}
+      txHash={live ? hash : undefined}
+      live={live}
+      size="sm"
+    />
+  );
+};
+
+export default function TransactionHistoryItem({
+  transaction,
+  density = "comfortable",
+}: {
+  transaction: Transaction;
+  density?: "comfortable" | "compact";
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isNegative = transaction.amount < 0;
+  const typeVisual = typeVisuals[transaction.type];
+
+  // Format amount
+  const formattedAmount = `${isNegative ? "-" : "+"}${Math.abs(transaction.amount).toFixed(2)} ${transaction.currency}`;
+
+  if (density === "compact") {
+    return (
+      <div className="border border-[#FFFFFF14] bg-bg3 rounded-xl px-4 py-3 mb-2 hover:bg-[#111] transition-colors flex items-center gap-4">
+        <div
+          className={`w-8 h-8 rounded-lg flex items-center justify-center border flex-shrink-0 ${typeVisual.background} ${typeVisual.border}`}
+        >
+          {getIcon(transaction.type, `w-4 h-4 ${typeVisual.icon}`)}
+        </div>
+
+        <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-2 items-center">
+          <div className="flex flex-col">
+            <span className="font-bold text-white text-sm truncate">
+              {transaction.type}
+            </span>
+            <span className="text-[#444] text-xs truncate">
+              #{transaction.id}
+            </span>
+          </div>
+
+          <div className="hidden md:block">
+            <span className="text-white font-bold text-sm">
+              {formattedAmount}
+            </span>
+          </div>
+
+          <div className="hidden md:block truncate">
+            <span className="text-gray-400 text-xs">
+              {transaction.counterpartyLabel} {transaction.counterpartyName}
+            </span>
+          </div>
+
+          <div className="hidden md:block">
+            <span className="text-gray-400 text-xs">
+              {transaction.date.split(" ")[0]}
+            </span>
+          </div>
+
+          <div className="flex justify-end">
+            <StatusBadge status={transaction.status} hash={transaction.hash} />
+          </div>
+        </div>
+
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="p-1 hover:bg-white/10 rounded text-gray-400"
+        >
+          {isExpanded ? (
+            <ChevronUp className="w-4 h-4" />
+          ) : (
+            <ChevronDown className="w-4 h-4" />
+          )}
+        </button>
+
+        {isExpanded && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setIsExpanded(false)}
+          >
+            <div
+              className="bg-[#111] border border-white/10 p-6 rounded-2xl max-w-md w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-bold text-white">
+                  Transaction Details
+                </h3>
+                <button
+                  onClick={() => setIsExpanded(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-gray-500 text-xs">Type</div>
+                    <div className="text-white text-sm">{transaction.type}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 text-xs">ID</div>
+                    <div className="text-white text-sm">#{transaction.id}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 text-xs">Amount</div>
+                    <div className="text-white text-sm font-bold">
+                      {formattedAmount}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 text-xs">Status</div>
+                    <div className="mt-1">
+                      <StatusBadge status={transaction.status} hash={transaction.hash} />
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <div className="text-gray-500 text-xs">
+                      {transaction.counterpartyLabel}
+                    </div>
+                    <div className="text-white text-sm">
+                      {transaction.counterpartyName}
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <div className="text-gray-500 text-xs">Date</div>
+                    <div className="text-white text-sm">{transaction.date}</div>
+                  </div>
+                  <div className="col-span-2">
+                    <div className="text-gray-500 text-xs">Hash</div>
+                    <div className="text-white text-xs font-mono break-all">
+                      {transaction.hash || "N/A"}
+                    </div>
+                  </div>
+                </div>
+                <a
+                  href={`https://stellar.expert/explorer/public/tx/${transaction.hash || transaction.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#1A0505] border border-[#2A1515] text-[#FF4B26] text-sm font-medium hover:bg-[#2A0808] transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  View on Explorer
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="border border-[#FFFFFF14] bg-gradient-to-t from-bg2 to-bg3 rounded-2xl p-6 mb-4 hover:border-[#333] transition-colors">
+      <div className="flex gap-4">
+        <div
+          className={`w-12 h-12 rounded-xl flex items-center justify-center border flex-shrink-0 mr-2 ${typeVisual.background} ${typeVisual.border}`}
+        >
+          {getIcon(transaction.type)}
+        </div>
+
+        <div className="flex-1 space-y-2">
+          <div className="flex-1 flex items-start justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-white text-lg">
+                {transaction.type}
+              </span>
+              <span className="text-[#444] text-sm">#{transaction.id}</span>
+            </div>
+            <StatusBadge status={transaction.status} hash={transaction.hash} />
+          </div>
+          {/* Data Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <div className="text-[#666] text-xs mb-1.5">Amount</div>
+              <div className="text-xl font-bold text-white tracking-tight">
+                {formattedAmount}
+              </div>
+            </div>
+            <div>
+              <div className="text-[#666] text-xs mb-1.5">
+                {transaction.counterpartyLabel}
+              </div>
+              <div className="text-[#FFFFFFCC] text-sm font-medium">
+                {transaction.counterpartyName}
+              </div>
+            </div>
+            <div>
+              <div className="text-[#666] text-xs mb-1.5">Date & Time</div>
+              <div className="text-[#FFFFFFCC] text-sm font-medium">
+                {transaction.date}
+              </div>
+            </div>
+            <div>
+              <div className="text-[#666] text-xs mb-1.5">Fee</div>
+              <div className="text-[#FFFFFFCC] text-sm font-medium">
+                {transaction.fee.toFixed(2)} USDC
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#FFFFFF0D] border border-[#FFFFFF14] text-white text-sm font-medium hover:bg-[#1A1A1A] transition-colors"
+            >
+              {isExpanded ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+              {isExpanded ? "Hide Details" : "View Details"}
+            </button>
+
+            <a
+              href={`https://stellar.expert/explorer/public/tx/${transaction.hash || transaction.id}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1A0505] border border-[#2A1515] text-[#FF4B26] text-sm font-medium hover:bg-[#2A0808] transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              View on Explorer
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Expanded Details Section */}
+      {isExpanded && (
+        <div className="mt-6 pt-6 border-t border-[#1F1F1F] grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div>
+            <div className="text-[#666] text-xs mb-1.5">Transaction Hash</div>
+            <div className="text-white text-sm font-mono break-all">
+              {transaction.hash || `${transaction.id}...`}
+            </div>
+          </div>
+          <div>
+            <div className="text-[#666] text-xs mb-1.5">Block Number</div>
+            <div className="text-white text-sm">45678912</div>
+          </div>
+          <div>
+            <div className="text-[#666] text-xs mb-1.5">Network</div>
+            <div className="text-white text-sm">Stellar Public</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
