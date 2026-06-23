@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import Link from 'next/link';
 import { Check, Clock, X, ChevronRight, ArrowLeftRight } from 'lucide-react';
 import { useDensity } from '@/lib/context/DensityContext';
@@ -61,7 +61,7 @@ const mockTransactions: Transaction[] = [
     }
 ];
 
-const StatusBadge = ({ status }: { status: TransactionStatus }) => {
+const StatusBadge = memo(function StatusBadge({ status }: { status: TransactionStatus }) {
     const configs = {
         Completed: {
             icon: Check,
@@ -91,7 +91,7 @@ const StatusBadge = ({ status }: { status: TransactionStatus }) => {
             <span className="text-xs font-medium">{status}</span>
         </div>
     );
-};
+})
 
 interface RecentTransactionsWidgetProps {
     /** Pass an empty array to show the empty state */
@@ -206,4 +206,4 @@ const RecentTransactionsWidget = ({
     );
 };
 
-export default RecentTransactionsWidget;
+export default memo(RecentTransactionsWidget);

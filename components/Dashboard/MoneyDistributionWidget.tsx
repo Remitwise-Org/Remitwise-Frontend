@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Clock, PieChart as PieChartIcon } from "lucide-react";
 import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
@@ -90,7 +90,7 @@ interface MoneyDistributionWidgetProps {
   hasError?: boolean;
 }
 
-export default function MoneyDistributionWidget({
+function MoneyDistributionWidget({
   distributionData = data,
   hasError = false,
 }: MoneyDistributionWidgetProps) {
@@ -98,9 +98,13 @@ export default function MoneyDistributionWidget({
   const handleRetry = useCallback(() => setRetryKey((k) => k + 1), []);
 
   const isEmpty = !hasError && distributionData.length === 0;
-  const total = distributionData.reduce(
-    (sum, d) => sum + parseFloat(d.amount.replace(/[^0-9.]/g, "")),
-    0
+  const total = useMemo(
+    () =>
+      distributionData.reduce(
+        (sum, d) => sum + parseFloat(d.amount.replace(/[^0-9.]/g, "")),
+        0
+      ),
+    [distributionData]
   );
 
   return (
@@ -195,3 +199,5 @@ export default function MoneyDistributionWidget({
     </section>
   );
 }
+
+export default memo(MoneyDistributionWidget);
