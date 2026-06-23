@@ -102,45 +102,47 @@ const MobileNav = () => {
                     </div>
 
                     {/* Links */}
-                    <nav className="flex-1 p-4 sm:p-6 space-y-8 pb-24">
+                    <nav aria-label="Mobile navigation" className="flex-1 p-4 sm:p-6 space-y-8 pb-24">
                         {sections.map((section, idx) => (
                             <div key={idx} className="space-y-4">
                                 <h3 className="text-xs font-bold text-white/30 uppercase tracking-[0.2rem] px-2">
                                     {section.title}
                                 </h3>
-                                <div className="space-y-1">
+                                <ul className="space-y-1">
                                     {section.links.map((link) => (
-                                        <Link
-                                            key={link.name}
-                                            href={link.href}
-                                            onClick={() => setIsOpen(false)}
-                                            className={`flex items-center justify-between p-4 rounded-2xl transition-all group overflow-hidden relative
-                                                ${isActive(link.href)
-                                                    ? "bg-brand-red/10 border border-brand-red/20 shadow-[0_0_20px_rgba(215,35,35,0.1)]"
-                                                    : "hover:bg-white/5 border border-transparent"
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-4 relative z-10">
-                                                <div className={`p-2 rounded-xl transition-colors
-                                                    ${isActive(link.href) ? "bg-brand-red text-white" : "bg-white/5 text-white/40 group-hover:text-white/60"}
-                                                `}>
-                                                    {link.icon}
+                                        <li key={link.name}>
+                                            <Link
+                                                href={link.href}
+                                                aria-current={isActive(link.href) ? "page" : undefined}
+                                                onClick={() => setIsOpen(false)}
+                                                className={`flex items-center justify-between p-4 rounded-2xl transition-all group overflow-hidden relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/50
+                                                    ${isActive(link.href)
+                                                        ? "bg-brand-red/10 border border-brand-red/20 shadow-[0_0_20px_rgba(215,35,35,0.1)]"
+                                                        : "hover:bg-white/5 border border-transparent"
+                                                    }`}
+                                            >
+                                                <div className="flex items-center gap-4 relative z-10">
+                                                    <div className={`p-2 rounded-xl transition-colors
+                                                        ${isActive(link.href) ? "bg-brand-red text-white" : "bg-white/5 text-white/40 group-hover:text-white/60"}
+                                                    `}>
+                                                        {link.icon}
+                                                    </div>
+                                                    <span className={`font-semibold transition-colors
+                                                        ${isActive(link.href) ? "text-white" : "text-white/70 group-hover:text-white"}
+                                                    `}>
+                                                        {link.name}
+                                                    </span>
                                                 </div>
-                                                <span className={`font-semibold transition-colors
-                                                    ${isActive(link.href) ? "text-white" : "text-white/70 group-hover:text-white"}
-                                                `}>
-                                                    {link.name}
-                                                </span>
-                                            </div>
-                                            <ChevronRight className={`w-5 h-5 transition-transform group-hover:translate-x-1
-                                                ${isActive(link.href) ? "text-brand-red" : "text-white/20 group-hover:text-white/40"}
-                                            `} />
-                                            {isActive(link.href) && (
-                                                <span className="absolute inset-0 bg-brand-red/5 blur-xl -z-10" />
-                                            )}
-                                        </Link>
+                                                <ChevronRight className={`w-5 h-5 transition-transform group-hover:translate-x-1
+                                                    ${isActive(link.href) ? "text-brand-red" : "text-white/20 group-hover:text-white/40"}
+                                                `} />
+                                                {isActive(link.href) && (
+                                                    <span className="absolute inset-0 bg-brand-red/5 blur-xl -z-10" />
+                                                )}
+                                            </Link>
+                                        </li>
                                     ))}
-                                </div>
+                                </ul>
                             </div>
                         ))}
                     </nav>

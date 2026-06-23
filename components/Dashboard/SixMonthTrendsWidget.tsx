@@ -1,7 +1,9 @@
 'use client'
 
+import { useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { TrendingUp, Target, FileText } from 'lucide-react'
+import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y'
 
 // Sample data for the 6-month chart (Jul-Dec)
 const chartData = [
@@ -98,6 +100,17 @@ function SummaryCard({ icon, label, value, subtitle, variant = 'default', valueC
 }
 
 export default function SixMonthTrendsWidget() {
+    // Generate accessible label and summary from chart data
+    const chartLabel = useMemo(
+        () => generateTrendChartLabel("6-Month Trends", chartData, ["remittances", "savings", "bills", "insurance"]),
+        []
+    );
+
+    const chartSummary = useMemo(
+        () => generateTrendChartSummary(chartData, ["remittances", "savings", "bills", "insurance"]),
+        []
+    );
+
     return (
         <div
             className="flex flex-col items-start pt-[25px] px-[25px] pb-[16px] gap-6 rounded-2xl border border-[rgba(255,255,255,0.08)] w-full max-w-[928px]"
@@ -144,9 +157,9 @@ export default function SixMonthTrendsWidget() {
             </div>
 
             {/* Line Chart - 320px height */}
-            <div className="w-full h-[280px] sm:h-[320px]">
+            <div className="w-full h-[280px] sm:h-[320px]" role="img" aria-label={chartLabel}>
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
+                    <LineChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 5 }} aria-hidden="true">
                         <CartesianGrid
                             strokeDasharray="3 3"
                             stroke="rgba(255, 255, 255, 0.063)"
@@ -213,6 +226,11 @@ export default function SixMonthTrendsWidget() {
                     </LineChart>
                 </ResponsiveContainer>
             </div>
+
+            {/* Screen reader summary */}
+            <p className="sr-only" aria-live="polite">
+                {chartSummary}
+            </p>
 
             {/* Summary Cards Section */}
             <div className="w-full border-t border-[rgba(255,255,255,0.08)] pt-[25px]">
