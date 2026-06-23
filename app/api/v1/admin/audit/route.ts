@@ -9,10 +9,12 @@ export async function GET(request: NextRequest) {
 
   const limitRaw = request.nextUrl.searchParams.get('limit');
   const parsed = Number(limitRaw ?? 50);
-  const limit = Number.isFinite(parsed) && parsed > 0 ? Math.min(Math.floor(parsed), 200) : 50;
+  const limit =
+    Number.isFinite(parsed) && parsed > 0
+      ? Math.min(Math.floor(parsed), 200)
+      : 50;
 
   return NextResponse.json({
-    events: getAuditEvents(limit),
+    events: await getAuditEvents(limit),
   });
 }
-
