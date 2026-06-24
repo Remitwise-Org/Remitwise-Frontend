@@ -13,6 +13,7 @@ import {
   Area
 } from 'recharts';
 import { INSIGHTS_PALETTE } from './palette';
+import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y';
 const LINE_COLOR = INSIGHTS_PALETTE[0];
 
 function useReducedMotion() {
@@ -118,6 +119,17 @@ function RemittanceTrendChartInner({
   const prev    = useMemo(() => data[data.length - 2]?.amount ?? latest, [data, latest])
   const trend   = latest >= prev ? 'up' : 'down'
 
+  // Generate accessible label and summary
+  const chartLabel = useMemo(
+    () => generateTrendChartLabel("Remittance Trend", data, ["amount"]),
+    [data]
+  )
+
+  const chartSummary = useMemo(
+    () => generateTrendChartSummary(data, ["amount"]),
+    [data]
+  )
+
   if (isEmpty) {
     return (
       <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
@@ -180,66 +192,69 @@ function RemittanceTrendChartInner({
       </div>
 
       {/* Chart */}
-      <ResponsiveContainer width="100%" height={220}>
-        <AreaChart
-          data={data}
-          margin={{ top: 8, right: 4, bottom: 0, left: -16 }}
-        >
-          <defs>
-            <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%"  stopColor={LINE_COLOR} stopOpacity={0.3} />
-              <stop offset="95%" stopColor={LINE_COLOR} stopOpacity={0}   />
-            </linearGradient>
-          </defs>
+      <div role="img" aria-label={chartLabel}>
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart
+            data={data}
+            margin={{ top: 8, right: 4, bottom: 0, left: -16 }}
+            aria-hidden="true"
+          >
+            <defs>
+              <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor={LINE_COLOR} stopOpacity={0.3} />
+                <stop offset="95%" stopColor={LINE_COLOR} stopOpacity={0}   />
+              </linearGradient>
+            </defs>
 
-          <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
 
-          <XAxis
-            dataKey="date"
-            tick={{ fill: AXIS_COLOR, fontSize: 10 }}
-            axisLine={false}
-            tickLine={false}
-            interval="preserveStartEnd"
-          />
-          <YAxis
-            tick={{ fill: AXIS_COLOR, fontSize: 11 }}
-            axisLine={false}
-            tickLine={false}
-            tickFormatter={(v: number) => `$${v >= 1000 ? `${v / 1000}k` : v}`}
-            width={40}
-            className="hidden sm:block"
-          />
+            <XAxis
+              dataKey="date"
+              tick={{ fill: AXIS_COLOR, fontSize: 10 }}
+              axisLine={false}
+              tickLine={false}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              tick={{ fill: AXIS_COLOR, fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v: number) => `$${v >= 1000 ? `${v / 1000}k` : v}`}
+              width={40}
+              className="hidden sm:block"
+            />
 
-          <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
 
-          {/* Average reference line */}
-          <ReferenceLine
-            y={average}
-            stroke="rgba(255,255,255,0.15)"
-            strokeDasharray="4 4"
-            label={{
-              value: `Avg $${average.toLocaleString()}`,
-              position: 'insideTopRight',
-              fontSize: 10,
-              fill: '#6b7280',
-            }}
-          />
+            {/* Average reference line */}
+            <ReferenceLine
+              y={average}
+              stroke="rgba(255,255,255,0.15)"
+              strokeDasharray="4 4"
+              label={{
+                value: `Avg $${average.toLocaleString()}`,
+                position: 'insideTopRight',
+                fontSize: 10,
+                fill: '#6b7280',
+              }}
+            />
 
-          <Area
-            type="monotone"
-            dataKey="amount"
-            stroke={LINE_COLOR}
-            strokeWidth={2.5}
-            fill="url(#trendGradient)"
-            dot={false}
-            isAnimationActive={!reducedMotion}
-            activeDot={{ r: 5, fill: LINE_COLOR, stroke: '#0A0A0A', strokeWidth: 2 }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+            <Area
+              type="monotone"
+              dataKey="amount"
+              stroke={LINE_COLOR}
+              strokeWidth={2.5}
+              fill="url(#trendGradient)"
+              dot={false}
+              isAnimationActive={!reducedMotion}
+              activeDot={{ r: 5, fill: LINE_COLOR, stroke: '#0A0A0A', strokeWidth: 2 }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
       {/* Screen‑reader summary */}
       <p className="sr-only" aria-live="polite">
-        {data.map(d => `${d.date}: $${d.amount.toLocaleString()} (${d.transactions} transactions)`).join(', ')}
+        {chartSummary}
       </p>
     </div>
   )

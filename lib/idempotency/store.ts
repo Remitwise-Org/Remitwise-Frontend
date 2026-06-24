@@ -5,6 +5,8 @@
  * For production, replace with Redis or database storage.
  */
 
+import { registerCache } from '@/lib/cache/registry';
+import { registerGracefulShutdown, registerShutdownHook } from '@/lib/background/runtime';
 import { IdempotencyRecord, IdempotencyCheckResult } from './types';
 
 // In-memory store (replace with Redis/DB in production)
@@ -25,8 +27,31 @@ function cleanupExpired() {
     }
 }
 
-// Run cleanup every hour
-setInterval(cleanupExpired, 60 * 60 * 1000);
+// ── Timer & lifecycle ──────────────────────────────────
+let cleanupTimer: ReturnType<typeof setInterval> | null = null;
+let cleanupInitialized = false;
+
+function initializeCleanup(): void {
+    if (cleanupInitialized) return;
+    cleanupInitialized = true;
+
+    cleanupTimer = setInterval(cleanupExpired, 60 * 60 * 1000);
+
+    if (typeof cleanupTimer.unref === 'function') {
+        cleanupTimer.unref();
+    }
+
+    registerGracefulShutdown();
+    registerShutdownHook('idempotency_cleanup', () => {
+        if (cleanupTimer) {
+            clearInterval(cleanupTimer);
+            cleanupTimer = null;
+        }
+    });
+    registerCache('idempotency', clearIdempotencyStore);
+}
+
+initializeCleanup();
 
 /**
  * Store an idempotency record

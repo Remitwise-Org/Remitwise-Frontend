@@ -84,6 +84,9 @@ const billQueue = [
 
 const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+// Minimal mock bills placeholder for client-side warning behavior in dev/test
+const mockBills: Bill[] = [];
+
 function ordinalDay(day: string) {
 	const value = Number(day);
 	const suffix =
@@ -130,7 +133,7 @@ export default function Bills() {
 				},
 			});
 		}
-	}, [toast]);
+	}, [toast, bills]);
 
 	const [bills, setBills] = useState<Bill[]>([]);
 	const [stats, setStats] = useState<any>(null);
@@ -159,7 +162,7 @@ export default function Bills() {
 
 			const paidBills = fetchedBills.filter((b: Bill) => b.status === 'paid');
 			const paidAmount = paidBills.reduce((acc: number, b: Bill) => acc + b.amount, 0);
-			const overdueCount = fetchedBills.filter((b: Bill) => b.status === 'overdue' || b.status === 'urgent').length;
+			const overdueCount = fetchedBills.filter((b: Bill) => (b.status as string) === 'overdue' || (b.status as string) === 'urgent').length;
 
 			setStats({
 				totalUnpaid: {

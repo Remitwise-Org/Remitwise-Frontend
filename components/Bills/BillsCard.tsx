@@ -33,6 +33,8 @@ const getStatusStyles = (status: Bill['status']) => {
                 dueBg: 'bg-status-success-soft',
                 dueBorder: 'border-status-success-border',
             };
+        default:
+            return undefined;
     }
 };
 
@@ -45,6 +47,8 @@ function StatusBadge({ status }: { status: Bill["status"] }) {
     urgent: "Due Soon",
     upcoming: "Upcoming",
     paid: "Paid",
+    unpaid: "Unpaid",
+    cancelled: "Cancelled",
   };
   const Icon =
     status === "paid"
@@ -68,7 +72,14 @@ function StatusBadge({ status }: { status: Bill["status"] }) {
 
 export function BillCards({ bill, density = "comfortable" }: { bill: Bill; density?: "comfortable" | "compact" }) {
     const styles = getStatusStyles(bill.status) || getStatusStyles("upcoming")!;
-    const statusPresentation = getBillStatusPresentation(bill.status as any);
+    const statusForPresentation = (status: Bill['status']): 'paid' | 'overdue' | 'urgent' | 'upcoming' => {
+        if (status === 'unpaid' || status === 'cancelled') {
+            return 'upcoming'; // Or some other default
+        }
+        return status;
+    }
+
+    const statusPresentation = getBillStatusPresentation(statusForPresentation(bill.status));
     const StatusIcon = statusPresentation.icon;
 
     if (density === 'compact') {

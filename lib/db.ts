@@ -1,3 +1,4 @@
+export { prisma as default, prisma, getDatabaseUrl } from './prisma';
 import { PrismaClient } from "@prisma/client";
 
 declare global {
@@ -5,7 +6,7 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-function getDatabaseUrl(): string | undefined {
+export function getDatabaseUrl(): string | undefined {
   const urlString = process.env.DATABASE_URL;
   if (!urlString) return undefined;
   try {

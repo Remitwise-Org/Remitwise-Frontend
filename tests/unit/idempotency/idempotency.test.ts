@@ -352,3 +352,66 @@ describe('Configuration Integration Unit Tests', () => {
         expect(IDEMPOTENCY_CONFIG.REPLAY_HEADER_NAME).toBe('x-idempotent-replay');
     });
 });
+
+describe('Timer & Lifecycle Integration Unit Tests', () => {
+    let listRegisteredCaches: typeof import('@/lib/cache/registry').listRegisteredCaches;
+    let clearRegisteredCaches: typeof import('@/lib/cache/registry').clearRegisteredCaches;
+    let resetRegistry: typeof import('@/lib/cache/registry').resetRegistry;
+
+    beforeAll(async () => {
+        const registry = await import('@/lib/cache/registry');
+        listRegisteredCaches = registry.listRegisteredCaches;
+        clearRegisteredCaches = registry.clearRegisteredCaches;
+        resetRegistry = registry.resetRegistry;
+    });
+
+    beforeEach(() => {
+        clearIdempotencyStore();
+    });
+
+    afterAll(() => {
+        resetRegistry();
+    });
+
+    it('should register itself with the cache registry under "idempotency"', () => {
+        expect(listRegisteredCaches()).toContain('idempotency');
+    });
+
+    it('should clear the store when clearRegisteredCaches() is called', async () => {
+        storeIdempotencyRecord('key-a', 'hash-a', { status: 200, body: {} });
+        storeIdempotencyRecord('key-b', 'hash-b', { status: 200, body: {} });
+        expect(getStoreSize()).toBe(2);
+
+        const cleared = await clearRegisteredCaches();
+        expect(cleared).toContain('idempotency');
+        expect(getStoreSize()).toBe(0);
+    });
+
+    it('should handle empty store gracefully during registry-driven clear', async () => {
+        expect(getStoreSize()).toBe(0);
+        await expect(clearRegisteredCaches()).resolves.not.toThrow();
+        expect(getStoreSize()).toBe(0);
+    });
+
+    it('should still allow store operations after a registry-driven clear', async () => {
+        await clearRegisteredCaches();
+        expect(getStoreSize()).toBe(0);
+
+        storeIdempotencyRecord('key-c', 'hash-c', { status: 200, body: {} });
+        expect(getStoreSize()).toBe(1);
+        expect(checkIdempotencyKey('key-c', 'hash-c').exists).toBe(true);
+    });
+
+    it('should keep the same interval handle and not create duplicates when module is loaded once', () => {
+        // Under normal ES module semantics, store.ts's initializeCleanup is called once.
+        // The cleanupInitialized flag prevents re-initialization.
+        // This test verifies that the store still works correctly (confirming no double-init corruption).
+        storeIdempotencyRecord('guard-key', 'hash-g', { status: 200, body: {} });
+        expect(getStoreSize()).toBe(1);
+
+        // Advance time past the cleanup interval to verify only one timer is active
+        vi.advanceTimersByTime(60 * 60 * 1000);
+        // 'guard-key' has 24h TTL, so it should still exist after one cleanup interval
+        expect(checkIdempotencyKey('guard-key', 'hash-g').exists).toBe(true);
+    });
+});

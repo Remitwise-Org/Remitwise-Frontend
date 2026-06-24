@@ -1,7 +1,7 @@
 // lib/prisma.ts
 import { PrismaClient } from '@prisma/client';
 
-function getDatabaseUrl(): string | undefined {
+export function getDatabaseUrl(): string | undefined {
   const urlString = process.env.DATABASE_URL;
   if (!urlString) return undefined;
   try {
@@ -21,7 +21,7 @@ function getDatabaseUrl(): string | undefined {
   }
 }
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 const dbUrl = getDatabaseUrl();
 
@@ -32,4 +32,8 @@ export const prisma =
     log: ['error'],
   });
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
+}
+
+export default prisma;
