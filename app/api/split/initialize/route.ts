@@ -1,22 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
 import { buildInitializeSplitTx } from '@/lib/contracts/remittance-split';
-import { SplitPercentages, ValidationError } from '@/lib/validation/percentages';
+import { PercentagesSchema, StellarAddressSchema } from '@/lib/validation/percentages';
+import { createValidationError } from '@/lib/errors/api-errors';
 
 export async function POST(request: NextRequest) {
   try {
     // 1. Verify authentication
     const session = await getSession(request);
     
-    if (!session || !session.authenticated) {
+    if (!session || !session.authenticated || !session.address) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
+    // Validate session address
+    const sessionValidation = StellarAddressSchema.safeParse(session.address);
+    if (!sessionValidation.success) {
+      return createValidationError('Invalid session address', sessionValidation.error.flatten().fieldErrors);
+    }
+
     // 2. Parse request body
-    let body: SplitPercentages;
+    let body: any;
     try {
       body = await request.json();
     } catch {
@@ -26,11 +33,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate body using Zod schema
+    const result = PercentagesSchema.safeParse(body);
+    if (!result.success) {
+      const errors = {
+        form: result.error.flatten().formErrors,
+        field: result.error.flatten().fieldErrors,
+      };
+      return createValidationError('Validation Error', errors);
+    }
+
     // 3. Extract percentages
-    const { spending, savings, bills, insurance } = body;
+    const { spending, savings, bills, insurance } = result.data;
 
     // 4. Build transaction using session address as owner
-    const result = await buildInitializeSplitTx(
+    const txResult = await buildInitializeSplitTx(
       session.address,
       { spending, savings, bills, insurance },
       { simulate: true } // Include simulation for cost estimation
@@ -39,20 +56,12 @@ export async function POST(request: NextRequest) {
     // 5. Return success response
     return NextResponse.json({
       success: true,
-      xdr: result.xdr,
-      simulate: result.simulate,
+      xdr: txResult.xdr,
+      simulate: txResult.simulate,
       message: 'Transaction built successfully. Please sign with your wallet and submit to the network.',
     });
 
   } catch (error) {
-    // Handle validation errors
-    if (error instanceof ValidationError) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 400 }
-      );
-    }
-
     // Handle other errors
     console.error('Initialize split error:', error);
     

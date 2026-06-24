@@ -70,3 +70,36 @@ export function validateStellarAddress(address: string): void {
     throw new ValidationError('Invalid Stellar address checksum');
   }
 }
+
+import { z } from 'zod';
+
+export const StellarAddressSchema = z.string({
+  required_error: 'Address must be a non-empty string',
+}).refine((val) => {
+  try {
+    validateStellarAddress(val);
+    return true;
+  } catch {
+    return false;
+  }
+}, {
+  message: 'Invalid Stellar address',
+});
+
+export const PercentagesSchema = z.object({
+  spending: z.number({ required_error: 'spending is required' }),
+  savings: z.number({ required_error: 'savings is required' }),
+  bills: z.number({ required_error: 'bills is required' }),
+  insurance: z.number({ required_error: 'insurance is required' }),
+}).strict().superRefine((data, ctx) => {
+  try {
+    validatePercentages(data);
+  } catch (err: any) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: err.message,
+      path: [],
+    });
+  }
+});
+
