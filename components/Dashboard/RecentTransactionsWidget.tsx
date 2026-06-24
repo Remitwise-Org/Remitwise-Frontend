@@ -6,6 +6,7 @@ import { Check, Clock, X, ChevronRight, ArrowLeftRight } from 'lucide-react';
 import { useDensity } from '@/lib/context/DensityContext';
 import WidgetEmptyState from '@/components/ui/WidgetEmptyState';
 import WidgetErrorState from '@/components/ui/WidgetErrorState';
+import { SkeletonList } from '@/components/ui/Skeleton';
 
 type TransactionStatus = 'Completed' | 'Pending' | 'Failed';
 
@@ -98,18 +99,21 @@ interface RecentTransactionsWidgetProps {
     transactions?: Transaction[];
     /** Pass true to show the error state */
     hasError?: boolean;
+    /** Pass true to show the loading skeleton */
+    isLoading?: boolean;
 }
 
 const RecentTransactionsWidget = ({
     transactions = mockTransactions,
     hasError = false,
+    isLoading = false,
 }: RecentTransactionsWidgetProps) => {
     const { density } = useDensity();
     const isCompact = density === 'compact';
     const [retryKey, setRetryKey] = useState(0);
     const handleRetry = useCallback(() => setRetryKey((k) => k + 1), []);
 
-    const isEmpty = !hasError && transactions.length === 0;
+    const isEmpty = !hasError && !isLoading && transactions.length === 0;
 
     return (
         <div key={retryKey} className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 w-full">
@@ -117,10 +121,10 @@ const RecentTransactionsWidget = ({
                 <div>
                     <h2 className="text-xl font-bold text-white mb-1">Recent Transactions</h2>
                     <p className="text-sm text-gray-400">
-                        {isEmpty || hasError ? 'Your latest activity' : 'Last 5 activities'}
+                        {isEmpty || hasError || isLoading ? 'Your latest activity' : 'Last 5 activities'}
                     </p>
                 </div>
-                {!isEmpty && !hasError && (
+                {!isEmpty && !hasError && !isLoading && (
                     <Link
                         href="/transactions"
                         className="text-[#DC2626] text-sm font-medium flex items-center gap-1 hover:opacity-80 transition-opacity"
@@ -130,7 +134,11 @@ const RecentTransactionsWidget = ({
                 )}
             </div>
 
-            {hasError ? (
+            {isLoading ? (
+                <div aria-busy="true" aria-hidden="true">
+                    <SkeletonList variant="table" rows={5} />
+                </div>
+            ) : hasError ? (
                 <WidgetErrorState
                     message="We couldn't load your transactions. Please try again."
                     onRetry={handleRetry}

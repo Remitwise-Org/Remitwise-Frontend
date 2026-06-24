@@ -13,7 +13,7 @@ export interface Bill {
   amount: number;
   dueDate: string;
   recurring: boolean;
-  status: "paid" | "unpaid" | "cancelled";
+  status: "paid" | "unpaid" | "cancelled" | "overdue" | "urgent" | "upcoming";
 }
 
 // ─────────────────────────────────────────────

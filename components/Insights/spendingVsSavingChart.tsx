@@ -39,13 +39,12 @@ const GRID_COLOR = 'rgba(255,255,255,0.06)';
 const AXIS_COLOR = '#6b7280';
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: TooltipContentProps) {
-    if (!active || !payload?.length) return null
-
-    return (
-        <div className="rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-3 shadow-2xl text-sm min-w-[160px]">
-            <p className="text-gray-400 font-medium mb-2">{label ?? ''}</p>
-            {payload.map((entry) => (
+function CustomTooltip({ active, payload, label }: TooltipContentProps<any, any>) {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-3 shadow-xl">
+                <p className="text-white text-sm font-medium mb-2">{label}</p>
+                {payload.map((entry: any) => (
                 <div key={entry.name} className="flex items-center justify-between gap-4 py-0.5">
                     <div className="flex items-center gap-2">
                         <span
@@ -72,7 +71,9 @@ function CustomTooltip({ active, payload, label }: TooltipContentProps) {
                 </div>
             )}
         </div>
-    )
+        )
+    }
+    return null;
 }
 
 // ── Custom legend ─────────────────────────────────────────────────────────────

@@ -11,7 +11,6 @@ import { ActionState } from "@/lib/auth/middleware";
 import { useFormAction } from "@/lib/hooks/useFormAction";
 import AsyncOperationsPanel from "@/components/AsyncOperationsPanel";
 import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
-<<<<<<< HEAD
 import { apiClient } from "@/lib/client/apiClient";
 import { Bill } from "@/lib/contracts/bill-payments";
 import { WidgetErrorState } from "@/components/ui/WidgetStates";
@@ -116,12 +115,12 @@ export default function Bills() {
 	}, [frequency, isRecurring, monthlyDay, weeklyDay]);
 
 	useEffect(() => {
-		const overdueBill = mockBills.find((b) => b.status === "overdue");
+		const overdueBill = bills.find((b) => b.status === "overdue" || b.status === "urgent");
 		if (overdueBill) {
 			toast({
 				variant: "warning",
 				title: "Bill overdue",
-				description: `${overdueBill.title} was due on ${overdueBill.dueDate}.`,
+				description: `${overdueBill.name} was due on ${overdueBill.dueDate}.`,
 				action: {
 					label: "Pay now",
 					onClick: () => {

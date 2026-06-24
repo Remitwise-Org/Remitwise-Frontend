@@ -2,6 +2,10 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { TrendingUp, Target, FileText } from 'lucide-react'
+import { SkeletonChart } from '@/components/ui/Skeleton'
+import WidgetEmptyState from '@/components/ui/WidgetEmptyState'
+import WidgetErrorState from '@/components/ui/WidgetErrorState'
+import { useState, useCallback } from 'react'
 
 // Sample data for the 6-month chart (Jul-Dec)
 const chartData = [
@@ -97,7 +101,84 @@ function SummaryCard({ icon, label, value, subtitle, variant = 'default', valueC
     )
 }
 
-export default function SixMonthTrendsWidget() {
+interface SixMonthTrendsWidgetProps {
+    /** Pass true to show the loading skeleton */
+    isLoading?: boolean;
+    /** Pass true to show the error state */
+    hasError?: boolean;
+    /** Pass true to show the empty state when data is not available */
+    isEmpty?: boolean;
+}
+
+export default function SixMonthTrendsWidget({ isLoading = false, hasError = false, isEmpty = false }: SixMonthTrendsWidgetProps) {
+    const [retryKey, setRetryKey] = useState(0)
+    const handleRetry = useCallback(() => setRetryKey((k) => k + 1), [])
+
+    if (isLoading) {
+        return (
+            <div
+                className="flex flex-col items-start pt-[25px] px-[25px] pb-[16px] gap-6 rounded-2xl border border-[rgba(255,255,255,0.08)] w-full max-w-[928px]"
+                style={{
+                    background: 'linear-gradient(180deg, #0F0F0F 0%, #0A0A0A 100%)'
+                }}
+                aria-busy="true"
+                aria-hidden="true"
+            >
+                <div className="flex flex-row items-center justify-between gap-4 w-full">
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path
+                                    d="M2 15L6 11L10 14L18 5"
+                                    stroke="#DC2626"
+                                    strokeWidth="1.67"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                                <path
+                                    d="M14 5H18V9"
+                                    stroke="#DC2626"
+                                    strokeWidth="1.67"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            </svg>
+                            <h2 className="text-xl font-bold leading-7 tracking-[-0.45px] text-white">
+                                6-Month Trends
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+                <div className="w-full">
+                    <SkeletonChart type="line" />
+                </div>
+            </div>
+        );
+    }
+
+    if (hasError) {
+        return (
+            <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] w-full max-w-[928px] p-6 bg-[#0f0f0f]">
+                <WidgetErrorState
+                    message="We couldn't load your trends data. Please try again."
+                    onRetry={handleRetry}
+                />
+            </div>
+        );
+    }
+
+    if (isEmpty) {
+        return (
+            <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] w-full max-w-[928px] p-6 bg-[#0f0f0f]">
+                <WidgetEmptyState
+                    icon={TrendingUp}
+                    title="No trends data yet"
+                    description="Keep using Remitwise to see your financial patterns over time."
+                />
+            </div>
+        );
+    }
+
     return (
         <div
             className="flex flex-col items-start pt-[25px] px-[25px] pb-[16px] gap-6 rounded-2xl border border-[rgba(255,255,255,0.08)] w-full max-w-[928px]"

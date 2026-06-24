@@ -80,9 +80,12 @@ describe('MobileNav', () => {
     expect(screen.queryByText('Features')).not.toBeInTheDocument();
     expect(screen.queryByText('Pricing')).not.toBeInTheDocument();
     expect(screen.queryByText('About Us')).not.toBeInTheDocument();
-    expect(screen.queryByAttribute('href', 'a', '#features')).not.toBeInTheDocument();
-    expect(screen.queryByAttribute('href', 'a', '#pricing')).not.toBeInTheDocument();
-    expect(screen.queryByAttribute('href', 'a', '#about')).not.toBeInTheDocument();
+    const featuresLink = document.querySelector('a[href="#features"]');
+    const pricingLink = document.querySelector('a[href="#pricing"]');
+    const aboutLink = document.querySelector('a[href="#about"]');
+    expect(featuresLink).not.toBeInTheDocument();
+    expect(pricingLink).not.toBeInTheDocument();
+    expect(aboutLink).not.toBeInTheDocument();
   });
 
   it('marks active route with active styling', () => {

@@ -40,7 +40,7 @@ const getStatusStyles = (status: Bill['status']) => {
 
 function StatusBadge({ status }: { status: Bill["status"] }) {
   const s = getStatusStyles(status)!;
-  const label: Record<Bill["status"], string> = {
+  const label: Partial<Record<Bill["status"], string>> = {
     overdue: "Overdue",
     urgent: "Due Soon",
     upcoming: "Upcoming",
@@ -68,7 +68,7 @@ function StatusBadge({ status }: { status: Bill["status"] }) {
 
 export function BillCards({ bill, density = "comfortable" }: { bill: Bill; density?: "comfortable" | "compact" }) {
     const styles = getStatusStyles(bill.status) || getStatusStyles("upcoming")!;
-    const statusPresentation = getBillStatusPresentation(bill.status);
+    const statusPresentation = getBillStatusPresentation(bill.status as any);
     const StatusIcon = statusPresentation.icon;
 
     if (density === 'compact') {
@@ -82,10 +82,10 @@ export function BillCards({ bill, density = "comfortable" }: { bill: Bill; densi
             >
                 <div className="flex flex-col flex-1 min-w-0">
                     <h3 className="font-bold text-sm text-white truncate">
-                        {bill.title}
+                        {bill.name}
                     </h3>
                     <span className="text-xs text-white/40 truncate">
-                        {bill.category} • Due {bill.dueDate}
+                        Bill • Due {bill.dueDate}
                     </span>
                 </div>
 
@@ -129,10 +129,10 @@ export function BillCards({ bill, density = "comfortable" }: { bill: Bill; densi
                 <div className="flex flex-row justify-between items-start">
                     <div className="flex flex-col gap-1 flex-1">
                         <h3 className="font-bold text-lg leading-7 tracking-[-0.439453px] text-white">
-                            {bill.title}
+                            {bill.name}
                         </h3>
                         <span className="font-normal text-xs leading-4 text-white/40">
-                            {bill.category}
+                            Bill
                         </span>
                     </div>
 
@@ -147,8 +147,8 @@ export function BillCards({ bill, density = "comfortable" }: { bill: Bill; densi
                             </span>
                         </div>
                         <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-white/65">
-                            {bill.isRecurring ? <Repeat className="h-3 w-3" /> : <CalendarClock className="h-3 w-3" />}
-                            <span>{bill.isRecurring ? "Recurring charge" : "One-time charge"}</span>
+                            {bill.recurring ? <Repeat className="h-3 w-3" /> : <CalendarClock className="h-3 w-3" />}
+                            <span>{bill.recurring ? "Recurring charge" : "One-time charge"}</span>
                         </div>
 
                     </div>
@@ -181,7 +181,6 @@ export function BillCards({ bill, density = "comfortable" }: { bill: Bill; densi
                             {statusPresentation.emphasis}
                         </div>
                         <div className="mt-1 text-[11px] leading-4 text-white/55">
-                            {bill.daysInfo}
                         </div>
                     </div>
                 </div>
