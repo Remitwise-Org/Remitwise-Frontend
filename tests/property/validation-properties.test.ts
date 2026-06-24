@@ -193,7 +193,7 @@ describe('Validation Properties - Property-Based Tests', () => {
           fc.constant({ fn: validateFutureDate, input: '2020-01-01' })
         ),
         (testCase) => {
-          const result = testCase.fn(testCase.input as any);
+          const result = (testCase.fn as any)(testCase.input);
           return (
             result.isValid === false &&
             typeof result.error === 'string' &&

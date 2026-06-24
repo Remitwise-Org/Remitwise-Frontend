@@ -71,7 +71,7 @@ export default function FinancialInsightsPage() {
             <div className="mt-3 space-y-2 text-xs text-gray-500">
               <p><strong className="text-gray-400">Spending vs Savings → Grouped Bar:</strong> Comparing two absolute values across discrete time periods. Bars make the magnitude difference between spending and savings immediately scannable.</p>
               <p><strong className="text-gray-400">Remittance Trend → Area Line:</strong> Continuous progression over time with volume emphasis. Gradient fill under the line communicates cumulative transfer activity without adding visual noise.</p>
-              <p><strong className="text-gray-400">Category Breakdown → Donut:</strong> Proportions of a whole. The empty center enables a dynamic label showing total or selected category amount — more information-dense than a pie. Interactive slices and legend rows implement the "click to filter" pattern.</p>
+              <p><strong className="text-gray-400">Category Breakdown → Donut:</strong> Proportions of a whole. The empty center enables a dynamic label showing total or selected category amount — more information-dense than a pie. Interactive slices and legend rows implement the &quot;click to filter&quot; pattern.</p>
               <p><strong className="text-gray-400">Color palette:</strong> #D72323 (brand red) as primary, #0ea5e9 (sky) as secondary, #f59e0b (amber) and #10b981 (emerald) as tertiary. All contrast above 3:1 against the dark background.</p>
               <p><strong className="text-gray-400">Responsive:</strong> Charts use ResponsiveContainer for fluid width. Y-axis hidden on mobile to reclaim space — values are accessible via hover tooltip. Grid collapses from 2-col to 1-col below lg breakpoint.</p>
             </div>

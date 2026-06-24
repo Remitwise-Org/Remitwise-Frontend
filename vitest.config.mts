@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     include: [
       'lib/contracts/**/*.test.ts',
+      'lib/anchor/**/*.test.ts',
       'tests/unit/**/*.test.ts',
       'tests/unit/**/*.test.cjs',
       'tests/integration/**/*.test.ts',

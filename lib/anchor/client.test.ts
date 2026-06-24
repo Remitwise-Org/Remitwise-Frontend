@@ -15,7 +15,7 @@
  *
  * Run:
  *   npm run test:coverage
- *   npx vitest run tests/unit/anchor-client.test.ts
+ *   npx vitest run lib/anchor/client.test.ts
  */
 
 import {
@@ -82,7 +82,7 @@ describe('AnchorClient — isConfigured()', () => {
     vi.stubEnv('ANCHOR_API_BASE_URL', '');
     // Fresh import so the constructor reads the stubbed env
     vi.resetModules();
-    const { AnchorClient } = await import('@/lib/anchor/client');
+    const { AnchorClient } = await import('./client');
     const client = new AnchorClient();
     expect(client.isConfigured()).toBe(false);
   });
@@ -90,7 +90,7 @@ describe('AnchorClient — isConfigured()', () => {
   it('returns true when ANCHOR_API_BASE_URL is set', async () => {
     vi.stubEnv('ANCHOR_API_BASE_URL', 'https://anchor.example.com');
     vi.resetModules();
-    const { AnchorClient } = await import('@/lib/anchor/client');
+    const { AnchorClient } = await import('./client');
     const client = new AnchorClient();
     expect(client.isConfigured()).toBe(true);
   });
@@ -99,7 +99,7 @@ describe('AnchorClient — isConfigured()', () => {
     vi.stubEnv('ANCHOR_API_BASE_URL', '');
     vi.resetModules();
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { AnchorClient } = await import('@/lib/anchor/client');
+    const { AnchorClient } = await import('./client');
     new AnchorClient();
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('ANCHOR_API_BASE_URL'),
@@ -116,7 +116,7 @@ describe('AnchorClient.getExchangeRates()', () => {
 
   async function importClient() {
     vi.resetModules();
-    return import('@/lib/anchor/client');
+    return import('./client');
   }
 
   beforeEach(async () => {
@@ -165,7 +165,7 @@ describe('AnchorClient.getExchangeRates()', () => {
   it('throws "Anchor Base URL not configured" when ANCHOR_API_BASE_URL is absent', async () => {
     vi.stubEnv('ANCHOR_API_BASE_URL', '');
     vi.resetModules();
-    const { AnchorClient: Bare } = await import('@/lib/anchor/client');
+    const { AnchorClient: Bare } = await import('./client');
     const bare = new Bare();
     // No fetch mock needed — it should throw before fetching
     await expect(bare.getExchangeRates()).rejects.toThrow(
@@ -210,7 +210,7 @@ describe('AnchorClient.getExchangeRates()', () => {
   it('throws "Request timed out" when fetch does not respond within 5 seconds', async () => {
     vi.useFakeTimers();
 
-    fetchMock.mockImplementationOnce((_url, options) => {
+    fetchMock.mockImplementationOnce((_url: unknown, options?: RequestInit) => {
       // Simulate a request that never resolves but honours AbortSignal
       return new Promise((_resolve, reject) => {
         (options as RequestInit).signal!.addEventListener('abort', () => {
@@ -238,7 +238,7 @@ describe('AnchorClient.getQuote()', () => {
 
   async function getClass() {
     vi.resetModules();
-    const { AnchorClient } = await import('@/lib/anchor/client');
+    const { AnchorClient } = await import('./client');
     return AnchorClient;
   }
 
@@ -287,7 +287,7 @@ describe('AnchorClient.getQuote()', () => {
   it('throws "Anchor Base URL not configured" when ANCHOR_API_BASE_URL is absent', async () => {
     vi.stubEnv('ANCHOR_API_BASE_URL', '');
     vi.resetModules();
-    const { AnchorClient: Bare } = await import('@/lib/anchor/client');
+    const { AnchorClient: Bare } = await import('./client');
     const bare = new Bare();
     await expect(bare.getQuote({ from: 'USD', to: 'USDC', amount: '50' })).rejects.toThrow(
       'Anchor Base URL not configured',
@@ -334,7 +334,7 @@ describe('AnchorClient.getQuote()', () => {
   it('throws "Request timed out" when fetch hangs past the 5 s default', async () => {
     vi.useFakeTimers();
 
-    fetchMock.mockImplementationOnce((_url, options) => {
+    fetchMock.mockImplementationOnce((_url: unknown, options?: RequestInit) => {
       return new Promise((_resolve, reject) => {
         (options as RequestInit).signal!.addEventListener('abort', () => {
           const err = new Error('The operation was aborted.');
@@ -360,7 +360,7 @@ describe('AnchorClient.startDepositFlow()', () => {
 
   async function getClass() {
     vi.resetModules();
-    const { AnchorClient } = await import('@/lib/anchor/client');
+    const { AnchorClient } = await import('./client');
     return AnchorClient;
   }
 
@@ -438,7 +438,7 @@ describe('AnchorClient.startDepositFlow()', () => {
   it('sends a Bearer Authorization header when ANCHOR_API_KEY is set', async () => {
     vi.stubEnv('ANCHOR_API_KEY', 'super-secret-key');
     vi.resetModules();
-    const { AnchorClient: WithKey } = await import('@/lib/anchor/client');
+    const { AnchorClient: WithKey } = await import('./client');
     const clientWithKey = new WithKey();
 
     fetchMock.mockResolvedValueOnce(makeResponse(successResponse));
@@ -452,7 +452,7 @@ describe('AnchorClient.startDepositFlow()', () => {
   it('uses a custom deposit path from ANCHOR_DEPOSIT_PATH env var', async () => {
     vi.stubEnv('ANCHOR_DEPOSIT_PATH', '/custom/deposit');
     vi.resetModules();
-    const { AnchorClient: CustomPath } = await import('@/lib/anchor/client');
+    const { AnchorClient: CustomPath } = await import('./client');
     const clientCustom = new CustomPath();
 
     fetchMock.mockResolvedValueOnce(makeResponse(successResponse));
@@ -467,7 +467,7 @@ describe('AnchorClient.startDepositFlow()', () => {
   it('throws "Anchor Base URL not configured" when ANCHOR_API_BASE_URL is absent', async () => {
     vi.stubEnv('ANCHOR_API_BASE_URL', '');
     vi.resetModules();
-    const { AnchorClient: Bare } = await import('@/lib/anchor/client');
+    const { AnchorClient: Bare } = await import('./client');
     const bare = new Bare();
     await expect(bare.startDepositFlow(payload)).rejects.toThrow(
       'Anchor Base URL not configured',
@@ -481,9 +481,8 @@ describe('AnchorClient.startDepositFlow()', () => {
     fetchMock.mockResolvedValueOnce(
       makeResponse(null, 400, { textBody: 'Bad Request: invalid amount' }),
     );
-    await expect(client.startDepositFlow(payload)).rejects.toThrow('HTTP 400');
     await expect(client.startDepositFlow(payload)).rejects.toThrow(
-      /Bad Request: invalid amount/,
+      'HTTP 400 - Bad Request: invalid amount',
     );
   });
 
@@ -520,7 +519,7 @@ describe('AnchorClient.startDepositFlow()', () => {
   it('throws "Request timed out" when deposit fetch hangs past 5 s', async () => {
     vi.useFakeTimers();
 
-    fetchMock.mockImplementationOnce((_url, options) => {
+    fetchMock.mockImplementationOnce((_url: unknown, options?: RequestInit) => {
       return new Promise((_resolve, reject) => {
         (options as RequestInit).signal!.addEventListener('abort', () => {
           const err = new Error('The operation was aborted.');
@@ -546,7 +545,7 @@ describe('AnchorClient.startWithdrawFlow()', () => {
 
   async function getClass() {
     vi.resetModules();
-    const { AnchorClient } = await import('@/lib/anchor/client');
+    const { AnchorClient } = await import('./client');
     return AnchorClient;
   }
 
@@ -604,7 +603,7 @@ describe('AnchorClient.startWithdrawFlow()', () => {
   it('uses a custom withdraw path from ANCHOR_WITHDRAW_PATH env var', async () => {
     vi.stubEnv('ANCHOR_WITHDRAW_PATH', '/custom/withdraw');
     vi.resetModules();
-    const { AnchorClient: CustomPath } = await import('@/lib/anchor/client');
+    const { AnchorClient: CustomPath } = await import('./client');
     const clientCustom = new CustomPath();
 
     fetchMock.mockResolvedValueOnce(makeResponse(successResponse));
@@ -619,7 +618,7 @@ describe('AnchorClient.startWithdrawFlow()', () => {
   it('throws "Anchor Base URL not configured" when ANCHOR_API_BASE_URL is absent', async () => {
     vi.stubEnv('ANCHOR_API_BASE_URL', '');
     vi.resetModules();
-    const { AnchorClient: Bare } = await import('@/lib/anchor/client');
+    const { AnchorClient: Bare } = await import('./client');
     const bare = new Bare();
     await expect(bare.startWithdrawFlow(payload)).rejects.toThrow(
       'Anchor Base URL not configured',
@@ -664,7 +663,7 @@ describe('AnchorClient.startWithdrawFlow()', () => {
   it('throws "Request timed out" when withdraw fetch hangs past 5 s', async () => {
     vi.useFakeTimers();
 
-    fetchMock.mockImplementationOnce((_url, options) => {
+    fetchMock.mockImplementationOnce((_url: unknown, options?: RequestInit) => {
       return new Promise((_resolve, reject) => {
         (options as RequestInit).signal!.addEventListener('abort', () => {
           const err = new Error('The operation was aborted.');
@@ -692,21 +691,21 @@ describe('anchorClient singleton export', () => {
 
   it('is an instance of AnchorClient', async () => {
     vi.stubEnv('ANCHOR_API_BASE_URL', 'https://anchor.example.com');
-    const { anchorClient, AnchorClient } = await import('@/lib/anchor/client');
+    const { anchorClient, AnchorClient } = await import('./client');
     expect(anchorClient).toBeInstanceOf(AnchorClient);
   });
 
   it('is configured when ANCHOR_API_BASE_URL is set at module load time', async () => {
     vi.resetModules();
     vi.stubEnv('ANCHOR_API_BASE_URL', 'https://anchor.example.com');
-    const { anchorClient } = await import('@/lib/anchor/client');
+    const { anchorClient } = await import('./client');
     expect(anchorClient.isConfigured()).toBe(true);
   });
 
   it('is not configured when ANCHOR_API_BASE_URL is absent at module load time', async () => {
     vi.resetModules();
     vi.stubEnv('ANCHOR_API_BASE_URL', '');
-    const { anchorClient } = await import('@/lib/anchor/client');
+    const { anchorClient } = await import('./client');
     expect(anchorClient.isConfigured()).toBe(false);
   });
 });
@@ -720,7 +719,7 @@ describe('AnchorClient — edge cases', () => {
 
   async function importCls() {
     vi.resetModules();
-    const { AnchorClient } = await import('@/lib/anchor/client');
+    const { AnchorClient } = await import('./client');
     return AnchorClient;
   }
 
