@@ -44,6 +44,8 @@ describe('Admin Webhook DLQ API Integration Tests', () => {
           retryCount: 5,
           maxRetries: 5,
           lastError: 'Connection timeout',
+          nextRetryAt: null,
+          processedAt: null,
           createdAt: new Date(),
           updatedAt: new Date(),
           rawPayload: '{}',

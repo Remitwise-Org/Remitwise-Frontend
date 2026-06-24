@@ -6,7 +6,7 @@ import { createValidationError } from '@/lib/errors/api-errors';
 import { StellarAddressSchema } from '@/lib/validation/percentages';
 
 const CalculateQuerySchema = z.object({
-  amount: z.string({ required_error: 'Amount parameter required' }).refine((val) => {
+  amount: z.string().refine((val) => {
     const num = Number(val);
     return Number.isInteger(num) && num > 0 && /^\d+$/.test(val);
   }, {

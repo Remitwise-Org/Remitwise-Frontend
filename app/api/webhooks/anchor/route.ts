@@ -99,6 +99,10 @@ async function handleAnchorEvent(payload: any): Promise<WebhookProcessResult> {
       case 'withdrawal_failed':
         if (txId) {
           await updateAnchorFlowStatusByTransactionId(txId, 'failed')
+        }
+        recordAuditEvent({
+          type: 'anchor.webhook.withdrawal_failed',
+          actor: 'anchor-webhook',
           message: `Withdrawal failed for ${txId || 'unknown'}`,
           metadata: { transaction_id: txId || null, status },
         })

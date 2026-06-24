@@ -73,9 +73,7 @@ export function validateStellarAddress(address: string): void {
 
 import { z } from 'zod';
 
-export const StellarAddressSchema = z.string({
-  required_error: 'Address must be a non-empty string',
-}).refine((val) => {
+export const StellarAddressSchema = z.string().refine((val) => {
   try {
     validateStellarAddress(val);
     return true;
@@ -87,10 +85,10 @@ export const StellarAddressSchema = z.string({
 });
 
 export const PercentagesSchema = z.object({
-  spending: z.number({ required_error: 'spending is required' }),
-  savings: z.number({ required_error: 'savings is required' }),
-  bills: z.number({ required_error: 'bills is required' }),
-  insurance: z.number({ required_error: 'insurance is required' }),
+  spending: z.number(),
+  savings: z.number(),
+  bills: z.number(),
+  insurance: z.number(),
 }).strict().superRefine((data, ctx) => {
   try {
     validatePercentages(data);

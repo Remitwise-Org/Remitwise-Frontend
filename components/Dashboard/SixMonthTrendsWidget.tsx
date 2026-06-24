@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, memo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { TrendingUp, Target, FileText } from 'lucide-react'
 import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y'
@@ -98,6 +98,8 @@ function SummaryCard({ icon, label, value, subtitle, variant = 'default', valueC
         </div>
     )
 }
+
+const MemoSummaryCard = memo(SummaryCard);
 
 export default function SixMonthTrendsWidget() {
     // Generate accessible label and summary from chart data
@@ -254,4 +256,4 @@ export default function SixMonthTrendsWidget() {
             </div>
         </div>
     )
-})
+}
