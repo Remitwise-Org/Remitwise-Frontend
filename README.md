@@ -3,6 +3,7 @@
 Frontend application for the RemitWise remittance and financial planning platform.
 
 > **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map.
+> For client state ownership decisions, use [docs/STATE.md](docs/STATE.md).
 
 ## Overview
 
