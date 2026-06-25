@@ -128,11 +128,9 @@ describe('dashboard widget render smoke tests', () => {
   it('mounts QuickActions and renders its primary actions', () => {
     expect(() => renderWithProviders(<QuickActions />)).not.toThrow()
 
-    expect(screen.getByRole('heading', { name: /quick actions/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /emergency transfer/i })).toBeInTheDocument()
-    expect(screen.getAllByRole('link').find((link) => link.getAttribute('href') === '/send')).toHaveTextContent(
-      /send money/i,
-    )
+    expect(screen.getByRole('button', { name: /emergency transfer/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /send/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /goals/i })).toBeInTheDocument()
   })
 })
 

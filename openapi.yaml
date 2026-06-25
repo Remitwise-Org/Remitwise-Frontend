@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: RemitWise Frontend API (v1)
-  version: "1.0.0"
+  version: 1.0.0
   description: |
     This OpenAPI document describes the current v1 API surface for RemitWise.
 
@@ -16,13 +16,18 @@ info:
 servers:
   - url: /api/v1
     description: v1 base path (local/dev)
+  - url: /api
+    description: legacy base path (rewrites to v1)
 paths:
   /anchor/deposit:
     post:
       summary: Start anchor deposit flow
-      description: >
+      description: |
         Protected route. Starts a fiat -> USDC flow against the configured anchor.
         Returns a URL and/or flow steps. Returns 501 when anchor is not configured.
+      responses:
+        '200':
+          description: Success
   /health:
     get:
       summary: Health check
@@ -40,26 +45,529 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthStatus'
-components:
-  schemas:
-    HealthStatus:
-      type: object
-      properties:
-        status:
-          type: string
-          enum: [ok, unhealthy]
-        database:
-          type: string
-          enum: [ok, error]
-        rpc:
-          type: string
-          enum: [ok, error]
-        anchor:
-          type: string
-          enum: [ok, error, skipped]
-  - url: /api
-    description: legacy base path (rewrites to v1)
-
+  /remittance/quote:
+    get:
+      summary: Get Remittance Quote
+      tags:
+        - Remittance
+      parameters:
+        - in: query
+          name: amount
+          schema:
+            type: number
+          required: true
+          description: Amount to send (> 0)
+          example: 100.5
+        - in: query
+          name: currency
+          schema:
+            type: string
+          required: true
+          description: 3-letter ISO code
+          example: USD
+        - in: query
+          name: toCurrency
+          schema:
+            type: string
+          required: true
+          description: 3-letter ISO code
+          example: PHP
+      responses:
+        '200':
+          description: Quote successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemittanceQuoteResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /remittance/build:
+    post:
+      summary: Build Remittance Transaction
+      tags:
+        - Remittance
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildRemittanceRequest'
+      responses:
+        '200':
+          description: Transaction built
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildRemittanceResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/remittance/history:
+    get:
+      summary: Get Remittance History
+      tags:
+        - Remittance
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            maximum: 200
+          example: 20
+        - in: query
+          name: cursor
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - completed
+              - failed
+              - pending
+          example: completed
+      responses:
+        '200':
+          description: History records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemittanceHistoryResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/remittance/status/{txHash}:
+    get:
+      summary: Get Remittance Status
+      tags:
+        - Remittance
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: txHash
+          required: true
+          schema:
+            type: string
+          example: d41d8cd98f00b204e9800998ecf8427e
+      responses:
+        '200':
+          description: Transaction status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemittanceStatusResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /split/calculate:
+    get:
+      summary: Calculate Split Allocation
+      tags:
+        - Split
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: amount
+          schema:
+            type: number
+          required: true
+          description: Amount to split (> 0)
+          example: 1000
+      responses:
+        '200':
+          description: Calculated allocations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitCalculateResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /split/initialize:
+    post:
+      summary: Initialize Split Configuration
+      tags:
+        - Split
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SplitPercentages'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitUpdateResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /split/update:
+    post:
+      summary: Update Split Configuration
+      tags:
+        - Split
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SplitPercentages'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitUpdateResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/bills:
+    post:
+      summary: Create a new Bill
+      tags:
+        - Bills
+      security:
+        - xUserHeader: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBillRequest'
+      responses:
+        '200':
+          description: XDR for transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XdrResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/bills/{id}/pay:
+    post:
+      summary: Pay a Bill
+      tags:
+        - Bills
+      security:
+        - xUserHeader: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          example: bill_123456
+      responses:
+        '200':
+          description: XDR to pay bill
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XdrResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/bills/{id}/cancel:
+    post:
+      summary: Cancel a Bill
+      tags:
+        - Bills
+      security:
+        - xUserHeader: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          example: bill_123456
+        - in: header
+          name: x-owner-only
+          schema:
+            type: string
+          required: false
+        - in: header
+          name: x-owner
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: XDR to cancel bill
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XdrResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/bills/due-soon:
+    get:
+      summary: Get bills due soon
+      tags:
+        - Bills
+      security:
+        - cookieAuth: []
+        - xUserHeader: []
+      responses:
+        '200':
+          description: List of bills due within 7 days
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BillDueSoon'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/insurance:
+    post:
+      summary: Create Insurance Policy
+      tags:
+        - Insurance
+      security:
+        - xUserHeader: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInsuranceRequest'
+      responses:
+        '200':
+          description: Returns XDR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XdrResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/insurance/{id}/pay:
+    post:
+      summary: Pay Insurance Premium
+      tags:
+        - Insurance
+      security:
+        - xUserHeader: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          example: ins_7890
+      responses:
+        '200':
+          description: Returns XDR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XdrResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/insurance/{id}/deactivate:
+    post:
+      summary: Deactivate Insurance Policy
+      tags:
+        - Insurance
+      security:
+        - xUserHeader: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          example: ins_7890
+        - in: header
+          name: x-owner-only
+          schema:
+            type: string
+          required: false
+        - in: header
+          name: x-owner
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: Returns XDR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XdrResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/admin/audit:
+    get:
+      summary: List audit events
+      tags:
+        - Admin
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+      responses:
+        '200':
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      type: object
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/admin/users:
+    get:
+      summary: List recent users
+      tags:
+        - Admin
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: User list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      type: object
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/admin/webhooks/dlq:
+    get:
+      summary: List Webhook DLQ
+      tags:
+        - Admin
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: source
+          schema:
+            type: string
+          example: stripe
+      responses:
+        '200':
+          description: DLQ events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookDlqResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
 components:
   securitySchemes:
     cookieAuth:
@@ -72,7 +580,6 @@ components:
       in: header
       name: x-user
       description: Stellar public key of the caller
-
   parameters:
     AcceptLanguageHeader:
       in: header
@@ -81,10 +588,7 @@ components:
       schema:
         type: string
         example: es
-      description: |
-        Optional header to request localized responses. 
-        Supported languages: 'en' (English), 'es' (Spanish).
-
+      description: 'Optional header to request localized responses. Supported languages: ''en'' (English), ''es'' (Spanish).'
   schemas:
     ApiError:
       type: object
@@ -97,466 +601,264 @@ components:
             Example translations:
              - en: "Unauthorized: missing or invalid x-user header"
              - es: "No autorizado: falta o es inválido el encabezado x-user"
-          example: "Unauthorized: missing or invalid x-user header"
-
-paths:
-  /auth/login:
-    post:
-      summary: Login via Wallet Signature
-      description: Authenticate user by verifying an Ed25519 signature of a previously issued nonce.
-      tags:
-        - Auth
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [amount, currency]
-              properties:
-                amount:
-                  oneOf:
-                    - type: number
-                    - type: string
-                currency:
-                  type: string
-                destination:
-                  type: string
-      responses:
-        "200":
-          description: Flow created
-        "401":
-          description: Unauthorized
-        "501":
-          description: Anchor not configured
-  /anchor/withdraw:
-    post:
-      summary: Start anchor withdraw flow
-      description: >
-        Protected route. Starts a USDC -> fiat flow against the configured anchor.
-        Returns a URL and/or flow steps. Returns 501 when anchor is not configured.
-              required:
-                - address
-                - signature
-              properties:
-                address:
-                  type: string
-                  description: Stellar public key
-                signature:
-                  type: string
-                  description: Base64 encoded signature
-      responses:
-        '200':
-          description: Successfully authenticated, returns a session cookie.
-          content:
-            application/json:
-              schema:
+          example: 'Unauthorized: missing or invalid x-user header'
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
+            - unhealthy
+          example: ok
+        database:
+          type: string
+          enum:
+            - ok
+            - error
+          example: ok
+        rpc:
+          type: string
+          enum:
+            - ok
+            - error
+          example: ok
+        anchor:
+          type: string
+          enum:
+            - ok
+            - error
+            - skipped
+          example: ok
+    RemittanceQuoteResponse:
+      type: object
+      properties:
+        sendAmount:
+          type: number
+          example: 100
+        receiveAmount:
+          type: number
+          example: 5600.5
+        fee:
+          type: number
+          example: 1.5
+        rate:
+          type: number
+          example: 56
+        expiry:
+          type: string
+          format: date-time
+          example: '2023-10-12T07:20:50.52Z'
+        source:
+          type: string
+          enum:
+            - anchor
+            - stellar
+          example: anchor
+    BuildRemittanceRequest:
+      type: object
+      required:
+        - amount
+        - recipientAddress
+      properties:
+        amount:
+          type: number
+          example: 250
+        currency:
+          type: string
+          default: USDC
+          example: USDC
+        recipientAddress:
+          type: string
+          example: GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5
+        memo:
+          type: string
+          maxLength: 28
+          example: Monthly support
+    BuildRemittanceResponse:
+      type: object
+      properties:
+        xdr:
+          type: string
+          example: AAAAAgAAAAA...
+        networkPassphrase:
+          type: string
+          example: Test SDF Network ; September 2015
+        simulate:
+          type: object
+          properties:
+            fee:
+              type: string
+              example: '100'
+            success:
+              type: boolean
+              example: true
+    RemittanceHistoryResponse:
+      type: object
+      properties:
+        userAddress:
+          type: string
+          example: GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5
+      additionalProperties: true
+    RemittanceStatusResponse:
+      type: object
+      properties:
+        hash:
+          type: string
+          example: d41d8cd98f00b204e9800998ecf8427e
+        status:
+          type: object
+          additionalProperties: true
+    SplitCalculateResponse:
+      type: object
+      properties:
+        amounts:
+          type: object
+          additionalProperties: true
+          example:
+            savings: 300
+            bills: 200
+            insurance: 50
+    SplitPercentages:
+      type: object
+      required:
+        - spending
+        - savings
+        - bills
+        - insurance
+      properties:
+        spending:
+          type: number
+          example: 50
+        savings:
+          type: number
+          example: 25
+        bills:
+          type: number
+          example: 20
+        insurance:
+          type: number
+          example: 5
+    SplitUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        xdr:
+          type: string
+          example: AAAAAgAAAAA...
+        simulate:
+          type: object
+          additionalProperties: true
+        message:
+          type: string
+          example: Successfully updated split percentages
+    CreateBillRequest:
+      type: object
+      required:
+        - name
+        - amount
+        - dueDate
+      properties:
+        name:
+          type: string
+          example: Electric Bill
+        amount:
+          type: number
+          example: 120.5
+        dueDate:
+          type: string
+          format: date-time
+          example: '2023-10-15T00:00:00Z'
+        recurring:
+          type: boolean
+          default: false
+          example: true
+        frequencyDays:
+          type: number
+          example: 30
+    XdrResponse:
+      type: object
+      properties:
+        xdr:
+          type: string
+          example: AAAAAgAAAAA...
+    BillDueSoon:
+      type: object
+      required:
+        - billId
+        - name
+        - amount
+        - dueDate
+      properties:
+        billId:
+          type: string
+          example: bill_123456
+        name:
+          type: string
+          example: Electric Bill
+        amount:
+          type: number
+          example: 120.5
+        dueDate:
+          type: string
+          format: date-time
+          example: '2023-10-15T00:00:00Z'
+    CreateInsuranceRequest:
+      type: object
+      required:
+        - name
+        - coverageType
+        - monthlyPremium
+        - coverageAmount
+      properties:
+        name:
+          type: string
+          example: Health Insurance
+        coverageType:
+          type: string
+          example: Medical
+        monthlyPremium:
+          type: number
+          example: 250
+        coverageAmount:
+          type: number
+          example: 100000
+    WebhookDlqResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            events:
+              type: array
+              items:
                 type: object
-                properties:
-                  ok:
-                    type: boolean
-                  address:
-                    type: string
-        '400':
-          description: Missing address or signature
-        '401':
-          description: Invalid signature or expired nonce
-        '500':
-          description: Server error
-          
-  /split:
-    get:
-      summary: Get Split Configuration
-      description: Fetch the current user's allocation percentages.
-      security:
-        - cookieAuth: []
-      tags:
-        - Split
-      responses:
-        '200':
-          description: Returns configuration
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  percentages:
-                    type: object
-                    properties:
-                      savings:
-                        type: number
-                      bills:
-                        type: number
-                      insurance:
-                        type: number
-                      family:
-                        type: number
-        '404':
-          description: Split config not found
-    post:
-      summary: Update Split Configuration
-      security:
-        - cookieAuth: []
-      tags:
-        - Split
-      responses:
-        '200':
-          description: Configuration updated
-          
-  /split/calculate:
-    get:
-      summary: Calculate Split Allocation
-      description: Given an amount, calculate the allocation based on the user's split settings.
-      security:
-        - cookieAuth: []
-      tags:
-        - Split
-      parameters:
-        - in: query
-          name: amount
-          schema:
-            type: number
-          required: true
-          description: The gross amount to split
-      responses:
-        '200':
-          description: Calculated amounts
-          
-  /remittance/allocate:
-    post:
-      summary: Allocate Remittance
-      description: Record a remittance and allocate the funds accordingly.
-      security:
-        - cookieAuth: []
-      tags:
-        - Remittance
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
+            pagination:
               type: object
-              required: [amount, currency]
               properties:
-                amount:
-                  oneOf:
-                    - type: number
-                    - type: string
-                currency:
-                  type: string
-                destinationAccount:
-                  type: string
-      responses:
-        "200":
-          description: Flow created
-        "401":
-          description: Unauthorized
-        "501":
-          description: Anchor not configured
-  /admin/cache/clear:
-    post:
-      summary: Clear in-memory caches
-      description: Admin-only route protected by X-Admin-Key or admin cookie.
-      responses:
-        "200":
-          description: Caches cleared
-        "401":
-          description: Unauthorized
-  /admin/users:
-    get:
-      summary: List recent users
-      description: Admin-only route protected by X-Admin-Key or admin cookie.
-      parameters:
-        - in: query
-          name: limit
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: User list
-        "401":
-          description: Unauthorized
-  /admin/audit:
-    get:
-      summary: List audit events
-      description: Admin-only route protected by X-Admin-Key or admin cookie.
-      parameters:
-        - in: query
-          name: limit
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: Audit events
-        "401":
-          description: Unauthorized
-components: {}
-              required:
-                - txHash
-                - amount
-              properties:
-                txHash:
-                  type: string
-                amount:
-                  type: number
-      responses:
-        '200':
-          description: Allocation success
-        
-  /bills:
-    get:
-      summary: Get Legacy Bills
-      security:
-        - cookieAuth: []
-      tags:
-        - Bills
-      responses:
-        '200':
-          description: List of bills
-    post:
-      summary: Create or Pay Legacy Bill
-      security:
-        - cookieAuth: []
-      tags:
-        - Bills
-      responses:
-        '200':
-          description: Success
-          
-  /v1/bills:
-    post:
-      summary: Create a new Bill
-      security:
-        - xUserHeader: []
-      tags:
-        - Bills (v1)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - name
-                - amount
-                - dueDate
-              properties:
-                name:
-                  type: string
-                amount:
-                  type: number
-                dueDate:
-                  type: string
-                  format: date-time
-                recurring:
+                limit:
+                  type: integer
+                  example: 50
+                offset:
+                  type: integer
+                  example: 0
+                total:
+                  type: integer
+                  example: 5
+                hasMore:
                   type: boolean
-                frequencyDays:
-                  type: number
-      responses:
-        '200':
-          description: Returns XDR for the transaction
-        '400':
-          description: Invalid input parameters
-          
-  /v1/bills/due-soon:
-    get:
-      summary: Get bills due soon
-      description: Returns unpaid bills with dueDate within the next 7 days (inclusive).
-      security:
-        - cookieAuth: []
-      tags:
-        - Bills (v1)
-      responses:
-        '200':
-          description: List of bill reminders
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  required:
-                    - billId
-                    - name
-                    - amount
-                    - dueDate
-                  properties:
-                    billId:
-                      type: string
-                    name:
-                      type: string
-                    amount:
-                      type: number
-                    dueDate:
-                      type: string
-                      format: date-time
-        '401':
-          description: Unauthorized
-
-  /v1/bills/{id}/cancel:
-    post:
-      summary: Cancel a Bill
-      security:
-        - xUserHeader: []
-      tags:
-        - Bills (v1)
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Returns XDR to cancel the bill
-          
-  /v1/bills/{id}/pay:
-    post:
-      summary: Pay a Bill
-      security:
-        - xUserHeader: []
-      tags:
-        - Bills (v1)
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Returns XDR to pay the bill
-          
-  /insurance:
-    get:
-      summary: Get Active Policies
-      security:
-        - xUserHeader: []
-        - cookieAuth: []
-      tags:
-        - Insurance
-      parameters:
-        - in: query
-          name: owner
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: List of active policies
-          
-  /v1/insurance:
-    post:
-      summary: Create Insurance Policy
-      security:
-        - xUserHeader: []
-      tags:
-        - Insurance (v1)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
+                  example: false
+            stats:
               type: object
-              required:
-                - name
-                - coverageType
-                - monthlyPremium
-                - coverageAmount
-              properties:
-                name:
-                  type: string
-                coverageType:
-                  type: string
-                monthlyPremium:
-                  type: number
-                coverageAmount:
-                  type: number
-      responses:
-        '200':
-          description: Returns XDR
-          
-  /v1/insurance/{id}/deactivate:
-    post:
-      summary: Deactivate Insurance Policy
-      security:
-        - xUserHeader: []
-      tags:
-        - Insurance (v1)
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Returns XDR
-          
-  /v1/insurance/{id}/pay:
-    post:
-      summary: Pay Insurance Premium
-      security:
-        - xUserHeader: []
-      tags:
-        - Insurance (v1)
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Returns XDR
-          
-  /goals:
-    get:
-      summary: Get Savings Goals
-      security:
-        - cookieAuth: []
-      tags:
-        - Goals
-      responses:
-        '200':
-          description: Array of goals
-    post:
-      summary: Create Savings Goal
-      security:
-        - cookieAuth: []
-      tags:
-        - Goals
-      responses:
-        '200':
-          description: Success
-          
-  /family:
-    get:
-      summary: Get Family Members
-      security:
-        - cookieAuth: []
-      tags:
-        - Family
-      responses:
-        '200':
-          description: Array of family members
-    post:
-      summary: Add Family Member
-      security:
-        - cookieAuth: []
-      tags:
-        - Family
-      responses:
-        '200':
-          description: Success
-          
-  /send:
-    post:
-      summary: Send Transaction
-      security:
-        - cookieAuth: []
-      tags:
-        - Send
-      responses:
-        '200':
-          description: Returns transaction Id
+              example:
+                pending: 0
+                processing: 0
+                processed: 100
+                failed: 5
+                dlq: 5
+                total: 110

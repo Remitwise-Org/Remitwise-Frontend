@@ -117,7 +117,23 @@ export default function Bills() {
 		return `Monthly on the ${ordinalDay(monthlyDay)}`;
 	}, [frequency, isRecurring, monthlyDay, weeklyDay]);
 
-
+	useEffect(() => {
+		const overdueBill = bills.find((b) => b.status === "overdue" || b.status === "urgent");
+		if (overdueBill) {
+			toast({
+				variant: "warning",
+				title: "Bill overdue",
+				description: `${overdueBill.name} was due on ${overdueBill.dueDate}.`,
+				action: {
+					label: "Pay now",
+					onClick: () => {
+						const formElement = document.getElementById("name");
+						if (formElement) formElement.scrollIntoView({ behavior: "smooth" });
+					},
+				},
+			});
+		}
+	}, [toast, bills]);
 
 	const [bills, setBills] = useState<Bill[]>([]);
 	const [stats, setStats] = useState<any>(null);

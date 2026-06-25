@@ -6,7 +6,8 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   test: {
-    pool: 'vmForks',
+    pool: 'threads',
+    singleThread: true,
     include: [
       'lib/contracts/**/*.test.ts',
       'lib/**/*.test.ts',
@@ -24,6 +25,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    deps: {
+      inline: ['@reduxjs/toolkit', 'recharts'],
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

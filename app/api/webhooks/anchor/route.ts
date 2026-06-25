@@ -1,4 +1,5 @@
-import { NextResponse, NextRequest } from 'next/server'
+import { NextRequest } from "next/server";
+import { NextResponse } from 'next/server'
 import { getTranslator } from '../../../../lib/i18n'
 import crypto from 'crypto'
 import { verifySignature } from '@/lib/webhooks/verify'
@@ -85,7 +86,7 @@ async function handleAnchorEvent(payload: any): Promise<WebhookProcessResult> {
     switch (event_type) {
       case 'deposit_completed':
         if (txId) {
-          await updateAnchorFlowStatusByTransactionId(txId, 'completed')
+          updateAnchorFlowStatusByTransactionId(txId, 'completed')
         }
         recordAuditEvent({
           type: 'anchor.webhook.deposit_completed',

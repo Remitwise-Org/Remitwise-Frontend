@@ -5,6 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Clock, PieChart as PieChartIcon } from "lucide-react";
 import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
 import WidgetErrorState from "@/components/ui/WidgetErrorState";
+import { SkeletonChart } from "@/components/ui/Skeleton";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { buildChartImageLabel, buildChartSummary } from "@/lib/a11y/chart";
 
@@ -90,11 +91,14 @@ interface MoneyDistributionWidgetProps {
   distributionData?: typeof data;
   /** Pass true to show the error state */
   hasError?: boolean;
+  /** Pass true to show the loading skeleton */
+  isLoading?: boolean;
 }
 
 function MoneyDistributionWidget({
   distributionData = data,
   hasError = false,
+  isLoading = false,
 }: MoneyDistributionWidgetProps) {
   const [retryKey, setRetryKey] = useState(0);
   const summaryId = useId();
@@ -114,7 +118,7 @@ function MoneyDistributionWidget({
   const summaryText = buildChartSummary(summaryItems, t);
   const handleRetry = useCallback(() => setRetryKey((k) => k + 1), []);
 
-  const isEmpty = !hasError && distributionData.length === 0;
+  const isEmpty = !hasError && !isLoading && distributionData.length === 0;
   const total = useMemo(
     () =>
       distributionData.reduce(
@@ -139,7 +143,7 @@ function MoneyDistributionWidget({
           </div>
           <p className="mt-2 text-sm text-white/50">Where your money goes</p>
         </div>
-        {!isEmpty && !hasError && (
+        {!isEmpty && !hasError && !isLoading && (
           <div className="order-2 w-full sm:order-2 sm:w-auto sm:text-right">
             <p className="text-sm text-white/50">Total</p>
             <p className="text-3xl font-semibold text-[#dc2626]">
@@ -149,7 +153,11 @@ function MoneyDistributionWidget({
         )}
       </div>
 
-      {hasError ? (
+      {isLoading ? (
+        <div className="mt-8" aria-busy="true" aria-hidden="true">
+          <SkeletonChart type="donut" />
+        </div>
+      ) : hasError ? (
         <WidgetErrorState
           message="We couldn't load your distribution data. Please try again."
           onRetry={handleRetry}
