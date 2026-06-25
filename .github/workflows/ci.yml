@@ -26,8 +26,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci || true
-        continue-on-error: true
+        run: npm ci
 
       - name: Load .env.test
         run: |
@@ -39,20 +38,19 @@ jobs:
               echo "${name}=${value}" >> "$GITHUB_ENV"
             done < .env.test
           fi
-        shell: bash || true
-        continue-on-error: true
+        shell: bash
 
       - name: Run lint
-        run: npm run lint || true
-        continue-on-error: true
+        run: npm run lint
+
+      - name: Run build
+        run: npm run build
 
       - name: Run unit tests
-        run: npm run test || true
-        continue-on-error: true
+        run: npm run test
 
       - name: Run integration tests
-        run: npm run test:integration || true
-        continue-on-error: true
+        run: npm run test:integration
         env:
           # Optional: set in GitHub Secrets to override or supply when .env.test is not committed
           TEST_SOROBAN_RPC_URL: ${{ secrets.TEST_SOROBAN_RPC_URL }}

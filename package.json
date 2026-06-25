@@ -13,10 +13,11 @@
     "test:ui": "node node_modules/vitest/vitest.mjs --config vitest.config.mjs --configLoader runner --ui",
     "test:unit": "npm run test:unit:node && npm run test:unit:vitest",
     "test:unit:node": "node --test tests/unit/webhooks-verify.test.cjs tests/unit/middleware.test.cjs tests/unit/contract-cache.test.cjs",
-    "test:unit:vitest": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/unit/validation/savings-goals.test.ts tests/unit/middleware-gateway.test.ts",
+    "test:unit:vitest": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/unit/**/*.test.ts tests/unit/**/*.test.tsx",
     "test:property": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/property",
     "test:integration": "node --test tests/integration/auth.test.cjs tests/integration/health.test.cjs tests/integration/validation.test.cjs && node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/integration/api",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:perf": "npx playwright test tests/e2e/dashboard-performance.spec.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -54,6 +55,7 @@
     "@vitest/ui": "^4.0.18",
     "autoprefixer": "^10.4.0",
     "eslint": "^8.57.1",
+    "lighthouse": "^11.0.0",
     "eslint-config-next": "^14.2.35",
     "jest": "^30.2.0",
     "jest-axe": "^10.0.0",
