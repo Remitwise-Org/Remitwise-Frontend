@@ -17,6 +17,10 @@ This is a Next.js-based frontend skeleton that provides the UI structure for all
 
 The frontend includes placeholder pages and components for:
 
+### Shared Components
+
+- **AddressDisplay**: A component for displaying long strings like Stellar addresses, featuring truncation, a copy-to-clipboard button, and a tooltip showing the full address on hover.
+
 1. **Dashboard** - Overview of remittances, savings, bills, and insurance
 2. **Send Money** - Remittance sending interface with automatic split preview
 3. **Smart Money Split** - Configuration for automatic allocation
