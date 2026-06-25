@@ -1,5 +1,8 @@
 # API Routes Documentation
 
+> **Need a per-entrypoint auth breakdown?** See the [Authorization Matrix](./authz-matrix.md)
+> for the complete table of (method, path, required auth, optional auth).
+
 ## Folder Structure
 
 All API route handlers live under `app/api/` following Next.js 14 App Router conventions.

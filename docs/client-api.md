@@ -2,7 +2,10 @@
 
 This is the canonical guide for the browser-side API layer in RemitWise.
 
-Use it when you are adding or reviewing client code that talks to `/api/*`. The goal is simple: authenticated browser requests should go through the shared client helpers so session refresh, expiry handling, and logout stay consistent across the app.
+Use it when you are adding or reviewing client code that talks to `/api/*`.
+
+> **Which routes require auth?** See the [Authorization Matrix](./authz-matrix.md)
+> for the complete per-entrypoint table of (method, path, required auth, optional auth). The goal is simple: authenticated browser requests should go through the shared client helpers so session refresh, expiry handling, and logout stay consistent across the app.
 
 ## At a Glance
 
