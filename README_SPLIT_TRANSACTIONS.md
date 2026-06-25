@@ -301,3 +301,6 @@ Documentation updated per issue requirements.
 
 ## Issue #771 Fix
 Documentation updated per issue requirements.
+
+## Issue #769 Fix
+Documentation updated per issue requirements.
