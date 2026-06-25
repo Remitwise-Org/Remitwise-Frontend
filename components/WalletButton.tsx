@@ -13,6 +13,7 @@ const truncateAddress = (address: string) => {
 
 const WalletButton = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { account, isConnected: connected, connect, disconnect, network } = useWallet();
   const address = account?.address ?? '';
@@ -23,8 +24,13 @@ const WalletButton = () => {
   };
 
   const handleConnect = async () => {
-    await connect();
-    setIsOpen(false);
+    try {
+      setIsConnecting(true);
+      await connect();
+      setIsOpen(false);
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   const handleDisconnect = async () => {
@@ -65,6 +71,7 @@ const WalletButton = () => {
       <WalletDropdown
         isOpen={isOpen}
         isConnected={connected}
+        isConnecting={isConnecting}
         walletAddress={address || ''}
         network={network || 'Testnet'}
         buttonRef={buttonRef}
