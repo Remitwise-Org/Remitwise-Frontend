@@ -13,7 +13,7 @@
     "test:ui": "node node_modules/vitest/vitest.mjs --config vitest.config.mjs --configLoader runner --ui",
     "test:unit": "npm run test:unit:node && npm run test:unit:vitest",
     "test:unit:node": "node --test tests/unit/webhooks-verify.test.cjs tests/unit/middleware.test.cjs tests/unit/contract-cache.test.cjs",
-    "test:unit:vitest": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/unit/validation/savings-goals.test.ts tests/unit/middleware-gateway.test.ts",
+    "test:unit:vitest": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/unit/validation/savings-goals.test.ts tests/unit/middleware-gateway.test.ts tests/unit/remittance/build-validation.test.ts",
     "test:property": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/property",
     "test:integration": "node --test tests/integration/auth.test.cjs tests/integration/health.test.cjs tests/integration/validation.test.cjs && node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/integration/api",
     "test:e2e": "playwright test"
