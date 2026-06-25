@@ -287,3 +287,151 @@ export function InsightsLoadingSkeleton() {
     </div>
   );
 }
+
+export function GoalsLoadingSkeleton() {
+  return (
+    <div className="min-h-screen bg-[#010101] safari-safe-bottom">
+      {/* Page header */}
+      <div className="border-b border-white/10 px-5 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-40 rounded" />
+            <Skeleton className="h-4 w-56 rounded" />
+          </div>
+          <Skeleton className="h-10 w-28 rounded-xl" />
+        </div>
+      </div>
+
+      <main className="mx-auto max-w-7xl px-5 py-7 sm:px-6 lg:px-8">
+        {/* Stats row */}
+        <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <SkeletonCard key={i} variant="stat" />
+          ))}
+        </div>
+
+        {/* Goals grid */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(16,16,16,0.98),rgba(10,10,10,0.98))] p-5"
+            >
+              <div className="mb-4 flex items-start justify-between">
+                <Skeleton className="h-12 w-12 rounded-2xl" />
+                <Skeleton className="h-6 w-16 rounded-full" />
+              </div>
+              <div className="mb-4 space-y-2">
+                <Skeleton className="h-5 w-3/4 rounded" />
+                <Skeleton className="h-4 w-1/2 rounded" />
+              </div>
+              <Skeleton className="mb-2 h-2 w-full rounded-full" />
+              <div className="flex items-center justify-between gap-3">
+                <Skeleton className="h-4 w-20 rounded" />
+                <Skeleton className="h-4 w-20 rounded" />
+              </div>
+              <div className="mt-4 flex gap-2">
+                <Skeleton className="h-9 flex-1 rounded-xl" />
+                <Skeleton className="h-9 w-9 rounded-xl" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export function TransactionHistoryLoadingSkeleton() {
+  return (
+    <main className="w-full min-h-screen bg-[#010101]">
+      {/* Header */}
+      <div className="border-b border-white/10 px-4 py-6 md:px-20">
+        <Skeleton className="mb-2 h-7 w-48 rounded" />
+        <Skeleton className="h-4 w-32 rounded" />
+      </div>
+
+      <div className="mx-4 mt-8 space-y-6 md:mx-20">
+        {/* Search + action bar */}
+        <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] px-4 py-6">
+          <Skeleton className="mb-4 h-10 w-full rounded-xl" />
+          <div className="flex justify-end gap-3">
+            <Skeleton className="h-9 w-24 rounded-xl" />
+            <Skeleton className="h-9 w-24 rounded-xl" />
+          </div>
+        </div>
+
+        {/* Filters panel */}
+        <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] px-4 py-5">
+          <div className="mb-4 flex items-center gap-2">
+            <Skeleton className="h-4 w-4 rounded" />
+            <Skeleton className="h-4 w-20 rounded" />
+          </div>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-24 rounded-xl" />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-20 rounded-xl" />
+            ))}
+          </div>
+        </div>
+
+        {/* Transaction rows */}
+        <div className="space-y-4">
+          {["today", "yesterday", "earlier"].map((group) => (
+            <section key={group}>
+              <div className="mb-3 flex items-center justify-between border-b border-white/[0.08] pb-3">
+                <Skeleton className="h-5 w-24 rounded" />
+                <Skeleton className="h-4 w-16 rounded" />
+              </div>
+              <div className="space-y-3">
+                {Array.from({ length: group === "today" ? 2 : 3 }).map((_, i) => (
+                  <ListRowSkeleton key={i} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+export function InsightLoadingSkeleton() {
+  return (
+    <div
+      className="min-h-screen p-4 sm:p-6 lg:p-8"
+      style={{ background: "linear-gradient(180deg, #0F0F0F 0%, #0A0A0A 100%)" }}
+    >
+      <div className="mx-auto max-w-[928px] space-y-6">
+        {/* Title + period selector row */}
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <Skeleton className="h-8 w-44 rounded" />
+          <Skeleton className="h-10 w-36 rounded-xl" />
+        </div>
+
+        {/* KPI stat row */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-white/10 bg-black/40 p-4"
+            >
+              <Skeleton className="mb-2 h-4 w-20 rounded" />
+              <Skeleton className="h-6 w-24 rounded" />
+            </div>
+          ))}
+        </div>
+
+        {/* Charts */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <SkeletonCard variant="chart" />
+          <SkeletonCard variant="chart" />
+        </div>
+      </div>
+    </div>
+  );
+}
