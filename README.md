@@ -31,6 +31,8 @@ The frontend includes placeholder pages and components for:
 
 Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
 
+Fetch-driven widget surfaces on those screens now auto-retry failed read requests up to 3 times with exponential backoff before the inline "Try again" error CTA appears.
+
 ## Sentry
 
 Sentry is wired through the client, server, and edge config files with separate environment variables for each runtime:

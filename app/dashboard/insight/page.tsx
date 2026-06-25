@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { apiClient } from '@/lib/client/apiClient';
+import { runWidgetFetchWithRetry } from '@/lib/client/widgetFetchRetry';
 import { CategoryDonutChart, type CategoryDataPoint } from '@/components/Insights/categoryDonutChart';
 import { RemittanceTrendChart, type TrendDataPoint } from '@/components/Insights/remittanceTrendChart';
 import { WidgetErrorState, WidgetEmptyState } from '@/components/ui/WidgetStates';
@@ -27,16 +28,25 @@ export default function InsightPage() {
     const [data, setData] = useState<InsightsResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
+    const [reloadKey, setReloadKey] = useState(0);
+
+    const handleRetry = useCallback(() => {
+        setReloadKey((current) => current + 1);
+    }, []);
 
     useEffect(() => {
         const controller = new AbortController();
         setLoading(true);
         setError(null);
 
-        apiClient.getJson<InsightsResponse>(`/api/insights?period=${period}`, {
-            signal: controller.signal
+        runWidgetFetchWithRetry({
+            signal: controller.signal,
+            load: () => apiClient.getJson<InsightsResponse>(`/api/insights?period=${period}`, {
+                signal: controller.signal
+            })
         })
             .then((res) => {
+                if (controller.signal.aborted) return;
                 setData(res);
                 setLoading(false);
             })
@@ -47,7 +57,7 @@ export default function InsightPage() {
             });
 
         return () => controller.abort();
-    }, [period]);
+    }, [period, reloadKey]);
 
     const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setPeriod(e.target.value as Period);
@@ -67,7 +77,7 @@ export default function InsightPage() {
             <WidgetErrorState
                 title="Failed to load insights"
                 message={error.message || "An unexpected error occurred."}
-                onRetry={() => setPeriod(period)}
+                onRetry={handleRetry}
             />
         );
     } else if (!data) {

@@ -31,6 +31,8 @@ Real call sites in the repo:
 - [`components/WalletButton.tsx`](../components/WalletButton.tsx) and [`components/Nav/MobileNav.tsx`](../components/Nav/MobileNav.tsx): logout entry points.
 - [`app/layout.tsx`](../app/layout.tsx): global `SessionExpiryProvider` mount point.
 
+For widget-style read surfaces that should stay inline while transient failures clear, use [`lib/client/widgetFetchRetry.ts`](../lib/client/widgetFetchRetry.ts) on top of `apiClient`. That helper retries failed reads up to 3 times with exponential backoff before the UI shows its inline retry CTA.
+
 ## `apiClient` Contract
 
 `apiClient` exposes:

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useMemo, useState } from "react";
+import { useRef, useEffect, useMemo, useState, useCallback } from "react";
 import { CalendarClock, Loader2, Layers3, ShieldCheck, Wallet, Clock3 } from "lucide-react";
 import { UnpaidBillsSection } from "@/components/Bills/UnpaidBillsSection";
 import PageHeader from "@/components/PageHeader";
@@ -12,6 +12,7 @@ import { useFormAction } from "@/lib/hooks/useFormAction";
 import AsyncOperationsPanel from "@/components/AsyncOperationsPanel";
 import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
 import { apiClient } from "@/lib/client/apiClient";
+import { runWidgetFetchWithRetry } from "@/lib/client/widgetFetchRetry";
 import { Bill } from "@/lib/contracts/bill-payments";
 import { WidgetErrorState } from "@/components/ui/WidgetStates";
 import { SkeletonList } from "@/components/ui/Skeleton";
@@ -139,52 +140,79 @@ export default function Bills() {
 	const [stats, setStats] = useState<any>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
+	const [reloadKey, setReloadKey] = useState(0);
 
-	const fetchBillsData = async () => {
-		setIsLoading(true);
-		setError(null);
-		try {
-			const [billsRes, statsRes] = await Promise.all([
-				apiClient.get('/api/bills'),
-				apiClient.get('/api/bills/total-unpaid')
-			]);
-			
-			if (!billsRes || !statsRes) throw new Error("Session expired");
-			if (!billsRes.ok || !statsRes.ok) throw new Error("Failed to load bills data");
-			
-			const billsJson = await billsRes.json();
-			const statsJson = await statsRes.json();
-			
-			const fetchedBills: Bill[] = billsJson.data?.bills || [];
-			const fetchedStats = statsJson.data;
+	const fetchBillsData = useCallback((signal?: AbortSignal) => {
+		return runWidgetFetchWithRetry({
+			signal,
+			load: async () => {
+				const [billsRes, statsRes] = await Promise.all([
+					apiClient.get('/api/bills', { signal }),
+					apiClient.get('/api/bills/total-unpaid', { signal })
+				]);
 
-			setBills(fetchedBills);
-
-			const paidBills = fetchedBills.filter((b: Bill) => b.status === 'paid');
-			const paidAmount = paidBills.reduce((acc: number, b: Bill) => acc + b.amount, 0);
-			const overdueCount = fetchedBills.filter((b: Bill) => (b.status as string) === 'overdue' || (b.status as string) === 'urgent').length;
-
-			setStats({
-				totalUnpaid: {
-					amount: fetchedStats?.totalUnpaid?.toLocaleString() || '0',
-					pendingCount: fetchedStats?.count || 0
-				},
-				overdueCount,
-				paidThisMonth: {
-					amount: paidAmount.toLocaleString(),
-					paymentCount: paidBills.length
+				if (!billsRes || !statsRes || !billsRes.ok || !statsRes.ok) {
+					throw new Error("Failed to load bills data");
 				}
-			});
-		} catch (err) {
-			setError(err instanceof Error ? err : new Error("Unknown error"));
-		} finally {
-			setIsLoading(false);
-		}
-	};
+
+				const billsJson = await billsRes.json();
+				const statsJson = await statsRes.json();
+
+				const fetchedBills: Bill[] = billsJson.data?.bills || [];
+				const fetchedStats = statsJson.data;
+				const paidBills = fetchedBills.filter((bill: Bill) => bill.status === 'paid');
+				const paidAmount = paidBills.reduce((acc: number, bill: Bill) => acc + bill.amount, 0);
+				const overdueCount = fetchedBills.filter((bill: Bill) => (bill.status as string) === 'overdue' || (bill.status as string) === 'urgent').length;
+
+				return {
+					bills: fetchedBills,
+					stats: {
+						totalUnpaid: {
+							amount: fetchedStats?.totalUnpaid?.toLocaleString() || '0',
+							pendingCount: fetchedStats?.count || 0
+						},
+						overdueCount,
+						paidThisMonth: {
+							amount: paidAmount.toLocaleString(),
+							paymentCount: paidBills.length
+						}
+					}
+				};
+			}
+		});
+	}, []);
+
+	const handleRetry = useCallback(() => {
+		setReloadKey((current) => current + 1);
+	}, []);
 
 	useEffect(() => {
-		fetchBillsData();
-	}, []);
+		const controller = new AbortController();
+
+		setIsLoading(true);
+		setError(null);
+
+		void fetchBillsData(controller.signal)
+			.then((result) => {
+				if (controller.signal.aborted) {
+					return;
+				}
+
+				setBills(result.bills);
+				setStats(result.stats);
+				setIsLoading(false);
+			})
+			.catch((err) => {
+				if (controller.signal.aborted) {
+					return;
+				}
+
+				setError(err instanceof Error ? err : new Error("Unknown error"));
+				setIsLoading(false);
+			});
+
+		return () => controller.abort();
+	}, [fetchBillsData, reloadKey]);
 
 	function handleAddBill() {
 		formSectionRef.current?.scrollIntoView({
@@ -209,7 +237,7 @@ export default function Bills() {
 						<WidgetErrorState 
 							title="Failed to load bills" 
 							message={error.message} 
-							onRetry={fetchBillsData} 
+							onRetry={handleRetry} 
 						/>
 					</div>
 				) : isLoading ? (
