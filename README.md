@@ -209,7 +209,8 @@ remitwise-frontend/
 │   └── auth.ts              # Auth middleware
 ├── docs/                    # Documentation
 │   ├── API_ROUTES.md        # API routes documentation
-│   └── contract-cache.md    # Contract caching architecture and guidelines
+│   ├── contract-cache.md    # Contract caching architecture and guidelines
+│   └── SECURITY_REVIEW.md   # Security review checklist for PR reviewers
 ├── public/                  # Static assets
 └── package.json
 ```
@@ -379,6 +380,8 @@ All API responses include the following security headers to protect against comm
 | `Vary`                   | `Origin`        | Instructs caches to vary response by origin    |
 
 These headers are applied automatically to all `/api` responses and do not require configuration.
+
+> **Security reviews:** before merging PRs that touch these areas, reviewers should run through the [Security Review Checklist](docs/SECURITY_REVIEW.md).
 
 #### Request Body Size Limit
 
