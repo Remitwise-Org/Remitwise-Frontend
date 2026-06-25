@@ -28,11 +28,11 @@ const PrimaryNav = () => {
     };
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-[60] border-b border-white/5 bg-brand-dark/50 backdrop-blur-xl">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-20">
+        <header className="fixed top-0 left-0 right-0 z-[60] overflow-x-hidden border-b border-white/5 bg-brand-dark/50 backdrop-blur-xl">
+            <div className="mx-auto max-w-7xl overflow-x-hidden px-4 sm:px-6 lg:px-8">
+                <div className="flex h-16 min-w-0 items-center justify-between gap-2 375:h-20">
                     {/* Left: Logo */}
-                    <div className="flex-shrink-0">
+                    <div className="min-w-0 flex-shrink">
                         <Logo />
                     </div>
 
@@ -64,13 +64,13 @@ const PrimaryNav = () => {
                     </nav>
 
                     {/* Right: Wallet & Mobile Menu Toggle */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 flex-shrink-0 items-center gap-2 375:gap-3">
                         {whatsNew && (
                             <button
                                 onClick={whatsNew.toggle}
                                 aria-label="What's New"
                                 aria-expanded={whatsNew.isOpen}
-                                className="relative flex items-center justify-center w-10 h-10 rounded-full text-white/60 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
+                                className="relative hidden 450:flex items-center justify-center w-10 h-10 rounded-full text-white/60 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
                             >
                                 <Bell className="w-5 h-5" />
                                 <WhatsNewBadge className="top-1.5 right-1.5 w-5 h-5" />

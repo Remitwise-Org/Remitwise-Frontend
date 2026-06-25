@@ -13,7 +13,7 @@ import {
   Area
 } from 'recharts';
 import { INSIGHTS_PALETTE } from './palette';
-import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y';
+import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart';
 const LINE_COLOR = INSIGHTS_PALETTE[0];
 
 function useReducedMotion() {
@@ -120,15 +120,22 @@ function RemittanceTrendChartInner({
   const trend   = latest >= prev ? 'up' : 'down'
 
   // Generate accessible label and summary
-  const chartLabel = useMemo(
-    () => generateTrendChartLabel("Remittance Trend", data, ["amount"]),
-    [data]
+  const summaryItems = useMemo(
+    () =>
+      data.map(
+        (point) =>
+          `${point.date}: $${point.amount.toLocaleString()} (${point.transactions} tx)`,
+      ),
+    [data],
   )
 
-  const chartSummary = useMemo(
-    () => generateTrendChartSummary(data, ["amount"]),
-    [data]
-  )
+  const t = useMemo(() => {
+    return (_path: string, options?: string | Record<string, unknown>) =>
+      typeof options === 'string' ? options : _path
+  }, [])
+
+  const chartLabel = useMemo(() => buildChartImageLabel('Remittance Trend', summaryItems, t), [summaryItems, t])
+  const chartSummary = useMemo(() => buildChartSummary(summaryItems, t), [summaryItems, t])
 
   if (isEmpty) {
     return (

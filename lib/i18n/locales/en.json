@@ -64,5 +64,42 @@
   "charts": {
     "imageLabel": "{{title}}: {{summary}}",
     "noData": "No data available."
+  },
+  "savingsGoals": {
+    "title": "Savings Goals",
+    "subtitle": "Track and grow your family savings",
+    "newGoal": "New Goal",
+    "createGoal": "Create Goal",
+    "editGoal": "Save Changes",
+    "stats": {
+      "totalGoals": "Total Goals",
+      "totalTarget": "Total Target",
+      "totalSaved": "Total Saved"
+    },
+    "card": {
+      "overdue": "Overdue",
+      "complete": "Complete",
+      "nearComplete": "Near Complete",
+      "onTrack": "On Track",
+      "goalMet": "Goal met",
+      "daysLeft": "{{count}} days left",
+      "noDeadline": "No deadline",
+      "needMore": "Need {{amount}} more",
+      "target": "Target",
+      "remaining": "{{amount}} remaining",
+      "addFunds": "Add Funds",
+      "edit": "Details"
+    },
+    "modal": {
+      "createTitle": "Create New Goal",
+      "editTitle": "Edit Goal",
+      "titleLabel": "Goal name",
+      "titlePlaceholder": "e.g. Children's Education",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "What is this goal for?",
+      "amountLabel": "Target amount (USD)",
+      "dateLabel": "Target date",
+      "iconLabel": "Choose an icon"
+    }
   }
 }

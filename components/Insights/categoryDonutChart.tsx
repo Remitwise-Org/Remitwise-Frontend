@@ -261,7 +261,7 @@ function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutCha
       )}
       {/* Screen‑reader summary for the chart */}
       <p id={summaryId} className="sr-only" aria-live="polite">
-        {chartSummary}
+        {summaryText}
       </p>
     </div>
   )

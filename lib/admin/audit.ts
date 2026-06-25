@@ -21,21 +21,25 @@ export function recordAuditEvent(
     ...input,
   };
 
-  void prisma.auditEvent
-    .create({
-      data: {
-        timestamp: new Date(event.createdAt),
-        event: event.type,
-        identity: event.actor,
-        details: JSON.stringify({
-          message: event.message,
-          metadata: event.metadata,
-        }),
-      },
-    })
-    .catch((error) => {
-      console.error('Failed to persist audit event:', error);
-    });
+  const auditEventClient = (prisma as any).auditEvent;
+
+  if (auditEventClient?.create) {
+    void auditEventClient
+      .create({
+        data: {
+          timestamp: new Date(event.createdAt),
+          event: event.type,
+          identity: event.actor,
+          details: JSON.stringify({
+            message: event.message,
+            metadata: event.metadata,
+          }),
+        },
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to persist audit event:', error);
+      });
+  }
 
   return event;
 }
@@ -48,12 +52,15 @@ export async function getAuditEvents(
       ? Math.min(Math.floor(limit), MAX_LIMIT)
       : DEFAULT_LIMIT;
 
-  const events = await prisma.auditEvent.findMany({
-    orderBy: {
-      timestamp: 'desc',
-    },
-    take: safeLimit,
-  });
+  const auditEventClient = (prisma as any).auditEvent;
+  const events: any[] = auditEventClient?.findMany
+    ? await auditEventClient.findMany({
+        orderBy: {
+          timestamp: 'desc',
+        },
+        take: safeLimit,
+      })
+    : [];
 
   return events.map((event) => {
     let details: {

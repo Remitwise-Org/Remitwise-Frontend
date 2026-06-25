@@ -1,6 +1,6 @@
 import { Contract, scValToNative, nativeToScVal, SorobanRpc } from "@stellar/stellar-sdk";
 import { getSorobanClient } from "../soroban-client";
-import { resolveContractId } from "./network-resolution";
+import { getSorobanNetworkPassphrase, resolveContractId } from "./network-resolution";
 import { ContractReadError } from "./dashboard-aggregate";
 export { ContractReadError };
 
@@ -151,4 +151,4 @@ export async function isGoalCompleted(goalId: string): Promise<boolean> {
 }
 
 // Re-export resolved passphrase for callers that need it when signing transactions.
-export { getNetworkPassphrase };
+export const getNetworkPassphrase = getSorobanNetworkPassphrase;

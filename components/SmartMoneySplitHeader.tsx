@@ -15,7 +15,7 @@ export default function SmartMoneySplitHeader({ totalPercentage = 100 }: SmartMo
     <div className="bg-[#010101] text-white safari-safe-top">
       <div className="max-w-7xl mx-auto px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 pt-7 375:pt-8 pb-5 375:pb-6">
         {/* Header Top Section */}
-        <div className="flex items-start gap-3 375:gap-4 mb-7 375:mb-8">
+        <div className="flex min-w-0 items-start gap-3 375:gap-4 mb-7 375:mb-8">
           <button
             onClick={() => router.back()}
             className="touch-target flex-shrink-0 flex items-center justify-center w-10 h-10 375:w-11 375:h-11 rounded-full bg-[#1a1a1a] border border-white/10 hover:bg-[#252525] transition-colors"
@@ -24,8 +24,8 @@ export default function SmartMoneySplitHeader({ totalPercentage = 100 }: SmartMo
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
           
-          <div>
-            <h1 className="text-2xl 375:text-3xl font-bold text-white tracking-tight">Smart Money Split</h1>
+          <div className="min-w-0">
+            <h1 className="break-words text-2xl 375:text-3xl font-bold text-white tracking-tight">Smart Money Split</h1>
             <p className="text-white/40 text-xs 375:text-sm mt-1">Configure automatic allocation</p>
           </div>
         </div>

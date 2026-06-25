@@ -1,13 +1,13 @@
 'use client'
 
-import { useMemo } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { TrendingUp, Target, FileText } from 'lucide-react'
 import { SkeletonChart } from '@/components/ui/Skeleton'
 import WidgetEmptyState from '@/components/ui/WidgetEmptyState'
 import WidgetErrorState from '@/components/ui/WidgetErrorState'
-import { useState, useCallback, memo } from 'react'
-import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y/chart'
+import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart'
 
 // Sample data for the 6-month chart (Jul-Dec)
 const chartData = [
@@ -26,6 +26,26 @@ const COLORS = {
     bills: '#991B1B',
     insurance: '#7F1D1D',
 }
+
+const TOOLTIP_CONTENT_STYLE: CSSProperties = {
+    backgroundColor: 'rgba(10,10,10,0.96)',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: 12,
+    padding: '10px 12px',
+}
+
+const TOOLTIP_LABEL_STYLE: CSSProperties = {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: 600,
+    marginBottom: 6,
+}
+
+const ACTIVE_DOT = { r: 5, stroke: 'rgba(255,255,255,0.85)', strokeWidth: 2 }
+const DOT_REMITTANCES = { r: 2.5, fill: COLORS.remittances, stroke: COLORS.remittances, strokeWidth: 1 }
+const DOT_SAVINGS = { r: 2.5, fill: COLORS.savings, stroke: COLORS.savings, strokeWidth: 1 }
+const DOT_BILLS = { r: 2.5, fill: COLORS.bills, stroke: COLORS.bills, strokeWidth: 1 }
+const DOT_INSURANCE = { r: 2.5, fill: COLORS.insurance, stroke: COLORS.insurance, strokeWidth: 1 }
 
 interface CustomLegendProps {
     payload?: Array<{
@@ -56,7 +76,7 @@ const CustomLegend = memo(function CustomLegend({ payload }: CustomLegendProps) 
 })
 
 interface SummaryCardProps {
-    icon: React.ReactNode
+    icon: ReactNode
     label: string
     value: string
     subtitle: string
@@ -118,16 +138,26 @@ export default memo(function SixMonthTrendsWidget({ isLoading = false, hasError 
     const [retryKey, setRetryKey] = useState(0)
     const handleRetry = useCallback(() => setRetryKey((k) => k + 1), [])
 
-    // Generate accessible label and summary from chart data
-    const chartLabel = useMemo(
-        () => generateTrendChartLabel("6-Month Trends", chartData, ["remittances", "savings", "bills", "insurance"]),
-        []
-    );
+    const tooltipFormatter = useCallback((value: unknown, name: unknown) => {
+        const numeric = typeof value === 'number' ? value : Number(value)
+        const formatted = Number.isFinite(numeric)
+            ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(numeric)
+            : String(value)
 
-    const chartSummary = useMemo(
-        () => generateTrendChartSummary(chartData, ["remittances", "savings", "bills", "insurance"]),
-        []
-    );
+        return [formatted, String(name)]
+    }, [])
+
+    // Generate accessible label and summary from chart data
+    const t = useCallback((_path: string, options?: string | Record<string, unknown>) => {
+        return typeof options === 'string' ? options : _path
+    }, [])
+
+    const a11ySummaryItems = useMemo(() => {
+        return ['Remittances', 'Savings', 'Bills', 'Insurance']
+    }, [])
+
+    const chartLabel = useMemo(() => buildChartImageLabel('6-Month Trends', a11ySummaryItems, t), [a11ySummaryItems, t])
+    const chartSummary = useMemo(() => buildChartSummary(a11ySummaryItems, t), [a11ySummaryItems, t])
 
     if (isLoading) {
         return (

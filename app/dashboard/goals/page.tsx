@@ -108,7 +108,7 @@ export default function SavingsGoalsPage() {
         showBottomDivider
       />
 
-      <main className="max-w-7xl mx-auto px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 py-7 375:py-8 overflow-x-hidden">
+      <main className="mx-auto max-w-7xl overflow-x-hidden px-5 py-7 320:px-6 375:px-7 375:py-8 tablet:px-6 laptop:px-8">
         {/* Savings Goals Stats Cards */}
         <div className="mb-7 375:mb-8">
           <SavingsGoalsStatsCards
@@ -123,7 +123,7 @@ export default function SavingsGoalsPage() {
         </div>
 
         {/* Goals Grid */}
-        <div className="grid grid-cols-1 450:grid-cols-2 xl:grid-cols-3 gap-5 375:gap-6">
+        <div className="grid min-w-0 grid-cols-1 gap-5 375:gap-6 450:grid-cols-2 xl:grid-cols-3">
           {goals.map((goal) => (
             <SavingsGoalCard
               key={goal.id}

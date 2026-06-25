@@ -118,12 +118,12 @@ export default function SplitConfiguration() {
 	};
 
 	return (
-		<div className='min-h-screen bg-[#010101] safari-safe-bottom'>
+		<div className='min-h-screen overflow-x-hidden bg-[#010101] safari-safe-bottom'>
 			<SmartMoneySplitHeader />
 
-			<main className='mx-auto max-w-7xl px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 py-7 375:py-8 sm:py-8'>
-				<div className='grid gap-7 375:gap-8 xl:grid-cols-[minmax(0,1.1fr)_360px] xl:items-start'>
-					<div className='rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-5 320:p-6 375:p-7 sm:p-8'>
+			<main className='mx-auto max-w-7xl overflow-x-hidden px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 py-7 375:py-8 sm:py-8'>
+				<div className='grid min-w-0 gap-7 375:gap-8 xl:grid-cols-[minmax(0,1.1fr)_360px] xl:items-start'>
+					<div className='min-w-0 rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-5 320:p-6 375:p-7 sm:p-8'>
 						<div className='border-b border-white/[0.08] pb-5 375:pb-6'>
 							<p className='text-xs font-semibold uppercase tracking-[0.24em] text-red-300'>
 								Allocation editor
@@ -272,7 +272,7 @@ export default function SplitConfiguration() {
 						</form>
 					</div>
 
-					<aside className='space-y-6 xl:sticky xl:top-6'>
+					<aside className='min-w-0 space-y-6 xl:sticky xl:top-6'>
 						<AsyncOperationsPanel
 							eyebrow='Async behavior'
 							title='Duration, Stacking, and Placement'

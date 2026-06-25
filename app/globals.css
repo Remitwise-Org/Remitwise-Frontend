@@ -24,6 +24,7 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: black;
+  overflow-x: hidden;
 }
 
 .starry-bg {
