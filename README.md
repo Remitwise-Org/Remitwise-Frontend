@@ -29,7 +29,7 @@ The frontend includes placeholder pages and components for:
 
 ## Loading States
 
-Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
+Dashboard, Bills, Insights, and Transaction History now use route-level skeleton screens built from `components/ui/Skeleton.tsx` and `components/ui/LoadingSkeletons.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
 
 ## Sentry
 

@@ -524,8 +524,48 @@ const TransactionHistoryPage = () => {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="mt-8 flex justify-center">
-            <Loader2 className="w-8 h-8 text-[#FF4B26] animate-spin" />
+          <div className="mt-8 space-y-8">
+            {["today", "yesterday", "earlier"].map((group) => (
+              <div key={group}>
+                <div className="mb-3 flex items-center justify-between border-b border-[#FFFFFF14] pb-3">
+                  <div className="h-6 w-24 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                  <div className="h-4 w-12 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                </div>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((row) => (
+                    <div
+                      key={row}
+                      className="border border-[#FFFFFF14] bg-gradient-to-t from-[#0A0A0A] to-[#0F0F0F] rounded-2xl p-6"
+                    >
+                      <div className="flex gap-4">
+                        <div className="w-12 h-12 rounded-xl shrink-0 bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <div className="h-5 w-28 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                              <div className="h-4 w-12 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                            </div>
+                            <div className="h-6 w-[90px] rounded-full bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            {[1, 2, 3, 4].map((col) => (
+                              <div key={col} className="space-y-1.5">
+                                <div className="h-3 w-14 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                                <div className="h-5 w-24 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex flex-wrap gap-3">
+                            <div className="h-[38px] w-[120px] rounded-lg bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                            <div className="h-[38px] w-[140px] rounded-lg bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

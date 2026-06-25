@@ -241,6 +241,122 @@ export function BillsLoadingSkeleton() {
   );
 }
 
+export function TransactionHistoryLoadingSkeleton() {
+  return (
+    <main className="w-full min-h-screen bg-[#010101] font-inter">
+      {/* Header */}
+      <div className="mx-4 mt-8 md:mx-20 md:mt-10">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48 rounded" />
+          <Skeleton className="h-5 w-64 rounded" />
+        </div>
+      </div>
+
+      {/* Search and Action Bar */}
+      <div className="mx-4 mt-8 md:mx-20 md:mt-10">
+        <div className="flex flex-col gap-4 rounded-2xl border border-[#FFFFFF14] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] px-4 py-6 sm:gap-5">
+          <Skeleton className="h-12 w-full rounded-xl" />
+          <div className="flex w-full flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+            <Skeleton className="h-[42px] w-[120px] rounded-xl" />
+            <Skeleton className="h-[42px] w-[120px] rounded-xl" />
+          </div>
+        </div>
+      </div>
+
+      {/* Filters Panel */}
+      <div className="mx-4 mt-6 md:mx-20">
+        <div className="rounded-2xl border border-[#FFFFFF14] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] px-4 py-5 sm:px-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="h-4 w-4 rounded" />
+            <Skeleton className="h-4 w-16 rounded" />
+          </div>
+
+          <div className="mb-5">
+            <Skeleton className="h-3 w-12 rounded mb-3" />
+            <div className="flex flex-wrap gap-2">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-[40px] w-[80px] rounded-xl" />
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-5">
+            <Skeleton className="h-3 w-10 rounded mb-3" />
+            <div className="flex flex-wrap gap-2">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-[40px] w-[100px] rounded-xl" />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Skeleton className="h-3 w-20 rounded mb-3" />
+            <div className="flex flex-wrap items-end gap-3">
+              <Skeleton className="h-[68px] w-[160px] rounded-xl" />
+              <Skeleton className="h-[68px] w-[160px] rounded-xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Transaction List Groups */}
+      <div className="mx-4 mt-8 md:mx-20">
+        {["today", "yesterday", "earlier"].map((group) => (
+          <div key={group} className="mb-8">
+            <div className="mb-3 flex items-center justify-between border-b border-[#FFFFFF14] pb-3">
+              <Skeleton className="h-6 w-24 rounded" />
+              <Skeleton className="h-4 w-12 rounded" />
+            </div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((row) => (
+                <div
+                  key={row}
+                  className="border border-[#FFFFFF14] bg-gradient-to-t from-[#0A0A0A] to-[#0F0F0F] rounded-2xl p-6"
+                >
+                  <div className="flex gap-4">
+                    <Skeleton className="w-12 h-12 rounded-xl shrink-0" />
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-start justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-5 w-28 rounded" />
+                          <Skeleton className="h-4 w-12 rounded" />
+                        </div>
+                        <Skeleton className="h-6 w-[90px] rounded-full" />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div className="space-y-1.5">
+                          <Skeleton className="h-3 w-14 rounded" />
+                          <Skeleton className="h-6 w-24 rounded" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Skeleton className="h-3 w-20 rounded" />
+                          <Skeleton className="h-4 w-28 rounded" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Skeleton className="h-3 w-16 rounded" />
+                          <Skeleton className="h-4 w-32 rounded" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Skeleton className="h-3 w-8 rounded" />
+                          <Skeleton className="h-4 w-16 rounded" />
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <Skeleton className="h-[38px] w-[120px] rounded-lg" />
+                        <Skeleton className="h-[38px] w-[140px] rounded-lg" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}
+
 export function InsightsLoadingSkeleton() {
   return (
     <div className="flex min-h-screen flex-col bg-[#010101]">
