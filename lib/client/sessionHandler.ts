@@ -135,6 +135,7 @@ function clearAuthState(): void {
     localStorage.removeItem('wallet_address');
     localStorage.removeItem('wallet_connected');
     localStorage.removeItem('auth_state');
+    localStorage.removeItem('remitwise_session_expiry');
   }
 }
 
