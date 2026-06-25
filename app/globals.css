@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Pulse and shimmer animations must only run when the user has not requested
+ * reduced motion (WCAG 2.1 AA – Success Criterion 2.3.3 / 2.2.2).
+ * Tailwind's built-in `animate-pulse` and `animate-spin` classes, plus our
+ * custom `animate-neon-pulse` and `animate-shimmer`, are wrapped here so they
+ * have no effect when prefers-reduced-motion: reduce is active.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-spin,
+  .animate-shimmer,
+  .animate-neon-pulse {
+    animation: none !important;
+  }
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
