@@ -8,6 +8,7 @@ import WalletButton from "../WalletButton";
 import MobileNav from "./MobileNav";
 import { useWhatsNewOptional } from "@/lib/context/WhatsNewContext";
 import WhatsNewBadge from "@/components/Dashboard/WhatsNewBadge";
+import WrongNetworkBanner from "@/components/WrongNetworkBanner";
 
 const PrimaryNav = () => {
     const pathname = usePathname();
@@ -28,6 +29,7 @@ const PrimaryNav = () => {
     };
 
     return (
+        <>
         <header className="fixed top-0 left-0 right-0 z-[60] border-b border-white/5 bg-brand-dark/50 backdrop-blur-xl">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
@@ -84,6 +86,8 @@ const PrimaryNav = () => {
                 </div>
             </div>
         </header>
+        <WrongNetworkBanner />
+        </>
     );
 };
 
