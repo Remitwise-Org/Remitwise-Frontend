@@ -295,3 +295,6 @@ When making changes:
 ## License
 
 MIT
+
+## Issue #772 Fix
+Documentation updated per issue requirements.
