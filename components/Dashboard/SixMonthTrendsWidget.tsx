@@ -27,38 +27,31 @@ const COLORS = {
     insurance: '#7F1D1D',
 }
 
-const TOOLTIP_CONTENT_STYLE = {
-    backgroundColor: 'rgba(15, 15, 15, 0.96)',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    borderRadius: '12px',
-    color: '#FFFFFF',
+// Tooltip styles matching the dark theme
+const TOOLTIP_CONTENT_STYLE: React.CSSProperties = {
+    backgroundColor: '#1A1A1A',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '8px',
+    padding: '8px 12px',
+    color: '#fff',
+    fontSize: '12px',
 }
 
-const TOOLTIP_LABEL_STYLE = {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 12,
+const TOOLTIP_LABEL_STYLE: React.CSSProperties = {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontWeight: 600,
+    marginBottom: '4px',
 }
 
-const ACTIVE_DOT = {
-    r: 6,
-    strokeWidth: 0,
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const tooltipFormatter: any = (value: number) => [`$${value.toLocaleString()}`]
 
-const DOT_REMITTANCES = { r: 4, fill: COLORS.remittances, strokeWidth: 0 }
-const DOT_SAVINGS = { r: 4, fill: COLORS.savings, strokeWidth: 0 }
-const DOT_BILLS = { r: 4, fill: COLORS.bills, strokeWidth: 0 }
-const DOT_INSURANCE = { r: 4, fill: COLORS.insurance, strokeWidth: 0 }
-
-function tooltipFormatter(
-    value: string | number | readonly (string | number)[] | undefined,
-    name: string | number | undefined
-): [string, string] {
-    const labelText = String(name)
-    const label = labelText.charAt(0).toUpperCase() + labelText.slice(1)
-    const normalizedValue = Array.isArray(value) ? value[0] : value
-    const amount = typeof normalizedValue === 'number' ? normalizedValue : Number(normalizedValue ?? 0)
-    return [`$${amount}`, label]
-}
+// Dot styles for each line series
+const DOT_REMITTANCES = { fill: COLORS.remittances, r: 3, strokeWidth: 0 }
+const DOT_SAVINGS = { fill: COLORS.savings, r: 3, strokeWidth: 0 }
+const DOT_BILLS = { fill: COLORS.bills, r: 3, strokeWidth: 0 }
+const DOT_INSURANCE = { fill: COLORS.insurance, r: 3, strokeWidth: 0 }
+const ACTIVE_DOT = { r: 5, strokeWidth: 2, stroke: '#fff' }
 
 interface CustomLegendProps {
     payload?: Array<{
