@@ -12,6 +12,7 @@ interface WalletDropdownProps {
   buttonRef?: React.RefObject<HTMLButtonElement>;
   walletAddress?: string;
   network?: string;
+  isConnecting?: boolean;
 }
 
 const formatAddress = (address: string) => {
@@ -28,6 +29,7 @@ export default function WalletDropdown({
   buttonRef,
   walletAddress = 'GDEMOXQ3D5AFX4K7IQ3XR5ZYQ2H7F4QO2N7F4R6STJHK2QMZ7CNC3',
   network = 'Testnet',
+  isConnecting = false,
 }: WalletDropdownProps) {
   const [copied, setCopied] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
@@ -231,9 +233,20 @@ export default function WalletDropdown({
             <button
               type="button"
               onClick={onConnect}
-              className="w-full rounded-3xl bg-brand-red px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#d33a3a] focus:outline-none focus:ring-2 focus:ring-brand-red/50"
+              disabled={isConnecting}
+              className="w-full rounded-3xl bg-brand-red px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#d33a3a] focus:outline-none focus:ring-2 focus:ring-brand-red/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Connect Wallet
+              {isConnecting ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Connecting...
+                </>
+              ) : (
+                'Connect Wallet'
+              )}
             </button>
           </>
         )}
