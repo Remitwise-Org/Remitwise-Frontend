@@ -298,6 +298,3 @@ MIT
 
 ## Issue #772 Fix
 Documentation updated per issue requirements.
-
-## Issue #771 Fix
-Documentation updated per issue requirements.
