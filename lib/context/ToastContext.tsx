@@ -9,6 +9,15 @@ export interface ToastAction {
   onClick: () => void;
 }
 
+export interface DiagnosticDetails {
+  /** Request ID for tracking and support */
+  requestId?: string;
+  /** Error code for categorization */
+  errorCode?: string;
+  /** Timestamp when the error occurred */
+  timestamp?: string;
+}
+
 export interface Toast {
   id: string;
   variant: ToastVariant;
@@ -17,6 +26,8 @@ export interface Toast {
   action?: ToastAction;
   /** Auto-dismiss delay in ms. Pass 0 to require manual dismissal. Default: 5000. */
   duration?: number;
+  /** Diagnostic details shown in disclosure (error variant only) */
+  diagnostics?: DiagnosticDetails;
 }
 
 interface ToastContextValue {

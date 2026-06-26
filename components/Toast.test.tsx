@@ -327,4 +327,243 @@ describe('Toast', () => {
       expect(mockOnDismiss).toHaveBeenCalledTimes(3);
     });
   });
+
+  describe('Disclosure (What failed)', () => {
+    it('should not show disclosure button for non-error variants', () => {
+      render(<Toast toast={mockToast} onDismiss={mockOnDismiss} />);
+      expect(screen.queryByText('What failed')).not.toBeInTheDocument();
+    });
+
+    it('should not show disclosure button for error toast without diagnostics', () => {
+      const errorToast: ToastType = {
+        id: 'test-error-1',
+        variant: 'error',
+        title: 'Error',
+        description: 'An error occurred',
+      };
+      render(<Toast toast={errorToast} onDismiss={mockOnDismiss} />);
+      expect(screen.queryByText('What failed')).not.toBeInTheDocument();
+    });
+
+    it('should show disclosure button for error toast with diagnostics', () => {
+      const errorToastWithDiagnostics: ToastType = {
+        id: 'test-error-2',
+        variant: 'error',
+        title: 'Error',
+        description: 'An error occurred',
+        diagnostics: {
+          requestId: '9d0f8c5d-1c7a-4d53-a74c-xxxxxxxx4',
+        },
+      };
+      render(<Toast toast={errorToastWithDiagnostics} onDismiss={mockOnDismiss} />);
+      expect(screen.getByText('What failed')).toBeInTheDocument();
+    });
+
+    it('should have disclosure hidden by default', () => {
+      const errorToastWithDiagnostics: ToastType = {
+        id: 'test-error-3',
+        variant: 'error',
+        title: 'Error',
+        description: 'An error occurred',
+        diagnostics: {
+          requestId: '9d0f8c5d-1c7a-4d53-a74c-xxxxxxxx4',
+        },
+      };
+      render(<Toast toast={errorToastWithDiagnostics} onDismiss={mockOnDismiss} />);
+      const disclosureButton = screen.getByText('What failed');
+      expect(disclosureButton).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.queryByText('Request ID:')).not.toBeInTheDocument();
+    });
+
+    it('should expand disclosure when clicked', () => {
+      const errorToastWithDiagnostics: ToastType = {
+        id: 'test-error-4',
+        variant: 'error',
+        title: 'Error',
+        description: 'An error occurred',
+        diagnostics: {
+          requestId: '9d0f8c5d-1c7a-4d53-a74c-xxxxxxxx4',
+        },
+      };
+      render(<Toast toast={errorToastWithDiagnostics} onDismiss={mockOnDismiss} />);
+      const disclosureButton = screen.getByText('What failed');
+      
+      fireEvent.click(disclosureButton);
+      
+      expect(disclosureButton).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByText('Request ID:')).toBeInTheDocument();
+      expect(screen.getByText('9d0f8c5d-1c7a-4d53-a74c-xxxxxxxx4')).toBeInTheDocument();
+    });
+
+    it('should collapse disclosure when clicked again', () => {
+      const errorToastWithDiagnostics: ToastType = {
+        id: 'test-error-5',
+        variant: 'error',
+        title: 'Error',
+        description: 'An error occurred',
+        diagnostics: {
+          requestId: '9d0f8c5d-1c7a-4d53-a74c-xxxxxxxx4',
+        },
+      };
+      render(<Toast toast={errorToastWithDiagnostics} onDismiss={mockOnDismiss} />);
+      const disclosureButton = screen.getByText('What failed');
+      
+      // Open
+      fireEvent.click(disclosureButton);
+      expect(disclosureButton).toHaveAttribute('aria-expanded', 'true');
+      
+      // Close
+      fireEvent.click(disclosureButton);
+      expect(disclosureButton).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.queryByText('Request ID:')).not.toBeInTheDocument();
+    });
+
+    it('should display request ID when available', () => {
+      const errorToastWithDiagnostics: ToastType = {
+        id: 'test-error-6',
+        variant: 'error',
+        title: 'Error',
+        description: 'An error occurred',
+        diagnostics: {
+          requestId: 'req-12345-67890',
+        },
+      };
+      render(<Toast toast={errorToastWithDiagnostics} onDismiss={mockOnDismiss} />);
+      
+      fireEvent.click(screen.getByText('What failed'));
+      
+      expect(screen.getByText('Request ID:')).toBeInTheDocument();
+      expect(screen.getByText('req-12345-67890')).toBeInTheDocument();
+    });
+
+    it('should display error code when available', () => {
+      const errorToastWithDiagnostics: ToastType = {
+        id: 'test-error-7',
+        variant: 'error',
+        title: 'Error',
+        description: 'An error occurred',
+        diagnostics: {
+          errorCode: 'ERR_500',
+          requestId: 'req-12345-67890',
+        },
+      };
+      render(<Toast toast={errorToastWithDiagnostics} onDismiss={mockOnDismiss} />);
+      
+      fireEvent.click(screen.getByText('What failed'));
+      
+      expect(screen.getByText('Error Code:')).toBeInTheDocument();
+      expect(screen.getByText('ERR_500')).toBeInTheDocument();
+    });
+
+    it('should display timestamp when available', () => {
+      const errorToastWithDiagnostics: ToastType = {
+        id: 'test-error-8',
+        variant: 'error',
+        title: 'Error',
+        description: 'An error occurred',
+        diagnostics: {
+          requestId: 'req-12345-67890',
+          timestamp: '2024-01-01T12:00:00Z',
+        },
+      };
+      render(<Toast toast={errorToastWithDiagnostics} onDismiss={mockOnDismiss} />);
+      
+      fireEvent.click(screen.getByText('What failed'));
+      
+      expect(screen.getByText('Timestamp:')).toBeInTheDocument();
+      expect(screen.getByText('2024-01-01T12:00:00Z')).toBeInTheDocument();
+    });
+
+    it('should display error message in disclosure', () => {
+      const errorToastWithDiagnostics: ToastType = {
+        id: 'test-error-9',
+        variant: 'error',
+        title: 'Error',
+        description: 'Detailed error message here',
+        diagnostics: {
+          requestId: 'req-12345-67890',
+        },
+      };
+      render(<Toast toast={errorToastWithDiagnostics} onDismiss={mockOnDismiss} />);
+      
+      fireEvent.click(screen.getByText('What failed'));
+      
+      expect(screen.getByText('Error Message:')).toBeInTheDocument();
+      expect(screen.getByText('Detailed error message here')).toBeInTheDocument();
+    });
+
+    it('should be keyboard accessible with Enter key', () => {
+      const errorToastWithDiagnostics: ToastType = {
+        id: 'test-error-10',
+        variant: 'error',
+        title: 'Error',
+        description: 'An error occurred',
+        diagnostics: {
+          requestId: 'req-12345-67890',
+        },
+      };
+      render(<Toast toast={errorToastWithDiagnostics} onDismiss={mockOnDismiss} />);
+      const disclosureButton = screen.getByText('What failed');
+      
+      fireEvent.keyDown(disclosureButton, { key: 'Enter' });
+      
+      expect(disclosureButton).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('should be keyboard accessible with Space key', () => {
+      const errorToastWithDiagnostics: ToastType = {
+        id: 'test-error-11',
+        variant: 'error',
+        title: 'Error',
+        description: 'An error occurred',
+        diagnostics: {
+          requestId: 'req-12345-67890',
+        },
+      };
+      render(<Toast toast={errorToastWithDiagnostics} onDismiss={mockOnDismiss} />);
+      const disclosureButton = screen.getByText('What failed');
+      
+      fireEvent.keyDown(disclosureButton, { key: ' ' });
+      
+      expect(disclosureButton).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('should have accessible disclosure region', () => {
+      const errorToastWithDiagnostics: ToastType = {
+        id: 'test-error-12',
+        variant: 'error',
+        title: 'Error',
+        description: 'An error occurred',
+        diagnostics: {
+          requestId: 'req-12345-67890',
+        },
+      };
+      render(<Toast toast={errorToastWithDiagnostics} onDismiss={mockOnDismiss} />);
+      
+      fireEvent.click(screen.getByText('What failed'));
+      
+      const region = screen.getByLabelText('Diagnostic details');
+      expect(region).toHaveAttribute('role', 'region');
+    });
+
+    it('should render only available diagnostic fields', () => {
+      const errorToastWithPartialDiagnostics: ToastType = {
+        id: 'test-error-13',
+        variant: 'error',
+        title: 'Error',
+        description: 'An error occurred',
+        diagnostics: {
+          requestId: 'req-12345-67890',
+          // errorCode and timestamp not provided
+        },
+      };
+      render(<Toast toast={errorToastWithPartialDiagnostics} onDismiss={mockOnDismiss} />);
+      
+      fireEvent.click(screen.getByText('What failed'));
+      
+      expect(screen.getByText('Request ID:')).toBeInTheDocument();
+      expect(screen.queryByText('Error Code:')).not.toBeInTheDocument();
+      expect(screen.queryByText('Timestamp:')).not.toBeInTheDocument();
+    });
+  });
 });
