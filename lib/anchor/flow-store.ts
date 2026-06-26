@@ -17,6 +17,60 @@ export interface AnchorFlowRecord {
   updatedAt: string;
 }
 
+interface AnchorFlowRow {
+  id: string;
+  type: string;
+  userAddress: string;
+  amount: string;
+  currency: string;
+  destination: string | null;
+  anchorTransactionId: string | null;
+  anchorUrl: string | null;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface AnchorFlowDelegate {
+  create(args: {
+    data: {
+      type: string;
+      userAddress: string;
+      amount: string;
+      currency: string;
+      destination: string | null;
+      anchorTransactionId: string | null;
+      anchorUrl: string | null;
+      status: string;
+    };
+  }): Promise<AnchorFlowRow>;
+  findUnique(args: {
+    where: {
+      anchorTransactionId: string;
+    };
+  }): Promise<AnchorFlowRow | null>;
+  update(args: {
+    where: {
+      anchorTransactionId: string;
+    };
+    data: {
+      status: string;
+    };
+  }): Promise<AnchorFlowRow>;
+  findMany(args: {
+    where: {
+      userAddress: string;
+    };
+    orderBy: {
+      createdAt: 'desc';
+    };
+  }): Promise<AnchorFlowRow[]>;
+}
+
+const anchorFlowDelegate = (prisma as typeof prisma & {
+  anchorFlow?: AnchorFlowDelegate;
+}).anchorFlow;
+
 function mapAnchorFlow(record: {
   id: string;
   type: string;
@@ -111,4 +165,3 @@ export async function getAnchorFlowsForUser(
 
   return flows.map(mapAnchorFlow);
 }
-

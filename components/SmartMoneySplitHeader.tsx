@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, AlertCircle } from 'lucide-react'
+import PageHeadingLink from '@/components/PageHeadingLink'
 
 interface SmartMoneySplitHeaderProps {
   totalPercentage?: number

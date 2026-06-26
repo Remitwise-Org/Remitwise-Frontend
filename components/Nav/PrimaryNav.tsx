@@ -8,6 +8,7 @@ import WalletButton from "../WalletButton";
 import MobileNav from "./MobileNav";
 import { useWhatsNewOptional } from "@/lib/context/WhatsNewContext";
 import WhatsNewBadge from "@/components/Dashboard/WhatsNewBadge";
+import WrongNetworkBanner from "@/components/WrongNetworkBanner";
 
 const PrimaryNav = () => {
     const pathname = usePathname();
@@ -84,6 +85,8 @@ const PrimaryNav = () => {
                 </div>
             </div>
         </header>
+        <WrongNetworkBanner />
+        </>
     );
 };
 

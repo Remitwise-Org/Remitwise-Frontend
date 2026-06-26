@@ -357,7 +357,7 @@ export async function requireAuth(): Promise<{ address: string }> {
   }
 }
 
-export async function createSession(address: string): Promise<string> {
+export async function createSession(address: string): Promise<{ sealed: string; session: SessionData }> {
   const now = Date.now();
   const sessionMaxAge = getSessionMaxAge();
   const expiresAt = now + sessionMaxAge * 1000;
@@ -366,7 +366,7 @@ export async function createSession(address: string): Promise<string> {
     password: getPassword(),
     ttl: sessionMaxAge,
   });
-  return sealed;
+  return { sealed, session };
 }
 
 export function getSessionCookieHeader(sealed: string): string {

@@ -41,9 +41,14 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Helper functions
-// ---------------------------------------------------------------------------
 
+/**
+ * Applies Cross-Origin Resource Sharing (CORS) headers to the response if the request origin matches the configured allowlist.
+ * Ensures the 'Vary' header is set to prevent CDN caching issues across different origins.
+ * 
+ * @param response The NextResponse object to set headers on
+ * @param request The incoming NextRequest
+ */
 function applyCORS(response: NextResponse, request: NextRequest): void {
   const requestOrigin = request.headers.get("origin");
 
@@ -68,12 +73,25 @@ function applyCORS(response: NextResponse, request: NextRequest): void {
   );
 }
 
+/**
+ * Enforces standard security hardening headers to mitigate common clickjacking, XSS, and MIME-sniffing vulnerabilities.
+ * 
+ * @param response The NextResponse object to set headers on
+ */
 function applySecurityHeaders(response: NextResponse): void {
   Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
 }
 
+/**
+ * Validates that the request payload size is within the allowed bounds.
+ * Reads content-length or parses request body buffer to determine size for POST/PUT/PATCH requests.
+ * 
+ * @param request The incoming NextRequest
+ * @param maxSize The maximum allowed request body size in bytes
+ * @returns An object containing validation status and optional 413 response on error
+ */
 async function validateBodySize(
   request: NextRequest,
   maxSize: number = MAX_BODY_SIZE,
@@ -144,6 +162,13 @@ const rateLimitCache = new LRUCache<
 // Middleware
 // ---------------------------------------------------------------------------
 
+/**
+ * The main gateway middleware intercepting all `/api/:path*` requests.
+ * Orchestrates requestId tracking, structured request logging, CORS, security headers, body size checks, and tiered rate limiting.
+ * 
+ * @param request The incoming NextRequest object
+ * @returns A NextResponse mapping to the next middleware or a specific error response (e.g. 413, 429)
+ */
 export async function middleware(request: NextRequest) {
   const start = Date.now();
   const method = request.method;

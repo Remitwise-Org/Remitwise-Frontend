@@ -2,6 +2,8 @@
 
 This is the canonical guide for the browser-side API layer in RemitWise.
 
+Primary page-level CTAs and main flow submit or confirm actions expose stable `data-testid` hooks via [`lib/cta-testids.ts`](../lib/cta-testids.ts). Use those hooks for browser automation and analytics instrumentation instead of visible button text when the button is in the shared primary-CTA scope.
+
 Use it when you are adding or reviewing client code that talks to `/api/*`. The goal is simple: authenticated browser requests should go through the shared client helpers so session refresh, expiry handling, and logout stay consistent across the app.
 
 ## At a Glance
@@ -30,6 +32,8 @@ Real call sites in the repo:
 - [`lib/hooks/useFormAction.ts`](../lib/hooks/useFormAction.ts): generic form submission wrapper.
 - [`components/WalletButton.tsx`](../components/WalletButton.tsx) and [`components/Nav/MobileNav.tsx`](../components/Nav/MobileNav.tsx): logout entry points.
 - [`app/layout.tsx`](../app/layout.tsx): global `SessionExpiryProvider` mount point.
+
+For widget-style read surfaces that should stay inline while transient failures clear, use [`lib/client/widgetFetchRetry.ts`](../lib/client/widgetFetchRetry.ts) on top of `apiClient`. That helper retries failed reads up to 3 times with exponential backoff before the UI shows its inline retry CTA.
 
 ## `apiClient` Contract
 

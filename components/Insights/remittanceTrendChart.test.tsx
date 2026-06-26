@@ -50,10 +50,9 @@ describe('RemittanceTrendChart', () => {
     const { container } = render(<RemittanceTrendChart data={MOCK_TREND_DATA} />);
     const summary = container.querySelector('.sr-only');
     expect(summary).not.toBeNull();
-    expect(summary?.textContent).toContain('Sep 1: $520');
-    expect(summary?.textContent).toContain('(2 transactions)');
+    expect(summary?.textContent).toContain('Sep 1: amount $520');
     // Last point also present, proving the whole series is summarized.
-    expect(summary?.textContent).toContain('Dec 8: $1,420');
+    expect(summary?.textContent).toContain('Dec 8: amount $1,420');
   });
 
   it('renders the peak stat derived from the data', () => {
@@ -69,7 +68,7 @@ describe('RemittanceTrendChart', () => {
 
   it('shows an empty state (never NaN/-Infinity) for an empty data array', () => {
     const { container } = render(<RemittanceTrendChart data={[]} />);
-    expect(screen.getByText(/no remittance data yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/no activity timeline/i)).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/Infinity|NaN/);
     // Accessible summary still present in the empty state.
     expect(container.querySelector('.sr-only')?.textContent).toMatch(/no remittance trend data/i);

@@ -50,6 +50,7 @@ export default function SendMoney() {
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [sendAnnouncement, setSendAnnouncement] = useState("");
   const [transactionData, setTransactionData] = useState<ReceiptData | null>(null);
 
   const { toast } = useToast();
@@ -106,6 +107,7 @@ export default function SendMoney() {
       return;
     }
 
+    setSendAnnouncement("Sending…");
     setIsConfirming(true);
 
     try {
@@ -151,6 +153,7 @@ export default function SendMoney() {
 
       setTransactionData(receipt);
       setIsSubmitted(true);
+      setSendAnnouncement("Sent");
 
       toast({
         variant: "success",
@@ -174,6 +177,10 @@ export default function SendMoney() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {sendAnnouncement}
+      </div>
+
       {/* Header */}
       <SendHeader />
 

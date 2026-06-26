@@ -2,13 +2,16 @@
 
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Plus } from 'lucide-react'
+import PageHeadingLink from '@/components/PageHeadingLink'
 
 type PageHeaderProps = {
   title: string
   subtitle: string
   ctaLabel: string
   onCtaClick?: () => void
+  ctaTestId?: string
   showBottomDivider?: boolean
+  headingId?: string
   /** 'red' (default) or 'redOrange' for reddish-orange CTA e.g. Savings Goals */
   ctaVariant?: 'red' | 'redOrange'
 }
@@ -18,7 +21,9 @@ export default function PageHeader({
   subtitle,
   ctaLabel,
   onCtaClick,
+  ctaTestId,
   showBottomDivider = false,
+  headingId = 'page-heading',
   ctaVariant = 'red',
 }: PageHeaderProps) {
   const router = useRouter()
@@ -49,6 +54,7 @@ export default function PageHeader({
           <button
             type="button"
             onClick={onCtaClick}
+            data-testid={ctaTestId}
             className={ctaClass}
           >
             <Plus className="w-5 h-5" />

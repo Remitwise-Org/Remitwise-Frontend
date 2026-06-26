@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { CTA_TEST_IDS } from '@/lib/cta-testids';
 
 /**
  * Send Money Wizard End-to-End Tests
@@ -31,7 +32,7 @@ test.describe('Send Money Wizard Flow', () => {
   test('Step 1 - Continue button disabled until valid address', async ({ page }) => {
     // Locate the recipient address input
     const addressInput = page.getByLabel(/recipient address/i);
-    const continueButton = page.getByRole('button', { name: /continue to amount/i });
+    const continueButton = page.getByTestId(CTA_TEST_IDS.flow.sendRecipientPrimary);
 
     // Initially, continue button should be disabled
     await expect(continueButton).toBeDisabled();
@@ -74,7 +75,7 @@ test.describe('Send Money Wizard Flow', () => {
   });
 
   test('Step 1 - Recent recipients populates address', async ({ page }) => {
-    const continueButton = page.getByRole('button', { name: /continue to amount/i });
+    const continueButton = page.getByTestId(CTA_TEST_IDS.flow.sendRecipientPrimary);
     
     // Click on a recent recipient
     await page.getByRole('button', { name: 'Family' }).click();
@@ -98,7 +99,7 @@ test.describe('Send Money Wizard Flow', () => {
     await expect(step1Indicator).toHaveClass(/bg-red-600/);
 
     // Click Continue to Amount
-    const continueButton = page.getByRole('button', { name: /continue to amount/i });
+    const continueButton = page.getByTestId(CTA_TEST_IDS.flow.sendRecipientPrimary);
     await continueButton.click();
 
     // Step 2: Amount and Currency
@@ -116,7 +117,7 @@ test.describe('Send Money Wizard Flow', () => {
     await currencySelect.selectOption(TEST_CURRENCY);
 
     // Click Review Transaction
-    const reviewButton = page.getByRole('button', { name: /review transaction/i });
+    const reviewButton = page.getByTestId(CTA_TEST_IDS.flow.sendAmountPrimary);
     await reviewButton.click();
 
     // Step 3: Review
@@ -130,7 +131,7 @@ test.describe('Send Money Wizard Flow', () => {
     await expect(page.getByText(TEST_CURRENCY)).toBeVisible();
 
     // Click Confirm & Send
-    const confirmButton = page.getByRole('button', { name: /confirm & send remittance/i });
+    const confirmButton = page.getByTestId(CTA_TEST_IDS.flow.sendReviewPrimary);
     await confirmButton.click();
 
     // Verify Transaction Success Receipt appears
@@ -145,7 +146,7 @@ test.describe('Send Money Wizard Flow', () => {
     await addressInput.fill(VALID_STELLAR_ADDRESS);
     await page.waitForTimeout(100);
 
-    const continueButton = page.getByRole('button', { name: /continue to amount/i });
+    const continueButton = page.getByTestId(CTA_TEST_IDS.flow.sendRecipientPrimary);
     await continueButton.click();
 
     // Verify we're on amount step
@@ -166,15 +167,15 @@ test.describe('Send Money Wizard Flow', () => {
     await addressInput.fill(VALID_STELLAR_ADDRESS);
     await page.waitForTimeout(100);
 
-    await page.getByRole('button', { name: /continue to amount/i }).click();
+    await page.getByTestId(CTA_TEST_IDS.flow.sendRecipientPrimary).click();
 
     const amountInput = page.getByLabel(/amount \(usd\)/i);
     await amountInput.fill(TEST_AMOUNT);
 
-    await page.getByRole('button', { name: /review transaction/i }).click();
+    await page.getByTestId(CTA_TEST_IDS.flow.sendAmountPrimary).click();
 
     // Verify we're on review step
-    await expect(page.getByRole('button', { name: /confirm & send remittance/i })).toBeVisible();
+    await expect(page.getByTestId(CTA_TEST_IDS.flow.sendReviewPrimary)).toBeVisible();
 
     // Click Back to Amount
     const backButton = page.getByRole('button', { name: /back to amount/i });
@@ -191,10 +192,10 @@ test.describe('Send Money Wizard Flow', () => {
     await addressInput.fill(VALID_STELLAR_ADDRESS);
     await page.waitForTimeout(100);
 
-    await page.getByRole('button', { name: /continue to amount/i }).click();
+    await page.getByTestId(CTA_TEST_IDS.flow.sendRecipientPrimary).click();
 
     const amountInput = page.getByLabel(/amount \(usd\)/i);
-    const reviewButton = page.getByRole('button', { name: /review transaction/i });
+    const reviewButton = page.getByTestId(CTA_TEST_IDS.flow.sendAmountPrimary);
 
     // Test minimum amount
     await amountInput.fill('0.50');
@@ -226,7 +227,7 @@ test.describe('Send Money Wizard Flow', () => {
     const addressInput = page.getByLabel(/recipient address/i);
     await addressInput.fill(VALID_STELLAR_ADDRESS);
     await page.waitForTimeout(100);
-    await page.getByRole('button', { name: /continue to amount/i }).click();
+    await page.getByTestId(CTA_TEST_IDS.flow.sendRecipientPrimary).click();
 
     // Step 2 active, step 1 completed, step 3 inactive
     await expect(step1Circle).not.toHaveClass(/bg-red-600/);
@@ -236,7 +237,7 @@ test.describe('Send Money Wizard Flow', () => {
     // Move to step 3
     const amountInput = page.getByLabel(/amount \(usd\)/i);
     await amountInput.fill(TEST_AMOUNT);
-    await page.getByRole('button', { name: /review transaction/i }).click();
+    await page.getByTestId(CTA_TEST_IDS.flow.sendAmountPrimary).click();
 
     // Step 3 active, steps 1 and 2 completed
     await expect(step1Circle).not.toHaveClass(/bg-red-600/);
@@ -249,13 +250,13 @@ test.describe('Send Money Wizard Flow', () => {
     const addressInput = page.getByLabel(/recipient address/i);
     await addressInput.fill(VALID_STELLAR_ADDRESS);
     await page.waitForTimeout(100);
-    await page.getByRole('button', { name: /continue to amount/i }).click();
+    await page.getByTestId(CTA_TEST_IDS.flow.sendRecipientPrimary).click();
 
     const amountInput = page.getByLabel(/amount \(usd\)/i);
     await amountInput.fill(TEST_AMOUNT);
-    await page.getByRole('button', { name: /review transaction/i }).click();
+    await page.getByTestId(CTA_TEST_IDS.flow.sendAmountPrimary).click();
 
-    await page.getByRole('button', { name: /confirm & send remittance/i }).click();
+    await page.getByTestId(CTA_TEST_IDS.flow.sendReviewPrimary).click();
 
     // Wait for receipt to appear
     await page.waitForTimeout(500);
@@ -272,7 +273,7 @@ test.describe('Send Money Wizard Flow', () => {
     const addressInput = page.getByLabel(/recipient address/i);
     await addressInput.fill(VALID_STELLAR_ADDRESS);
     await page.waitForTimeout(100);
-    await page.getByRole('button', { name: /continue to amount/i }).click();
+    await page.getByTestId(CTA_TEST_IDS.flow.sendRecipientPrimary).click();
 
     // Select XLM
     const currencySelect = page.getByRole('combobox');
@@ -280,13 +281,13 @@ test.describe('Send Money Wizard Flow', () => {
 
     const amountInput = page.getByLabel(/amount \(usd\)/i);
     await amountInput.fill(TEST_AMOUNT);
-    await page.getByRole('button', { name: /review transaction/i }).click();
+    await page.getByTestId(CTA_TEST_IDS.flow.sendAmountPrimary).click();
 
     // Verify currency is shown in review
     await expect(page.getByText('XLM')).toBeVisible();
 
     // Confirm and check receipt
-    await page.getByRole('button', { name: /confirm & send remittance/i }).click();
+    await page.getByTestId(CTA_TEST_IDS.flow.sendReviewPrimary).click();
     await page.waitForTimeout(500);
 
     await expect(page.getByText('XLM')).toBeVisible();

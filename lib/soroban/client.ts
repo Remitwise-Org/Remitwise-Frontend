@@ -19,12 +19,15 @@ import { getSorobanNetworkPassphrase } from "@/lib/contracts/network-resolution"
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 
-const RPC_URL = (() => {
+function getRpcUrl(): string {
   const url = process.env.SOROBAN_RPC_URL;
-  if (!url && process.env.NODE_ENV === "production") {
-    throw new Error("SOROBAN_RPC_URL is required but not set.");
+  if (!url) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn("SOROBAN_RPC_URL is not set; falling back to testnet URL.");
+    }
+    return "https://soroban-testnet.stellar.org";
   }
-  return url ?? "https://soroban-testnet.stellar.org";
+  return url;
 })();
 
 /** How long (ms) to wait for a single RPC call before aborting. */
@@ -44,8 +47,9 @@ let _server: SorobanRpc.Server | null = null;
  */
 export function getServer(): SorobanRpc.Server {
   if (!_server) {
-    _server = new SorobanRpc.Server(RPC_URL, {
-      allowHttp: RPC_URL.startsWith("http://"), // only allow plain HTTP for local dev
+    const rpcUrl = getRpcUrl();
+    _server = new SorobanRpc.Server(rpcUrl, {
+      allowHttp: rpcUrl.startsWith("http://"), // only allow plain HTTP for local dev
     });
   }
   return _server;

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, ChevronDown, Download } from 'lucide-react'
 import { useState } from 'react'
+import PageHeadingLink from '@/components/PageHeadingLink'
 
 type DateRange = 'This Month' | 'Last Month' | 'Last 3 Months' | 'Last 6 Months' | 'This Year' | 'Custom Range'
 
@@ -62,9 +63,16 @@ export default function FinancialInsightsHeader({
             
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <h1 className="text-sm sm:text-base font-bold text-white leading-tight truncate">
+                <PageHeadingLink
+                  headingId="financial-insights-page-heading-mobile"
+                  copyHeadingId="financial-insights-page-heading"
+                  label="Financial Insights"
+                  headingClassName="truncate text-sm sm:text-base font-bold text-white leading-tight"
+                  buttonClassName="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
+                  iconClassName="h-3.5 w-3.5"
+                >
                   Financial Insights
-                </h1>
+                </PageHeadingLink>
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-[#D72323] text-white text-[9px] font-bold uppercase tracking-wide">
                   PRO
                 </span>
@@ -119,6 +127,7 @@ export default function FinancialInsightsHeader({
             <button
               type="button"
               onClick={handleExportClick}
+              data-testid={CTA_TEST_IDS.page.financialInsightsPrimary}
               className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-[#D72323] hover:bg-[#B91C1C] active:scale-95 transition-all shadow-lg shadow-[#D72323]/30 touch-manipulation"
               aria-label="Export financial data"
             >
@@ -154,7 +163,14 @@ export default function FinancialInsightsHeader({
             </button>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl xl:text-2xl font-bold text-white">Financial Insights</h1>
+                <PageHeadingLink
+                  headingId="financial-insights-page-heading"
+                  label="Financial Insights"
+                  headingClassName="text-xl xl:text-2xl font-bold text-white"
+                  buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
+                >
+                  Financial Insights
+                </PageHeadingLink>
                 <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#D72323] text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-[#D72323]/30">
                   PRO
                 </span>
@@ -213,6 +229,7 @@ export default function FinancialInsightsHeader({
             <button
               type="button"
               onClick={handleExportClick}
+              data-testid={CTA_TEST_IDS.page.financialInsightsPrimary}
               className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#D72323] hover:bg-[#B91C1C] active:scale-95 transition-all font-semibold text-sm xl:text-base shadow-lg shadow-[#D72323]/30 touch-manipulation min-h-[44px]"
               aria-label="Export financial data"
             >

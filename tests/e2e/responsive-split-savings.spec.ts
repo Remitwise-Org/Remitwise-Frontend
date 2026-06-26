@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { CTA_TEST_IDS } from '@/lib/cta-testids';
 
 /**
  * Responsive Breakpoint Tests for Split Configuration and Savings Goals
@@ -295,9 +296,9 @@ test.describe('Savings Goals - Responsive Tests', () => {
       }
       
       // Check "New Goal" button touch target
-      const newGoalButton = page.locator('button:has-text("New Goal")');
+      const newGoalButton = page.getByTestId(CTA_TEST_IDS.page.savingsGoalsPrimary);
       if (await newGoalButton.isVisible()) {
-        await checkTouchTargetSize(page, 'button:has-text("New Goal")', 44, 44);
+        await checkTouchTargetSize(page, `[data-testid="${CTA_TEST_IDS.page.savingsGoalsPrimary}"]`, 44, 44);
       }
     });
 

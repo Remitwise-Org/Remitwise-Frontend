@@ -29,3 +29,33 @@ export function buildChartSummary(
 
   return summaryItems.join(', ')
 }
+
+export function generateTrendChartLabel(
+  title: string,
+  data: Record<string, any>[],
+  seriesKeys: string[],
+  t: (path: string, options?: string | Record<string, unknown>) => string = (p) => p
+): string {
+  const latest = data[data.length - 1] ?? {}
+  const summaryItems = seriesKeys.map((key) => {
+    const value = latest[key]
+    return `${key}: $${value ?? 0}`
+  })
+  return buildChartImageLabel(title, summaryItems, t)
+}
+
+export function generateTrendChartSummary(
+  data: Record<string, any>[],
+  seriesKeys: string[],
+  t: (path: string, options?: string | Record<string, unknown>) => string = (p) => p
+): string {
+  const totals = seriesKeys.map((key) => {
+    const sum = data.reduce((acc, item) => {
+      const v = Number(item[key])
+      return acc + (isNaN(v) ? 0 : v)
+    }, 0)
+    return `${key}: $${sum}`
+  })
+  return buildChartSummary(totals, t)
+}
+

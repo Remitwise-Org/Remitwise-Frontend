@@ -49,6 +49,9 @@ type ActionState = {
 };
 ```
 
+These fields drive standard form error states, success states, and disabled states. For more details on implementing these visual treatments, see the [Frontend Component States Guide](component-states.md).
+
+
 ## Abort / cancel behaviour
 
 - **Re-submit**: calling the action while a request is already in-flight aborts

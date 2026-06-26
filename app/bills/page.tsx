@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useMemo, useState } from "react";
+import { useRef, useEffect, useMemo, useState, useCallback } from "react";
 import { CalendarClock, Loader2, Layers3, ShieldCheck, Wallet, Clock3 } from "lucide-react";
 import { UnpaidBillsSection } from "@/components/Bills/UnpaidBillsSection";
 import PageHeader from "@/components/PageHeader";
@@ -12,10 +12,12 @@ import { useFormAction } from "@/lib/hooks/useFormAction";
 import AsyncOperationsPanel from "@/components/AsyncOperationsPanel";
 import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
 import { apiClient } from "@/lib/client/apiClient";
+import { runWidgetFetchWithRetry } from "@/lib/client/widgetFetchRetry";
 import { Bill } from "@/lib/contracts/bill-payments";
 import { WidgetErrorState } from "@/components/ui/WidgetStates";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/lib/context/ToastContext";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 
 type AddBillResponse = ActionState & {
 	name?: string;
@@ -122,6 +124,11 @@ export default function Bills() {
 		return `Monthly on the ${ordinalDay(monthlyDay)}`;
 	}, [frequency, isRecurring, monthlyDay, weeklyDay]);
 
+	const [bills, setBills] = useState<Bill[]>([]);
+	const [stats, setStats] = useState<any>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<Error | null>(null);
+
 	useEffect(() => {
 		const overdueBill = bills.find((b) => b.status === "overdue" || b.status === "urgent");
 		if (overdueBill) {
@@ -174,17 +181,65 @@ export default function Bills() {
 					amount: paidAmount.toLocaleString(),
 					paymentCount: paidBills.length
 				}
-			});
-		} catch (err) {
-			setError(err instanceof Error ? err : new Error("Unknown error"));
-		} finally {
-			setIsLoading(false);
-		}
-	};
+
+				const billsJson = await billsRes.json();
+				const statsJson = await statsRes.json();
+
+				const fetchedBills: Bill[] = billsJson.data?.bills || [];
+				const fetchedStats = statsJson.data;
+				const paidBills = fetchedBills.filter((bill: Bill) => bill.status === 'paid');
+				const paidAmount = paidBills.reduce((acc: number, bill: Bill) => acc + bill.amount, 0);
+				const overdueCount = fetchedBills.filter((bill: Bill) => (bill.status as string) === 'overdue' || (bill.status as string) === 'urgent').length;
+
+				return {
+					bills: fetchedBills,
+					stats: {
+						totalUnpaid: {
+							amount: fetchedStats?.totalUnpaid?.toLocaleString() || '0',
+							pendingCount: fetchedStats?.count || 0
+						},
+						overdueCount,
+						paidThisMonth: {
+							amount: paidAmount.toLocaleString(),
+							paymentCount: paidBills.length
+						}
+					}
+				};
+			}
+		});
+	}, []);
+
+	const handleRetry = useCallback(() => {
+		setReloadKey((current) => current + 1);
+	}, []);
 
 	useEffect(() => {
-		fetchBillsData();
-	}, []);
+		const controller = new AbortController();
+
+		setIsLoading(true);
+		setError(null);
+
+		void fetchBillsData(controller.signal)
+			.then((result) => {
+				if (controller.signal.aborted) {
+					return;
+				}
+
+				setBills(result.bills);
+				setStats(result.stats);
+				setIsLoading(false);
+			})
+			.catch((err) => {
+				if (controller.signal.aborted) {
+					return;
+				}
+
+				setError(err instanceof Error ? err : new Error("Unknown error"));
+				setIsLoading(false);
+			});
+
+		return () => controller.abort();
+	}, [fetchBillsData, reloadKey]);
 
 	function handleAddBill() {
 		formSectionRef.current?.scrollIntoView({
@@ -199,7 +254,9 @@ export default function Bills() {
 				title='Bill Payments'
 				subtitle='Manage and track your recurring bills'
 				ctaLabel='Add Bill'
+				headingId='bills-page-heading'
 				onCtaClick={handleAddBill}
+				ctaTestId={CTA_TEST_IDS.page.billsPrimary}
 				showBottomDivider
 			/>
 
@@ -209,11 +266,11 @@ export default function Bills() {
 						<WidgetErrorState 
 							title="Failed to load bills" 
 							message={error.message} 
-							onRetry={fetchBillsData} 
+							onRetry={handleRetry} 
 						/>
 					</div>
 				) : isLoading ? (
-					<div className="mb-8 space-y-8">
+					<div className="mb-8 space-y-8" aria-busy="true" aria-hidden="true">
 						<SkeletonList rows={3} variant="cards" />
 						<SkeletonList rows={3} variant="table" />
 					</div>
@@ -465,12 +522,12 @@ export default function Bills() {
 
 							<button
 								type='submit'
-								className='flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-6 py-3 font-semibold text-white transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010] disabled:cursor-not-allowed disabled:opacity-70'
+								className='flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-center font-semibold text-white transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010] disabled:cursor-not-allowed disabled:opacity-70 sm:px-6'
 								disabled={pending}>
 								{pending ? (
 									<>
 										<Loader2 className='w-5 h-5 animate-spin' />
-										<span>Preparing Contract Request...</span>
+										<span className='min-w-0 break-words'>Preparing Contract Request...</span>
 									</>
 								) : (
 									"Add Bill"

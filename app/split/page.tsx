@@ -7,6 +7,7 @@ import SmartMoneySplitHeader from "@/components/SmartMoneySplitHeader";
 import HowItWorks from "@/components/HowItWorksModal";
 import AsyncOperationsPanel from "@/components/AsyncOperationsPanel";
 import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import { DEFAULT_SPLIT_CONFIG, type SplitConfig } from "@/lib/remittance/split";
 import { validatePercentages } from "@/lib/validation/percentages";
 
@@ -252,6 +253,7 @@ export default function SplitConfiguration() {
 								</Link>
 								<button
 									type='submit'
+									data-testid={CTA_TEST_IDS.flow.splitConfigurationPrimary}
 									className='touch-target-wide flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-red-600 to-red-700 px-6 py-3.5 text-sm 375:text-base font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010] disabled:cursor-not-allowed disabled:opacity-60'
 									disabled={!isValid || pending}
 									aria-disabled={!isValid || pending}

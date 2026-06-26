@@ -10,6 +10,11 @@ import WidgetErrorState from '@/components/ui/WidgetErrorState'
 import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart'
 
 // Sample data for the 6-month chart (Jul-Dec)
+function tooltipFormatter(value: any, name: any, item: any, index: any, payload: any) {
+  if (value == null) return '';
+  return `$${Number(value).toLocaleString()}`;
+}
+
 const chartData = [
     { month: 'Jul', remittances: 2800, savings: 1200, bills: 420, insurance: 80 },
     { month: 'Aug', remittances: 3050, savings: 1350, bills: 400, insurance: 80 },
@@ -124,6 +129,23 @@ function SummaryCard({ icon, label, value, subtitle, variant = 'default', valueC
 }
 
 const MemoSummaryCard = memo(SummaryCard)
+
+// Stable Tooltip style objects hoisted to module scope to avoid new object refs each render
+const TOOLTIP_CONTENT_STYLE = {
+    backgroundColor: '#1a1a1a',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '8px',
+    color: '#fff',
+}
+const TOOLTIP_LABEL_STYLE = { color: '#fff' }
+const tooltipFormatter = (value: number | string | undefined) => [`$${Number(value ?? 0).toLocaleString()}`, ''] as [string, string]
+
+// Hoisted dot/activeDot objects so Recharts Line receives stable references
+const DOT_REMITTANCES = { fill: COLORS.remittances, stroke: COLORS.remittances, strokeWidth: 3, r: 4 }
+const DOT_SAVINGS     = { fill: COLORS.savings,     stroke: COLORS.savings,     strokeWidth: 3, r: 4 }
+const DOT_BILLS       = { fill: COLORS.bills,       stroke: COLORS.bills,       strokeWidth: 3, r: 4 }
+const DOT_INSURANCE   = { fill: COLORS.insurance,   stroke: COLORS.insurance,   strokeWidth: 3, r: 4 }
+const ACTIVE_DOT      = { r: 6 }
 
 interface SixMonthTrendsWidgetProps {
     /** Pass true to show the loading skeleton */

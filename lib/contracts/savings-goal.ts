@@ -3,8 +3,7 @@ import { getSorobanClient } from "../soroban-client";
 import { getSorobanNetworkPassphrase, resolveContractId } from "./network-resolution";
 import { ContractReadError } from "./dashboard-aggregate";
 export { ContractReadError };
-
-const server = getSorobanClient();
+import { getSorobanNetworkPassphrase } from "./network-resolution";
 
 const RPC_TIMEOUT_MS = 10_000;
 const MAX_RETRIES = 1;
@@ -72,6 +71,7 @@ function mapToGoal(id: string, rawData: any): SavingsGoal {
 
 export async function getGoal(goalId: string): Promise<SavingsGoal | null> {
   const contractId = getContractId();
+  const server = getSorobanClient();
   try {
     const result = await withRetry("getGoal", () =>
       server.getContractData(
@@ -94,6 +94,7 @@ export async function getGoal(goalId: string): Promise<SavingsGoal | null> {
 
 export async function getAllGoals(owner: string): Promise<SavingsGoal[]> {
   const contractId = getContractId();
+  const server = getSorobanClient();
   try {
     const contract = new Contract(contractId);
     const operation = contract.call(
