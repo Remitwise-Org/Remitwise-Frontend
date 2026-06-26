@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Globe, Moon, Sun, Smartphone } from "lucide-react";
 import { useDensity } from "@/lib/context/DensityContext";
 import { useClientTranslator } from "@/lib/i18n/client";
@@ -10,6 +10,10 @@ import {
   FieldRow,
   SaveButton,
 } from "./SettingsPrimitives";
+import {
+  getStoredMotionPreference,
+  setStoredMotionPreference,
+} from "@/lib/hooks/usePrefersReducedMotion";
 
 export function PreferencesSection() {
   const { t } = useClientTranslator();
@@ -24,6 +28,13 @@ export function PreferencesSection() {
     { id: "comfortable" as const, labelKey: "settings.preferences.density_comfortable" },
     { id: "compact" as const, labelKey: "settings.preferences.density_compact" },
   ];
+
+  const [motionPref, setMotionPref] = useState<"system" | "reduced" | "no-preference">("system");
+
+  useEffect(() => {
+    const stored = getStoredMotionPreference();
+    if (stored) setMotionPref(stored);
+  }, []);
 
   return (
     <SectionCard id="preferences">
@@ -109,6 +120,49 @@ export function PreferencesSection() {
                 </span>
               </label>
             ))}
+          </div>
+        </FieldRow>
+        <FieldRow labelKey="settings.preferences.motion_label">
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setMotionPref("system");
+                setStoredMotionPreference("system");
+              }}
+              aria-pressed={motionPref === "system"}
+              className={`flex-1 rounded-lg border py-2 px-3 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                motionPref === "system" ? "border-indigo-500 bg-indigo-50" : "border-gray-200"
+              }`}
+            >
+              Use system preference
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMotionPref("reduced");
+                setStoredMotionPreference("reduced");
+              }}
+              aria-pressed={motionPref === "reduced"}
+              className={`flex-1 rounded-lg border py-2 px-3 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                motionPref === "reduced" ? "border-indigo-500 bg-indigo-50" : "border-gray-200"
+              }`}
+            >
+              Prefer reduced motion
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMotionPref("no-preference");
+                setStoredMotionPreference("no-preference");
+              }}
+              aria-pressed={motionPref === "no-preference"}
+              className={`flex-1 rounded-lg border py-2 px-3 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                motionPref === "no-preference" ? "border-indigo-500 bg-indigo-50" : "border-gray-200"
+              }`}
+            >
+              Always enable animations
+            </button>
           </div>
         </FieldRow>
         <FieldRow labelKey="settings.preferences.display_density_label">

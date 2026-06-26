@@ -1,6 +1,7 @@
-'use client'
+ 'use client'
 
 import { useMemo, memo } from 'react'
+import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import { Activity } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -16,10 +17,7 @@ import { INSIGHTS_PALETTE } from './palette';
 import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y';
 const LINE_COLOR = INSIGHTS_PALETTE[0];
 
-function useReducedMotion() {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
+// Central hook respects user override
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
@@ -110,7 +108,7 @@ interface RemittanceTrendChartProps {
 function RemittanceTrendChartInner({
   data = MOCK_TREND_DATA,
 }: RemittanceTrendChartProps) {
-  const reducedMotion = useReducedMotion()
+  const reducedMotion = usePrefersReducedMotion()
   const isEmpty = data.length === 0
   const total   = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
   const average = useMemo(() => (data.length ? Math.round(total / data.length) : 0), [total, data.length])

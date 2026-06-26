@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion';
 
 interface UseFocusTrapProps {
   isActive: boolean;
@@ -39,10 +40,8 @@ export function useFocusTrap({
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
-  // Check if user prefers reduced motion
-  const prefersReducedMotion = useCallback(() => {
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  }, []);
+  // Check if user prefers reduced motion (supports user override)
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   // Get all focusable elements within the modal
   const getFocusableElements = useCallback((container: HTMLElement): HTMLElement[] => {
@@ -119,7 +118,7 @@ export function useFocusTrap({
     previousFocusRef.current = document.activeElement as HTMLElement;
 
     // Use reduced motion if preferred
-    const delay = prefersReducedMotion() ? 0 : 50;
+    const delay = prefersReducedMotion ? 0 : 50;
 
     const timer = setTimeout(() => {
       const container = modalRef.current;
@@ -164,7 +163,7 @@ export function useFocusTrap({
       if (restoreFocusOnClose && previousFocusRef.current) {
         const previousFocus = previousFocusRef.current;
         // Use reduced motion if preferred
-        const delay = prefersReducedMotion() ? 0 : 10;
+        const delay = prefersReducedMotion ? 0 : 10;
         setTimeout(() => {
           try {
             previousFocus.focus();

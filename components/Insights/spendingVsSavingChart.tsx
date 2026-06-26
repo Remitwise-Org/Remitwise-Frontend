@@ -1,6 +1,7 @@
-'use client'
+ 'use client'
 
 import { useMemo, memo } from 'react'
+import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import {
     BarChart,
     Bar,
@@ -93,10 +94,8 @@ function CustomLegend() {
     )
 }
 
-function useReducedMotion() {
-    if (typeof window === 'undefined') return false
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
+// Use central hook which supports a user override
+// (reads system `prefers-reduced-motion` unless user overrides in settings)
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -107,7 +106,7 @@ interface SpendingVsSavingsChartProps {
 function SpendingVsSavingsChartInner({
     data = MOCK_SPENDING_VS_SAVINGS,
 }: SpendingVsSavingsChartProps) {
-    const reducedMotion = useReducedMotion()
+    const reducedMotion = usePrefersReducedMotion()
     const savingsRate = useMemo(() => {
         const spending = data.reduce((s, d) => s + d.spending, 0)
         const savings  = data.reduce((s, d) => s + d.savings, 0)

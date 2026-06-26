@@ -1,6 +1,7 @@
 'use client'
 
 import { useId, useState, useMemo, memo } from 'react'
+import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import {
   PieChart,
   Pie,
@@ -107,16 +108,13 @@ interface CategoryDonutChartProps {
   data?: CategoryDataPoint[]
 }
 
-function useReducedMotion() {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
+
 
 function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutChartProps) {
   const summaryId = useId()
   const { t } = useClientTranslator()
   const [activeCategory, setActiveCategory] = useState<CategoryDataPoint | null>(null)
-  const reducedMotion = useReducedMotion()
+  const reducedMotion = usePrefersReducedMotion()
 
   const total  = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
   const topCat = useMemo(() => data[0], [data])
