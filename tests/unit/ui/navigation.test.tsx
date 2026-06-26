@@ -157,6 +157,53 @@ describe("SubNav Component", () => {
     expect(inactiveLink).toBeInTheDocument();
     expect(inactiveLink).not.toHaveAttribute("aria-current");
   });
+
+  it("supports WCAG 2.1 AA keyboard arrow-key navigation (roving tabIndex)", () => {
+    mockUsePathname.mockReturnValue("/dashboard");
+    const { container } = renderWithProviders(<SubNav />);
+
+    const tabList = container.querySelector('ul[role="tablist"]');
+    expect(tabList).toBeInTheDocument();
+
+    const tabs = container.querySelectorAll('a[role="tab"]');
+    expect(tabs.length).toBe(4);
+
+    // Initial state: first tab has tabIndex="0", others "-1"
+    expect(tabs[0]).toHaveAttribute("tabindex", "0");
+    expect(tabs[1]).toHaveAttribute("tabindex", "-1");
+    expect(tabs[2]).toHaveAttribute("tabindex", "-1");
+    expect(tabs[3]).toHaveAttribute("tabindex", "-1");
+
+    // Press ArrowRight
+    fireEvent.keyDown(tabList!, { key: "ArrowRight" });
+    expect(tabs[0]).toHaveAttribute("tabindex", "-1");
+    expect(tabs[1]).toHaveAttribute("tabindex", "0");
+
+    // Press ArrowDown
+    fireEvent.keyDown(tabList!, { key: "ArrowDown" });
+    expect(tabs[1]).toHaveAttribute("tabindex", "-1");
+    expect(tabs[2]).toHaveAttribute("tabindex", "0");
+
+    // Press End
+    fireEvent.keyDown(tabList!, { key: "End" });
+    expect(tabs[2]).toHaveAttribute("tabindex", "-1");
+    expect(tabs[3]).toHaveAttribute("tabindex", "0");
+
+    // Press ArrowRight (wrap around)
+    fireEvent.keyDown(tabList!, { key: "ArrowRight" });
+    expect(tabs[3]).toHaveAttribute("tabindex", "-1");
+    expect(tabs[0]).toHaveAttribute("tabindex", "0");
+
+    // Press ArrowLeft (wrap around to end)
+    fireEvent.keyDown(tabList!, { key: "ArrowLeft" });
+    expect(tabs[0]).toHaveAttribute("tabindex", "-1");
+    expect(tabs[3]).toHaveAttribute("tabindex", "0");
+
+    // Press Home
+    fireEvent.keyDown(tabList!, { key: "Home" });
+    expect(tabs[3]).toHaveAttribute("tabindex", "-1");
+    expect(tabs[0]).toHaveAttribute("tabindex", "0");
+  });
 });
 
 describe("MobileNav Component", () => {
