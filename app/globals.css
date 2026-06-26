@@ -81,3 +81,10 @@ body {
     min-width: 88px;
   }
 }
+
+/* Visible focus ring with sufficient contrast (WCAG 2.1 AA) */
+*:focus-visible {
+  outline: 2px solid #D72323 !important;
+  outline-offset: 2px !important;
+}
+
