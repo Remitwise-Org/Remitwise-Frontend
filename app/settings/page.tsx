@@ -9,6 +9,7 @@ import { SecuritySection } from "@/components/settings/SecuritySection";
 import { WalletSection } from "@/components/settings/WalletSection";
 import { FamilySection } from "@/components/settings/FamilySection";
 import { PreferencesSection } from "@/components/settings/PreferencesSection";
+import PageHeadingLink from "@/components/PageHeadingLink";
 
 const SECTIONS = [
   { id: "profile",        labelKey: "settings.sections.profile",         icon: User    },
@@ -65,9 +66,14 @@ export default function SettingsPage() {
       {/* ── Sticky top bar (mobile breadcrumb / desktop title) ── */}
       <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-100 dark:border-gray-800">
         <div className="mx-auto max-w-5xl flex h-14 items-center gap-3 px-4 sm:px-6">
-          <h1 className="text-base font-semibold text-gray-900 dark:text-white">
+          <PageHeadingLink
+            headingId="settings-page-heading"
+            label={t("settings.page_title")}
+            headingClassName="text-base font-semibold text-gray-900 dark:text-white"
+            buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white dark:focus-visible:ring-offset-gray-900"
+          >
             {t("settings.page_title")}
-          </h1>
+          </PageHeadingLink>
           {/* Mobile: horizontal scrollable nav pills */}
           <nav
             className="ml-auto flex gap-1 overflow-x-auto sm:hidden scrollbar-none"

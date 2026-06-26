@@ -30,6 +30,7 @@ import {
   serializeToJson,
   getExportFilename,
 } from "@/lib/utils/export-serializer";
+import PageHeadingLink from "@/components/PageHeadingLink";
 
 const allTransactions: Transaction[] = [
   {
@@ -466,9 +467,15 @@ export default function TransactionsPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-red-300">
                 {t("transactionHistory.titleStandalone")}
               </p>
-              <h1 className="mt-3 text-2xl font-semibold text-white sm:text-3xl">
+              <PageHeadingLink
+                headingId="transactions-page-heading"
+                label="USDC activity"
+                wrapperClassName="mt-3 flex min-w-0 items-center gap-2"
+                headingClassName="text-2xl font-semibold text-white sm:text-3xl"
+                buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101]"
+              >
                 USDC activity
-              </h1>
+              </PageHeadingLink>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
                 {t("transactionHistory.subtitleStandalone")}
               </p>

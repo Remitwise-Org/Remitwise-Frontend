@@ -18,6 +18,7 @@ import {
   Shield,
 } from "lucide-react";
 import TransactionSuccessReceipt from "@/components/TransactionSuccessReceipt";
+import PageHeadingLink from "@/components/PageHeadingLink";
 
 type Step = "recipient" | "amount" | "review" | "confirm";
 
@@ -106,9 +107,14 @@ export default function EmergencyTransferPage() {
               <div className="p-2 bg-brand-red rounded-full shadow-[0_0_20px_rgba(215,35,35,0.4)]">
                 <Zap className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-(--foreground)">
+              <PageHeadingLink
+                headingId="emergency-transfer-page-heading"
+                label="Emergency Transfer"
+                headingClassName="text-2xl font-bold text-(--foreground)"
+                buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              >
                 Emergency Transfer
-              </h1>
+              </PageHeadingLink>
             </div>
           </div>
         </div>

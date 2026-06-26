@@ -10,10 +10,14 @@ const revokeObjectURLMock = vi.fn();
 
 describe("TransactionsPage Export Component Integration", () => {
   beforeEach(() => {
-    vi.stubGlobal("URL", {
-      createObjectURL: createObjectURLMock,
-      revokeObjectURL: revokeObjectURLMock,
+    vi.spyOn(URL, "createObjectURL").mockImplementation(createObjectURLMock);
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(revokeObjectURLMock);
+    vi.stubGlobal("navigator", {
+      clipboard: {
+        writeText: vi.fn().mockResolvedValue(undefined),
+      },
     });
+    window.history.replaceState({}, "", "/transactions?type=failed#group");
     // Mock anchor click behavior
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     vi.useFakeTimers();
@@ -84,7 +88,7 @@ describe("TransactionsPage Export Component Integration", () => {
     renderComponent();
     
     // Type query that matches nothing in the search input
-    const searchInput = screen.getByPlaceholderText(/search id, recipient, type, status, amount/i);
+    const searchInput = screen.getByRole("searchbox");
     fireEvent.change(searchInput, { target: { value: "NonExistentTransactionXYZ" } });
 
     // Advance timer to trigger debounced filter update
@@ -128,5 +132,15 @@ describe("TransactionsPage Export Component Integration", () => {
     // Click outside
     fireEvent.mouseDown(document.body);
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("renders the page-heading copy button and copies the canonical URL", () => {
+    renderComponent();
+
+    fireEvent.click(screen.getByRole("button", { name: /copy link to usdc activity/i }));
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      "http://localhost:3000/transactions#transactions-page-heading",
+    );
   });
 });

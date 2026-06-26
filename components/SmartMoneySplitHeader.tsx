@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, AlertCircle } from 'lucide-react'
+import PageHeadingLink from '@/components/PageHeadingLink'
 
 interface SmartMoneySplitHeaderProps {
   totalPercentage?: number
@@ -25,7 +26,14 @@ export default function SmartMoneySplitHeader({ totalPercentage = 100 }: SmartMo
           </button>
           
           <div>
-            <h1 className="text-2xl 375:text-3xl font-bold text-white tracking-tight">Smart Money Split</h1>
+            <PageHeadingLink
+              headingId="split-page-heading"
+              label="Smart Money Split"
+              headingClassName="text-2xl 375:text-3xl font-bold text-white tracking-tight"
+              buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101]"
+            >
+              Smart Money Split
+            </PageHeadingLink>
             <p className="text-white/40 text-xs 375:text-sm mt-1">Configure automatic allocation</p>
           </div>
         </div>

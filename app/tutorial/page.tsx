@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, BookOpen } from "lucide-react";
 import TutorialList from "../../components/tutorials/TutorialList";
+import PageHeadingLink from "@/components/PageHeadingLink";
 
 export default function TutorialPage() {
   const tutorials = [
@@ -55,7 +56,14 @@ export default function TutorialPage() {
             >
               <ArrowLeft className="w-6 h-6" />
             </Link>
-            <h1 className="text-2xl font-bold text-foreground">Tutorials</h1>
+            <PageHeadingLink
+              headingId="tutorials-page-heading"
+              label="Tutorials"
+              headingClassName="text-2xl font-bold text-foreground"
+              buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-current/15 text-current/70 transition-colors hover:bg-current/10 hover:text-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010]"
+            >
+              Tutorials
+            </PageHeadingLink>
           </div>
         </div>
       </header>

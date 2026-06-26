@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PageHeadingLink from "@/components/PageHeadingLink";
 
 type Props = {
   params: Promise<{ tutorialId: string }>;
@@ -31,7 +32,15 @@ export default async function TutorialOverviewPage({ params }: Props) {
             <Link href="/tutorial" className="text-sm font-medium text-brand-red hover:text-brand-redHover">
               Back to tutorials
             </Link>
-            <h1 className="mt-3 text-3xl font-bold text-foreground">{tutorialId}</h1>
+            <PageHeadingLink
+              headingId="tutorial-overview-page-heading"
+              label={`${tutorialId} tutorial`}
+              wrapperClassName="mt-3 flex min-w-0 items-center gap-2"
+              headingClassName="text-3xl font-bold text-foreground"
+              buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-current/15 text-current/70 transition-colors hover:bg-current/10 hover:text-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010]"
+            >
+              {tutorialId}
+            </PageHeadingLink>
             <p className="mt-2 text-sm text-muted max-w-2xl">
               Continue your learning path and resume the next available chapter when you’re ready.
             </p>

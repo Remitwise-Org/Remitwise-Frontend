@@ -104,6 +104,7 @@ export default function SavingsGoalsPage() {
         title={t('savingsGoals.title')}
         subtitle={t('savingsGoals.subtitle')}
         ctaLabel={t('savingsGoals.newGoal')}
+        headingId="savings-goals-page-heading"
         onCtaClick={handleNewGoal}
         showBottomDivider
       />
@@ -153,4 +154,3 @@ export default function SavingsGoalsPage() {
     </div>
   )
 }
-
