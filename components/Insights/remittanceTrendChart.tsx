@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import { INSIGHTS_PALETTE } from './palette';
 import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y';
-import type { TrendChartDataPoint } from '@/lib/a11y/chartAccessibility';
+import WidgetEmptyState from '@/components/ui/WidgetEmptyState';
 const LINE_COLOR = INSIGHTS_PALETTE[0];
 
 
