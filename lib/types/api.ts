@@ -29,6 +29,18 @@ export interface SendTransactionErrorResponse {
  */
 export type SendTransactionResult = SendTransactionResponse | SendTransactionErrorResponse;
 
+export interface RecurringSchedule {
+  id: string;
+  userAddress: string;
+  recipientAddress: string;
+  amount: number;
+  currency: string;
+  frequency: 'weekly' | 'biweekly' | 'monthly';
+  nextRunAt: string; // ISO date
+  lastRunAt?: string;
+  createdAt: string;
+}
+
 export interface APIResponse {
   success: boolean;
   xdr?: string;
