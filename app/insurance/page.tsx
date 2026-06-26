@@ -10,69 +10,7 @@ import { SkeletonList } from "@/components/ui/Skeleton";
 import PolicyDetail from "@/components/insurance/PolicyDetail";
 import NewPolicyForm from "@/components/forms/NewPolicyForm";
 import PageHeadingLink from "@/components/PageHeadingLink";
-
-// ─── i18n stubs (replace with your real i18n hook) ───────────────────────────
-
-const en = {
-  insurance: {
-    page_title: "Micro-Insurance",
-    page_subtitle: "Manage your active coverage policies",
-    new_policy: "New Policy",
-    active_policies: "Active Policies",
-    no_policies_title: "No active policies yet",
-    no_policies_body: "Create your first policy to start protecting what matters most.",
-    total_premium: "Total Monthly Premium",
-    total_premium_sub: "Auto-paid from remittance allocation",
-    card_coverage_type: "Coverage Type",
-    card_monthly_premium: "Monthly Premium",
-    card_coverage_amount: "Coverage Amount",
-    card_next_payment: "Next Payment",
-    card_pay_now: "Pay Premium Now",
-    card_view_detail: "View Details",
-    detail_subtitle: "Policy details and actions",
-    detail_close: "Close policy details",
-    detail_status_idle_title: "Ready",
-    detail_status_idle_desc: "Select an action above to interact with this policy.",
-    detail_status_pending_title: "Processing request",
-    detail_status_pending_desc: "Building the on-chain payload — this takes a moment.",
-    detail_status_success_title: "Request ready",
-    detail_status_error_title: "Request failed",
-    pay_success_desc: "Premium payment payload is ready for signing.",
-    deactivate_success_desc: "Deactivation payload is ready for signing.",
-    pay_confirm_title: "Confirm premium payment",
-    pay_confirm_body: "You are about to pay {{amount}} for this policy. This action cannot be undone after signing.",
-    pay_submitting: "Preparing payment…",
-    pay_confirm: "Confirm Payment",
-    deactivate_confirm_title: "Deactivate policy permanently",
-    deactivate_confirm_body: "This will permanently deactivate your policy. You will lose coverage immediately and cannot reactivate it. Are you sure?",
-    deactivate_submitting: "Deactivating…",
-    deactivate_confirm: "Yes, Deactivate",
-    action_deactivate: "Deactivate Policy",
-    action_cancel: "Cancel",
-    already_deactivated: "This policy has been deactivated and can no longer be modified.",
-    error_fetch_policies: "Failed to load policies. Please try again.",
-    error_fetch_detail: "Failed to load policy details.",
-  },
-};
-
-function t(key: string, interpolations?: Record<string, string | number>): string {
-  const parts = key.split(".");
-  let value: unknown = en;
-  for (const part of parts) {
-    if (value && typeof value === "object" && part in value) {
-      value = (value as Record<string, unknown>)[part];
-    } else {
-      return key;
-    }
-  }
-  let result = typeof value === "string" ? value : key;
-  if (interpolations) {
-    Object.entries(interpolations).forEach(([k, v]) => {
-      result = result.replace(new RegExp(`{{${k}}}`, "g"), String(v));
-    });
-  }
-  return result;
-}
+import { useClientTranslator } from "@/lib/i18n/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -85,6 +23,7 @@ interface PageState {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function InsurancePage() {
+  const { t } = useClientTranslator();
   const [state, setState] = useState<PageState>({
     policies: [],
     loading: true,
