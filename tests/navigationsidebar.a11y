@@ -1,0 +1,131 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { axe, toHaveNoViolations } from "jest-axe";
+import NavigationSidebar from "@/components/NavigationSidebar";
+
+expect.extend(toHaveNoViolations);
+
+describe("NavigationSidebar Accessibility", () => {
+  const mockOnClose = vi.fn();
+
+  beforeEach(() => {
+    mockOnClose.mockClear();
+  });
+
+  it("has no axe violations when open", async () => {
+    const { container } = render(
+      <NavigationSidebar isOpen={true} onClose={mockOnClose} />
+    );
+
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it("has no axe violations when closed", async () => {
+    const { container } = render(
+      <NavigationSidebar isOpen={false} onClose={mockOnClose} />
+    );
+
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it("traps focus within the sidebar when open", async () => {
+    render(<NavigationSidebar isOpen={true} onClose={mockOnClose} />);
+
+    const firstLink = screen.getAllByRole("menuitem")[0];
+    const lastLink = screen.getAllByRole("menuitem").slice(-1)[0];
+
+    // Tab from last element should wrap to first
+    lastLink.focus();
+    fireEvent.keyDown(lastLink, { key: "Tab" });
+    await waitFor(() => expect(document.activeElement).toBe(firstLink));
+
+    // Shift+Tab from first should wrap to last
+    firstLink.focus();
+    fireEvent.keyDown(firstLink, { key: "Tab", shiftKey: true });
+    await waitFor(() => expect(document.activeElement).toBe(lastLink));
+  });
+
+  it("closes on Escape key", () => {
+    render(<NavigationSidebar isOpen={true} onClose={mockOnClose} />);
+
+    const sidebar = screen.getByRole("navigation");
+    fireEvent.keyDown(sidebar, { key: "Escape" });
+
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("navigates items with ArrowDown key", () => {
+    render(<NavigationSidebar isOpen={true} onClose={mockOnClose} />);
+
+    const items = screen.getAllByRole("menuitem");
+    items[0].focus();
+
+    fireEvent.keyDown(items[0], { key: "ArrowDown" });
+    expect(document.activeElement).toBe(items[1]);
+
+    fireEvent.keyDown(items[1], { key: "ArrowDown" });
+    expect(document.activeElement).toBe(items[2]);
+  });
+
+  it("navigates items with ArrowUp key", () => {
+    render(<NavigationSidebar isOpen={true} onClose={mockOnClose} />);
+
+    const items = screen.getAllByRole("menuitem");
+    items[2].focus();
+
+    fireEvent.keyDown(items[2], { key: "ArrowUp" });
+    expect(document.activeElement).toBe(items[1]);
+  });
+
+  it("moves focus to first item on Home key", () => {
+    render(<NavigationSidebar isOpen={true} onClose={mockOnClose} />);
+
+    const items = screen.getAllByRole("menuitem");
+    items[3].focus();
+
+    fireEvent.keyDown(items[3], { key: "Home" });
+    expect(document.activeElement).toBe(items[0]);
+  });
+
+  it("moves focus to last item on End key", () => {
+    render(<NavigationSidebar isOpen={true} onClose={mockOnClose} />);
+
+    const items = screen.getAllByRole("menuitem");
+    items[0].focus();
+
+    fireEvent.keyDown(items[0], { key: "End" });
+    expect(document.activeElement).toBe(items[items.length - 1]);
+  });
+
+  it("sets aria-expanded correctly", () => {
+    const { rerender } = render(
+      <NavigationSidebar isOpen={true} onClose={mockOnClose} />
+    );
+
+    const sidebar = screen.getByRole("navigation");
+    expect(sidebar).toHaveAttribute("aria-expanded", "true");
+
+    rerender(<NavigationSidebar isOpen={false} onClose={mockOnClose} />);
+    expect(sidebar).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("hides focusable elements when closed via tabIndex", () => {
+    render(<NavigationSidebar isOpen={false} onClose={mockOnClose} />);
+
+    const items = screen.getAllByRole("menuitem");
+    items.forEach((item) => {
+      expect(item).toHaveAttribute("tabIndex", "-1");
+    });
+  });
+
+  it("clicking backdrop closes the sidebar", () => {
+    render(<NavigationSidebar isOpen={true} onClose={mockOnClose} />);
+
+    const backdrop = screen.getByTestId("sidebar-backdrop");
+    fireEvent.click(backdrop);
+
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
+  });
+});
