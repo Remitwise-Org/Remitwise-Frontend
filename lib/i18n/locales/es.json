@@ -75,5 +75,42 @@
   "charts": {
     "imageLabel": "{{title}}: {{summary}}",
     "noData": "No hay datos disponibles."
+  },
+  "savingsGoals": {
+    "title": "Metas de Ahorro",
+    "subtitle": "Sigue y haz crecer el ahorro familiar",
+    "newGoal": "Nueva Meta",
+    "createGoal": "Crear Meta",
+    "editGoal": "Guardar Cambios",
+    "stats": {
+      "totalGoals": "Metas Totales",
+      "totalTarget": "Objetivo Total",
+      "totalSaved": "Total Ahorrado"
+    },
+    "card": {
+      "overdue": "Vencida",
+      "complete": "Completada",
+      "nearComplete": "Casi Completa",
+      "onTrack": "En Curso",
+      "goalMet": "Meta alcanzada",
+      "daysLeft": "{{count}} días restantes",
+      "noDeadline": "Sin fecha límite",
+      "needMore": "Faltan {{amount}}",
+      "target": "Objetivo",
+      "remaining": "{{amount}} restantes",
+      "addFunds": "Agregar Fondos",
+      "edit": "Detalles"
+    },
+    "modal": {
+      "createTitle": "Crear Nueva Meta",
+      "editTitle": "Editar Meta",
+      "titleLabel": "Nombre de la meta",
+      "titlePlaceholder": "p. ej. Educación de los hijos",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "¿Para qué es esta meta?",
+      "amountLabel": "Monto objetivo (USD)",
+      "dateLabel": "Fecha objetivo",
+      "iconLabel": "Elige un icono"
+    }
   }
 }

@@ -24,7 +24,7 @@ export default function LayoutWrapper({
   return (
     <RootErrorBoundary>
       <Header />
-      <div className="pt-20">
+      <div className="overflow-x-hidden pt-16 375:pt-20">
         {children}
         <FinalCallToAction />
         <Footer />

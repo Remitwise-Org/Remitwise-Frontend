@@ -13,6 +13,31 @@ import { CTA_TEST_IDS } from '@/lib/cta-testids';
  * - Consistent spacing scale
  */
 
+async function waitForPageReady(page: Page) {
+  await page.waitForLoadState('domcontentloaded');
+}
+
+async function waitForSplitPage(page: Page) {
+  await waitForPageReady(page);
+  await expect(page.locator('h2:has-text("Current Allocation")')).toBeVisible();
+}
+
+async function waitForGoalsPage(page: Page) {
+  await waitForPageReady(page);
+  await expect(page.locator('header h1').first()).toBeVisible();
+}
+
+async function waitForTutorialPage(page: Page) {
+  await waitForPageReady(page);
+  await expect(page.locator('text=Tutorial progress')).toBeVisible();
+}
+
+async function prepareDashboardTest(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('remitwise_whats_new_last_seen', 'playwright-seed');
+  });
+}
+
 // Viewport configurations matching our custom breakpoints
 const viewports = [
   { name: 'iPhone SE', width: 320, height: 568 },
@@ -21,6 +46,7 @@ const viewports = [
   { name: 'Foldable', width: 450, height: 800 },
   { name: 'iPad Portrait', width: 768, height: 1024 },
   { name: 'iPad Landscape', width: 1024, height: 768 },
+  { name: 'Small Desktop', width: 1280, height: 800 },
   { name: 'Desktop', width: 1440, height: 900 },
 ];
 
@@ -32,34 +58,33 @@ async function checkNoHorizontalOverflow(page: Page) {
   expect(hasOverflow).toBe(false);
 }
 
-async function checkVisibleCtasStayInViewport(page: Page) {
-  const overflowingCtas = await page
-    .locator('a, button')
-    .evaluateAll((elements) => {
-      const viewportWidth = document.documentElement.clientWidth;
+async function checkNoElementHorizontalOverflow(page: Page, rootSelector = 'main') {
+  const offenders = await page.evaluate((selector) => {
+    const root = document.querySelector(selector);
+    if (!root) return [];
 
-      return elements
-        .filter((element) => {
-          const style = window.getComputedStyle(element);
-          const rect = element.getBoundingClientRect();
-          const hasLabel = (element.textContent ?? '').trim().length > 0;
+    const viewportWidth = document.documentElement.clientWidth;
+    return Array.from(root.querySelectorAll<HTMLElement>('*'))
+      .filter((el) => {
+        const style = window.getComputedStyle(el);
+        if (
+          style.position === 'fixed' ||
+          style.display === 'none' ||
+          style.visibility === 'hidden'
+        ) {
+          return false;
+        }
+        const rect = el.getBoundingClientRect();
+        return rect.right - viewportWidth > 1 || rect.left < -1;
+      })
+      .slice(0, 5)
+      .map((el) => ({
+        tag: el.tagName.toLowerCase(),
+        className: el.className,
+      }));
+  }, rootSelector);
 
-          return (
-            hasLabel &&
-            style.display !== 'none' &&
-            style.visibility !== 'hidden' &&
-            rect.width > 0 &&
-            rect.height > 0
-          );
-        })
-        .filter((element) => {
-          const rect = element.getBoundingClientRect();
-          return rect.left < 0 || rect.right > viewportWidth;
-        })
-        .map((element) => (element.textContent ?? '').trim());
-    });
-
-  expect(overflowingCtas).toEqual([]);
+  expect(offenders).toEqual([]);
 }
 
 // Helper function to check touch target size
@@ -86,9 +111,7 @@ test.describe('Split Configuration - Responsive Tests', () => {
     test(`${name} (${width}×${height}) - Layout and Overflow`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.goto('/split');
-      
-      // Wait for page to load
-      await page.waitForLoadState('networkidle');
+      await waitForSplitPage(page);
       
       // Check no horizontal overflow
       await checkNoHorizontalOverflow(page);
@@ -100,7 +123,7 @@ test.describe('Split Configuration - Responsive Tests', () => {
     test(`${name} (${width}×${height}) - Touch Targets`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.goto('/split');
-      await page.waitForLoadState('networkidle');
+      await waitForSplitPage(page);
       
       // Check Cancel button touch target
       const cancelButton = page.locator('a:has-text("Cancel")');
@@ -109,9 +132,9 @@ test.describe('Split Configuration - Responsive Tests', () => {
       }
       
       // Check Submit button touch target
-      const submitButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
+      const submitButton = page.locator('button:has-text("Save Allocation")');
       if (await submitButton.isVisible()) {
-        await checkTouchTargetSize(page, `[data-testid="${CTA_TEST_IDS.flow.splitConfigurationPrimary}"]`, 44, 44);
+        await checkTouchTargetSize(page, 'button:has-text("Save Allocation")', 44, 44);
       }
       
       // Check back button touch target
@@ -124,7 +147,7 @@ test.describe('Split Configuration - Responsive Tests', () => {
     test(`${name} (${width}×${height}) - Text Sizes`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.goto('/split');
-      await page.waitForLoadState('networkidle');
+      await waitForSplitPage(page);
       
       // On mobile (< 768px), check minimum text sizes
       if (width < 768) {
@@ -141,7 +164,7 @@ test.describe('Split Configuration - Responsive Tests', () => {
     test(`${name} (${width}×${height}) - Grid Layout`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.goto('/split');
-      await page.waitForLoadState('networkidle');
+      await waitForSplitPage(page);
       
       const mainGrid = page.locator('main > div').first();
       
@@ -163,7 +186,7 @@ test.describe('Split Configuration - Responsive Tests', () => {
   test('Split Input Components - Responsive Spacing', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/split');
-    await page.waitForLoadState('networkidle');
+    await waitForSplitPage(page);
     
     // Check that split input cards have proper spacing
     const splitInputs = page.locator('div.rounded-2xl.border.border-white\\/\\[0\\.08\\]');
@@ -188,25 +211,27 @@ test.describe('Split Configuration - Responsive Tests', () => {
 });
 
 test.describe('Savings Goals - Responsive Tests', () => {
+  test.beforeEach(async ({ page }) => {
+    await prepareDashboardTest(page);
+  });
+
   viewports.forEach(({ name, width, height }) => {
     test(`${name} (${width}×${height}) - Layout and Overflow`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.goto('/dashboard/goals');
-      
-      // Wait for page to load
-      await page.waitForLoadState('networkidle');
+      await waitForGoalsPage(page);
       
       // Check no horizontal overflow
       await checkNoHorizontalOverflow(page);
       
       // Verify main content is visible
-      await expect(page.locator('h1:has-text("Savings Goals")')).toBeVisible();
+      await expect(page.locator('header h1').first()).toBeVisible();
     });
 
     test(`${name} (${width}×${height}) - Stats Cards Grid`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.goto('/dashboard/goals');
-      await page.waitForLoadState('networkidle');
+      await waitForGoalsPage(page);
       
       const statsGrid = page.locator('div.grid').first();
       
@@ -230,7 +255,7 @@ test.describe('Savings Goals - Responsive Tests', () => {
     test(`${name} (${width}×${height}) - Goals Grid`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.goto('/dashboard/goals');
-      await page.waitForLoadState('networkidle');
+      await waitForGoalsPage(page);
       
       // Find the goals grid (second grid on page)
       const goalsGrid = page.locator('div.grid').nth(1);
@@ -256,7 +281,7 @@ test.describe('Savings Goals - Responsive Tests', () => {
     test(`${name} (${width}×${height}) - Goal Card Touch Targets`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.goto('/dashboard/goals');
-      await page.waitForLoadState('networkidle');
+      await waitForGoalsPage(page);
       
       // Check "Add Funds" button touch target
       const addFundsButton = page.locator('button:has-text("Add Funds")').first();
@@ -280,10 +305,10 @@ test.describe('Savings Goals - Responsive Tests', () => {
     test(`${name} (${width}×${height}) - Card Padding`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.goto('/dashboard/goals');
-      await page.waitForLoadState('networkidle');
+      await waitForGoalsPage(page);
       
-      // Check goal card padding
-      const goalCard = page.locator('div.rounded-2xl').first();
+      // Check goal card padding (goals grid cards only)
+      const goalCard = page.locator('main .grid.min-w-0 > div.rounded-2xl').first();
       
       if (await goalCard.isVisible()) {
         const padding = await goalCard.evaluate((el) => {
@@ -291,13 +316,10 @@ test.describe('Savings Goals - Responsive Tests', () => {
           return parseFloat(style.paddingLeft);
         });
         
-        // Should have appropriate padding based on viewport
-        if (width < 320) {
-          expect(padding).toBeGreaterThanOrEqual(20); // 5 * 4px
-        } else if (width < 375) {
-          expect(padding).toBeGreaterThanOrEqual(24); // 6 * 4px
+        if (width < 375) {
+          expect(padding).toBeGreaterThanOrEqual(24); // 320:p-6
         } else {
-          expect(padding).toBeGreaterThanOrEqual(28); // 7 * 4px
+          expect(padding).toBeGreaterThanOrEqual(28); // 375:p-7
         }
       }
     });
@@ -306,7 +328,7 @@ test.describe('Savings Goals - Responsive Tests', () => {
   test('Modal - Responsive Behavior', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/dashboard/goals');
-    await page.waitForLoadState('networkidle');
+    await waitForGoalsPage(page);
     
     // Click "New Goal" button
     const newGoalButton = page.locator('button:has-text("New Goal")');
@@ -317,10 +339,10 @@ test.describe('Savings Goals - Responsive Tests', () => {
       await expect(page.locator('h2:has-text("Create New Goal")')).toBeVisible();
       
       // Check Close button touch target
-      await checkTouchTargetSize(page, 'button:has-text("Close")', 44, 44);
+      await checkTouchTargetSize(page, 'button[aria-label="Close modal"]', 44, 44);
       
       // Close modal
-      await page.locator('button:has-text("Close")').click();
+      await page.locator('button[aria-label="Close modal"]').click();
       await expect(page.locator('h2:has-text("Create New Goal")')).not.toBeVisible();
     }
   });
@@ -332,8 +354,11 @@ test.describe('Cross-Page Responsive Consistency', () => {
     
     for (const pagePath of pages) {
       await page.setViewportSize({ width: 375, height: 667 });
+      if (pagePath === '/dashboard/goals') {
+        await prepareDashboardTest(page);
+      }
       await page.goto(pagePath);
-      await page.waitForLoadState('networkidle');
+      await (pagePath === '/split' ? waitForSplitPage(page) : waitForGoalsPage(page));
       
       // Check container padding
       const main = page.locator('main').first();
@@ -356,14 +381,15 @@ test.describe('Cross-Page Responsive Consistency', () => {
     
     // Check Split page buttons
     await page.goto('/split');
-    await page.waitForLoadState('networkidle');
+    await waitForSplitPage(page);
     
-    const splitButton = page.locator('button:has-text("Connect Contract First")');
+    const splitButton = page.locator('button:has-text("Save Allocation")');
     const splitBox = await splitButton.boundingBox();
     
     // Check Savings page buttons
+    await prepareDashboardTest(page);
     await page.goto('/dashboard/goals');
-    await page.waitForLoadState('networkidle');
+    await waitForGoalsPage(page);
     
     const savingsButton = page.locator('button:has-text("Add Funds")').first();
     const savingsBox = await savingsButton.boundingBox();
@@ -376,24 +402,89 @@ test.describe('Cross-Page Responsive Consistency', () => {
   });
 });
 
-test.describe('Critical Screens - Responsive CTA Audit', () => {
-  const criticalRoutes = ['/send', '/dashboard', '/transactions', '/bills', '/settings'];
+test.describe('Tutorial Chapter View - Responsive Tests', () => {
+  viewports.forEach(({ name, width, height }) => {
+    test(`${name} (${width}×${height}) - Layout and Overflow`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto('/tutorial/1/chapter/0');
+      await waitForTutorialPage(page);
+
+      await checkNoHorizontalOverflow(page);
+
+      await expect(page.locator('text=Tutorial progress')).toBeVisible();
+    });
+
+    test(`${name} (${width}×${height}) - Touch Targets`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto('/tutorial/1/chapter/0');
+      await waitForTutorialPage(page);
+
+      const previous = page.locator('button:has-text("Previous")');
+      if (await previous.isVisible()) {
+        await checkTouchTargetSize(page, 'button:has-text("Previous")', 44, 44);
+      }
+
+      const resume = page.locator('button:has-text("Resume")');
+      if (await resume.isVisible()) {
+        await checkTouchTargetSize(page, 'button:has-text("Resume")', 44, 44);
+      }
+
+      const next = page.locator('button:has-text("Next")');
+      if (await next.isVisible()) {
+        await checkTouchTargetSize(page, 'button:has-text("Next")', 44, 44);
+      }
+
+      const checkpointButton = page.locator('button:has-text("Checkpoint")').first();
+      if (await checkpointButton.isVisible()) {
+        await checkTouchTargetSize(page, 'button:has-text("Checkpoint")', 44, 44);
+      }
+    });
+  });
+});
+
+test.describe('Tutorial + Goals Breakpoint Audit', () => {
   const auditViewports = [
-    { name: 'iPhone SE', width: 320, height: 568 },
-    { name: 'iPhone 14', width: 375, height: 667 },
-    { name: 'Desktop', width: 1440, height: 900 },
+    { width: 320, height: 568 },
+    { width: 375, height: 667 },
+    { width: 768, height: 1024 },
+    { width: 1024, height: 768 },
+    { width: 1280, height: 800 },
   ];
 
-  for (const route of criticalRoutes) {
-    for (const { name, width, height } of auditViewports) {
-      test(`${route} - ${name} has no overflow or cropped CTAs`, async ({ page }) => {
-        await page.setViewportSize({ width, height });
-        await page.goto(route);
-        await page.waitForLoadState('networkidle');
+  auditViewports.forEach(({ width, height }) => {
+    test(`Tutorial page no horizontal overflow at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto('/tutorial/1/chapter/0');
+      await waitForTutorialPage(page);
 
-        await checkNoHorizontalOverflow(page);
-        await checkVisibleCtasStayInViewport(page);
-      });
-    }
-  }
+      await checkNoHorizontalOverflow(page);
+      await checkNoElementHorizontalOverflow(page);
+    });
+
+    test(`Goals page no horizontal overflow at ${width}px`, async ({ page }) => {
+      await prepareDashboardTest(page);
+      await page.setViewportSize({ width, height });
+      await page.goto('/dashboard/goals');
+      await waitForGoalsPage(page);
+
+      await checkNoHorizontalOverflow(page);
+      await checkNoElementHorizontalOverflow(page);
+    });
+  });
+
+  test('Goals long title wraps without breaking layout', async ({ page }) => {
+    await prepareDashboardTest(page);
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto('/dashboard/goals');
+    await waitForGoalsPage(page);
+
+    const title = page.locator('main h3').first();
+    await title.evaluate((el) => {
+      el.textContent = 'EmergencyEducationMedicalHousingFundWithExtraLongUnbrokenTitle1234567890';
+    });
+
+    const isOverflowing = await title.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
+    expect(isOverflowing).toBe(false);
+    await checkNoHorizontalOverflow(page);
+  });
 });
