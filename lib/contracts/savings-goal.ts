@@ -3,6 +3,7 @@ import { getSorobanClient } from "../soroban-client";
 import { resolveContractId } from "./network-resolution";
 import { ContractReadError } from "./dashboard-aggregate";
 export { ContractReadError };
+import { getSorobanNetworkPassphrase } from "./network-resolution";
 
 const server = getSorobanClient();
 
@@ -151,4 +152,4 @@ export async function isGoalCompleted(goalId: string): Promise<boolean> {
 }
 
 // Re-export resolved passphrase for callers that need it when signing transactions.
-export { getNetworkPassphrase };
+export { getSorobanNetworkPassphrase as getNetworkPassphrase };

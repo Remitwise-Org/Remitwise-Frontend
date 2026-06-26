@@ -19,7 +19,7 @@ interface PieChartDataPoint {
 /**
  * Represents a data point with month/date and multiple series values.
  */
-interface TrendChartDataPoint {
+export interface TrendChartDataPoint {
   [key: string]: string | number | undefined;
   month?: string;
   date?: string;

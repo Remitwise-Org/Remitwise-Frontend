@@ -117,6 +117,11 @@ export default function Bills() {
 		return `Monthly on the ${ordinalDay(monthlyDay)}`;
 	}, [frequency, isRecurring, monthlyDay, weeklyDay]);
 
+	const [bills, setBills] = useState<Bill[]>([]);
+	const [stats, setStats] = useState<any>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<Error | null>(null);
+
 	useEffect(() => {
 		const overdueBill = bills.find((b) => b.status === "overdue" || b.status === "urgent");
 		if (overdueBill) {
@@ -134,11 +139,6 @@ export default function Bills() {
 			});
 		}
 	}, [toast, bills]);
-
-	const [bills, setBills] = useState<Bill[]>([]);
-	const [stats, setStats] = useState<any>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<Error | null>(null);
 
 	const fetchBillsData = async () => {
 		setIsLoading(true);

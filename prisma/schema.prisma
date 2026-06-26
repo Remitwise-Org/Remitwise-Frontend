@@ -70,3 +70,27 @@ model RecurringRemittance {
 
   @@index([userAddress])
 }
+
+
+model AnchorFlow {
+  id                  String   @id @default(cuid())
+  type                String
+  userAddress         String
+  amount              String
+  currency            String
+  destination         String?
+  anchorTransactionId String? @unique
+  anchorUrl           String?
+  status              String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model AuditEvent {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  event     String
+  identity  String
+  details   String
+}
+

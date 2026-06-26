@@ -13,6 +13,7 @@ import {
 } from 'recharts'
 import { TrendingUp } from 'lucide-react'
 import { generateBarChartLabel, generateBarChartSummary } from '@/lib/a11y'
+import type { TrendChartDataPoint } from '@/lib/a11y/chartAccessibility';
 
 // ── Mock data ───────────────────────────
 
@@ -40,7 +41,7 @@ const GRID_COLOR = 'rgba(255,255,255,0.06)';
 const AXIS_COLOR = '#6b7280';
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
+function CustomTooltip({ active, payload, label }: TooltipContentProps<any, any>) {
     if (!active || !payload?.length) return null
 
     return (
@@ -116,12 +117,12 @@ function SpendingVsSavingsChartInner({
 
     // Generate accessible label and summary
     const chartLabel = useMemo(
-        () => generateBarChartLabel("Spending vs Savings", data, "spending", "savings"),
+        () => generateBarChartLabel("Spending vs Savings", data as unknown as TrendChartDataPoint[], "spending", "savings"),
         [data]
     )
 
     const chartSummary = useMemo(
-        () => generateBarChartSummary(data, "spending", "savings"),
+        () => generateBarChartSummary(data as unknown as TrendChartDataPoint[], "spending", "savings"),
         [data]
     )
 

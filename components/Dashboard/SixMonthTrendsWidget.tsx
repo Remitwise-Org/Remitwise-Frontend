@@ -10,6 +10,11 @@ import { useState, useCallback, memo } from 'react'
 import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y/chart'
 
 // Sample data for the 6-month chart (Jul-Dec)
+function tooltipFormatter(value: any, name: any, item: any, index: any, payload: any) {
+  if (value == null) return '';
+  return `$${Number(value).toLocaleString()}`;
+}
+
 const chartData = [
     { month: 'Jul', remittances: 2800, savings: 1200, bills: 420, insurance: 80 },
     { month: 'Aug', remittances: 3050, savings: 1350, bills: 400, insurance: 80 },
@@ -26,6 +31,26 @@ const COLORS = {
     bills: '#991B1B',
     insurance: '#7F1D1D',
 }
+
+const TOOLTIP_CONTENT_STYLE = {
+  backgroundColor: 'rgba(0,0,0,0.85)',
+  border: 'none',
+  borderRadius: '8px',
+  color: '#fff',
+  padding: '8px',
+};
+
+const TOOLTIP_LABEL_STYLE = {
+  color: '#fff',
+  fontWeight: 'bold',
+};
+
+// Recharts dot and activeDot configurations
+const DOT_REMITTANCES = true;
+const DOT_SAVINGS = true;
+const DOT_BILLS = true;
+const DOT_INSURANCE = true;
+const ACTIVE_DOT = { r: 6, strokeWidth: 2, stroke: '#fff' };
 
 interface CustomLegendProps {
     payload?: Array<{

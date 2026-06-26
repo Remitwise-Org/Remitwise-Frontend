@@ -87,6 +87,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ```bash
 # Build for production
 npm run build
+npm run generate:types # Generate TypeScript types from OpenAPI spec
 
 # Start production server
 npm start
