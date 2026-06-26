@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const get = vi.fn();
@@ -19,7 +19,7 @@ vi.mock('@/components/Bills/UnpaidBillsSection', () => ({
 }));
 
 vi.mock('@/components/Bills/RecentPaymentsSection', () => ({
-  RecentPaymentsSection: () => <div>Recent Payments Section</div>,
+  default: () => <div>Recent Payments Section</div>,
 }));
 
 vi.mock('@/app/bills/components/BillPaymentsStatsCards', () => ({
@@ -31,7 +31,7 @@ vi.mock('@/components/Toggle', () => ({
 }));
 
 vi.mock('@/lib/hooks/useFormAction', () => ({
-  useFormAction: () => [{}, vi.fn(), false],
+  useFormAction: () => [{}, '/api/bills', false],
 }));
 
 vi.mock('@/components/AsyncOperationsPanel', () => ({
@@ -75,9 +75,14 @@ describe('Bills page retry behavior', () => {
     expect(container.querySelector('[aria-busy="true"]')).toBeTruthy();
     expect(screen.queryByText(/failed to load bills/i)).not.toBeInTheDocument();
 
-    await vi.runAllTimersAsync();
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    vi.useRealTimers();
 
-    expect(await screen.findByText(/failed to load bills/i)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /failed to load bills/i })
+    ).toBeInTheDocument();
     expect(get).toHaveBeenCalledTimes(8);
   });
 
@@ -87,14 +92,19 @@ describe('Bills page retry behavior', () => {
 
     render(<BillsPage />);
 
-    await vi.runAllTimersAsync();
-    expect(await screen.findByText(/failed to load bills/i)).toBeInTheDocument();
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    vi.useRealTimers();
+
+    expect(
+      await screen.findByRole('heading', { name: /failed to load bills/i })
+    ).toBeInTheDocument();
 
     get
       .mockResolvedValueOnce(okResponse({ data: { bills: [] } }))
       .mockResolvedValueOnce(okResponse({ data: { totalUnpaid: 0, count: 0 } }));
 
-    vi.useRealTimers();
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
 
     await waitFor(() => {

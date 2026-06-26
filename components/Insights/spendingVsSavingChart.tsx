@@ -76,6 +76,8 @@ function CustomTooltip({ active, payload, label }: TooltipContentProps<number, s
     )
 }
 
+type SpendingTooltipProps = TooltipContentProps<number | string | readonly (number | string)[], string | number>
+
 // ── Custom legend ─────────────────────────────────────────────────────────────
 function CustomLegend() {
     return (
@@ -177,7 +179,10 @@ function SpendingVsSavingsChartInner({
                             width={40}
                             className="hidden sm:block"
                         />
-                        <Tooltip content={CustomTooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                        <Tooltip
+                            content={CustomTooltip as (props: SpendingTooltipProps) => JSX.Element | null}
+                            cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                        />
                         <Bar dataKey="spending" name="spending" fill={SPENDING_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
                         <Bar dataKey="savings" name="savings" fill={SAVINGS_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
                     </BarChart>

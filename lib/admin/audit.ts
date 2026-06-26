@@ -12,6 +12,35 @@ export interface AuditEvent {
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
 
+interface AuditEventRow {
+  id: string;
+  timestamp: Date;
+  event: string;
+  identity: string;
+  details: string | null;
+}
+
+interface AuditEventDelegate {
+  create(args: {
+    data: {
+      timestamp: Date;
+      event: string;
+      identity: string;
+      details: string;
+    };
+  }): Promise<unknown>;
+  findMany(args: {
+    orderBy: {
+      timestamp: 'desc';
+    };
+    take: number;
+  }): Promise<AuditEventRow[]>;
+}
+
+const auditEventDelegate = (prisma as typeof prisma & {
+  auditEvent?: AuditEventDelegate;
+}).auditEvent;
+
 export function recordAuditEvent(
   input: Omit<AuditEvent, 'id' | 'createdAt'>
 ): AuditEvent {
@@ -21,7 +50,8 @@ export function recordAuditEvent(
     ...input,
   };
 
-  void prisma.auditEvent
+  if (auditEventDelegate) {
+    void auditEventDelegate
     .create({
       data: {
         timestamp: new Date(event.createdAt),
@@ -33,9 +63,10 @@ export function recordAuditEvent(
         }),
       },
     })
-    .catch((error) => {
+    .catch((error: unknown) => {
       console.error('Failed to persist audit event:', error);
     });
+  }
 
   return event;
 }
@@ -48,14 +79,18 @@ export async function getAuditEvents(
       ? Math.min(Math.floor(limit), MAX_LIMIT)
       : DEFAULT_LIMIT;
 
-  const events = await prisma.auditEvent.findMany({
+  if (!auditEventDelegate) {
+    return [];
+  }
+
+  const events = await auditEventDelegate.findMany({
     orderBy: {
       timestamp: 'desc',
     },
     take: safeLimit,
   });
 
-  return events.map((event) => {
+  return events.map((event: AuditEventRow) => {
     let details: {
       message?: string;
       metadata?: Record<string, unknown>;

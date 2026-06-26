@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { DashboardResponse } from '@/lib/types/dashboard';
@@ -123,13 +123,15 @@ describe('DashboardPage — StatCard summary row', () => {
 
     expect(screen.queryByText(/unable to load data/i)).not.toBeInTheDocument();
 
-    await vi.runAllTimersAsync();
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    vi.useRealTimers();
     expect(await screen.findByText(/unable to load data/i)).toBeInTheDocument();
     expect(get).toHaveBeenCalledTimes(4);
 
     // Retry succeeds the second time.
     get.mockResolvedValueOnce(okResponse(makeResponse()));
-    vi.useRealTimers();
     fireEvent.click(screen.getByRole('button', { name: /retry loading data/i }));
 
     await waitFor(() => {
@@ -143,9 +145,11 @@ describe('DashboardPage — StatCard summary row', () => {
     get.mockResolvedValue(null);
     render(<DashboardPage />);
 
-    await vi.runAllTimersAsync();
-    expect(await screen.findByText(/unable to load data/i)).toBeInTheDocument();
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
     vi.useRealTimers();
+    expect(await screen.findByText(/unable to load data/i)).toBeInTheDocument();
   });
 
   it('keeps showing the loading skeleton while automatic retries are in progress', async () => {
@@ -161,7 +165,9 @@ describe('DashboardPage — StatCard summary row', () => {
     expect(container.querySelector('.animate-shimmer')).toBeTruthy();
     expect(screen.queryByText(/unable to load data/i)).not.toBeInTheDocument();
 
-    await vi.runAllTimersAsync();
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
     vi.useRealTimers();
 
     expect(await screen.findByText('$1,240.50')).toBeInTheDocument();

@@ -7,7 +7,7 @@ import { SkeletonChart } from '@/components/ui/Skeleton'
 import WidgetEmptyState from '@/components/ui/WidgetEmptyState'
 import WidgetErrorState from '@/components/ui/WidgetErrorState'
 import { useState, useCallback, memo } from 'react'
-import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y/chart'
+import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y'
 
 // Sample data for the 6-month chart (Jul-Dec)
 const chartData = [
@@ -25,6 +25,39 @@ const COLORS = {
     savings: '#B91C1C',
     bills: '#991B1B',
     insurance: '#7F1D1D',
+}
+
+const TOOLTIP_CONTENT_STYLE = {
+    backgroundColor: 'rgba(15, 15, 15, 0.96)',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: '12px',
+    color: '#FFFFFF',
+}
+
+const TOOLTIP_LABEL_STYLE = {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+}
+
+const ACTIVE_DOT = {
+    r: 6,
+    strokeWidth: 0,
+}
+
+const DOT_REMITTANCES = { r: 4, fill: COLORS.remittances, strokeWidth: 0 }
+const DOT_SAVINGS = { r: 4, fill: COLORS.savings, strokeWidth: 0 }
+const DOT_BILLS = { r: 4, fill: COLORS.bills, strokeWidth: 0 }
+const DOT_INSURANCE = { r: 4, fill: COLORS.insurance, strokeWidth: 0 }
+
+function tooltipFormatter(
+    value: string | number | readonly (string | number)[] | undefined,
+    name: string | number | undefined
+): [string, string] {
+    const labelText = String(name)
+    const label = labelText.charAt(0).toUpperCase() + labelText.slice(1)
+    const normalizedValue = Array.isArray(value) ? value[0] : value
+    const amount = typeof normalizedValue === 'number' ? normalizedValue : Number(normalizedValue ?? 0)
+    return [`$${amount}`, label]
 }
 
 interface CustomLegendProps {

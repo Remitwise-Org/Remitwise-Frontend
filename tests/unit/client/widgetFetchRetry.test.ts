@@ -48,15 +48,17 @@ describe('widget fetch retry helper', () => {
   it('throws after exhausting all retries', async () => {
     const load = vi.fn<() => Promise<string>>().mockRejectedValue(new Error('down'));
 
-    const promise = runWidgetFetchWithRetry({
+    const rejection = runWidgetFetchWithRetry({
       load,
       baseBackoffMs: 10,
-    });
+    }).catch((error) => error);
 
     await Promise.resolve();
     await vi.runAllTimersAsync();
 
-    await expect(promise).rejects.toThrow('down');
+    const error = await rejection;
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe('down');
     expect(load).toHaveBeenCalledTimes(4);
   });
 

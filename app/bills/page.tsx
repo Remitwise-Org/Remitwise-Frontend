@@ -118,6 +118,12 @@ export default function Bills() {
 		return `Monthly on the ${ordinalDay(monthlyDay)}`;
 	}, [frequency, isRecurring, monthlyDay, weeklyDay]);
 
+	const [bills, setBills] = useState<Bill[]>([]);
+	const [stats, setStats] = useState<any>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<Error | null>(null);
+	const [reloadKey, setReloadKey] = useState(0);
+
 	useEffect(() => {
 		const overdueBill = bills.find((b) => b.status === "overdue" || b.status === "urgent");
 		if (overdueBill) {
@@ -135,12 +141,6 @@ export default function Bills() {
 			});
 		}
 	}, [toast, bills]);
-
-	const [bills, setBills] = useState<Bill[]>([]);
-	const [stats, setStats] = useState<any>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<Error | null>(null);
-	const [reloadKey, setReloadKey] = useState(0);
 
 	const fetchBillsData = useCallback((signal?: AbortSignal) => {
 		return runWidgetFetchWithRetry({
@@ -241,7 +241,7 @@ export default function Bills() {
 						/>
 					</div>
 				) : isLoading ? (
-					<div className="mb-8 space-y-8">
+					<div className="mb-8 space-y-8" aria-busy="true" aria-hidden="true">
 						<SkeletonList rows={3} variant="cards" />
 						<SkeletonList rows={3} variant="table" />
 					</div>

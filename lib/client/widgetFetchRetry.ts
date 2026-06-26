@@ -1,7 +1,10 @@
-export const WIDGET_FETCH_RETRY_CONFIG = {
+export const WIDGET_FETCH_RETRY_CONFIG: {
+  maxRetries: number;
+  baseBackoffMs: number;
+} = {
   maxRetries: 3,
   baseBackoffMs: 300,
-} as const;
+};
 
 export interface WidgetFetchRetryOptions<T> {
   load: () => Promise<T>;
