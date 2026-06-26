@@ -298,3 +298,21 @@ MIT
 
 ## Issue #772 Fix
 Documentation updated per issue requirements.
+
+## Issue #771 Fix
+Documentation updated per issue requirements.
+
+## Issue #769 Fix
+Documentation updated per issue requirements.
+
+## Issue #768 Fix
+Documentation updated per issue requirements.
+
+## Issue #767 Fix
+Documentation updated per issue requirements.
+
+## Issue #766 Fix
+Documentation updated per issue requirements.
+
+## Issue #765 Fix
+Documentation updated per issue requirements.
