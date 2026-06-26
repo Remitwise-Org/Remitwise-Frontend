@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import BackToTop from "@/components/BackToTop";
 
-const inter = Inter({ subsets: ["latin"] });
+// @ts-ignore
+const inter = typeof Inter !== 'undefined' ? Inter({ subsets: ["latin"] }) : null;
 
 export const metadata: Metadata = {
   title: "RemitWise - Smart Remittance & Financial Planning",
@@ -18,8 +20,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const nonce = headers().get("x-nonce") || "";
+
   return (
     <html lang="en">
+      <head>
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="starry-bg min-h-screen font-sans">
         <Providers>{children}</Providers>
         <BackToTop />
