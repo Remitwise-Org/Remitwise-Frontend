@@ -57,6 +57,10 @@ async function runShutdown(signal: 'SIGTERM' | 'SIGINT'): Promise<void> {
   process.exit(0);
 }
 
+/**
+ * Registers global event handlers for SIGTERM and SIGINT to initiate graceful shutdown.
+ * Prevents multiple registrations using a concurrency flag.
+ */
 export function registerGracefulShutdown(): void {
   if (handlersRegistered) return;
   if (typeof process === 'undefined' || typeof process.on !== 'function') return;
@@ -70,17 +74,34 @@ export function registerGracefulShutdown(): void {
   });
 }
 
+/**
+ * Registers a callback hook to run during the graceful shutdown sequence.
+ * Useful for closing database connections, cleanups, or stopping loops.
+ * 
+ * @param name Unique name of the shutdown hook
+ * @param hook The asynchronous or synchronous callback function
+ */
 export function registerShutdownHook(name: string, hook: ShutdownHook): void {
   registerGracefulShutdown();
   shutdownHooks.set(name, hook);
 }
 
+/**
+ * Checks if the runtime is currently executing the graceful shutdown sequence.
+ * 
+ * @returns true if shutdown has started; false otherwise
+ */
 export function isShuttingDown(): boolean {
   return shuttingDown;
 }
 
 /**
- * Registers an asynchronous background unit of work so graceful shutdown can wait for it.
+ * Registers an asynchronous background unit of work so the graceful shutdown process waits for its completion.
+ * Rejects the job if the server is already in the process of shutting down.
+ * 
+ * @param jobName A descriptive name for the background job (for logging)
+ * @param fn The asynchronous function executing the background work
+ * @returns A Promise resolving to the callback's result
  */
 export function runBackgroundJob<T>(jobName: string, fn: () => Promise<T>): Promise<T> {
   if (shuttingDown) {
