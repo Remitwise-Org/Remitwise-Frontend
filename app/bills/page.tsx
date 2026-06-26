@@ -18,6 +18,7 @@ import { WidgetErrorState } from "@/components/ui/WidgetStates";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/lib/context/ToastContext";
 import { CTA_TEST_IDS } from "@/lib/cta-testids";
+import { useClientTranslator } from "@/lib/i18n/client";
 
 type AddBillResponse = ActionState & {
 	name?: string;
@@ -25,61 +26,54 @@ type AddBillResponse = ActionState & {
 	dueDate?: string;
 };
 
-const billStages = [
+const getBillStages = (t: any) => [
 	{
-		label: "Validate bill details",
+		label: t("bills.billStages.stage1Label"),
 		duration: "0-2 sec",
-		detail:
-			"Keep field errors attached to the triggering inputs so users do not need to reconcile a toast with the form.",
-		placement: "Inline at field level",
+		detail: t("bills.billStages.stage1Detail"),
+		placement: t("bills.billStages.stage1Placement"),
 		icon: ShieldCheck,
 	},
 	{
-		label: "Prepare contract payload",
+		label: t("bills.billStages.stage2Label"),
 		duration: "2-6 sec",
-		detail:
-			"The form card should own the build state because the user still needs the bill amount, schedule, and recurring toggle in view.",
-		placement: "Inline above submit button",
+		detail: t("bills.billStages.stage2Detail"),
+		placement: t("bills.billStages.stage2Placement"),
 		icon: Layers3,
 	},
 	{
-		label: "Collect wallet approval",
+		label: t("bills.billStages.stage3Label"),
 		duration: "15-45 sec",
-		detail:
-			"Open a focused confirmation step only after the contract payload succeeds and the user can act immediately.",
-		placement: "Wallet modal or sheet",
+		detail: t("bills.billStages.stage3Detail"),
+		placement: t("bills.billStages.stage3Placement"),
 		icon: Wallet,
 	},
 	{
-		label: "Submit and confirm",
+		label: t("bills.billStages.stage4Label"),
 		duration: "5-30 sec",
-		detail:
-			"Show network progress in a stacked surface that persists even after the form scrolls away.",
-		placement: "Top-right desktop, inline mobile",
+		detail: t("bills.billStages.stage4Detail"),
+		placement: t("bills.billStages.stage4Placement"),
 		icon: Clock3,
 	},
 ];
 
-const billQueue = [
+const getBillQueue = (t: any) => [
 	{
-		title: "Create bill contract request",
+		title: t("bills.billQueue.item1Title"),
 		duration: "Live",
-		detail:
-			"Primary submission remains expanded until wallet approval or an error resolves.",
+		detail: t("bills.billQueue.item1Detail"),
 		status: "active" as const,
 	},
 	{
-		title: "Recurring schedule verification",
+		title: t("bills.billQueue.item2Title"),
 		duration: "Queued",
-		detail:
-			"Secondary tasks compress so multiple actions never dominate the screen.",
+		detail: t("bills.billQueue.item2Detail"),
 		status: "queued" as const,
 	},
 	{
-		title: "Previous bill confirmed",
+		title: t("bills.billQueue.item3Title"),
 		duration: "< 1 min",
-		detail:
-			"Leave the success state visible briefly so the user can trust the outcome without opening history.",
+		detail: t("bills.billQueue.item3Detail"),
 		status: "complete" as const,
 	},
 ];
@@ -104,6 +98,7 @@ function ordinalDay(day: string) {
 }
 
 export default function Bills() {
+	const { t } = useClientTranslator();
 	const formSectionRef = useRef<HTMLDivElement>(null);
 	const [state, formAction, pending] = useFormAction<AddBillResponse>("/api/bills");
 	const [isRecurring, setIsRecurring] = useState(false);
@@ -114,25 +109,26 @@ export default function Bills() {
 	const { toast } = useToast();
 
 	const recurrencePreview = useMemo(() => {
-		if (!isRecurring) return "One-time bill";
-		if (frequency === "weekly") return `Weekly on ${weeklyDay}`;
-		return `Monthly on the ${ordinalDay(monthlyDay)}`;
-	}, [frequency, isRecurring, monthlyDay, weeklyDay]);
+		if (!isRecurring) return t("bills.form.oneTimeBill");
+		if (frequency === "weekly") return t("bills.form.weeklyOn", { day: weeklyDay });
+		return t("bills.form.monthlyOn", { day: ordinalDay(monthlyDay) });
+	}, [frequency, isRecurring, monthlyDay, weeklyDay, t]);
 
 	const [bills, setBills] = useState<Bill[]>([]);
 	const [stats, setStats] = useState<any>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
+	const [reloadKey, setReloadKey] = useState(0);
 
 	useEffect(() => {
 		const overdueBill = bills.find((b) => b.status === "overdue" || b.status === "urgent");
 		if (overdueBill) {
 			toast({
 				variant: "warning",
-				title: "Bill overdue",
-				description: `${overdueBill.name} was due on ${overdueBill.dueDate}.`,
+				title: t("bills.toast.overdueTitle"),
+				description: t("bills.toast.overdueDesc", { name: overdueBill.name, date: overdueBill.dueDate }),
 				action: {
-					label: "Pay now",
+					label: t("bills.toast.payNow"),
 					onClick: () => {
 						const formElement = document.getElementById("name");
 						if (formElement) formElement.scrollIntoView({ behavior: "smooth" });
@@ -140,46 +136,23 @@ export default function Bills() {
 				},
 			});
 		}
-	}, [toast, bills]);
+	}, [toast, bills, t]);
 
-	const fetchBillsData = async () => {
-		setIsLoading(true);
-		setError(null);
-		try {
-			const [billsRes, statsRes] = await Promise.all([
-				apiClient.get('/api/bills'),
-				apiClient.get('/api/bills/total-unpaid')
-			]);
-			
-			if (!billsRes || !statsRes) throw new Error("Session expired");
-			if (!billsRes.ok || !statsRes.ok) throw new Error("Failed to load bills data");
-			
-			const billsJson = await billsRes.json();
-			const statsJson = await statsRes.json();
-			
-			const fetchedBills: Bill[] = billsJson.data?.bills || [];
-			const fetchedStats = statsJson.data;
-
-			setBills(fetchedBills);
-
-			const paidBills = fetchedBills.filter((b: Bill) => b.status === 'paid');
-			const paidAmount = paidBills.reduce((acc: number, b: Bill) => acc + b.amount, 0);
-			const overdueCount = fetchedBills.filter((b: Bill) => (b.status as string) === 'overdue' || (b.status as string) === 'urgent').length;
-
-			setStats({
-				totalUnpaid: {
-					amount: fetchedStats?.totalUnpaid?.toLocaleString() || '0',
-					pendingCount: fetchedStats?.count || 0
-				},
-				overdueCount,
-				paidThisMonth: {
-					amount: paidAmount.toLocaleString(),
-					paymentCount: paidBills.length
-				}
-
+	const fetchBillsData = useCallback((signal?: AbortSignal) => {
+		return runWidgetFetchWithRetry({
+			signal,
+			load: async () => {
+				const [billsRes, statsRes] = await Promise.all([
+					apiClient.get('/api/bills', { signal }),
+					apiClient.get('/api/bills/total-unpaid', { signal })
+				]);
+				
+				if (!billsRes || !statsRes) throw new Error("Session expired");
+				if (!billsRes.ok || !statsRes.ok) throw new Error("Failed to load bills data");
+				
 				const billsJson = await billsRes.json();
 				const statsJson = await statsRes.json();
-
+				
 				const fetchedBills: Bill[] = billsJson.data?.bills || [];
 				const fetchedStats = statsJson.data;
 				const paidBills = fetchedBills.filter((bill: Bill) => bill.status === 'paid');
@@ -246,9 +219,9 @@ export default function Bills() {
 	return (
 		<div className='min-h-screen bg-[#010101]'>
 			<PageHeader
-				title='Bill Payments'
-				subtitle='Manage and track your recurring bills'
-				ctaLabel='Add Bill'
+				title={t("bills.pageTitle")}
+				subtitle={t("bills.pageSubtitle")}
+				ctaLabel={t("bills.addBillCta")}
 				headingId='bills-page-heading'
 				onCtaClick={handleAddBill}
 				ctaTestId={CTA_TEST_IDS.page.billsPrimary}
@@ -259,7 +232,7 @@ export default function Bills() {
 				{error ? (
 					<div className="mb-8">
 						<WidgetErrorState 
-							title="Failed to load bills" 
+							title={t("bills.loadFailed")} 
 							message={error.message} 
 							onRetry={handleRetry} 
 						/>
@@ -291,34 +264,32 @@ export default function Bills() {
 						className='rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-6 sm:p-8'>
 						<div className='border-b border-white/[0.08] pb-6'>
 							<p className='text-xs font-semibold uppercase tracking-[0.24em] text-red-300'>
-								Bill creation
+								{t("bills.billCreationEyebrow")}
 							</p>
 							<h2 className='mt-3 text-2xl font-semibold text-white'>
-								Add New Bill
+								{t("bills.addBillTitle")}
 							</h2>
 							<p className='mt-2 text-sm leading-6 text-gray-300'>
-								The initiating form should own validation and contract-build
-								feedback. Longer-running submit states should move into a stack
-								that stays visible while the user continues working.
+								{t("bills.billCreationDesc")}
 							</p>
 						</div>
 						<div className='mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300'>
 							<p>
-								This bill request is built as an on-chain USDC payment payload. Your wallet signs and submits the transaction; RemitWise only prepares the payload.
+								{t("bills.billWarning")}
 							</p>
 						</div>
 
 						<form action={formAction} className='mt-6 space-y-6'>
 							<div className='grid gap-1'>
 								<label htmlFor='name' className='block text-sm font-medium text-gray-300'>
-									Bill Name
+									{t("bills.form.nameLabel")}
 								</label>
 								<input
 									id='name'
 									name='name'
 									type='text'
 									defaultValue={state.name}
-									placeholder='e.g., Electricity, School Fees, Rent'
+									placeholder={t("bills.form.namePlaceholder")}
 									className='w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-red-500'
 								/>
 								{state?.validationErrors ? (
@@ -332,7 +303,7 @@ export default function Bills() {
 							<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
 								<div className='grid gap-1'>
 									<label htmlFor='amount' className='block text-sm font-medium text-gray-300'>
-										Amount (USD)
+										{t("bills.form.amountLabel")}
 									</label>
 									<div className='relative'>
 										<span className='absolute left-4 top-3 text-gray-500'>$</span>
@@ -357,7 +328,7 @@ export default function Bills() {
 
 								<div className='grid gap-1'>
 									<label htmlFor='dueDate' className='block text-sm font-medium text-gray-300'>
-										Due Date
+										{t("bills.form.dueDateLabel")}
 									</label>
 									<input
 										type='date'
@@ -395,7 +366,7 @@ export default function Bills() {
 													id='recurring-bill-label'
 													htmlFor='recurring-toggle'
 													className='text-sm font-semibold text-white'>
-													Repeat this bill
+													{t("bills.form.repeatLabel")}
 												</label>
 												<span
 													className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${
@@ -403,13 +374,13 @@ export default function Bills() {
 															? "border-red-400/40 bg-red-500/15 text-red-200"
 															: "border-white/10 bg-white/5 text-white/45"
 													}`}>
-													{isRecurring ? "On" : "Off"}
+													{isRecurring ? t("bills.form.repeatOn") : t("bills.form.repeatOff")}
 												</span>
 											</div>
 											<p className='mt-1 text-sm leading-5 text-gray-400'>
 												{isRecurring
-													? `${recurrencePreview}; reminders start ${reminderLead} days before each due date.`
-													: "Leave off for one-time bills, or turn on to add a visible payment schedule."}
+													? t("bills.form.repeatDescOn", { preview: recurrencePreview, days: reminderLead })
+													: t("bills.form.repeatDescOff")}
 											</p>
 										</div>
 									</div>
@@ -425,7 +396,7 @@ export default function Bills() {
 									<div className='mt-4 grid gap-4 border-t border-white/10 pt-4 md:grid-cols-3'>
 										<div className='grid gap-1'>
 											<label htmlFor='recurrenceFrequency' className='text-xs font-semibold uppercase tracking-[0.14em] text-white/50'>
-												Repeats
+												{t("bills.form.repeatsHeader")}
 											</label>
 											<select
 												id='recurrenceFrequency'
@@ -433,15 +404,15 @@ export default function Bills() {
 												value={frequency}
 												onChange={(event) => setFrequency(event.target.value)}
 												className='w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-3 text-sm text-white focus:border-transparent focus:ring-2 focus:ring-red-500'>
-												<option value='monthly'>Monthly</option>
-												<option value='weekly'>Weekly</option>
+												<option value='monthly'>{t("bills.form.monthly")}</option>
+												<option value='weekly'>{t("bills.form.weekly")}</option>
 											</select>
 										</div>
 
 										{frequency === "monthly" ? (
 											<div className='grid gap-1'>
 												<label htmlFor='recurrenceDayOfMonth' className='text-xs font-semibold uppercase tracking-[0.14em] text-white/50'>
-													Day
+													{t("bills.form.dayHeader")}
 												</label>
 												<select
 													id='recurrenceDayOfMonth'
@@ -459,7 +430,7 @@ export default function Bills() {
 										) : (
 											<div className='grid gap-1'>
 												<label htmlFor='recurrenceDayOfWeek' className='text-xs font-semibold uppercase tracking-[0.14em] text-white/50'>
-													Day
+													{t("bills.form.dayHeader")}
 												</label>
 												<select
 													id='recurrenceDayOfWeek'
@@ -478,7 +449,7 @@ export default function Bills() {
 
 										<div className='grid gap-1'>
 											<label htmlFor='recurrenceReminderLead' className='text-xs font-semibold uppercase tracking-[0.14em] text-white/50'>
-												Reminder
+												{t("bills.form.reminderHeader")}
 											</label>
 											<select
 												id='recurrenceReminderLead'
@@ -486,15 +457,15 @@ export default function Bills() {
 												value={reminderLead}
 												onChange={(event) => setReminderLead(event.target.value)}
 												className='w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-3 text-sm text-white focus:border-transparent focus:ring-2 focus:ring-red-500'>
-												<option value='1'>1 day before</option>
-												<option value='3'>3 days before</option>
-												<option value='5'>5 days before</option>
+												<option value='1'>{t("bills.form.daysBefore1")}</option>
+												<option value='3'>{t("bills.form.daysBefore3")}</option>
+												<option value='5'>{t("bills.form.daysBefore5")}</option>
 											</select>
 										</div>
 
 										<div className='rounded-xl border border-white/10 bg-black/25 px-3 py-3 md:col-span-3'>
 											<p className='text-xs font-semibold uppercase tracking-[0.14em] text-white/45'>
-												Card label preview
+												{t("bills.form.previewHeader")}
 											</p>
 											<p className='mt-1 text-sm font-semibold text-white'>{recurrencePreview}</p>
 										</div>
@@ -506,13 +477,13 @@ export default function Bills() {
 								pending={pending}
 								error={state?.error}
 								success={state?.success}
-								idleTitle='Submission placement'
-								idleDescription='Validation lives at field level, contract-build feedback stays inline above the CTA, and submit progress should move into the persistent stack rail.'
-								pendingTitle='Preparing bill contract request'
-								pendingDescription='Hold the user in this form context until the bill payload is ready for wallet approval.'
-								successTitle='Bill contract request created'
-								successDescription='The next step should open wallet approval immediately, while a stacked confirmation card remains visible if the user navigates away.'
-								errorTitle='Bill request could not be prepared'
+								idleTitle={t("bills.status.idleTitle")}
+								idleDescription={t("bills.status.idleDesc")}
+								pendingTitle={t("bills.status.pendingTitle")}
+								pendingDescription={t("bills.status.pendingDesc")}
+								successTitle={t("bills.status.successTitle")}
+								successDescription={t("bills.status.successDesc")}
+								errorTitle={t("bills.status.errorTitle")}
 							/>
 
 							<button
@@ -522,10 +493,10 @@ export default function Bills() {
 								{pending ? (
 									<>
 										<Loader2 className='w-5 h-5 animate-spin' />
-										<span>Preparing Contract Request...</span>
+										<span>{t("bills.form.submitPreparing")}</span>
 									</>
 								) : (
-									"Add Bill"
+									t("bills.form.submitAdd")
 								)}
 							</button>
 						</form>
@@ -533,14 +504,14 @@ export default function Bills() {
 
 					<aside className='space-y-6 xl:sticky xl:top-6'>
 						<AsyncOperationsPanel
-							eyebrow='Async behavior'
-							title='Bill Submission Pattern'
-							description='Recurring bill creation is a good example of why inline build states and persistent submission stacks should be separate surfaces.'
-							stages={billStages}
-							queueTitle='Stack behavior'
-							queueDescription='On desktop, anchor stacked confirmation cards near the top-right edge of the main content. On mobile, move the same stack directly below the initiating form or modal footer.'
-							queueItems={billQueue}
-							footer='This pass does not require any Tailwind config changes. It uses existing red focus rings, dark surfaces, and border-opacity utilities already present across the app.'
+							eyebrow={t("bills.asyncPanel.eyebrow")}
+							title={t("bills.asyncPanel.title")}
+							description={t("bills.asyncPanel.desc")}
+							stages={getBillStages(t)}
+							queueTitle={t("bills.asyncPanel.queueTitle")}
+							queueDescription={t("bills.asyncPanel.queueDesc")}
+							queueItems={getBillQueue(t)}
+							footer={t("bills.asyncPanel.footer")}
 						/>
 					</aside>
 				</div>

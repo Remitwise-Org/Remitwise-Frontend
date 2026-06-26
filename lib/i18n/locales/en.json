@@ -75,5 +75,85 @@
   "charts": {
     "imageLabel": "{{title}}: {{summary}}",
     "noData": "No data available."
+  },
+  "bills": {
+    "pageTitle": "Bill Payments",
+    "pageSubtitle": "Manage and track your recurring bills",
+    "addBillCta": "Add Bill",
+    "loadFailed": "Failed to load bills",
+    "billCreationEyebrow": "Bill creation",
+    "addBillTitle": "Add New Bill",
+    "billCreationDesc": "The initiating form should own validation and contract-build feedback. Longer-running submit states should move into a stack that stays visible while the user continues working.",
+    "billWarning": "This bill request is built as an on-chain USDC payment payload. Your wallet signs and submits the transaction; RemitWise only prepares the payload.",
+    "form": {
+      "nameLabel": "Bill Name",
+      "namePlaceholder": "e.g., Electricity, School Fees, Rent",
+      "amountLabel": "Amount (USD)",
+      "amountPlaceholder": "50.00",
+      "dueDateLabel": "Due Date",
+      "repeatLabel": "Repeat this bill",
+      "repeatOn": "On",
+      "repeatOff": "Off",
+      "repeatDescOff": "Leave off for one-time bills, or turn on to add a visible payment schedule.",
+      "repeatDescOn": "{{preview}}; reminders start {{days}} days before each due date.",
+      "repeatsHeader": "Repeats",
+      "monthly": "Monthly",
+      "weekly": "Weekly",
+      "dayHeader": "Day",
+      "reminderHeader": "Reminder",
+      "daysBefore1": "1 day before",
+      "daysBefore3": "3 days before",
+      "daysBefore5": "5 days before",
+      "previewHeader": "Card label preview",
+      "oneTimeBill": "One-time bill",
+      "weeklyOn": "Weekly on {{day}}",
+      "monthlyOn": "Monthly on the {{day}}",
+      "submitPreparing": "Preparing Contract Request...",
+      "submitAdd": "Add Bill"
+    },
+    "status": {
+      "idleTitle": "Submission placement",
+      "idleDesc": "Validation lives at field level, contract-build feedback stays inline above the CTA, and submit progress should move into the persistent stack rail.",
+      "pendingTitle": "Preparing bill contract request",
+      "pendingDesc": "Hold the user in this form context until the bill payload is ready for wallet approval.",
+      "successTitle": "Bill contract request created",
+      "successDesc": "The next step should open wallet approval immediately, while a stacked confirmation card remains visible if the user navigates away.",
+      "errorTitle": "Bill request could not be prepared"
+    },
+    "asyncPanel": {
+      "eyebrow": "Async behavior",
+      "title": "Bill Submission Pattern",
+      "desc": "Recurring bill creation is a good example of why inline build states and persistent submission stacks should be separate surfaces.",
+      "queueTitle": "Stack behavior",
+      "queueDesc": "On desktop, anchor stacked confirmation cards near the top-right edge of the main content. On mobile, move the same stack directly below the initiating form or modal footer.",
+      "footer": "This pass does not require any Tailwind config changes. It uses existing red focus rings, dark surfaces, and border-opacity utilities already present across the app."
+    },
+    "billStages": {
+      "stage1Label": "Validate bill details",
+      "stage1Detail": "Keep field errors attached to the triggering inputs so users do not need to reconcile a toast with the form.",
+      "stage1Placement": "Inline at field level",
+      "stage2Label": "Prepare contract payload",
+      "stage2Detail": "The form card should own the build state because the user still needs the bill amount, schedule, and recurring toggle in view.",
+      "stage2Placement": "Inline above submit button",
+      "stage3Label": "Collect wallet approval",
+      "stage3Detail": "Open a focused confirmation step only after the contract payload succeeds and the user can act immediately.",
+      "stage3Placement": "Wallet modal or sheet",
+      "stage4Label": "Submit and confirm",
+      "stage4Detail": "Show network progress in a stacked surface that persists even after the form scrolls away.",
+      "stage4Placement": "Top-right desktop, inline mobile"
+    },
+    "billQueue": {
+      "item1Title": "Create bill contract request",
+      "item1Detail": "Primary submission remains expanded until wallet approval or an error resolves.",
+      "item2Title": "Recurring schedule verification",
+      "item2Detail": "Secondary tasks compress so multiple actions never dominate the screen.",
+      "item3Title": "Previous bill confirmed",
+      "item3Detail": "Leave the success state visible briefly so the user can trust the outcome without opening history."
+    },
+    "toast": {
+      "overdueTitle": "Bill overdue",
+      "overdueDesc": "{{name}} was due on {{date}}.",
+      "payNow": "Pay now"
+    }
   }
 }
