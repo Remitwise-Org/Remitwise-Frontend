@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { apiClient } from '@/lib/client/apiClient';
+import { runWidgetFetchWithRetry } from '@/lib/client/widgetFetchRetry';
 import { CategoryDonutChart, type CategoryDataPoint } from '@/components/Insights/categoryDonutChart';
 import { RemittanceTrendChart, type TrendDataPoint } from '@/components/Insights/remittanceTrendChart';
 import { WidgetErrorState, WidgetEmptyState } from '@/components/ui/WidgetStates';
 import { SkeletonCard } from '@/components/ui/Skeleton';
 import { formatCurrency } from '@/lib/utils/format-currency';
+import PageHeadingLink from '@/components/PageHeadingLink';
 
 type Period = 'current_month' | 'last_3_months' | 'last_year';
 
@@ -27,16 +29,25 @@ export default function InsightPage() {
     const [data, setData] = useState<InsightsResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
+    const [reloadKey, setReloadKey] = useState(0);
+
+    const handleRetry = useCallback(() => {
+        setReloadKey((current) => current + 1);
+    }, []);
 
     useEffect(() => {
         const controller = new AbortController();
         setLoading(true);
         setError(null);
 
-        apiClient.getJson<InsightsResponse>(`/api/insights?period=${period}`, {
-            signal: controller.signal
+        runWidgetFetchWithRetry({
+            signal: controller.signal,
+            load: () => apiClient.getJson<InsightsResponse>(`/api/insights?period=${period}`, {
+                signal: controller.signal
+            })
         })
             .then((res) => {
+                if (controller.signal.aborted) return;
                 setData(res);
                 setLoading(false);
             })
@@ -47,7 +58,7 @@ export default function InsightPage() {
             });
 
         return () => controller.abort();
-    }, [period]);
+    }, [period, reloadKey]);
 
     const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setPeriod(e.target.value as Period);
@@ -67,7 +78,7 @@ export default function InsightPage() {
             <WidgetErrorState
                 title="Failed to load insights"
                 message={error.message || "An unexpected error occurred."}
-                onRetry={() => setPeriod(period)}
+                onRetry={handleRetry}
             />
         );
     } else if (!data) {
@@ -129,7 +140,14 @@ export default function InsightPage() {
         >
             <div className="max-w-[928px] mx-auto space-y-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <h1 className="text-2xl font-bold text-white tracking-tight">Financial Insights</h1>
+                    <PageHeadingLink
+                        headingId="dashboard-insights-page-heading"
+                        label="Financial Insights"
+                        headingClassName="text-2xl font-bold text-white tracking-tight"
+                        buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
+                    >
+                        Financial Insights
+                    </PageHeadingLink>
                     <select
                         aria-label="Select period"
                         value={period}

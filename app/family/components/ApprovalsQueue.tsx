@@ -4,6 +4,7 @@ import { CheckCircle2, Clock3, Loader2, PenLine, Users, XCircle } from "lucide-r
 import { useEffect, useRef } from "react";
 import { useWallet } from "stellar-wallet-kit";
 import { useClientTranslator } from "@/lib/i18n/client";
+import { useToast } from "@/lib/context/ToastContext";
 import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
 import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
 import WidgetErrorState from "@/components/ui/WidgetErrorState";
@@ -121,6 +122,7 @@ export interface ApprovalsQueueProps {
 
 export default function ApprovalsQueue({ hook }: ApprovalsQueueProps) {
   const { t } = useClientTranslator();
+  const { toast } = useToast();
   const { account, isConnected: connected, signTransaction } = useWallet();
   const address = account?.address ?? "";
   const internal = useApprovalsQueue();
@@ -139,11 +141,26 @@ export default function ApprovalsQueue({ hook }: ApprovalsQueueProps) {
 
   const handleSign = async (id: string) => {
     if (!connected || !address) return;
-    await signItem(id, address, (xdr) =>
-      // Route through the wallet-kit's signTransaction — no new primitive
+    const result = await signItem(id, address, (xdr) =>
+      // Route through the wallet-kit signTransaction — no new primitive
       signTransaction(xdr, { networkPassphrase: undefined as unknown as string })
         .then((r) => (typeof r === "string" ? r : (r as { signedTxXdr: string }).signedTxXdr))
     );
+
+    if (!result) return;
+
+    if (result.success && result.approved) {
+      toast({ variant: "success", title: t("approvals_queue.approved_toast") });
+    } else if (result.success) {
+      toast({ variant: "success", title: t("approvals_queue.signed_toast") });
+    } else {
+      toast({
+        variant: "error",
+        title: t("approvals_queue.sign_failed_toast"),
+        description: result.error,
+        duration: 0,
+      });
+    }
   };
 
   const pendingCount = visibleQueue.filter((i) => i.status === "pending").length;

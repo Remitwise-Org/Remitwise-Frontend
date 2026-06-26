@@ -7,6 +7,7 @@ import StatCard from '@/components/Dashboard/StatCard';
 import { DashboardLoadingSkeleton } from '@/components/ui/LoadingSkeletons';
 import WidgetErrorState from '@/components/ui/WidgetErrorState';
 import { apiClient } from '@/lib/client/apiClient';
+import { runWidgetFetchWithRetry } from '@/lib/client/widgetFetchRetry';
 import { useClientTranslator } from '@/lib/i18n/client';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import type { DashboardResponse } from '@/lib/types/dashboard';
@@ -17,30 +18,52 @@ export default function DashboardPage() {
   const { t, locale } = useClientTranslator();
   const [state, setState] = useState<LoadState>('loading');
   const [data, setData] = useState<DashboardResponse | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // The /api/dashboard route derives the wallet address from the session, so we
   // never have to pass it from the client. apiClient adds the shared
   // 401 -> refresh -> retry-once behaviour on top of fetch.
-  const load = useCallback(async () => {
-    setState('loading');
-    try {
-      const res = await apiClient.get('/api/dashboard');
-      // `null` means the session-expiry flow already took over (redirecting).
-      if (!res || !res.ok) {
-        setState('error');
-        return;
-      }
-      const json = (await res.json()) as DashboardResponse;
-      setData(json);
-      setState('ready');
-    } catch {
-      setState('error');
-    }
+  const load = useCallback((signal?: AbortSignal) => {
+    return runWidgetFetchWithRetry({
+      signal,
+      load: async () => {
+        const res = await apiClient.get('/api/dashboard', { signal });
+        if (!res || !res.ok) {
+          throw new Error('Unable to load dashboard summary.');
+        }
+
+        return (await res.json()) as DashboardResponse;
+      },
+    });
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    setReloadKey((current) => current + 1);
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    const controller = new AbortController();
+
+    setState('loading');
+    void load(controller.signal)
+      .then((json) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        setData(json);
+        setState('ready');
+      })
+      .catch(() => {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        setState('error');
+      });
+
+    return () => controller.abort();
+  }, [load, reloadKey]);
 
   if (state === 'loading') {
     return <DashboardLoadingSkeleton />;
@@ -55,7 +78,7 @@ export default function DashboardPage() {
               'dashboard.loadError',
               "We couldn't load your dashboard summary."
             )}
-            onRetry={load}
+            onRetry={handleRetry}
           />
         </div>
       </div>

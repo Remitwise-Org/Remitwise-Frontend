@@ -10,7 +10,13 @@ import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
 import { TransactionItem } from "@/lib/remittance/horizon";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useDebounce } from "@/lib/hooks/useDebounce";
-import type { Transaction, TransactionStatus } from "@/components/Dashboard/TransactionHistoryItem";
+import type {
+  Transaction,
+  TransactionStatus,
+} from "@/components/Dashboard/TransactionHistoryItem";
+// @ts-ignore
+import { FixedSizeList } from "react-window";
+const List = FixedSizeList as any;
 
 type Direction = "all" | "sent" | "received";
 
@@ -20,12 +26,31 @@ function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-function getGroupKey(date: Date, todayStart: Date, yesterdayStart: Date): GroupKey {
+function getGroupKey(
+  date: Date,
+  todayStart: Date,
+  yesterdayStart: Date,
+): GroupKey {
   const d = startOfDay(date);
   if (d.getTime() === todayStart.getTime()) return "today";
   if (d.getTime() === yesterdayStart.getTime()) return "yesterday";
   return "earlier";
 }
+
+interface VirtualRowProps {
+  index: number;
+  style: React.CSSProperties;
+  data: Transaction[];
+}
+
+const TransactionVirtualRow = ({ index, style, data }: VirtualRowProps) => {
+  const tx = data[index];
+  return (
+    <div style={style}>
+      <TransactionHistoryItem transaction={tx} />
+    </div>
+  );
+};
 
 const TransactionHistoryPage = () => {
   const { t } = useClientTranslator();
@@ -36,7 +61,9 @@ const TransactionHistoryPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 300);
-  const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "failed" | "pending">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "completed" | "failed" | "pending"
+  >("all");
   const [directionFilter, setDirectionFilter] = useState<Direction>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -51,23 +78,24 @@ const TransactionHistoryPage = () => {
     return startOfDay(d);
   }, []);
 
-  const groupLabels: Record<GroupKey, { label: string; helper: string }> = useMemo(
-    () => ({
-      today: {
-        label: t("transactionHistory.dateGroups.today"),
-        helper: t("transactionHistory.dateGroups.todayHelper"),
-      },
-      yesterday: {
-        label: t("transactionHistory.dateGroups.yesterday"),
-        helper: t("transactionHistory.dateGroups.yesterdayHelper"),
-      },
-      earlier: {
-        label: t("transactionHistory.dateGroups.earlier"),
-        helper: t("transactionHistory.dateGroups.earlierHelper"),
-      },
-    }),
-    [t]
-  );
+  const groupLabels: Record<GroupKey, { label: string; helper: string }> =
+    useMemo(
+      () => ({
+        today: {
+          label: t("transactionHistory.dateGroups.today"),
+          helper: t("transactionHistory.dateGroups.todayHelper"),
+        },
+        yesterday: {
+          label: t("transactionHistory.dateGroups.yesterday"),
+          helper: t("transactionHistory.dateGroups.yesterdayHelper"),
+        },
+        earlier: {
+          label: t("transactionHistory.dateGroups.earlier"),
+          helper: t("transactionHistory.dateGroups.earlierHelper"),
+        },
+      }),
+      [t],
+    );
 
   const fetchTransactions = useCallback(
     async (currentCursor?: string, reset = false) => {
@@ -111,7 +139,7 @@ const TransactionHistoryPage = () => {
         setError(
           err instanceof Error
             ? err.message
-            : t("transactionHistory.alerts.genericError")
+            : t("transactionHistory.alerts.genericError"),
         );
       } finally {
         setLoading(false);
@@ -119,7 +147,7 @@ const TransactionHistoryPage = () => {
         setLoadingMore(false);
       }
     },
-    [statusFilter, t]
+    [statusFilter, t],
   );
 
   useEffect(() => {
@@ -193,7 +221,15 @@ const TransactionHistoryPage = () => {
 
       return true;
     });
-  }, [transactions, debouncedSearch, statusFilter, directionFilter, dateFrom, dateTo, userAddress]);
+  }, [
+    transactions,
+    debouncedSearch,
+    statusFilter,
+    directionFilter,
+    dateFrom,
+    dateTo,
+    userAddress,
+  ]);
 
   const groupedTransactions = useMemo(() => {
     const groups: Record<GroupKey, Transaction[]> = {
@@ -205,7 +241,9 @@ const TransactionHistoryPage = () => {
     filteredTransactions.forEach((tx) => {
       const txDate = new Date(tx.date);
       const groupKey = getGroupKey(txDate, todayStart, yesterdayStart);
-      const isSent = userAddress ? tx.sender === userAddress : tx.sender !== tx.recipient;
+      const isSent = userAddress
+        ? tx.sender === userAddress
+        : tx.sender !== tx.recipient;
 
       const componentTx: Transaction = {
         id: tx.hash.slice(0, 8),
@@ -234,14 +272,20 @@ const TransactionHistoryPage = () => {
   const filteredCount = filteredTransactions.length;
   const isLoading = initialLoading && loading;
   const noTransactions = !isLoading && !error && totalCount === 0;
-  const noResults = !isLoading && !error && totalCount > 0 && filteredCount === 0 && hasActiveFilters;
+  const noResults =
+    !isLoading &&
+    !error &&
+    totalCount > 0 &&
+    filteredCount === 0 &&
+    hasActiveFilters;
 
   const resultsAriaLive = useMemo(() => {
-    if (filteredCount === 0) return t("transactionHistory.resultsAriaLive.none");
+    if (filteredCount === 0)
+      return t("transactionHistory.resultsAriaLive.none");
     if (filteredCount === 1) return t("transactionHistory.resultsAriaLive.one");
     return t("transactionHistory.resultsAriaLive.many").replace(
       "{{count}}",
-      String(filteredCount)
+      String(filteredCount),
     );
   }, [filteredCount, t]);
 
@@ -253,7 +297,7 @@ const TransactionHistoryPage = () => {
           totalCount > 0
             ? t("transactionHistory.resultsCount").replace(
                 "{{count}}",
-                String(totalCount)
+                String(totalCount),
               )
             : t("transactionHistory.resultsCountZero")
         }
@@ -302,7 +346,7 @@ const TransactionHistoryPage = () => {
                   ...rows.map((row) =>
                     Object.values(row)
                       .map((v) => `"${String(v).replace(/"/g, '""')}"`)
-                      .join(",")
+                      .join(","),
                   ),
                 ].join("\n");
 
@@ -356,7 +400,7 @@ const TransactionHistoryPage = () => {
                   >
                     {t(`transactionHistory.tabs.${status}`)}
                   </button>
-                )
+                ),
               )}
             </div>
           </fieldset>
@@ -396,10 +440,7 @@ const TransactionHistoryPage = () => {
             </legend>
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="date-from"
-                  className="text-xs text-gray-400"
-                >
+                <label htmlFor="date-from" className="text-xs text-gray-400">
                   {t("transactionHistory.dateRange.from")}
                 </label>
                 <input
@@ -411,10 +452,7 @@ const TransactionHistoryPage = () => {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="date-to"
-                  className="text-xs text-gray-400"
-                >
+                <label htmlFor="date-to" className="text-xs text-gray-400">
                   {t("transactionHistory.dateRange.to")}
                 </label>
                 <input
@@ -452,7 +490,7 @@ const TransactionHistoryPage = () => {
                 <ActivePill
                   label={t("transactionHistory.activeFilters.status").replace(
                     "{{status}}",
-                    t(`transactionHistory.tabs.${statusFilter}`)
+                    t(`transactionHistory.tabs.${statusFilter}`),
                   )}
                   onRemove={() => setStatusFilter("all")}
                 />
@@ -463,7 +501,7 @@ const TransactionHistoryPage = () => {
                     "{{type}}",
                     directionFilter === "sent"
                       ? t("transactionHistory.typeFilter.send")
-                      : t("transactionHistory.typeFilter.received")
+                      : t("transactionHistory.typeFilter.received"),
                   )}
                   onRemove={() => setDirectionFilter("all")}
                 />
@@ -472,7 +510,7 @@ const TransactionHistoryPage = () => {
                 <ActivePill
                   label={t("transactionHistory.activeFilters.search").replace(
                     "{{query}}",
-                    debouncedSearch
+                    debouncedSearch,
                   )}
                   onRemove={() => setSearchTerm("")}
                 />
@@ -498,11 +536,7 @@ const TransactionHistoryPage = () => {
         </div>
 
         {/* Results Count (aria-live) */}
-        <div
-          aria-live="polite"
-          aria-atomic="true"
-          className="sr-only"
-        >
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
           {resultsAriaLive}
         </div>
 
@@ -524,8 +558,48 @@ const TransactionHistoryPage = () => {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="mt-8 flex justify-center">
-            <Loader2 className="w-8 h-8 text-[#FF4B26] animate-spin" />
+          <div className="mt-8 space-y-8">
+            {["today", "yesterday", "earlier"].map((group) => (
+              <div key={group}>
+                <div className="mb-3 flex items-center justify-between border-b border-[#FFFFFF14] pb-3">
+                  <div className="h-6 w-24 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                  <div className="h-4 w-12 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                </div>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((row) => (
+                    <div
+                      key={row}
+                      className="border border-[#FFFFFF14] bg-gradient-to-t from-[#0A0A0A] to-[#0F0F0F] rounded-2xl p-6"
+                    >
+                      <div className="flex gap-4">
+                        <div className="w-12 h-12 rounded-xl shrink-0 bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <div className="h-5 w-28 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                              <div className="h-4 w-12 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                            </div>
+                            <div className="h-6 w-[90px] rounded-full bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            {[1, 2, 3, 4].map((col) => (
+                              <div key={col} className="space-y-1.5">
+                                <div className="h-3 w-14 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                                <div className="h-5 w-24 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex flex-wrap gap-3">
+                            <div className="h-[38px] w-[120px] rounded-lg bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                            <div className="h-[38px] w-[140px] rounded-lg bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -564,7 +638,10 @@ const TransactionHistoryPage = () => {
                 if (txs.length === 0) return null;
 
                 return (
-                  <section key={groupKey} aria-labelledby={`group-${groupKey}-heading`}>
+                  <section
+                    key={groupKey}
+                    aria-labelledby={`group-${groupKey}-heading`}
+                  >
                     <div className="mb-3 flex items-center justify-between border-b border-[#FFFFFF14] pb-3">
                       <h2
                         id={`group-${groupKey}-heading`}
@@ -577,25 +654,28 @@ const TransactionHistoryPage = () => {
                         {txs.length === 1
                           ? t("transactionHistory.results_one").replace(
                               "{{count}}",
-                              "1"
+                              "1",
                             )
                           : t("transactionHistory.results_many").replace(
                               "{{count}}",
-                              String(txs.length)
+                              String(txs.length),
                             )}
                       </span>
                     </div>
-                    <div className="space-y-4">
-                      {txs.map((tx) => (
-                        <TransactionHistoryItem
-                          key={tx.hash || tx.id}
-                          transaction={tx}
-                        />
-                      ))}
+                    <div className="h-[500px] w-full max-h-[70vh]">
+                      <List
+                        height={500}
+                        width="100%"
+                        itemCount={txs.length}
+                        itemSize={80}
+                        itemData={txs}
+                      >
+                        {TransactionVirtualRow}
+                      </List>
                     </div>
                   </section>
                 );
-              }
+              },
             )}
           </div>
         )}
@@ -609,9 +689,7 @@ const TransactionHistoryPage = () => {
               disabled={loadingMore}
               className="min-h-[48px] rounded-xl bg-[#FF4B26] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#FF4B26]/80 disabled:opacity-50 disabled:cursor-not-allowed sm:text-base"
             >
-              {loadingMore
-                ? "Loading..."
-                : t("transactionHistory.loadMore")}
+              {loadingMore ? "Loading..." : t("transactionHistory.loadMore")}
             </button>
           </div>
         )}

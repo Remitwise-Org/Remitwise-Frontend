@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import InsightPage from '@/app/dashboard/insight/page';
 import { apiClient } from '@/lib/client/apiClient';
 
@@ -44,13 +44,19 @@ describe('InsightPage', () => {
     });
 
     it('renders error state if API fails', async () => {
+        vi.useFakeTimers();
         vi.mocked(apiClient.getJson).mockRejectedValue(new Error('Network failure'));
         render(<InsightPage />);
-        
+
+        expect(screen.queryByText('Failed to load insights')).not.toBeInTheDocument();
+        await vi.runAllTimersAsync();
+        vi.useRealTimers();
+
         await waitFor(() => {
             expect(screen.getByText('Failed to load insights')).toBeInTheDocument();
             expect(screen.getByText('Network failure')).toBeInTheDocument();
         });
+        expect(apiClient.getJson).toHaveBeenCalledTimes(4);
     });
 
     it('renders empty state if no data returned', async () => {
@@ -135,5 +141,26 @@ describe('InsightPage', () => {
         await waitFor(() => {
             expect(apiClient.getJson).toHaveBeenCalledTimes(2);
         });
+    });
+
+    it('retries automatically and recovers before showing an error', async () => {
+        vi.useFakeTimers();
+        vi.mocked(apiClient.getJson)
+            .mockRejectedValueOnce(new Error('Network failure'))
+            .mockRejectedValueOnce(new Error('Network failure'))
+            .mockRejectedValueOnce(new Error('Network failure'))
+            .mockResolvedValueOnce(mockData);
+
+        render(<InsightPage />);
+
+        expect(screen.queryByText('Failed to load insights')).not.toBeInTheDocument();
+
+        await vi.runAllTimersAsync();
+        vi.useRealTimers();
+
+        await waitFor(() => {
+            expect(screen.getByText('Spending')).toBeInTheDocument();
+        });
+        expect(apiClient.getJson).toHaveBeenCalledTimes(4);
     });
 });

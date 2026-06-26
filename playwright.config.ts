@@ -1,6 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
 
+// ---------------------------------------------------------------------------
+// Visual-regression snapshot update flag.
+// Set PLAYWRIGHT_UPDATE_SNAPSHOTS=1 in the environment to regenerate baselines.
+// ---------------------------------------------------------------------------
+const updateSnapshots = process.env.PLAYWRIGHT_UPDATE_SNAPSHOTS === '1' ? 'all' : 'none';
+
 export default defineConfig({
   testDir: './tests/e2e',
 
@@ -9,7 +15,11 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
 
-  reporter: 'html',
+  reporter: [
+    ['html'],
+    // Dot reporter is compact and works well in CI alongside html.
+    ['dot'],
+  ],
 
   use: {
     baseURL: 'http://localhost:3000',
@@ -17,12 +27,57 @@ export default defineConfig({
     extraHTTPHeaders: {
       'x-playwright-test': 'true',
     },
+    // Force reduced-motion so CSS transitions don't pollute snapshots.
+    reducedMotion: 'reduce',
+    // Consistent colour scheme for snapshot stability.
+    colorScheme: 'dark',
   },
 
+  // ---------------------------------------------------------------------------
+  // Snapshot configuration
+  // ---------------------------------------------------------------------------
+  updateSnapshots,
+  snapshotPathTemplate:
+    '{testDir}/__snapshots__/{testFilePath}/{projectName}/{arg}{ext}',
+
   projects: [
+    // -----------------------------------------------------------------------
+    // Functional e2e suite — all spec files except visual-regression.
+    // -----------------------------------------------------------------------
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testIgnore: ['**/visual-regression.spec.ts'],
+    },
+
+    // -----------------------------------------------------------------------
+    // Visual-regression projects — one per target viewport / browser combo.
+    // Each project maps to one CI matrix entry so snapshots are isolated and
+    // reproducible across runs.
+    // -----------------------------------------------------------------------
+    {
+      name: 'vr-chromium-360',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 360, height: 640 },
+      },
+      testMatch: '**/visual-regression.spec.ts',
+    },
+    {
+      name: 'vr-chromium-768',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 768, height: 1024 },
+      },
+      testMatch: '**/visual-regression.spec.ts',
+    },
+    {
+      name: 'vr-chromium-1280',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1280, height: 800 },
+      },
+      testMatch: '**/visual-regression.spec.ts',
     },
   ],
 

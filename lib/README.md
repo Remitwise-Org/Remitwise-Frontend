@@ -71,6 +71,16 @@ lib/
 - `validateGoalName()` - Validate goal name format
 - `validatePublicKey()` - Validate Stellar public key format
 
+### Infrastructure (Root level, and `lib/`)
+
+For a detailed walkthrough, see [Request Gateway & Lifecycle Guide](../docs/infrastructure.md).
+
+- **middleware.ts** - Core request gateway (CORS, tiered rate limiting, body-size checks, and security hardening)
+- **lib/requestId.ts** - Traceability/correlation ID generation and management
+- **lib/logger.ts** - Structured logging contract and formatter
+- **lib/sanitize.ts** - PII, secret redaction, and wallet address masking
+- **lib/background/runtime.ts** - Drain-safe background execution and graceful shutdown hooks
+
 ## Usage Examples
 
 ### Building a Transaction

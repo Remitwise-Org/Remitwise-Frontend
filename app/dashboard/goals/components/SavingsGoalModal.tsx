@@ -148,7 +148,7 @@ export default function SavingsGoalModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm motion-reduce:backdrop-blur-none"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm motion-reduce:backdrop-blur-none"
       onClick={onClose}
     >
       <div
@@ -165,7 +165,7 @@ export default function SavingsGoalModal({
       >
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-2 text-white/50 hover:text-white transition-colors motion-reduce:transition-none"
+          className="touch-target absolute right-4 top-4 flex items-center justify-center p-2 text-white/50 hover:text-white transition-colors motion-reduce:transition-none"
           aria-label="Close modal"
         >
           <X className="w-5 h-5" />

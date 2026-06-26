@@ -44,9 +44,9 @@ versions:
 | `SectionCard`   | The bordered card wrapper that also renders the `<section id>` scroll-spy target. |
 | `SectionHeader` | Icon + translated title/description header row. |
 | `FieldRow`      | Label/hint on the left, control(s) on the right (responsive grid). |
-| `TextInput`     | Styled text/email/tel input with translated placeholder + disabled state. |
-| `Toggle`        | Accessible `role="switch"`; supports controlled and uncontrolled use. |
-| `SaveButton`    | idle → saving → saved button that fires a success toast. |
+| `TextInput`     | Styled text/email/tel input with translated placeholder + disabled state. Supports both uncontrolled (`defaultValue`) and controlled (`value` + `onChange`) usage. |
+| `Toggle`        | Accessible `role="switch"`; supports controlled (`checked` + `onChange`) and uncontrolled (`defaultChecked`) use. |
+| `SaveButton`    | idle → saving → saved button that fires a success toast. Accepts optional `saveState` for external state control and `onSave` for custom save handler. |
 
 ## Sections
 
@@ -54,16 +54,21 @@ Each section is a self-contained component that renders one `SectionCard` with a
 fixed `id` matching `SECTIONS`:
 
 - **`ProfileSection`** (`#profile`) — avatar + identity fields, save button.
+  Uses `useAutosave` (500ms debounce).
 - **`NotificationsSection`** (`#notifications`) — grouped notification toggles and
   the embedded `InsuranceReminderPreview`, save button.
+  Uses `useAutosave` (500ms debounce).
 - **`SecuritySection`** (`#security`) — security toggles, session-timeout select,
   and a dismissible 2FA alert toggled by "sign out of all sessions".
+  Does not use autosave (inline actions only).
 - **`WalletSection`** (`#wallet`) — network radios, Soroban RPC field, auto-split
   toggle, default-currency select, save button.
+  Uses `useAutosave` (500ms debounce).
 - **`FamilySection`** (`#family`) — family member list with role badges and an
-  invite button.
+  invite button. Does not use autosave (inline actions only).
 - **`PreferencesSection`** (`#preferences`) — theme picker, **density controls
   wired to `useDensity()`**, language/timezone selects, and date-format radios.
+  Uses `useAutosave` (500ms debounce).
 
 ## Cross-cutting integrations
 
@@ -72,6 +77,14 @@ fixed `id` matching `SECTIONS`:
   verbatim; component tests assert against those keys.
 - **Density** — `PreferencesSection` reads/writes `useDensity()`; both the button
   group and the mirrored `<select>` reflect the same context value.
+- **Autosave** — Profile, Notifications, Wallet, and Preferences sections use
+  the `useAutosave` hook (`lib/hooks/useAutosave.ts`) which debounces saves by
+  500ms after the last change and fires a success toast. `TextInput` and
+  `Toggle` primitives support `value`/`checked` + `onChange` for controlled
+  usage. `SaveButton` accepts an optional `saveState` prop to reflect the
+  autosave state (idle → saving → saved → idle). The hook uses a ref to always
+  call the latest `onSave` function, avoiding stale closure issues when form
+  state changes.
 - **Toasts** — `SaveButton` calls `useToast()`, so any section containing it must
   be rendered within a `ToastProvider`.
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
+import PageHeadingLink from "@/components/PageHeadingLink";
 
 export default function Hero() {
   return (
@@ -41,13 +42,21 @@ export default function Hero() {
         </div>
 
         {/* Main Headline - Clear value proposition */}
-        <h1 className="mx-auto font-bold text-center text-white text-[44px] sm:text-[56px] md:text-[72px] leading-[52px] sm:leading-[64px] md:leading-[84px] w-full max-w-[1000px] tracking-tight">
-          Global Payments
-          <br />
-          <span className="bg-gradient-to-r from-[#DC2626] to-[#FF6B35] bg-clip-text text-transparent">
-            Without Borders
-          </span>
-        </h1>
+        <PageHeadingLink
+          headingId="home-page-heading"
+          label="Global Payments Without Borders"
+          wrapperClassName="mx-auto flex w-full max-w-[1040px] items-start justify-center gap-3 text-center"
+          headingClassName="mx-auto w-full max-w-[1000px] font-bold text-center text-white text-[44px] sm:text-[56px] md:text-[72px] leading-[52px] sm:leading-[64px] md:leading-[84px] tracking-tight"
+          buttonClassName="mt-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+        >
+          <>
+            Global Payments
+            <br />
+            <span className="bg-gradient-to-r from-[#DC2626] to-[#FF6B35] bg-clip-text text-transparent">
+              Without Borders
+            </span>
+          </>
+        </PageHeadingLink>
 
         {/* Subheadline - Concise, benefit-focused */}
         <div className="mx-auto mt-6 w-full max-w-[700px] px-4">
@@ -61,6 +70,7 @@ export default function Hero() {
           {/* Primary CTA */}
           <Link
             href="/send"
+            data-testid={CTA_TEST_IDS.page.homePrimary}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#DC2626] to-[#B91C1C] px-8 py-4 font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-red-600/40 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black"
           >
             <LightningBoltIcon className="w-5 h-5" />

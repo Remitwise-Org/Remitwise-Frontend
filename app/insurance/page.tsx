@@ -5,9 +5,11 @@ import { Shield, Plus } from "lucide-react";
 import { type Policy } from "@/lib/contracts/insurance";
 import { getPolicyPaymentPresentation } from "@/lib/ui/status-semantics";
 import { apiClient } from "@/lib/client/apiClient";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import PolicyDetail from "@/components/insurance/PolicyDetail";
 import NewPolicyForm from "@/components/forms/NewPolicyForm";
+import PageHeadingLink from "@/components/PageHeadingLink";
 
 // ─── i18n stubs (replace with your real i18n hook) ───────────────────────────
 
@@ -146,15 +148,21 @@ export default function InsurancePage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            <PageHeadingLink
+              headingId="insurance-page-heading"
+              label={t("insurance.page_title")}
+              headingClassName="text-2xl sm:text-3xl font-bold tracking-tight"
+              buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0b0f]"
+            >
               {t("insurance.page_title")}
-            </h1>
+            </PageHeadingLink>
             <p className="text-gray-400 mt-1 text-sm sm:text-base">
               {t("insurance.page_subtitle")}
             </p>
           </div>
           <button
             onClick={() => setShowNewPolicy((s) => !s)}
+            data-testid={CTA_TEST_IDS.page.insurancePrimary}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/40"
           >
             <Plus className="w-4 h-4" />
@@ -227,6 +235,7 @@ export default function InsurancePage() {
               body={t("insurance.no_policies_body")}
               onCta={() => setShowNewPolicy(true)}
               ctaLabel={t("insurance.new_policy")}
+              ctaTestId={CTA_TEST_IDS.page.insuranceEmptyPrimary}
             />
           )}
 
@@ -364,11 +373,13 @@ function EmptyPolicies({
   body,
   onCta,
   ctaLabel,
+  ctaTestId,
 }: {
   title: string;
   body: string;
   onCta: () => void;
   ctaLabel: string;
+  ctaTestId?: string;
 }) {
   return (
     <div className="text-center py-12 sm:py-16 px-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] border-dashed">
@@ -379,6 +390,7 @@ function EmptyPolicies({
       <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6">{body}</p>
       <button
         onClick={onCta}
+        data-testid={ctaTestId}
         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium transition-colors"
       >
         <Plus className="w-4 h-4" />

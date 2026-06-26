@@ -39,6 +39,14 @@ describe("PreferencesSection", () => {
     expect(comfortable).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("restores the persisted theme preference and highlights the selected theme", () => {
+    renderWithProviders(<PreferencesSection />, { theme: "dark" });
+    const dark = screen.getByRole("button", {
+      name: "settings.preferences.theme_dark",
+    });
+    expect(dark).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("updates density when the compact button is clicked", () => {
     renderWithProviders(<PreferencesSection />, { density: "comfortable" });
     const compact = screen.getByRole("button", {

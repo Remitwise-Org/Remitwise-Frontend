@@ -86,13 +86,16 @@ export function useTransactionStatus(txHash: string | null, options: UseTransact
       setError(err.message || "error");
       scheduleNext(currentAttempt + 1);
     }
-  }, [txHash, maxAttempts, baseDelayMs, maxDelayMs]);
+  }, [txHash, maxAttempts]);
 
-  const scheduleNext = useCallback((nextAttempt: number) => {
-    if (unmountedRef.current) return;
+  // Helper to schedule the next poll with exponential backoff
+  const scheduleNext = (nextAttempt: number) => {
     const delay = nextBackoffDelay(nextAttempt, baseDelayMs, maxDelayMs);
-    timerRef.current = setTimeout(() => poll(nextAttempt), delay);
-  }, [poll, baseDelayMs, maxDelayMs]);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      poll(nextAttempt);
+    }, delay);
+  };
 
   useEffect(() => {
     if (!enabled || !txHash) {

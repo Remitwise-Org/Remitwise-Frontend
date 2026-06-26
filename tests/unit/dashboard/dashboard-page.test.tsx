@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { DashboardResponse } from '@/lib/types/dashboard';
@@ -113,23 +113,64 @@ describe('DashboardPage — StatCard summary row', () => {
   });
 
   it('shows the error fallback when the fetch fails and recovers on retry', async () => {
-    get.mockResolvedValueOnce({ ok: false } as Response);
+    vi.useFakeTimers();
+    get
+      .mockResolvedValueOnce({ ok: false } as Response)
+      .mockResolvedValueOnce({ ok: false } as Response)
+      .mockResolvedValueOnce({ ok: false } as Response)
+      .mockResolvedValueOnce({ ok: false } as Response);
     render(<DashboardPage />);
 
+    expect(screen.queryByText(/unable to load data/i)).not.toBeInTheDocument();
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    vi.useRealTimers();
     expect(await screen.findByText(/unable to load data/i)).toBeInTheDocument();
+    expect(get).toHaveBeenCalledTimes(4);
 
     // Retry succeeds the second time.
     get.mockResolvedValueOnce(okResponse(makeResponse()));
     fireEvent.click(screen.getByRole('button', { name: /retry loading data/i }));
 
-    expect(await screen.findByText('$1,240.50')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('$1,240.50')).toBeInTheDocument();
+    });
     expect(screen.queryByText(/unable to load data/i)).not.toBeInTheDocument();
   });
 
   it('shows the error fallback when the session-expiry flow returns null', async () => {
+    vi.useFakeTimers();
     get.mockResolvedValue(null);
     render(<DashboardPage />);
 
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    vi.useRealTimers();
     expect(await screen.findByText(/unable to load data/i)).toBeInTheDocument();
+  });
+
+  it('keeps showing the loading skeleton while automatic retries are in progress', async () => {
+    vi.useFakeTimers();
+    get
+      .mockResolvedValueOnce({ ok: false } as Response)
+      .mockResolvedValueOnce({ ok: false } as Response)
+      .mockResolvedValueOnce({ ok: false } as Response)
+      .mockResolvedValueOnce(okResponse(makeResponse()));
+
+    const { container } = render(<DashboardPage />);
+
+    expect(container.querySelector('.animate-shimmer')).toBeTruthy();
+    expect(screen.queryByText(/unable to load data/i)).not.toBeInTheDocument();
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    vi.useRealTimers();
+
+    expect(await screen.findByText('$1,240.50')).toBeInTheDocument();
+    expect(get).toHaveBeenCalledTimes(4);
   });
 });

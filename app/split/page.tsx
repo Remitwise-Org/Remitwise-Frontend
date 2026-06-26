@@ -7,6 +7,7 @@ import SmartMoneySplitHeader from "@/components/SmartMoneySplitHeader";
 import HowItWorks from "@/components/HowItWorksModal";
 import AsyncOperationsPanel from "@/components/AsyncOperationsPanel";
 import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import { DEFAULT_SPLIT_CONFIG, type SplitConfig } from "@/lib/remittance/split";
 import { validatePercentages } from "@/lib/validation/percentages";
 
@@ -118,12 +119,12 @@ export default function SplitConfiguration() {
 	};
 
 	return (
-		<div className='min-h-screen bg-[#010101] safari-safe-bottom'>
+		<div className='min-h-screen overflow-x-hidden bg-[#010101] safari-safe-bottom'>
 			<SmartMoneySplitHeader />
 
-			<main className='mx-auto max-w-7xl px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 py-7 375:py-8 sm:py-8'>
-				<div className='grid gap-7 375:gap-8 xl:grid-cols-[minmax(0,1.1fr)_360px] xl:items-start'>
-					<div className='rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-5 320:p-6 375:p-7 sm:p-8'>
+			<main className='mx-auto max-w-7xl overflow-x-hidden px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 py-7 375:py-8 sm:py-8'>
+				<div className='grid min-w-0 gap-7 375:gap-8 xl:grid-cols-[minmax(0,1.1fr)_360px] xl:items-start'>
+					<div className='min-w-0 rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-5 320:p-6 375:p-7 sm:p-8'>
 						<div className='border-b border-white/[0.08] pb-5 375:pb-6'>
 							<p className='text-xs font-semibold uppercase tracking-[0.24em] text-red-300'>
 								Allocation editor
@@ -252,6 +253,7 @@ export default function SplitConfiguration() {
 								</Link>
 								<button
 									type='submit'
+									data-testid={CTA_TEST_IDS.flow.splitConfigurationPrimary}
 									className='touch-target-wide flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-red-600 to-red-700 px-6 py-3.5 text-sm 375:text-base font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010] disabled:cursor-not-allowed disabled:opacity-60'
 									disabled={!isValid || pending}
 									aria-disabled={!isValid || pending}
@@ -272,7 +274,7 @@ export default function SplitConfiguration() {
 						</form>
 					</div>
 
-					<aside className='space-y-6 xl:sticky xl:top-6'>
+					<aside className='min-w-0 space-y-6 xl:sticky xl:top-6'>
 						<AsyncOperationsPanel
 							eyebrow='Async behavior'
 							title='Duration, Stacking, and Placement'

@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { TrendingUp, Target, FileText } from 'lucide-react'
 import { SkeletonChart } from '@/components/ui/Skeleton'
@@ -8,8 +9,14 @@ import WidgetEmptyState from '@/components/ui/WidgetEmptyState'
 import WidgetErrorState from '@/components/ui/WidgetErrorState'
 import { useState, useCallback, memo } from 'react'
 import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y'
+import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart'
 
 // Sample data for the 6-month chart (Jul-Dec)
+function tooltipFormatter(value: any, name: any, item: any, index: any, payload: any) {
+  if (value == null) return '';
+  return `$${Number(value).toLocaleString()}`;
+}
+
 const chartData = [
     { month: 'Jul', remittances: 2800, savings: 1200, bills: 420, insurance: 80 },
     { month: 'Aug', remittances: 3050, savings: 1350, bills: 400, insurance: 80 },
@@ -52,6 +59,25 @@ const DOT_SAVINGS = { fill: COLORS.savings, r: 3, strokeWidth: 0 }
 const DOT_BILLS = { fill: COLORS.bills, r: 3, strokeWidth: 0 }
 const DOT_INSURANCE = { fill: COLORS.insurance, r: 3, strokeWidth: 0 }
 const ACTIVE_DOT = { r: 5, strokeWidth: 2, stroke: '#fff' }
+const TOOLTIP_CONTENT_STYLE: CSSProperties = {
+    backgroundColor: 'rgba(10,10,10,0.96)',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: 12,
+    padding: '10px 12px',
+}
+
+const TOOLTIP_LABEL_STYLE: CSSProperties = {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: 600,
+    marginBottom: 6,
+}
+
+const ACTIVE_DOT = { r: 5, stroke: 'rgba(255,255,255,0.85)', strokeWidth: 2 }
+const DOT_REMITTANCES = { r: 2.5, fill: COLORS.remittances, stroke: COLORS.remittances, strokeWidth: 1 }
+const DOT_SAVINGS = { r: 2.5, fill: COLORS.savings, stroke: COLORS.savings, strokeWidth: 1 }
+const DOT_BILLS = { r: 2.5, fill: COLORS.bills, stroke: COLORS.bills, strokeWidth: 1 }
+const DOT_INSURANCE = { r: 2.5, fill: COLORS.insurance, stroke: COLORS.insurance, strokeWidth: 1 }
 
 interface CustomLegendProps {
     payload?: Array<{
@@ -82,7 +108,7 @@ const CustomLegend = memo(function CustomLegend({ payload }: CustomLegendProps) 
 })
 
 interface SummaryCardProps {
-    icon: React.ReactNode
+    icon: ReactNode
     label: string
     value: string
     subtitle: string
@@ -131,6 +157,23 @@ function SummaryCard({ icon, label, value, subtitle, variant = 'default', valueC
 
 const MemoSummaryCard = memo(SummaryCard)
 
+// Stable Tooltip style objects hoisted to module scope to avoid new object refs each render
+const TOOLTIP_CONTENT_STYLE = {
+    backgroundColor: '#1a1a1a',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '8px',
+    color: '#fff',
+}
+const TOOLTIP_LABEL_STYLE = { color: '#fff' }
+const tooltipFormatter = (value: number | string | undefined) => [`$${Number(value ?? 0).toLocaleString()}`, ''] as [string, string]
+
+// Hoisted dot/activeDot objects so Recharts Line receives stable references
+const DOT_REMITTANCES = { fill: COLORS.remittances, stroke: COLORS.remittances, strokeWidth: 3, r: 4 }
+const DOT_SAVINGS     = { fill: COLORS.savings,     stroke: COLORS.savings,     strokeWidth: 3, r: 4 }
+const DOT_BILLS       = { fill: COLORS.bills,       stroke: COLORS.bills,       strokeWidth: 3, r: 4 }
+const DOT_INSURANCE   = { fill: COLORS.insurance,   stroke: COLORS.insurance,   strokeWidth: 3, r: 4 }
+const ACTIVE_DOT      = { r: 6 }
+
 interface SixMonthTrendsWidgetProps {
     /** Pass true to show the loading skeleton */
     isLoading?: boolean;
@@ -144,16 +187,26 @@ export default memo(function SixMonthTrendsWidget({ isLoading = false, hasError 
     const [retryKey, setRetryKey] = useState(0)
     const handleRetry = useCallback(() => setRetryKey((k) => k + 1), [])
 
-    // Generate accessible label and summary from chart data
-    const chartLabel = useMemo(
-        () => generateTrendChartLabel("6-Month Trends", chartData, ["remittances", "savings", "bills", "insurance"]),
-        []
-    );
+    const tooltipFormatter = useCallback((value: unknown, name: unknown) => {
+        const numeric = typeof value === 'number' ? value : Number(value)
+        const formatted = Number.isFinite(numeric)
+            ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(numeric)
+            : String(value)
 
-    const chartSummary = useMemo(
-        () => generateTrendChartSummary(chartData, ["remittances", "savings", "bills", "insurance"]),
-        []
-    );
+        return [formatted, String(name)]
+    }, [])
+
+    // Generate accessible label and summary from chart data
+    const t = useCallback((_path: string, options?: string | Record<string, unknown>) => {
+        return typeof options === 'string' ? options : _path
+    }, [])
+
+    const a11ySummaryItems = useMemo(() => {
+        return ['Remittances', 'Savings', 'Bills', 'Insurance']
+    }, [])
+
+    const chartLabel = useMemo(() => buildChartImageLabel('6-Month Trends', a11ySummaryItems, t), [a11ySummaryItems, t])
+    const chartSummary = useMemo(() => buildChartSummary(a11ySummaryItems, t), [a11ySummaryItems, t])
 
     if (isLoading) {
         return (
