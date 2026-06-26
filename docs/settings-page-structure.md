@@ -62,8 +62,11 @@ fixed `id` matching `SECTIONS`:
   toggle, default-currency select, save button.
 - **`FamilySection`** (`#family`) — family member list with role badges and an
   invite button.
-- **`PreferencesSection`** (`#preferences`) — theme picker, **density controls
-  wired to `useDensity()`**, language/timezone selects, and date-format radios.
+- **`PreferencesSection`** (`#preferences`) — theme picker with persisted preference, **density controls wired to `useDensity()`**, language/timezone selects, and date-format radios.
+
+### Theme persistence
+- Theme preference is stored in `localStorage` under `theme-preference`.
+- The app reads the persisted preference before hydration to avoid flash-of-unstyled-content (FOUC) and uses the system preference as the fallback.
 
 ## Cross-cutting integrations
 

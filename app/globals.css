@@ -6,24 +6,41 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  --background: #ffffff;
+  --color-bg2: #f8fafc;
+  --color-bg3: #f1f5f9;
+  --card: linear-gradient(var(--color-bg2), var(--color-bg3));
+  --accent: #dc2626;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-    --background: #010101;
-    --color-bg2: #0f0f0f;
-    --color-bg3: #0a0a0a;
-    --card: linear-gradient(var(--color-bg2), var(--color-bg3));
-    --accent: #dc2626;
-  }
+html.dark {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
+  --background: #010101;
+  --color-bg2: #0f0f0f;
+  --color-bg3: #0a0a0a;
+  --card: linear-gradient(var(--color-bg2), var(--color-bg3));
+  --accent: #dc2626;
+  color-scheme: dark;
+}
+
+html.light {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+  --background: #ffffff;
+  --color-bg2: #f8fafc;
+  --color-bg3: #f1f5f9;
+  --card: linear-gradient(var(--color-bg2), var(--color-bg3));
+  --accent: #dc2626;
+  color-scheme: light;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: black;
+  background: rgb(var(--background-start-rgb));
 }
 
 .starry-bg {

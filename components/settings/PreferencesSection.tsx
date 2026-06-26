@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Globe, Moon, Sun, Smartphone } from "lucide-react";
 import { useDensity } from "@/lib/context/DensityContext";
+import { useTheme } from "@/lib/context/ThemeContext";
 import { useClientTranslator } from "@/lib/i18n/client";
 import {
   SectionCard,
@@ -14,7 +14,7 @@ import {
 export function PreferencesSection() {
   const { t } = useClientTranslator();
   const { density, setDensity } = useDensity();
-  const [theme, setTheme] = useState<"system" | "light" | "dark">("system");
+  const { theme, setTheme } = useTheme();
   const themes = [
     { id: "system", labelKey: "settings.preferences.theme_system", Icon: Smartphone },
     { id: "light", labelKey: "settings.preferences.theme_light", Icon: Sun },
