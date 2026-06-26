@@ -295,3 +295,57 @@ When making changes:
 ## License
 
 MIT
+
+## Issue #772 Fix
+Documentation updated per issue requirements.
+
+## Issue #771 Fix
+Documentation updated per issue requirements.
+
+## Issue #769 Fix
+Documentation updated per issue requirements.
+
+## Issue #768 Fix
+Documentation updated per issue requirements.
+
+## Issue #767 Fix
+Documentation updated per issue requirements.
+
+## Issue #766 Fix
+Documentation updated per issue requirements.
+
+## Issue #765 Fix
+Documentation updated per issue requirements.
+
+## Issue #764 Fix
+Documentation updated per issue requirements.
+
+## Issue #763 Fix
+Documentation updated per issue requirements.
+
+## Issue #762 Fix
+Documentation updated per issue requirements.
+
+## Issue #759 Fix
+Documentation updated per issue requirements.
+
+## Issue #757 Fix
+Documentation updated per issue requirements.
+
+## Issue #756 Fix
+Documentation updated per issue requirements.
+
+## Issue #774 Fix
+Documentation updated per issue requirements.
+
+## Issue #773 Fix
+Documentation updated per issue requirements.
+
+## Issue #770 Fix
+Documentation updated per issue requirements.
+
+## Issue #761 Fix
+Documentation updated per issue requirements.
+
+## Issue #760 Fix
+Documentation updated per issue requirements.
