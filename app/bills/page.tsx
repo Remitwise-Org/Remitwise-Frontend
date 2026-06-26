@@ -16,6 +16,7 @@ import { Bill } from "@/lib/contracts/bill-payments";
 import { WidgetErrorState } from "@/components/ui/WidgetStates";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/lib/context/ToastContext";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 
 type AddBillResponse = ActionState & {
 	name?: string;
@@ -200,6 +201,7 @@ export default function Bills() {
 				subtitle='Manage and track your recurring bills'
 				ctaLabel='Add Bill'
 				onCtaClick={handleAddBill}
+				ctaTestId={CTA_TEST_IDS.page.billsPrimary}
 				showBottomDivider
 			/>
 

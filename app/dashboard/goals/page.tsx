@@ -14,6 +14,7 @@ import SavingsGoalModal from './components/SavingsGoalModal'
 import { SavingsGoal } from './types'
 import { calculateDaysLeft, checkIsOverdue } from './utils'
 import { useClientTranslator } from '@/lib/i18n/client'
+import { CTA_TEST_IDS } from '@/lib/cta-testids'
 
 // Sample data matching Figma design
 const initialGoals: SavingsGoal[] = [
@@ -105,6 +106,7 @@ export default function SavingsGoalsPage() {
         subtitle={t('savingsGoals.subtitle')}
         ctaLabel={t('savingsGoals.newGoal')}
         onCtaClick={handleNewGoal}
+        ctaTestId={CTA_TEST_IDS.page.savingsGoalsPrimary}
         showBottomDivider
       />
 
@@ -153,4 +155,3 @@ export default function SavingsGoalsPage() {
     </div>
   )
 }
-

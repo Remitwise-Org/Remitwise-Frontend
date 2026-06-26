@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { ChevronDown, RefreshCw } from "lucide-react"
+import { CTA_TEST_IDS } from "@/lib/cta-testids"
 import { useExchangeRates } from "@/lib/context/RatesContext"
 import { useClientTranslator } from "@/lib/i18n/client"
 
@@ -138,6 +139,7 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
         <button
           onClick={handleReview}
           disabled={!isValid}
+          data-testid={CTA_TEST_IDS.flow.sendAmountPrimary}
           className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 flex items-center justify-center gap-2"
         >
           Review Transaction

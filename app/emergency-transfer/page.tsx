@@ -18,6 +18,7 @@ import {
   Shield,
 } from "lucide-react";
 import TransactionSuccessReceipt from "@/components/TransactionSuccessReceipt";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 
 type Step = "recipient" | "amount" | "review" | "confirm";
 
@@ -247,6 +248,7 @@ export default function EmergencyTransferPage() {
                 <button
                   onClick={handleRecipientContinue}
                   disabled={!recipientName || !validation.isValid}
+                  data-testid={CTA_TEST_IDS.flow.emergencyTransferRecipientPrimary}
                   className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-red-600 to-red-700 px-6 py-3 font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Continue
@@ -426,6 +428,7 @@ export default function EmergencyTransferPage() {
                 </button>
                 <button
                   onClick={handleReviewConfirm}
+                  data-testid={CTA_TEST_IDS.flow.emergencyTransferReviewPrimary}
                   className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-red-600 to-red-700 px-6 py-3 font-semibold text-white transition"
                 >
                   Confirm Details
@@ -499,6 +502,7 @@ export default function EmergencyTransferPage() {
                 <button
                   onClick={handleFinalConfirm}
                   disabled={!confirmedUrgent || !confirmedFee}
+                  data-testid={CTA_TEST_IDS.flow.emergencyTransferConfirmPrimary}
                   className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-red-600 to-red-700 px-6 py-3 font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Submit Transfer

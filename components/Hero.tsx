@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 
 export default function Hero() {
   return (
@@ -61,6 +62,7 @@ export default function Hero() {
           {/* Primary CTA */}
           <Link
             href="/send"
+            data-testid={CTA_TEST_IDS.page.homePrimary}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#DC2626] to-[#B91C1C] px-8 py-4 font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-red-600/40 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black"
           >
             <LightningBoltIcon className="w-5 h-5" />

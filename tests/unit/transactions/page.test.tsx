@@ -2,6 +2,7 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { DensityProvider } from "@/lib/context/DensityContext";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import TransactionsPage from "@/app/transactions/page";
 
 // Mock URL methods
@@ -10,10 +11,8 @@ const revokeObjectURLMock = vi.fn();
 
 describe("TransactionsPage Export Component Integration", () => {
   beforeEach(() => {
-    vi.stubGlobal("URL", {
-      createObjectURL: createObjectURLMock,
-      revokeObjectURL: revokeObjectURLMock,
-    });
+    vi.spyOn(URL, "createObjectURL").mockImplementation(createObjectURLMock);
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(revokeObjectURLMock);
     // Mock anchor click behavior
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     vi.useFakeTimers();
@@ -34,18 +33,14 @@ describe("TransactionsPage Export Component Integration", () => {
 
   it("should render the export button enabled when there are transactions", () => {
     renderComponent();
-    const exportButton = screen.getByRole("button", {
-      name: /export filtered transactions/i,
-    });
+    const exportButton = screen.getByTestId(CTA_TEST_IDS.page.transactionsPrimary);
     expect(exportButton).toBeInTheDocument();
     expect(exportButton).not.toBeDisabled();
   });
 
   it("should open export dropdown on click and trigger download on clicking CSV", () => {
     renderComponent();
-    const exportButton = screen.getByRole("button", {
-      name: /export filtered transactions/i,
-    });
+    const exportButton = screen.getByTestId(CTA_TEST_IDS.page.transactionsPrimary);
 
     // Dropdown should not be visible initially
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
@@ -68,9 +63,7 @@ describe("TransactionsPage Export Component Integration", () => {
 
   it("should trigger JSON download on clicking JSON export option", () => {
     renderComponent();
-    const exportButton = screen.getByRole("button", {
-      name: /export filtered transactions/i,
-    });
+    const exportButton = screen.getByTestId(CTA_TEST_IDS.page.transactionsPrimary);
 
     fireEvent.click(exportButton);
     const jsonButton = screen.getByRole("menuitem", { name: /export as json/i });
@@ -84,7 +77,7 @@ describe("TransactionsPage Export Component Integration", () => {
     renderComponent();
     
     // Type query that matches nothing in the search input
-    const searchInput = screen.getByPlaceholderText(/search id, recipient, type, status, amount/i);
+    const searchInput = screen.getByRole("searchbox");
     fireEvent.change(searchInput, { target: { value: "NonExistentTransactionXYZ" } });
 
     // Advance timer to trigger debounced filter update
@@ -92,9 +85,7 @@ describe("TransactionsPage Export Component Integration", () => {
       vi.advanceTimersByTime(300);
     });
 
-    const exportButton = screen.getByRole("button", {
-      name: /export filtered transactions/i,
-    });
+    const exportButton = screen.getByTestId(CTA_TEST_IDS.page.transactionsPrimary);
     expect(exportButton).toBeDisabled();
 
     // Dropdown should not be opened if clicked while disabled
@@ -104,9 +95,7 @@ describe("TransactionsPage Export Component Integration", () => {
 
   it("closes dropdown when Escape key is pressed", () => {
     renderComponent();
-    const exportButton = screen.getByRole("button", {
-      name: /export filtered transactions/i,
-    });
+    const exportButton = screen.getByTestId(CTA_TEST_IDS.page.transactionsPrimary);
 
     fireEvent.click(exportButton);
     expect(screen.getByRole("menu")).toBeInTheDocument();
@@ -118,9 +107,7 @@ describe("TransactionsPage Export Component Integration", () => {
 
   it("closes dropdown when clicking outside", () => {
     renderComponent();
-    const exportButton = screen.getByRole("button", {
-      name: /export filtered transactions/i,
-    });
+    const exportButton = screen.getByTestId(CTA_TEST_IDS.page.transactionsPrimary);
 
     fireEvent.click(exportButton);
     expect(screen.getByRole("menu")).toBeInTheDocument();
