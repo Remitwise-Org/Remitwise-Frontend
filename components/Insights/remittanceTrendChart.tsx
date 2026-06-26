@@ -14,7 +14,9 @@ import {
 } from 'recharts';
 import { INSIGHTS_PALETTE } from './palette';
 import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y';
+import WidgetEmptyState from '@/components/ui/WidgetEmptyState';
 const LINE_COLOR = INSIGHTS_PALETTE[0];
+
 
 function useReducedMotion() {
   if (typeof window === 'undefined') return false
@@ -36,6 +38,7 @@ function useReducedMotion() {
  * @property transactions Number of transactions in the period.
  */
 export interface TrendDataPoint {
+  [key: string]: string | number | undefined
   date: string
   amount: number
   transactions: number
@@ -144,8 +147,14 @@ function RemittanceTrendChartInner({
             <p className="text-gray-500 text-xs sm:text-sm">Volume over time</p>
           </div>
         </div>
-        <div className="flex h-[220px] items-center justify-center text-center">
-          <p className="text-gray-500 text-sm">No remittance data yet.</p>
+        <div className="flex items-center justify-center text-center">
+          <WidgetEmptyState
+            icon={Activity}
+            title="No activity timeline"
+            description="Your remittance trend timeline will appear here once you send money."
+            ctaLabel="Send money"
+            ctaHref="/send"
+          />
         </div>
         <p className="sr-only" aria-live="polite">
           No remittance trend data available.

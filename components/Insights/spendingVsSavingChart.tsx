@@ -17,6 +17,7 @@ import { generateBarChartLabel, generateBarChartSummary } from '@/lib/a11y'
 // ── Mock data ───────────────────────────
 
 export interface SpendingVsSavingsDataPoint {
+    [key: string]: string | number | undefined
     month: string
     spending: number
     savings: number
@@ -39,8 +40,8 @@ const SAVINGS_COLOR = INSIGHTS_PALETTE[1]; // light blue
 const GRID_COLOR = 'rgba(255,255,255,0.06)';
 const AXIS_COLOR = '#6b7280';
 
-// ── Custom tooltip ────────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CustomTooltip({ active, payload, label }: TooltipContentProps<any, any>) {
     if (!active || !payload?.length) return null
 
     return (
