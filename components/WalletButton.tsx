@@ -41,6 +41,7 @@ const WalletButton = () => {
         onClick={() => setIsOpen((value) => !value)}
         aria-haspopup="menu"
         aria-expanded={isOpen}
+        aria-controls={isOpen ? 'wallet-dropdown-menu' : undefined}
         className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-red/40 focus:ring-offset-2 focus:ring-offset-transparent ${
           connected
             ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
