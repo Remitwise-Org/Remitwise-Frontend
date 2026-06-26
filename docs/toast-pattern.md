@@ -106,3 +106,10 @@ Programmatically remove a toast before its timer expires.
 | Bills | Bill overdue reminder | `warning` + action → `/bills` |
 | Settings | Preferences saved | `success` (short duration) |
 | Session | Session expired | `error` (duration: 0) — replaces `SessionExpiryNotification` |
+| Approvals queue | Signature collected (approval threshold not yet met) | `success` |
+| Approvals queue | Approval threshold reached (item approved) | `success` |
+| Approvals queue | Signing failed | `error` (duration: 0) |
+| Policy (pay) | Premium payment XDR ready | `success` |
+| Policy (pay) | Payment request failed | `error` (duration: 0) |
+| Policy (deactivate) | Policy deactivated | `success` |
+| Policy (deactivate) | Deactivation request failed | `error` (duration: 0) |

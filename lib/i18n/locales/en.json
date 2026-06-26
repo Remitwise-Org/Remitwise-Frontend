@@ -1,4 +1,15 @@
 {
+  "approvals_queue": {
+    "signed_toast": "Signature collected",
+    "approved_toast": "Approval complete",
+    "sign_failed_toast": "Signing failed"
+  },
+  "insurance": {
+    "pay_success_toast": "Payment XDR ready for signing",
+    "pay_error_toast": "Payment failed",
+    "deactivate_success_toast": "Policy deactivated",
+    "deactivate_error_toast": "Deactivation failed"
+  },
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "network": "Network connection error. Check your connection.",

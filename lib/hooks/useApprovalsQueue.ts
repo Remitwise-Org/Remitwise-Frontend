@@ -108,6 +108,12 @@ export interface EnqueueUpdateLimitParams {
   requiredSignatures?: number;
 }
 
+export interface SignItemResult {
+  success: boolean;
+  approved: boolean;
+  error?: string;
+}
+
 export interface UseApprovalsQueueReturn {
   queue: ApprovalItem[];
   enqueueAddMember: (params: EnqueueAddMemberParams) => Promise<void>;
@@ -115,12 +121,13 @@ export interface UseApprovalsQueueReturn {
   /**
    * Sign a pending item.
    * `signXdr` should invoke the wallet-kit sign method and return the signed XDR.
+   * Returns the outcome so callers can show toast feedback.
    */
   signItem: (
     id: string,
     signerAddress: string,
     signXdr: (xdr: string) => Promise<string>
-  ) => Promise<void>;
+  ) => Promise<SignItemResult | undefined>;
   /** Mark any items older than APPROVAL_TTL_MS as expired */
   expireStale: () => void;
 }
@@ -225,7 +232,7 @@ export function useApprovalsQueue(): UseApprovalsQueueReturn {
       id: string,
       signerAddress: string,
       signXdr: (xdr: string) => Promise<string>
-    ) => {
+    ): Promise<SignItemResult | undefined> => {
       const item = queue.find((i) => i.id === id);
       if (!item || item.status !== "pending") return;
       if (item.collectedSignatures.includes(signerAddress)) return;
@@ -234,6 +241,12 @@ export function useApprovalsQueue(): UseApprovalsQueueReturn {
       try {
         await signXdr(item.xdr);
         dispatch({ type: "ADD_SIGNATURE", id, signer: signerAddress });
+        // Use the original item data (from the closure) plus the new signer
+        // to determine approval status.  Reading queue after dispatch would
+        // still see the stale closure, so we compute from what we know.
+        const approved =
+          item.collectedSignatures.length + 1 >= item.requiredSignatures;
+        return { success: true, approved };
       } catch (err) {
         // Revert to pending so the user can retry
         dispatch({
@@ -242,6 +255,11 @@ export function useApprovalsQueue(): UseApprovalsQueueReturn {
           status: "pending",
           error: err instanceof Error ? err.message : "Signing failed",
         });
+        return {
+          success: false,
+          approved: false,
+          error: err instanceof Error ? err.message : "Signing failed",
+        };
       }
     },
     [queue]
