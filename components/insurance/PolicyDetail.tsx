@@ -16,6 +16,7 @@ import {
 import { type Policy } from "@/lib/contracts/insurance";
 import { getPolicyPaymentPresentation } from "@/lib/ui/status-semantics";
 import { usePolicyActions } from "@/lib/hooks/usePolicyActions";
+import { useToast } from "@/lib/context/ToastContext";
 import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
 
 /**
@@ -70,6 +71,8 @@ export default function PolicyDetail({
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const [showPayConfirm, setShowPayConfirm] = useState(false);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
+
+  const { toast } = useToast();
 
   const {
     payState,
@@ -132,18 +135,45 @@ export default function PolicyDetail({
     }
   }, [open, resetPay, resetDeactivate]);
 
+  // ── Toast feedback (separate from callbacks to avoid re-firing) ────────────
+  useEffect(() => {
+    if (payState.status === "success") {
+      toast({ variant: "success", title: t("insurance.pay_success_toast") });
+    } else if (payState.status === "error") {
+      toast({
+        variant: "error",
+        title: t("insurance.pay_error_toast"),
+        description: payState.message,
+        duration: 0,
+      });
+    }
+  }, [payState.status, payState.message, payState.xdr, toast, t]);
+
+  useEffect(() => {
+    if (deactivateState.status === "success") {
+      toast({ variant: "success", title: t("insurance.deactivate_success_toast") });
+    } else if (deactivateState.status === "error") {
+      toast({
+        variant: "error",
+        title: t("insurance.deactivate_error_toast"),
+        description: deactivateState.message,
+        duration: 0,
+      });
+    }
+  }, [deactivateState.status, deactivateState.message, deactivateState.xdr, toast, t]);
+
   // ── Handle action success callbacks ────────────────────────────────────────
   useEffect(() => {
     if (payState.status === "success" && onPaySuccess) {
       onPaySuccess(payState.xdr);
     }
-  }, [payState, onPaySuccess]);
+  }, [payState.status, payState.xdr, onPaySuccess]);
 
   useEffect(() => {
     if (deactivateState.status === "success" && onDeactivateSuccess) {
       onDeactivateSuccess(deactivateState.xdr);
     }
-  }, [deactivateState, onDeactivateSuccess]);
+  }, [deactivateState.status, deactivateState.xdr, onDeactivateSuccess]);
 
   if (!open || !policy) return null;
 

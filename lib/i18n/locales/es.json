@@ -1,4 +1,15 @@
 {
+  "approvals_queue": {
+    "signed_toast": "Firma registrada",
+    "approved_toast": "Aprobación completada",
+    "sign_failed_toast": "Error al firmar"
+  },
+  "insurance": {
+    "pay_success_toast": "Pago listo para firmar",
+    "pay_error_toast": "Error al procesar el pago",
+    "deactivate_success_toast": "Póliza desactivada",
+    "deactivate_error_toast": "Error al desactivar"
+  },
   "errors": {
     "generic": "Algo salió mal. Por favor, inténtelo de nuevo.",
     "network": "Error de conexión de red. Compruebe su conexión.",
