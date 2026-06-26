@@ -107,16 +107,18 @@ interface CategoryDonutChartProps {
 function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutChartProps) {
   const summaryId = useId()
   const { t } = useClientTranslator()
-
-  const summaryItems = useMemo(
-    () =>
-      data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage}%)`),
-    [data],
-  )
-  const chartSummary = buildChartSummary(summaryItems, t)
+  const summaryItems = useMemo(() =>
+  data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage}%)`),
+  [data]
+);
+const chartSummary = buildChartSummary(summaryItems, t);
   const [activeCategory, setActiveCategory] = useState<CategoryDataPoint | null>(null)
-  // Use the canonical hook — reactive, SSR-safe, and shared across the codebase.
-  const reducedMotion = usePrefersReducedMotion()
+  const reducedMotion = useReducedMotion()
+
+  const total  = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
+  const topCat = useMemo(() => data[0], [data])
+
+
 
   const pieStyle = useMemo(() => ({ cursor: 'pointer' as const }), [])
 

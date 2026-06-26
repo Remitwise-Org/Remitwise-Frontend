@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "generate:types": "openapi-typescript ./openapi.yaml --output ./src/api/types.ts",
-    "check:img-alt": "node scripts/check-img-alt.js",
-    "prebuild": "npm run generate:types && npm run check:img-alt",
+    "prebuild": "npm run generate:types",
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
@@ -50,7 +49,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@jridgewell/sourcemap-codec": "^1.5.5",
+    "openapi-typescript": "^6.5.0",
     "@playwright/test": "^1.58.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

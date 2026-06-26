@@ -7,6 +7,8 @@ import { ContractReadError } from "./dashboard-aggregate";
 export { ContractReadError };
 import { getSorobanNetworkPassphrase } from "./network-resolution";
 
+const server = getSorobanClient();
+
 const RPC_TIMEOUT_MS = 10_000;
 const MAX_RETRIES = 1;
 
@@ -154,4 +156,4 @@ export async function isGoalCompleted(goalId: string): Promise<boolean> {
 }
 
 // Re-export resolved passphrase for callers that need it when signing transactions.
-export const getNetworkPassphrase = getSorobanNetworkPassphrase;
+export { getSorobanNetworkPassphrase as getNetworkPassphrase };

@@ -10,6 +10,11 @@ import WidgetErrorState from '@/components/ui/WidgetErrorState'
 import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart'
 
 // Sample data for the 6-month chart (Jul-Dec)
+function tooltipFormatter(value: any, name: any, item: any, index: any, payload: any) {
+  if (value == null) return '';
+  return `$${Number(value).toLocaleString()}`;
+}
+
 const chartData = [
     { month: 'Jul', remittances: 2800, savings: 1200, bills: 420, insurance: 80 },
     { month: 'Aug', remittances: 3050, savings: 1350, bills: 400, insurance: 80 },
@@ -27,28 +32,25 @@ const COLORS = {
     insurance: '#7F1D1D',
 }
 
-// Tooltip styles matching the dark theme
-const TOOLTIP_CONTENT_STYLE: React.CSSProperties = {
-    backgroundColor: '#1A1A1A',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '8px',
-    padding: '8px 12px',
-    color: '#fff',
-    fontSize: '12px',
-}
+const TOOLTIP_CONTENT_STYLE = {
+  backgroundColor: 'rgba(0,0,0,0.85)',
+  border: 'none',
+  borderRadius: '8px',
+  color: '#fff',
+  padding: '8px',
+};
 
-const TOOLTIP_LABEL_STYLE: React.CSSProperties = {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontWeight: 600,
-    marginBottom: '4px',
-}
+const TOOLTIP_LABEL_STYLE = {
+  color: '#fff',
+  fontWeight: 'bold',
+};
 
-// Dot styles for each line series
-const DOT_REMITTANCES = { fill: COLORS.remittances, r: 3, strokeWidth: 0 }
-const DOT_SAVINGS = { fill: COLORS.savings, r: 3, strokeWidth: 0 }
-const DOT_BILLS = { fill: COLORS.bills, r: 3, strokeWidth: 0 }
-const DOT_INSURANCE = { fill: COLORS.insurance, r: 3, strokeWidth: 0 }
-const ACTIVE_DOT = { r: 5, strokeWidth: 2, stroke: '#fff' }
+// Recharts dot and activeDot configurations
+const DOT_REMITTANCES = true;
+const DOT_SAVINGS = true;
+const DOT_BILLS = true;
+const DOT_INSURANCE = true;
+const ACTIVE_DOT = { r: 6, strokeWidth: 2, stroke: '#fff' };
 
 interface CustomLegendProps {
     payload?: Array<{

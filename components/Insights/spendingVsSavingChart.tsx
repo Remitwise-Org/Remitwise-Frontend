@@ -13,7 +13,8 @@ import {
     type TooltipContentProps,
 } from 'recharts'
 import { TrendingUp } from 'lucide-react'
-import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart'
+import { generateBarChartLabel, generateBarChartSummary } from '@/lib/a11y'
+import type { TrendChartDataPoint } from '@/lib/a11y/chartAccessibility';
 
 // ── Mock data ───────────────────────────
 
@@ -45,7 +46,8 @@ const SAVINGS_COLOR  = INSIGHTS_PALETTE[1];
 const GRID_COLOR     = 'rgba(255,255,255,0.06)';
 const AXIS_COLOR     = '#6b7280';
 
-const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: TooltipContentProps<number | string | readonly (number | string)[], string | number>) {
+// ── Custom tooltip ────────────────────────────────────────────────────────────
+function CustomTooltip({ active, payload, label }: TooltipContentProps<any, any>) {
     if (!active || !payload?.length) return null
 
     return (
@@ -120,28 +122,16 @@ function SpendingVsSavingsChartInner({
         return Math.round((savings / (spending + savings)) * 100)
     }, [data])
 
-    const summaryItems = useMemo(
-        () =>
-            data.map(
-                (point) =>
-                    `${point.month}: spending $${point.spending.toLocaleString()}, savings $${point.savings.toLocaleString()}`,
-            ),
-        [data],
+    // Generate accessible label and summary
+    const chartLabel = useMemo(
+        () => generateBarChartLabel("Spending vs Savings", data as unknown as TrendChartDataPoint[], "spending", "savings"),
+        [data]
     )
 
-    const t = useMemo(() => {
-        return (_path: string, options?: string | Record<string, unknown>) =>
-            typeof options === 'string' ? options : _path
-    }, [])
-
-    const chartLabel = useMemo(() => buildChartImageLabel('Spending vs Savings', summaryItems, t), [summaryItems, t])
-    const chartSummary = useMemo(() => buildChartSummary(summaryItems, t), [summaryItems, t])
-
-    const margin = useMemo(() => ({ top: 4, right: 4, bottom: 0, left: -16 }), [])
-    const axisTick = useMemo(() => ({ fill: AXIS_COLOR, fontSize: 11 }), [])
-    const tooltipCursor = useMemo(() => ({ fill: 'rgba(255,255,255,0.03)' }), [])
-    const barRadius = useMemo(() => [4, 4, 0, 0] as const, [])
-    const tickFormatter = useCallback((v: number) => `$${v >= 1000 ? `${v / 1000}k` : v}`, [])
+    const chartSummary = useMemo(
+        () => generateBarChartSummary(data as unknown as TrendChartDataPoint[], "spending", "savings"),
+        [data]
+    )
 
     return (
         <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
