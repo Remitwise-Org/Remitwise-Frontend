@@ -81,11 +81,11 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
       )}
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
         {/* Amount Card */}
         <div className="relative overflow-hidden rounded-2xl">
           <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-red-900/20 blur-[120px] rounded-full -mr-24 -mt-24 pointer-events-none z-0" />
-          <div className="relative z-10 bg-zinc-900/50 rounded-2xl p-6 border border-zinc-800 ">
+          <div className="relative z-10 bg-zinc-900/50 rounded-2xl p-5 375:p-6 border border-zinc-800 ">
             <label className="text-sm font-medium mb-3 block text-white">
               Amount (USD) <span className="text-red-500">*</span>
             </label>
@@ -108,7 +108,7 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
         {/* Currency Card */}
         <div className="relative overflow-hidden rounded-2xl">
           <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-red-900/20 blur-[120px] rounded-full -mr-24 -mt-24 pointer-events-none z-0" />
-          <div className="relative z-10 bg-zinc-900/50 rounded-2xl p-6 border border-zinc-800">
+          <div className="relative z-10 bg-zinc-900/50 rounded-2xl p-5 375:p-6 border border-zinc-800">
             <label className="text-sm font-medium mb-3 block text-white">Currency</label>
             <div className="relative">
               <select
@@ -139,15 +139,14 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
         <button
           onClick={handleReview}
           disabled={!isValid}
-          data-testid={CTA_TEST_IDS.flow.sendAmountPrimary}
-          className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 flex items-center justify-center gap-2"
+          className="w-full min-h-11 px-4 py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-base 375:text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 flex items-center justify-center gap-2 text-center break-words"
         >
           Review Transaction
         </button>
 
         <button
           onClick={onBack}
-          className="w-full py-4 bg-transparent hover:bg-white/5 rounded-2xl text-sm font-medium text-zinc-400 transition-colors border border-zinc-800/50"
+          className="w-full min-h-11 px-4 py-4 bg-transparent hover:bg-white/5 rounded-2xl text-sm font-medium text-zinc-400 transition-colors border border-zinc-800/50 text-center break-words"
         >
           Back to Recipient
         </button>

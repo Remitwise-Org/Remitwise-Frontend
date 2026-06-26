@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import { User } from "lucide-react";
 import { useClientTranslator } from "@/lib/i18n/client";
+import { useAutosave } from "@/lib/hooks/useAutosave";
 import {
   SectionCard,
   SectionHeader,
@@ -12,6 +14,30 @@ import {
 
 export function ProfileSection() {
   const { t } = useClientTranslator();
+  const [name, setName] = useState("Amara Osei");
+  const [email, setEmail] = useState("amara@example.com");
+  const [phone, setPhone] = useState("+234 801 234 5678");
+
+  const onSave = useCallback(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }, []);
+
+  const { saveState, triggerSave } = useAutosave(onSave);
+
+  const handleNameChange = (value: string) => {
+    setName(value);
+    triggerSave();
+  };
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    triggerSave();
+  };
+
+  const handlePhoneChange = (value: string) => {
+    setPhone(value);
+    triggerSave();
+  };
 
   return (
     <SectionCard id="profile">
@@ -43,7 +69,8 @@ export function ProfileSection() {
           hintKey="settings.profile.full_name_hint"
         >
           <TextInput
-            defaultValue="Amara Osei"
+            value={name}
+            onChange={handleNameChange}
             placeholderKey="settings.profile.full_name_placeholder"
           />
         </FieldRow>
@@ -53,7 +80,8 @@ export function ProfileSection() {
         >
           <TextInput
             type="email"
-            defaultValue="amara@example.com"
+            value={email}
+            onChange={handleEmailChange}
             placeholderKey="settings.profile.email_placeholder"
           />
         </FieldRow>
@@ -63,7 +91,8 @@ export function ProfileSection() {
         >
           <TextInput
             type="tel"
-            defaultValue="+234 801 234 5678"
+            value={phone}
+            onChange={handlePhoneChange}
             placeholderKey="settings.profile.phone_placeholder"
           />
         </FieldRow>
@@ -74,7 +103,7 @@ export function ProfileSection() {
           <TextInput defaultValue="GBQWY...K3PT" disabled />
         </FieldRow>
       </div>
-      <SaveButton labelKey="settings.save_changes" />
+      <SaveButton labelKey="settings.save_changes" saveState={saveState} />
     </SectionCard>
   );
 }

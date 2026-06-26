@@ -108,6 +108,11 @@ export default function Bills() {
 	const [reminderLead, setReminderLead] = useState("3");
 	const { toast } = useToast();
 
+	const [bills, setBills] = useState<Bill[]>([]);
+	const [stats, setStats] = useState<any>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<Error | null>(null);
+
 	const recurrencePreview = useMemo(() => {
 		if (!isRecurring) return t("bills.form.oneTimeBill");
 		if (frequency === "weekly") return t("bills.form.weeklyOn", { day: weeklyDay });
@@ -488,12 +493,12 @@ export default function Bills() {
 
 							<button
 								type='submit'
-								className='flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-6 py-3 font-semibold text-white transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010] disabled:cursor-not-allowed disabled:opacity-70'
+								className='flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-center font-semibold text-white transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010] disabled:cursor-not-allowed disabled:opacity-70 sm:px-6'
 								disabled={pending}>
 								{pending ? (
 									<>
 										<Loader2 className='w-5 h-5 animate-spin' />
-										<span>{t("bills.form.submitPreparing")}</span>
+										<span className='min-w-0 break-words'>Preparing Contract Request...</span>
 									</>
 								) : (
 									t("bills.form.submitAdd")

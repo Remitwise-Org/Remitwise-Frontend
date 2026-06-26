@@ -12,8 +12,7 @@ import {
     type TooltipContentProps,
 } from 'recharts'
 import { TrendingUp } from 'lucide-react'
-import { generateBarChartLabel, generateBarChartSummary } from '@/lib/a11y'
-import type { TrendChartDataPoint } from '@/lib/a11y/chartAccessibility';
+import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart'
 
 // ── Mock data ───────────────────────────
 
@@ -119,15 +118,22 @@ function SpendingVsSavingsChartInner({
     }, [data])
 
     // Generate accessible label and summary
-    const chartLabel = useMemo(
-        () => generateBarChartLabel("Spending vs Savings", data as unknown as TrendChartDataPoint[], "spending", "savings"),
-        [data]
+    const summaryItems = useMemo(
+        () =>
+            data.map(
+                (point) =>
+                    `${point.month}: spending $${point.spending.toLocaleString()}, savings $${point.savings.toLocaleString()}`,
+            ),
+        [data],
     )
 
-    const chartSummary = useMemo(
-        () => generateBarChartSummary(data as unknown as TrendChartDataPoint[], "spending", "savings"),
-        [data]
-    )
+    const t = useMemo(() => {
+        return (_path: string, options?: string | Record<string, unknown>) =>
+            typeof options === 'string' ? options : _path
+    }, [])
+
+    const chartLabel = useMemo(() => buildChartImageLabel('Spending vs Savings', summaryItems, t), [summaryItems, t])
+    const chartSummary = useMemo(() => buildChartSummary(summaryItems, t), [summaryItems, t])
 
     return (
         <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
@@ -181,10 +187,7 @@ function SpendingVsSavingsChartInner({
                             width={40}
                             className="hidden sm:block"
                         />
-                        <Tooltip
-                            content={CustomTooltip as (props: SpendingTooltipProps) => JSX.Element | null}
-                            cursor={{ fill: 'rgba(255,255,255,0.03)' }}
-                        />
+                        <Tooltip content={CustomTooltip as any} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
                         <Bar dataKey="spending" name="spending" fill={SPENDING_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
                         <Bar dataKey="savings" name="savings" fill={SAVINGS_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
                     </BarChart>

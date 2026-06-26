@@ -92,7 +92,7 @@ export default function RecipientAddressInput({
   const isContinueEnabled = validation.isValid;
 
   return (
-    <div className="mx-auto relative overflow-hidden bg-[#0c0c0c] border border-white/5 rounded-[2rem] p-8 sm:p-10 mb-8 shadow-2xl">
+    <div className="mx-auto relative overflow-hidden bg-[#0c0c0c] border border-white/5 rounded-[2rem] p-5 375:p-6 sm:p-10 mb-8 shadow-2xl">
       {/* Subtle Gradient Glow */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-red-900/20 blur-[120px] rounded-full -mr-48 -mt-48 pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-white/[0.02] blur-[100px] rounded-full -ml-32 -mb-32 pointer-events-none" />
@@ -230,7 +230,7 @@ export default function RecipientAddressInput({
                 key={recipient.name}
                 type="button"
                 onClick={() => handleRecentClick(recipient.address)}
-                className="bg-[#1a1a1a] hover:bg-[#222222] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all border border-white/5 active:scale-95"
+                className="min-h-11 min-w-0 bg-[#1a1a1a] hover:bg-[#222222] text-white px-4 375:px-6 py-2.5 rounded-xl text-sm font-semibold transition-all border border-white/5 active:scale-95 break-words"
               >
                 {recipient.name}
               </button>
@@ -243,8 +243,7 @@ export default function RecipientAddressInput({
           <button
             onClick={onContinue}
             disabled={!isContinueEnabled}
-            data-testid={CTA_TEST_IDS.flow.sendRecipientPrimary}
-            className={`w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20`}
+            className={`w-full min-h-11 px-4 py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-base 375:text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 break-words`}
           >
             Continue to Amount
           </button>

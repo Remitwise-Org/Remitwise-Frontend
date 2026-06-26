@@ -65,18 +65,13 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* ── Sticky top bar (mobile breadcrumb / desktop title) ── */}
       <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-100 dark:border-gray-800">
-        <div className="mx-auto max-w-5xl flex h-14 items-center gap-3 px-4 sm:px-6">
-          <PageHeadingLink
-            headingId="settings-page-heading"
-            label={t("settings.page_title")}
-            headingClassName="text-base font-semibold text-gray-900 dark:text-white"
-            buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white dark:focus-visible:ring-offset-gray-900"
-          >
+        <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 overflow-hidden px-4 sm:px-6">
+          <h1 className="shrink-0 text-base font-semibold text-gray-900 dark:text-white">
             {t("settings.page_title")}
           </PageHeadingLink>
           {/* Mobile: horizontal scrollable nav pills */}
           <nav
-            className="ml-auto flex gap-1 overflow-x-auto sm:hidden scrollbar-none"
+            className="ml-auto flex min-w-0 flex-1 gap-1 overflow-x-auto sm:hidden scrollbar-none"
             aria-label={t("settings.nav_aria_label")}
           >
             {SECTIONS.map(({ id, labelKey, icon: Icon }) => (

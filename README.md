@@ -33,9 +33,7 @@ The frontend includes placeholder pages and components for:
 
 ## Loading States
 
-Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners. For detailed guidelines and implementation patterns on all UI states (Default, Error, Disabled, and Loading), see [docs/component-states.md](docs/component-states.md).
-
-Fetch-driven widget surfaces on those screens now auto-retry failed read requests up to 3 times with exponential backoff before the inline "Try again" error CTA appears.
+Dashboard, Bills, Insights, and Transaction History now use route-level skeleton screens built from `components/ui/Skeleton.tsx` and `components/ui/LoadingSkeletons.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
 
 ## Sentry
 

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "@/components/Providers";
+import BackToTop from "@/components/BackToTop";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "RemitWise - Smart Remittance & Financial Planning",
@@ -19,6 +22,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="starry-bg min-h-screen font-sans">
         <Providers>{children}</Providers>
+        <BackToTop />
       </body>
     </html>
   );

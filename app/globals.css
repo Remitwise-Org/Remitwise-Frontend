@@ -56,7 +56,8 @@ html.light {
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-start-rgb));
+  background: black;
+  overflow-x: hidden;
 }
 
 .starry-bg {

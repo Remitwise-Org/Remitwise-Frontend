@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-
+import { NextRequest, NextResponse } from "next/server";
 import { getTranslator } from '../../../../../../lib/i18n'
 import { buildPayBillTx } from '../../../../../../lib/contracts/bill-payments'
 import { StrKey } from '@stellar/stellar-sdk'

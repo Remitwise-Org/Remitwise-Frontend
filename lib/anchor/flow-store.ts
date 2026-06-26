@@ -102,11 +102,12 @@ function mapAnchorFlow(record: {
 export async function createPendingAnchorFlow(
   input: Omit<AnchorFlowRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'>
 ): Promise<AnchorFlowRecord> {
-  if (!anchorFlowDelegate) {
-    throw new Error('Anchor flow storage is not configured.');
+  const anchorFlowClient = (prisma as any).anchorFlow;
+  if (!anchorFlowClient?.create) {
+    throw new Error('Anchor flow persistence is not configured.');
   }
 
-  const record = await anchorFlowDelegate.create({
+  const record = await anchorFlowClient.create({
     data: {
       type: input.type,
       userAddress: input.userAddress,
@@ -130,11 +131,12 @@ export async function updateAnchorFlowStatusByTransactionId(
     return null;
   }
 
-  if (!anchorFlowDelegate) {
+  const anchorFlowClient = (prisma as any).anchorFlow;
+  if (!anchorFlowClient?.findUnique || !anchorFlowClient?.update) {
     return null;
   }
 
-  const existing = await anchorFlowDelegate.findUnique({
+  const existing = await anchorFlowClient.findUnique({
     where: { anchorTransactionId },
   });
 
@@ -142,7 +144,7 @@ export async function updateAnchorFlowStatusByTransactionId(
     return null;
   }
 
-  const updated = await anchorFlowDelegate.update({
+  const updated = await anchorFlowClient.update({
     where: { anchorTransactionId },
     data: { status },
   });
@@ -153,14 +155,13 @@ export async function updateAnchorFlowStatusByTransactionId(
 export async function getAnchorFlowsForUser(
   userAddress: string
 ): Promise<AnchorFlowRecord[]> {
-  if (!anchorFlowDelegate) {
-    return [];
-  }
-
-  const flows = await anchorFlowDelegate.findMany({
+  const anchorFlowClient = (prisma as any).anchorFlow;
+  const flows: any[] = anchorFlowClient?.findMany
+    ? await anchorFlowClient.findMany({
     where: { userAddress },
     orderBy: { createdAt: 'desc' },
-  });
+    })
+    : [];
 
   return flows.map(mapAnchorFlow);
 }
