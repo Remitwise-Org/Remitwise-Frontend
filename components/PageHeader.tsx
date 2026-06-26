@@ -8,6 +8,7 @@ type PageHeaderProps = {
   subtitle: string
   ctaLabel: string
   onCtaClick?: () => void
+  ctaTestId?: string
   showBottomDivider?: boolean
   /** 'red' (default) or 'redOrange' for reddish-orange CTA e.g. Savings Goals */
   ctaVariant?: 'red' | 'redOrange'
@@ -18,6 +19,7 @@ export default function PageHeader({
   subtitle,
   ctaLabel,
   onCtaClick,
+  ctaTestId,
   showBottomDivider = false,
   ctaVariant = 'red',
 }: PageHeaderProps) {
@@ -49,6 +51,7 @@ export default function PageHeader({
           <button
             type="button"
             onClick={onCtaClick}
+            data-testid={ctaTestId}
             className={ctaClass}
           >
             <Plus className="w-5 h-5" />

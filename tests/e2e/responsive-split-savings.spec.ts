@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { CTA_TEST_IDS } from '@/lib/cta-testids';
 
 /**
  * Responsive Breakpoint Tests for Split Configuration and Savings Goals
@@ -78,9 +79,9 @@ test.describe('Split Configuration - Responsive Tests', () => {
       }
       
       // Check Submit button touch target
-      const submitButton = page.locator('button:has-text("Connect Contract First")');
+      const submitButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
       if (await submitButton.isVisible()) {
-        await checkTouchTargetSize(page, 'button:has-text("Connect Contract First")', 44, 44);
+        await checkTouchTargetSize(page, `[data-testid="${CTA_TEST_IDS.flow.splitConfigurationPrimary}"]`, 44, 44);
       }
       
       // Check back button touch target
@@ -240,9 +241,9 @@ test.describe('Savings Goals - Responsive Tests', () => {
       }
       
       // Check "New Goal" button touch target
-      const newGoalButton = page.locator('button:has-text("New Goal")');
+      const newGoalButton = page.getByTestId(CTA_TEST_IDS.page.savingsGoalsPrimary);
       if (await newGoalButton.isVisible()) {
-        await checkTouchTargetSize(page, 'button:has-text("New Goal")', 44, 44);
+        await checkTouchTargetSize(page, `[data-testid="${CTA_TEST_IDS.page.savingsGoalsPrimary}"]`, 44, 44);
       }
     });
 

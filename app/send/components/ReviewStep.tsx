@@ -2,6 +2,7 @@
 
 import { Zap, ArrowLeft, ShieldCheck, User, CreditCard } from "lucide-react";
 import AutomaticSplitCard from "./AutomaticSplitCard";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import { useClientLocale } from "@/lib/i18n/client";
 import { formatCurrency } from "@/lib/utils/format-currency";
 
@@ -78,6 +79,7 @@ export default function ReviewStep({
                 id="send-confirm-btn"
                 onClick={onConfirm}
                 disabled={isPending}
+                data-testid={CTA_TEST_IDS.flow.sendReviewPrimary}
                 aria-busy={isPending}
                 aria-label={isPending ? "Processing your transfer, please wait" : "Confirm and send remittance"}
                 className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-red-900 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/40 flex items-center justify-center gap-3"
@@ -157,4 +159,3 @@ export default function ReviewStep({
     </div>
   );
 }
-

@@ -7,6 +7,7 @@ import FamilyWalletsStatsCards from "./components/FamilyWalletsStatsCards";
 import UnderstandingRolesSection from "./components/UnderstandingRolesSection";
 import FamilyMemberSection from "./components/FamilyMemberSection";
 import ApprovalsQueue from "./components/ApprovalsQueue";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 
 export default function FamilyWallets() {
 	const { t } = useClientTranslator();
@@ -26,6 +27,7 @@ export default function FamilyWallets() {
 				subtitle={t("family_wallets.page_subtitle")}
 				ctaLabel={t("family_wallets.add_member_cta")}
 				onCtaClick={handleAddMember}
+				ctaTestId={CTA_TEST_IDS.page.familyWalletsPrimary}
 				showBottomDivider
 			/>
 

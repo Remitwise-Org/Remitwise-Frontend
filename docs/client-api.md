@@ -2,6 +2,8 @@
 
 This is the canonical guide for the browser-side API layer in RemitWise.
 
+Primary page-level CTAs and main flow submit or confirm actions expose stable `data-testid` hooks via [`lib/cta-testids.ts`](../lib/cta-testids.ts). Use those hooks for browser automation and analytics instrumentation instead of visible button text when the button is in the shared primary-CTA scope.
+
 Use it when you are adding or reviewing client code that talks to `/api/*`. The goal is simple: authenticated browser requests should go through the shared client helpers so session refresh, expiry handling, and logout stay consistent across the app.
 
 ## At a Glance

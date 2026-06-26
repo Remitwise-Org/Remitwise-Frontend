@@ -24,6 +24,7 @@ import TransactionHistoryItem, {
 import { useDensity } from "@/lib/context/DensityContext";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useDebounce } from "@/lib/hooks/useDebounce";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
 import {
   serializeToCsv,
@@ -479,6 +480,7 @@ export default function TransactionsPage() {
                 type="button"
                 onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
                 disabled={filteredTransactions.length === 0}
+                data-testid={CTA_TEST_IDS.page.transactionsPrimary}
                 aria-expanded={isExportDropdownOpen}
                 aria-haspopup="true"
                 aria-label="Export filtered transactions"

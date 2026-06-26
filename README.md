@@ -31,6 +31,8 @@ The frontend includes placeholder pages and components for:
 
 Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
 
+Primary page-level CTAs and core flow submit or confirm buttons now expose stable `data-testid` hooks from `lib/cta-testids.ts` so Playwright specs and analytics wiring do not need to depend on visible text or class names.
+
 ## Sentry
 
 Sentry is wired through the client, server, and edge config files with separate environment variables for each runtime:

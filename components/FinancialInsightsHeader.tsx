@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, ChevronDown, Download } from 'lucide-react'
 import { useState } from 'react'
+import { CTA_TEST_IDS } from '@/lib/cta-testids'
 
 type DateRange = 'This Month' | 'Last Month' | 'Last 3 Months' | 'Last 6 Months' | 'This Year' | 'Custom Range'
 
@@ -119,6 +120,7 @@ export default function FinancialInsightsHeader({
             <button
               type="button"
               onClick={handleExportClick}
+              data-testid={CTA_TEST_IDS.page.financialInsightsPrimary}
               className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-[#D72323] hover:bg-[#B91C1C] active:scale-95 transition-all shadow-lg shadow-[#D72323]/30 touch-manipulation"
               aria-label="Export financial data"
             >
@@ -213,6 +215,7 @@ export default function FinancialInsightsHeader({
             <button
               type="button"
               onClick={handleExportClick}
+              data-testid={CTA_TEST_IDS.page.financialInsightsPrimary}
               className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#D72323] hover:bg-[#B91C1C] active:scale-95 transition-all font-semibold text-sm xl:text-base shadow-lg shadow-[#D72323]/30 touch-manipulation min-h-[44px]"
               aria-label="Export financial data"
             >
