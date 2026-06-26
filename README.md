@@ -34,11 +34,7 @@ The frontend includes placeholder pages and components for:
 
 ## Loading States
 
-Dashboard, Bills, Insights, and Transaction History now use route-level skeleton screens built from `components/ui/Skeleton.tsx` and `components/ui/LoadingSkeletons.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
-
-## Browser Support & Polyfills
-
-To maintain a smooth background task experience across all platforms, this app polyfills missing native APIs (such as `window.requestIdleCallback` and `window.cancelIdleCallback` which are unsupported in Safari) using a standardized `setTimeout` wrapper. This polyfill is injected automatically at the client boundary (via `Providers.tsx`), so frontend engineers and downstream libraries can confidently use `requestIdleCallback` without explicit platform guard checks.
+Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners. For detailed guidelines and implementation patterns on all UI states (Default, Error, Disabled, and Loading), see [docs/component-states.md](docs/component-states.md).
 
 ## Sentry
 
@@ -225,10 +221,8 @@ remitwise-frontend/
 │   └── auth.ts              # Auth middleware
 ├── docs/                    # Documentation
 │   ├── API_ROUTES.md        # API routes documentation
-│   ├── PROP_CONVENTIONS.md  # Component prop naming, ordering, and boolean conventions
 │   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
-│   ├── contract-cache.md    # Contract caching architecture and guidelines
-│   └── FORM_PATTERNS.md     # Form design patterns (inline vs blocking validation, autosave, submit affordance)
+│   └── contract-cache.md    # Contract caching architecture and guidelines
 ├── public/                  # Static assets
 └── package.json
 ```
