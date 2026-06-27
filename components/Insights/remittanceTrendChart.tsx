@@ -13,7 +13,8 @@ import {
   Area
 } from 'recharts';
 import { INSIGHTS_PALETTE } from './palette';
-import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart';
+import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y';
+import WidgetEmptyState from '@/components/ui/WidgetEmptyState';
 const LINE_COLOR = INSIGHTS_PALETTE[0];
 
 

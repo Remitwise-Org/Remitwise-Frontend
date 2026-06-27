@@ -1,4 +1,6 @@
 import { Contract, scValToNative, nativeToScVal, SorobanRpc } from "@stellar/stellar-sdk";
+import { getSorobanClient, getNetworkPassphrase } from "../soroban-client";
+import { resolveContractId } from "./network-resolution";
 import { getSorobanClient } from "../soroban-client";
 import { getSorobanNetworkPassphrase, resolveContractId } from "./network-resolution";
 import { ContractReadError } from "./dashboard-aggregate";

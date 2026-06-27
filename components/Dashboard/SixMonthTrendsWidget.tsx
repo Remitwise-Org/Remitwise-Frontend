@@ -7,6 +7,8 @@ import { TrendingUp, Target, FileText } from 'lucide-react'
 import { SkeletonChart } from '@/components/ui/Skeleton'
 import WidgetEmptyState from '@/components/ui/WidgetEmptyState'
 import WidgetErrorState from '@/components/ui/WidgetErrorState'
+import { useState, useCallback, memo } from 'react'
+import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y'
 import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart'
 
 // Sample data for the 6-month chart (Jul-Dec)
@@ -32,6 +34,31 @@ const COLORS = {
     insurance: '#7F1D1D',
 }
 
+// Tooltip styles matching the dark theme
+const TOOLTIP_CONTENT_STYLE: React.CSSProperties = {
+    backgroundColor: '#1A1A1A',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '8px',
+    padding: '8px 12px',
+    color: '#fff',
+    fontSize: '12px',
+}
+
+const TOOLTIP_LABEL_STYLE: React.CSSProperties = {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontWeight: 600,
+    marginBottom: '4px',
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const tooltipFormatter: any = (value: number) => [`$${value.toLocaleString()}`]
+
+// Dot styles for each line series
+const DOT_REMITTANCES = { fill: COLORS.remittances, r: 3, strokeWidth: 0 }
+const DOT_SAVINGS = { fill: COLORS.savings, r: 3, strokeWidth: 0 }
+const DOT_BILLS = { fill: COLORS.bills, r: 3, strokeWidth: 0 }
+const DOT_INSURANCE = { fill: COLORS.insurance, r: 3, strokeWidth: 0 }
+const ACTIVE_DOT = { r: 5, strokeWidth: 2, stroke: '#fff' }
 const TOOLTIP_CONTENT_STYLE: CSSProperties = {
     backgroundColor: 'rgba(10,10,10,0.96)',
     border: '1px solid rgba(255,255,255,0.12)',
