@@ -1,8 +1,22 @@
 import ChapterView from "../../../../../components/tutorials/ChapterView";
+import { Metadata } from "next";
 
 type Props = {
   params: Promise<{ tutorialId: string; chapterId: string }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { tutorialId, chapterId } = await params;
+  const chapterIndex = parseInt(chapterId, 10) || 0;
+  const formattedTutorial = tutorialId
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return {
+    title: `Chapter ${chapterIndex + 1} – ${formattedTutorial} | RemitWise`,
+    description: `Watch Chapter ${chapterIndex + 1} of the ${formattedTutorial} tutorial on RemitWise.`,
+  };
+}
+
 
 export default async function TutorialChapterPage({ params }: Props) {
   const { tutorialId, chapterId } = await params;

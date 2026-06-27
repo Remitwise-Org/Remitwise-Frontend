@@ -1,8 +1,16 @@
+"use client";
+
 import React from "react";
 import { TopCategoriesWidget } from "@/components/Insights/TopCategoriesWidget";
 import Header from "@/components/Header";
+import { useSeo } from "@/lib/hooks/useSeo";
 
 export default function InsightsPage() {
+    useSeo({
+        title: "Insights | RemitWise",
+        description: "Explore your top spending categories and financial insights on RemitWise.",
+    });
+
     return (
         <div className="flex flex-col min-h-screen">
             <Header />

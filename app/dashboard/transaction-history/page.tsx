@@ -10,6 +10,7 @@ import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
 import { TransactionItem } from "@/lib/remittance/horizon";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useDebounce } from "@/lib/hooks/useDebounce";
+import { useSeo } from "@/lib/hooks/useSeo";
 import type {
   Transaction,
   TransactionStatus,
@@ -53,6 +54,11 @@ const TransactionVirtualRow = ({ index, style, data }: VirtualRowProps) => {
 };
 
 const TransactionHistoryPage = () => {
+  useSeo({
+    title: "Transaction History - RemitWise",
+    description: "View all your past transaction records and details",
+  });
+
   const { t } = useClientTranslator();
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const [userAddress, setUserAddress] = useState<string | null>(null);

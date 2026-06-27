@@ -15,6 +15,7 @@ import { SavingsGoal } from './types'
 import { calculateDaysLeft, checkIsOverdue } from './utils'
 import { useClientTranslator } from '@/lib/i18n/client'
 import { CTA_TEST_IDS } from '@/lib/cta-testids'
+import { useSeo } from '@/lib/hooks/useSeo'
 
 // Sample data matching Figma design
 const initialGoals: SavingsGoal[] = [
@@ -61,6 +62,11 @@ const initialGoals: SavingsGoal[] = [
 ]
 
 export default function SavingsGoalsPage() {
+  useSeo({
+    title: 'Savings Goals - RemitWise',
+    description: 'Create and track your savings goals to secure your financial future',
+  });
+
   const { t } = useClientTranslator()
   const [goals, setGoals] = useState<SavingsGoal[]>(initialGoals)
   const [showModal, setShowModal] = useState(false)

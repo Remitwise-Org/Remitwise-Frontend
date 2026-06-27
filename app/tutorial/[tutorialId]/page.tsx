@@ -1,9 +1,21 @@
 import Link from "next/link";
+import { Metadata } from "next";
 import PageHeadingLink from "@/components/PageHeadingLink";
 
 type Props = {
   params: Promise<{ tutorialId: string }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { tutorialId } = await params;
+  const formattedTitle = tutorialId
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return {
+    title: `${formattedTitle} Tutorial | RemitWise`,
+    description: `Step-by-step tutorial for ${formattedTitle} on RemitWise. Track your progress chapter by chapter.`,
+  };
+}
 
 export default async function TutorialOverviewPage({ params }: Props) {
   const { tutorialId } = await params;

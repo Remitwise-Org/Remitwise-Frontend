@@ -11,10 +11,16 @@ import { runWidgetFetchWithRetry } from '@/lib/client/widgetFetchRetry';
 import { useClientTranslator } from '@/lib/i18n/client';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import type { DashboardResponse } from '@/lib/types/dashboard';
+import { useSeo } from '@/lib/hooks/useSeo';
 
 type LoadState = 'loading' | 'error' | 'ready';
 
 export default function DashboardPage() {
+  useSeo({
+    title: 'Dashboard - RemitWise',
+    description: 'Manage your smart remittance and financial planning activities',
+  });
+
   const { t, locale } = useClientTranslator();
   const [state, setState] = useState<LoadState>('loading');
   const [data, setData] = useState<DashboardResponse | null>(null);

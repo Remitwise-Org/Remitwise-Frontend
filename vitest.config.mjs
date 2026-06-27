@@ -49,5 +49,8 @@ export default defineConfig({
     alias: {
       '@': rootDir,
     },
+    typecheck: {
+      tsconfig: './tsconfig.test.json',
+    },
   },
 });

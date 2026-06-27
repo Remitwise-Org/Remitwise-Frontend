@@ -41,7 +41,14 @@ interface ReceiptData {
   };
 }
 
+import { useSeo } from "@/lib/hooks/useSeo";
+
 export default function SendMoney() {
+  useSeo({
+    title: "Send Money - RemitWise",
+    description: "Fast, secure, and low-cost remittance transfers",
+  });
+
   const [step, setStep] = useState<Step>("recipient");
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState<number>(0);

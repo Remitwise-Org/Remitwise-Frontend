@@ -76,7 +76,14 @@ function computeTotal(alloc: SplitConfig): number {
 	return alloc.spending + alloc.savings + alloc.bills + alloc.insurance;
 }
 
+import { useSeo } from "@/lib/hooks/useSeo";
+
 export default function SplitConfiguration() {
+	useSeo({
+		title: "Split Transactions - RemitWise",
+		description: "Configure and split your remittances automatically",
+	});
+
 	const [allocation, setAllocation] = useState<SplitConfig>(DEFAULT_SPLIT_CONFIG);
 	const [pending, setPending] = useState(false);
 	const [submissionError, setSubmissionError] = useState<string | undefined>();

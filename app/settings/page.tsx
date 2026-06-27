@@ -10,6 +10,7 @@ import { WalletSection } from "@/components/settings/WalletSection";
 import { FamilySection } from "@/components/settings/FamilySection";
 import { PreferencesSection } from "@/components/settings/PreferencesSection";
 import PageHeadingLink from "@/components/PageHeadingLink";
+import { useSeo } from "@/lib/hooks/useSeo";
 
 const SECTIONS = [
   { id: "profile",        labelKey: "settings.sections.profile",         icon: User    },
@@ -25,6 +26,11 @@ type SectionId = (typeof SECTIONS)[number]["id"];
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
+  useSeo({
+    title: "Settings - RemitWise",
+    description: "Update your profile, theme, and language preferences",
+  });
+
   const { t } = useClientTranslator();
   const [active, setActive] = useState<SectionId>("profile");
   const observerRef = useRef<IntersectionObserver | null>(null);

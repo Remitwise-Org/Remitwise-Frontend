@@ -1,9 +1,17 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft, BookOpen } from "lucide-react";
 import TutorialList from "../../components/tutorials/TutorialList";
 import PageHeadingLink from "@/components/PageHeadingLink";
+import { useSeo } from "@/lib/hooks/useSeo";
 
 export default function TutorialPage() {
+  useSeo({
+    title: "Tutorials | RemitWise",
+    description: "Learn how to use RemitWise with step-by-step tutorials for sending money, managing wallets, savings goals, and more.",
+  });
+
   const tutorials = [
     {
       id: "getting-started",

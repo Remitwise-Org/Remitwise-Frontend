@@ -11,6 +11,7 @@ import { WidgetErrorState, WidgetEmptyState } from '@/components/ui/WidgetStates
 import { SkeletonCard } from '@/components/ui/Skeleton';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import PageHeadingLink from '@/components/PageHeadingLink';
+import { useSeo } from '@/lib/hooks/useSeo';
 
 type Period = 'current_month' | 'last_3_months' | 'last_year';
 
@@ -25,6 +26,11 @@ interface InsightsResponse {
 }
 
 export default function InsightPage() {
+    useSeo({
+        title: 'Financial Insights - RemitWise',
+        description: 'Detailed analytics of your remittances and savings',
+    });
+
     const [period, setPeriod] = useState<Period>('current_month');
     const [data, setData] = useState<InsightsResponse | null>(null);
     const [loading, setLoading] = useState(true);

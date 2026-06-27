@@ -275,7 +275,14 @@ function normalizeQuery(value: string) {
   return value.trim().toLowerCase();
 }
 
+import { useSeo } from "@/lib/hooks/useSeo";
+
 export default function TransactionsPage() {
+  useSeo({
+    title: "Transactions - RemitWise",
+    description: "Manage all your transactions and transfers",
+  });
+
   const { t } = useClientTranslator();
   const { density } = useDensity();
   const [searchQuery, setSearchQuery] = useState("");

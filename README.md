@@ -228,6 +228,75 @@ For authenticated browser-side requests, use the shared client API layer documen
 
 Route-level page titles now use a shared deep-link heading pattern. Use the shared heading primitive with a stable route-specific id whenever you add or update a primary page title. See [docs/page-heading-deeplinks.md](docs/page-heading-deeplinks.md).
 
+## Per-Route SEO Metadata (`useSeo`)
+
+Each client-side route can define its own `<title>` and `<meta name="description">` using the `useSeo` hook.
+
+### Quick Start
+
+```tsx
+"use client";
+
+import { useSeo } from "@/lib/hooks/useSeo";
+
+export default function MyPage() {
+  useSeo({
+    title: "My Page | RemitWise",
+    description: "A short description of what this page does.",
+  });
+
+  return <main>{/* page content */}</main>;
+}
+```
+
+### Default Metadata
+
+Defaults are defined in [`lib/config/seo.ts`](./lib/config/seo.ts):
+
+```ts
+export const DEFAULT_SEO = {
+  title: "RemitWise - Smart Remittance & Financial Planning",
+  description: "A remittance app that helps families save, plan, and protect — not just send money.",
+};
+```
+
+If `title` or `description` is omitted from `useSeo(...)`, the corresponding default is used automatically.
+
+### Behaviour
+
+| Scenario | Result |
+|---|---|
+| `useSeo({ title, description })` | Sets both title and description |
+| `useSeo({ title })` | Sets title; uses `DEFAULT_SEO.description` |
+| `useSeo()` | Uses both defaults |
+| Component unmounts | Reverts to previous route's SEO (stack-based) |
+| Layout already has a `<meta name="description">` | Reuses it — no duplicates created |
+
+### Server Components
+
+Async Server Components (e.g. dynamic `[tutorialId]` routes) use Next.js's built-in [`generateMetadata`](https://nextjs.org/docs/app/api-reference/functions/generate-metadata) export instead:
+
+```ts
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const { id } = await params;
+  return { title: `${id} | RemitWise`, description: "..." };
+}
+```
+
+The `api/docs/page.tsx` route uses a static `export const metadata` export for the same reason.
+
+### Tests
+
+Unit tests live in [`tests/unit/hooks/useSeo.test.tsx`](./tests/unit/hooks/useSeo.test.tsx) and cover:
+
+- Title updates correctly
+- Description updates correctly
+- Navigation updates metadata
+- Default metadata is used when values are omitted
+- No duplicate `<meta>` tags are created
+- Stack-based cleanup on unmount
+
+
 **Quick Reference:**
 
 - Public routes: `/api/health`, `/api/auth/*`

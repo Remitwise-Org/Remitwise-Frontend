@@ -6,6 +6,7 @@ import FinancialInsightsHeader from '@/components/FinancialInsightsHeader'
 import StatCard from '@/components/Dashboard/StatCard'
 import { SpendingVsSavingsChart } from '@/components/Insights/spendingVsSavingChart'
 import { TopCategoriesWidget } from '@/components/Insights/TopCategoriesWidget'
+import { useSeo } from '@/lib/hooks/useSeo'
 
 const RemittanceTrendChart = lazy(() =>
   import('@/components/Insights/remittanceTrendChart').then(m => ({ default: m.RemittanceTrendChart }))
@@ -25,6 +26,11 @@ const SUMMARY_STATS = [
 ] as const
 
 export default function FinancialInsightsPage() {
+  useSeo({
+    title: 'Financial Insights | RemitWise',
+    description: 'Analyze your spending vs savings, remittance trends, and category breakdowns on RemitWise.',
+  })
+
   const handleExport = () => {
     console.log('Exporting financial data...')
     alert('Export functionality will be implemented here (CSV/PDF)')

@@ -19,10 +19,16 @@ import {
 } from "lucide-react";
 import TransactionSuccessReceipt from "@/components/TransactionSuccessReceipt";
 import PageHeadingLink from "@/components/PageHeadingLink";
+import { useSeo } from "@/lib/hooks/useSeo";
 
 type Step = "recipient" | "amount" | "review" | "confirm";
 
 export default function EmergencyTransferPage() {
+  useSeo({
+    title: "Emergency Transfer - RemitWise",
+    description: "Send instant emergency transfers to your loved ones when they need it most",
+  });
+
   const [step, setStep] = useState<Step>("recipient");
   const [recipientName, setRecipientName] = useState("");
   const [recipientAddress, setRecipientAddress] = useState("");
