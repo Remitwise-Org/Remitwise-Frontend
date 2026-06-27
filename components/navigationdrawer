@@ -1,0 +1,58 @@
+"use client";
+
+import React, { useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
+import NavigationSidebar from "./NavigationSidebar";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
+
+interface NavigationDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function NavigationDrawer({ isOpen, onClose }: NavigationDrawerProps) {
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  // Prevent body scroll when drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  // Handle Escape key globally when drawer is open
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return createPortal(
+    <div
+      ref={drawerRef}
+      className="fixed inset-0 z-50 lg:hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Navigation drawer"
+      data-testid="navigation-drawer"
+    >
+      <NavigationSidebar isOpen={isOpen} onClose={onClose} />
+    </div>,
+    document.body
+  );
+}
