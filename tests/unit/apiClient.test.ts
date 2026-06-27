@@ -56,4 +56,27 @@ describe('apiClient', () => {
     expect(response).toBeNull();
     expect(sessionHandler.handleSessionExpiry).toHaveBeenCalled();
   });
+
+  it('should dispatch dev-request-id-updated event on successful response', async () => {
+    const mockDispatch = vi.fn();
+    vi.stubGlobal('dispatchEvent', mockDispatch);
+
+    const headers = new Headers();
+    headers.set('x-request-id', 'test-req-123');
+
+    (fetch as any).mockResolvedValueOnce({
+      status: 200,
+      headers,
+      json: () => Promise.resolve({ data: 'ok' })
+    });
+
+    (sessionHandler.isSessionExpired as any).mockResolvedValue(false);
+
+    await apiClient.get('/api/test', { retries: 0 });
+
+    expect(mockDispatch).toHaveBeenCalled();
+    const event = mockDispatch.mock.calls[0][0];
+    expect(event.type).toBe('dev-request-id-updated');
+    expect(event.detail).toBe('test-req-123');
+  });
 });

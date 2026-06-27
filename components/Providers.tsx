@@ -10,6 +10,7 @@ import LayoutWrapper from "@/components/LayoutWrapper";
 import ToastRegion from "@/components/ToastRegion";
 import SessionExpiryProvider from "@/components/SessionExpiryProvider";
 import CommandPalette from "@/components/CommandPalette";
+import DevRequestIdDisplay from "@/components/DevRequestIdDisplay";
 
 /**
  * Client-side provider boundary for the app.
@@ -31,6 +32,7 @@ export default function Providers({ children }: { children: ReactNode }) {
                 <LayoutWrapper>{children}</LayoutWrapper>
                 <ToastRegion />
                 <CommandPalette />
+                <DevRequestIdDisplay />
               </SessionExpiryProvider>
             </AsyncOperationsProvider>
           </DensityProvider>

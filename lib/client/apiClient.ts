@@ -262,6 +262,16 @@ async function fetchWithRetry(url: string, options: ApiClientOptions): Promise<R
 async function request(url: string, options?: ApiClientOptions): Promise<Response | null> {
   const response = await fetchWithRetry(url, options || {});
 
+  if (response && response.headers && typeof window !== 'undefined') {
+    const requestId = response.headers.get('x-request-id') ||
+                      response.headers.get('x-correlation-id') ||
+                      response.headers.get('request-id') ||
+                      response.headers.get('correlation-id');
+    if (requestId) {
+      window.dispatchEvent(new CustomEvent('dev-request-id-updated', { detail: requestId }));
+    }
+  }
+
   // Check if session expired
   if (await sessionHandler.isSessionExpired(response)) {
     if (!options?._isRetry) {
