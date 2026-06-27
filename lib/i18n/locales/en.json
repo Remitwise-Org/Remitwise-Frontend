@@ -68,6 +68,8 @@
   "quickActions": {
     "emergencyTransfer": "Emergency Transfer",
     "send": "Send",
+    "split": "Split",
+    "family": "Family",
     "goals": "Goals",
     "bills": "Bills",
     "urgentBadge": "URGENT"
