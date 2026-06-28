@@ -1,4 +1,4 @@
- # Idempotency Contract & Documentation
+# Idempotency Contract & Documentation
 
 This document describes the design, contract, constraints, and known limitations of the idempotency layer in the Remitwise application.
 
