@@ -54,6 +54,37 @@ function initializeCleanup(): void {
 initializeCleanup();
 
 /**
+ * Stop the periodic cleanup timer and reset lifecycle state.
+ *
+ * Primarily intended for tests so that a fresh timer can be (re)created via
+ * {@link initializeCleanup} and no interval leaks across test runs. Does not
+ * touch stored records — call {@link clearIdempotencyStore} for that.
+ */
+export function resetIdempotencyCleanup(): void {
+    if (cleanupTimer) {
+        clearInterval(cleanupTimer);
+        cleanupTimer = null;
+    }
+    cleanupInitialized = false;
+}
+
+/**
+ * Whether the periodic cleanup timer is currently active.
+ * Exposed for tests asserting that no timer dangles after shutdown.
+ */
+export function isCleanupActive(): boolean {
+    return cleanupTimer !== null;
+}
+
+/**
+ * (Re)start the periodic cleanup timer if it is not already running.
+ * Safe to call multiple times — re-initialization is a no-op while active.
+ */
+export function startIdempotencyCleanup(): void {
+    initializeCleanup();
+}
+
+/**
  * Store an idempotency record
  */
 export function storeIdempotencyRecord(
