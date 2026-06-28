@@ -19,6 +19,26 @@
  * ```
  */
 
+/**
+ * Path to the sign-in page. Requests that fail with a session-expired 401 will
+ * redirect here with the current route passed as a `?next=` query parameter.
+ */
+export const SIGN_IN_PATH = '/' as const;
+
+/**
+ * Builds the sign-in URL preserving the current route so the user can be
+ * redirected back after re-authentication.
+ *
+ * @param intendedPath - The page the user was on when the session expired.
+ * @returns A sign-in URL with `?next=` set, or just the sign-in path when
+ *          `intendedPath` is absent or unsafe.
+ */
+export function getSignInUrl(intendedPath?: string): string {
+  if (!intendedPath || intendedPath === '/') return SIGN_IN_PATH;
+  const encoded = encodeURIComponent(intendedPath);
+  return `${SIGN_IN_PATH}?next=${encoded}`;
+}
+
 export interface SessionHandler {
   /**
    * Check if response indicates session expiry
@@ -30,6 +50,7 @@ export interface SessionHandler {
   /**
    * Handle session expiry flow
    * Clears local auth state, shows message, and redirects to wallet connection
+   * preserving the current route in `?next=` for post-auth redirect.
    * @param intendedPath - Optional path to redirect to after re-authentication
    */
   handleSessionExpiry(intendedPath?: string): void;
@@ -142,6 +163,7 @@ function clearAuthState(): void {
 /**
  * Handle session expiry flow
  * Clears local state, displays message, and redirects to wallet connection
+ * preserving the current route in the `?next=` query parameter.
  * @param intendedPath - Optional path to redirect to after re-authentication
  */
 function handleSessionExpiry(intendedPath?: string): void {
@@ -163,11 +185,12 @@ function handleSessionExpiry(intendedPath?: string): void {
   });
   window.dispatchEvent(event);
   
-  // Redirect to wallet connection page (home page)
-  // Delay gives the user time to see the expired notification and optionally
-  // click "Reconnect wallet" before the auto-redirect fires.
+  // Redirect to wallet connection page (home page) with the current route
+  // preserved in the `?next=` parameter so the user is sent back after
+  // re-authentication.
+  const target = getSignInUrl(intendedPath);
   setTimeout(() => {
-    window.location.href = '/';
+    window.location.href = target;
   }, 15000);
 }
 
@@ -182,3 +205,5 @@ export const sessionHandler: SessionHandler = {
   dispatchSessionExpiring,
   clearAuthState,
 };
+
+export type { SessionHandler };

@@ -17,6 +17,8 @@
  * - The existing `401 -> refresh -> retry once` session-expiry flow and the
  *   `Response | null` contract, unchanged.
  * - An optional typed `getJson<T>()` helper that parses and validates the body.
+ * - A "session expired" interceptor that redirects to the sign-in page with the
+ *   current route preserved in `?next=` when refresh cannot recover the request.
  *
  * Aborts are first-class: a caller-supplied `signal` (e.g. from `useFormAction`
  * or a component unmount) cancels immediately and is never retried.
@@ -253,7 +255,9 @@ async function fetchWithRetry(url: string, options: ApiClientOptions): Promise<R
  *   contains `{ message: 'Session expired' }`.
  * - Attempts `POST /api/auth/refresh` once, then replays the original request once.
  * - Falls back to the terminal session-expiry flow and returns `null` if refresh
- *   cannot recover the request.
+ *   cannot recover the request. When that happens the caller is redirected to
+ *   the sign-in page with the current route preserved in `?next=` so the user
+ *   is sent back to where they were after re-authentication.
  *
  * @param url - API endpoint URL.
  * @param options - Standard `fetch` options plus optional `retries`, `backoff`, and `timeout`.
