@@ -36,6 +36,32 @@ describe("Remittance quote API", () => {
     expect(body.validationErrors.some((error: any) => error.path === "currency")).toBe(true);
   });
 
+  it("returns 400 for a non-positive amount", async () => {
+    const req = new NextRequest(
+      "http://localhost/api/remittance/quote?amount=-5&currency=USD&toCurrency=PHP",
+      { method: "GET" }
+    );
+
+    const response = await quoteGET(req);
+    expect(response.status).toBe(400);
+
+    const body = await response.json();
+    expect(body.validationErrors.some((error: any) => error.path === "amount")).toBe(true);
+  });
+
+  it("returns 400 for an amount with more than 2 decimals", async () => {
+    const req = new NextRequest(
+      "http://localhost/api/remittance/quote?amount=10.123&currency=USD&toCurrency=PHP",
+      { method: "GET" }
+    );
+
+    const response = await quoteGET(req);
+    expect(response.status).toBe(400);
+
+    const body = await response.json();
+    expect(body.validationErrors.some((error: any) => error.path === "amount")).toBe(true);
+  });
+
   it("returns a structured error when the anchor is unavailable", async () => {
     const req = new NextRequest(
       "http://localhost/api/remittance/quote?amount=100&currency=USD&toCurrency=PHP",
