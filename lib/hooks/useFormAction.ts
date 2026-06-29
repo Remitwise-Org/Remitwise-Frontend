@@ -20,7 +20,21 @@ interface ErrorPayload {
 }
 
 const NETWORK_ERROR_MESSAGE = "Network error. Please try again.";
+const TIMEOUT_ERROR_MESSAGE = "Request timed out. Please try again.";
 const DEFAULT_SUCCESS_MESSAGE = "Request completed successfully.";
+const DEFAULT_TIMEOUT_MS = 15_000;
+const DEFAULT_RETRY_DELAY_MS = 250;
+
+type FormActionMethod = "POST" | "PUT" | "PATCH" | "DELETE";
+
+interface UseFormActionOptions {
+  /** Timeout for the full submission, including configured retry attempts. */
+  timeoutMs?: number;
+  /** Additional attempts after the initial request. Defaults to no retry. */
+  maxRetries?: number;
+  /** Delay between retry attempts in milliseconds. */
+  retryDelayMs?: number;
+}
 
 function isApiErrorPayload(payload: unknown): payload is ApiErrorResponse {
   return Boolean(
@@ -57,6 +71,73 @@ async function parseResponseBody(response: Response): Promise<unknown> {
   }
 }
 
+function isRetryableMethod(method: FormActionMethod): boolean {
+  return method === "PUT" || method === "DELETE";
+}
+
+function isRetryableResponse(response: Response): boolean {
+  return response.status >= 500;
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
+  if (ms <= 0) return Promise.resolve();
+  if (signal.aborted) return Promise.reject(signal.reason);
+
+  return new Promise((resolve, reject) => {
+    const cleanup = () => signal.removeEventListener("abort", abort);
+    const timer = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, ms);
+    const abort = () => {
+      clearTimeout(timer);
+      cleanup();
+      reject(signal.reason);
+    };
+    signal.addEventListener("abort", abort, { once: true });
+  });
+}
+
+async function submitWithRetry(
+  url: string,
+  method: FormActionMethod,
+  formData: FormData,
+  signal: AbortSignal,
+  options: Required<Pick<UseFormActionOptions, "maxRetries" | "retryDelayMs">>
+): Promise<Response | null> {
+  const maxRetries = isRetryableMethod(method) ? Math.max(0, options.maxRetries) : 0;
+
+  for (let attempt = 0; ; attempt += 1) {
+    let res: Response | null;
+    try {
+      res = await apiClient.request(url, {
+        method,
+        body: formData,
+        signal,
+        retries: 0,
+        timeout: 0,
+      });
+    } catch (error) {
+      if (signal.aborted || isAbortError(error) || attempt >= maxRetries) {
+        throw error;
+      }
+
+      await sleep(options.retryDelayMs, signal);
+      continue;
+    }
+
+    if (!res || !isRetryableResponse(res) || attempt >= maxRetries) {
+      return res;
+    }
+
+    await sleep(options.retryDelayMs, signal);
+  }
+}
+
 /**
  * Shared form-submission hook used across Send, Split, NewPolicy, and Savings
  * Goal flows.
@@ -76,6 +157,14 @@ async function parseResponseBody(response: Response): Promise<unknown> {
  * return <form action={formAction}>…</form>;
  * ```
  *
+ * @example Opt into timeout and bounded retry for an idempotent update
+ * ```tsx
+ * const [state, formAction] = useFormAction('/api/settings', 'PUT', {
+ *   timeoutMs: 8000,
+ *   maxRetries: 1,
+ * });
+ * ```
+ *
  * @bug (fixed) Previously a submit that resolved after unmount would call
  * `setState` on an unmounted component, triggering a React warning and
  * potentially interfering with re-mounted siblings. The `mountedRef` guard
@@ -83,12 +172,16 @@ async function parseResponseBody(response: Response): Promise<unknown> {
  */
 export function useFormAction<T extends ActionState = ActionState>(
   url: string,
-  method: "POST" | "PUT" | "PATCH" | "DELETE" = "POST"
+  method: FormActionMethod = "POST",
+  options: UseFormActionOptions = {}
 ) {
   const [state, setState] = useState<T>({} as T);
   const [isPending, startTransition] = useTransition();
   const abortRef = useRef<AbortController | null>(null);
   const mountedRef = useRef(true);
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const maxRetries = options.maxRetries ?? 0;
+  const retryDelayMs = options.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS;
 
   useEffect(() => {
     mountedRef.current = true;
@@ -106,12 +199,28 @@ export function useFormAction<T extends ActionState = ActionState>(
       abortRef.current = controller;
 
       startTransition(async () => {
+        let timedOut = false;
+        const timeout =
+          timeoutMs > 0
+            ? setTimeout(() => {
+                timedOut = true;
+                controller.abort(new DOMException(TIMEOUT_ERROR_MESSAGE, "AbortError"));
+                if (mountedRef.current) {
+                  setState({ error: TIMEOUT_ERROR_MESSAGE } as T);
+                }
+              }, timeoutMs)
+            : null;
+
         try {
-          const res = await apiClient.request(url, {
-            method,
-            body: formData,
-            signal: controller.signal,
+          const res = await submitWithRetry(url, method, formData, controller.signal, {
+            maxRetries,
+            retryDelayMs,
           });
+
+          if (timedOut && mountedRef.current) {
+            setState({ error: TIMEOUT_ERROR_MESSAGE } as T);
+            return;
+          }
 
           // apiClient returns null when session-expiry flow has been triggered.
           if (!res || controller.signal.aborted || !mountedRef.current) return;
@@ -162,18 +271,25 @@ export function useFormAction<T extends ActionState = ActionState>(
 
           setState(payload as T);
         } catch (error) {
+          if (timedOut && mountedRef.current) {
+            setState({ error: TIMEOUT_ERROR_MESSAGE } as T);
+            return;
+          }
+
           if (
             controller.signal.aborted ||
-            (error instanceof DOMException && error.name === "AbortError") ||
+            isAbortError(error) ||
             !mountedRef.current
           ) {
             return;
           }
           setState({ error: NETWORK_ERROR_MESSAGE } as T);
+        } finally {
+          if (timeout) clearTimeout(timeout);
         }
       });
     },
-    [method, url]
+    [maxRetries, method, retryDelayMs, timeoutMs, url]
   );
 
   return [state, formAction, isPending] as const;

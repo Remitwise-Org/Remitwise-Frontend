@@ -17,14 +17,20 @@ const flushPromises = () => new Promise<void>((r) => setTimeout(r, 0));
 // ---------------------------------------------------------------------------
 // Minimal hook harness using createRoot (no @testing-library/react needed)
 // ---------------------------------------------------------------------------
-function createHookHarness(url = "/api/test") {
+type HookOptions = Parameters<typeof useFormAction<TestState>>[2];
+
+function createHookHarness(
+  url = "/api/test",
+  method: Parameters<typeof useFormAction<TestState>>[1] = "POST",
+  options?: HookOptions
+) {
   let captured: readonly [TestState, (fd: FormData) => void, boolean] | undefined;
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container) as Root;
 
   function TestComponent() {
-    const hook = useFormAction<TestState>(url);
+    const hook = useFormAction<TestState>(url, method, options);
     captured = hook;
     return null;
   }
@@ -63,6 +69,7 @@ describe("useFormAction", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     document.body.innerHTML = "";
   });
 
@@ -272,6 +279,109 @@ describe("useFormAction", () => {
       });
       expect(harness.hook[0]).toMatchObject({
         error: "Network error. Please try again.",
+      });
+    } finally {
+      harness.unmount();
+    }
+  });
+
+  it("sets a timeout error and aborts the request when timeoutMs elapses", async () => {
+    vi.useFakeTimers();
+    let capturedSignal: AbortSignal | undefined;
+
+    vi.spyOn(apiClient, "request").mockImplementationOnce((_url, opts) => {
+      capturedSignal = opts?.signal as AbortSignal | undefined;
+      return new Promise(() => {});
+    });
+
+    const harness = createHookHarness("/api/test", "POST", {
+      timeoutMs: 100,
+    });
+    try {
+      await act(async () => {
+        harness.hook[1](new FormData());
+        await vi.advanceTimersByTimeAsync(100);
+      });
+
+      expect(capturedSignal?.aborted).toBe(true);
+      expect(harness.hook[0]).toMatchObject({
+        error: "Request timed out. Please try again.",
+      });
+    } finally {
+      harness.unmount();
+    }
+  });
+
+  it("retries transient 5xx responses for idempotent methods within the configured bound", async () => {
+    const spy = vi
+      .spyOn(apiClient, "request")
+      .mockResolvedValueOnce(jsonResponse({ success: false }, 503))
+      .mockResolvedValueOnce(jsonResponse({ success: "Retried successfully" }));
+
+    const harness = createHookHarness("/api/test", "PUT", {
+      maxRetries: 1,
+      retryDelayMs: 0,
+    });
+    try {
+      await act(async () => {
+        harness.hook[1](new FormData());
+        await flushPromises();
+        await flushPromises();
+      });
+
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(harness.hook[0]).toMatchObject({
+        success: "Retried successfully",
+      });
+    } finally {
+      harness.unmount();
+    }
+  });
+
+  it("retries network failures for idempotent methods within the configured bound", async () => {
+    const spy = vi
+      .spyOn(apiClient, "request")
+      .mockRejectedValueOnce(new Error("temporary offline"))
+      .mockResolvedValueOnce(jsonResponse({ success: "Recovered" }));
+
+    const harness = createHookHarness("/api/test", "PUT", {
+      maxRetries: 1,
+      retryDelayMs: 0,
+    });
+    try {
+      await act(async () => {
+        harness.hook[1](new FormData());
+        await flushPromises();
+        await flushPromises();
+      });
+
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(harness.hook[0]).toMatchObject({
+        success: "Recovered",
+      });
+    } finally {
+      harness.unmount();
+    }
+  });
+
+  it("does not retry non-idempotent POST submissions even when maxRetries is configured", async () => {
+    const spy = vi
+      .spyOn(apiClient, "request")
+      .mockResolvedValueOnce(jsonResponse({ success: false }, 503));
+
+    const harness = createHookHarness("/api/test", "POST", {
+      maxRetries: 1,
+      retryDelayMs: 0,
+    });
+    try {
+      await act(async () => {
+        harness.hook[1](new FormData());
+        await flushPromises();
+      });
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(harness.hook[0]).toMatchObject({
+        error: "Request failed with status 503",
       });
     } finally {
       harness.unmount();
