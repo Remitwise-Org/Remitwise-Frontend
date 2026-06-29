@@ -13,12 +13,12 @@ export class EmergencyConfig {
 
   constructor(data: Partial<EmergencyTransferConfig>) {
     this.enabled = data.enabled ?? true;
-    this.maxAmountPerTransfer = data.max_amount_per_transfer || '10000000000'; // 1000 XLM in stroops
-    this.maxDailyAmount = data.max_daily_amount || '50000000000'; // 5000 XLM in stroops
-    this.maxMonthlyCount = data.max_monthly_count || 10;
-    this.emergencyFeePercentage = data.emergency_fee_percentage || 0.5;
-    this.standardFeePercentage = data.standard_fee_percentage || 1.0;
-    this.memoPrefix = data.memo_prefix || 'EMERGENCY:';
+    this.maxAmountPerTransfer = data.max_amount_per_transfer ?? '10000000000'; // 1000 XLM in stroops
+    this.maxDailyAmount = data.max_daily_amount ?? '50000000000'; // 5000 XLM in stroops
+    this.maxMonthlyCount = data.max_monthly_count ?? 10;
+    this.emergencyFeePercentage = data.emergency_fee_percentage ?? 0.5;
+    this.standardFeePercentage = data.standard_fee_percentage ?? 1.0;
+    this.memoPrefix = data.memo_prefix ?? 'EMERGENCY:';
   }
 
   toDatabase(): EmergencyTransferConfig {

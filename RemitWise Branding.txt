@@ -1,8 +1,0 @@
-I worked on RemitWise branding Create an official logo for the 
-RemitWise organization. The logo will be used across the product 
-(header, favicon, landing page, wallet dropdown, emails) and 
-should reflect smart remittance and family financial security. 
-Current placeholder is a circular red mark with a white "R"; 
-the new logo is distinctive, scalable, and work on dark and 
-light backgrounds.
-
