@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ChevronDown, RefreshCw } from "lucide-react"
 import { CTA_TEST_IDS } from "@/lib/cta-testids"
 import { useExchangeRates } from "@/lib/context/RatesContext"
 import { useClientTranslator } from "@/lib/i18n/client"
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue"
 
 interface AmountCurrencySectionProps {
   onReview?: (amount: number, currency: string) => void
@@ -15,9 +16,47 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
   const [amount, setAmount] = useState<string>("")
   const [currency, setCurrency] = useState<string>("USDC")
   const [error, setError] = useState<string>("")
+  const [quote, setQuote] = useState<number | null>(null)
+  const [quotePending, setQuotePending] = useState(false)
+
+  // Debounce the raw amount so the quote API is only called after the user
+  // pauses typing, preventing one request per keystroke.
+  const debouncedAmount = useDebouncedValue(amount, 400)
 
   const { rates, loading, stale, error: ratesError, refresh } = useExchangeRates()
   const { t } = useClientTranslator()
+
+  // Fetch a quote whenever the debounced amount or currency changes.
+  // Using the latest debounced value ensures no stale quote is displayed.
+  useEffect(() => {
+    const numValue = parseFloat(debouncedAmount)
+    if (!debouncedAmount || isNaN(numValue) || numValue < 1 || numValue > 10000) {
+      setQuote(null)
+      return
+    }
+
+    let cancelled = false
+    setQuotePending(true)
+
+    fetch(`/api/remittance/quote?amount=${encodeURIComponent(debouncedAmount)}&currency=${encodeURIComponent(currency)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { quote?: number } | null) => {
+        if (!cancelled) {
+          setQuote(data?.quote ?? null)
+          setQuotePending(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setQuote(null)
+          setQuotePending(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [debouncedAmount, currency])
 
   // Build conversion map from live rates (sell USD, buy asset)
   const conversionRates: Record<string, number> = { USDC: 1.0 }
@@ -102,6 +141,14 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
             </div>
             <p className="text-xs text-zinc-500 mt-2">Min: $1, Max: $10,000</p>
             {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+            {!error && quotePending && (
+              <p className="text-xs text-zinc-400 mt-2">Fetching quote…</p>
+            )}
+            {!error && !quotePending && quote !== null && (
+              <p className="text-xs text-green-400 mt-2">
+                Estimated receive: {quote.toFixed(2)} {currency}
+              </p>
+            )}
           </div>
         </div>
 
