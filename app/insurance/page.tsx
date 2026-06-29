@@ -11,6 +11,8 @@ import PolicyDetail from "@/components/insurance/PolicyDetail";
 import NewPolicyForm from "@/components/forms/NewPolicyForm";
 import PageHeadingLink from "@/components/PageHeadingLink";
 import { useClientTranslator } from "@/lib/i18n/client";
+import { useFormAction } from "@/lib/hooks/useFormAction";
+import { useToast } from "@/lib/context/ToastContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,6 +34,20 @@ export default function InsurancePage() {
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [showNewPolicy, setShowNewPolicy] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const { toast } = useToast();
+
+  // Live create-policy form wired to POST /api/insurance.
+  const [formState, formAction, formPending] = useFormAction("/api/insurance");
+
+  // On a successful create, toast, reset the form, and refresh the list.
+  useEffect(() => {
+    if (!formState?.success) return;
+    toast({ variant: "success", title: t("insurance.form_success") });
+    setShowNewPolicy(false);
+    setFormKey((k) => k + 1); // remount the form to clear inputs/errors
+    setSelectedPolicy(null);
+  }, [formState?.success, toast, t]);
 
   // Fetch policies on mount
   useEffect(() => {
@@ -138,9 +154,11 @@ export default function InsurancePage() {
         {showNewPolicy && (
           <div className="mb-8">
             <NewPolicyForm
-              pending={false}
-              state={{}}
-              formAction={() => {}}
+              key={formKey}
+              pending={formPending}
+              state={formState}
+              formAction={formAction}
+              t={t}
             />
           </div>
         )}
