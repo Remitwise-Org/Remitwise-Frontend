@@ -24,11 +24,6 @@ export interface CategoryDataPoint {
   percentage: number
 }
 
-interface CustomTooltipProps {
-  active?: boolean
-  payload?: Array<{ color?: string; payload: CategoryDataPoint }>
-}
-
 export const MOCK_CATEGORY_DATA: CategoryDataPoint[] = [
   { name: 'Family Support', amount: 1800, percentage: 56 },
   { name: 'Education',      amount: 850,  percentage: 26 },
@@ -112,11 +107,13 @@ interface CategoryDonutChartProps {
 function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutChartProps) {
   const summaryId = useId()
   const { t } = useClientTranslator()
-  const summaryItems = useMemo(() =>
-  data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage}%)`),
-  [data]
-);
-const chartSummary = buildChartSummary(summaryItems, t);
+
+  const summaryItems = useMemo(
+    () =>
+      data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage}%)`),
+    [data],
+  )
+  const chartSummary = buildChartSummary(summaryItems, t)
   const [activeCategory, setActiveCategory] = useState<CategoryDataPoint | null>(null)
   // Use the canonical hook — reactive, SSR-safe, and shared across the codebase.
   const reducedMotion = usePrefersReducedMotion()
@@ -150,20 +147,10 @@ const chartSummary = buildChartSummary(summaryItems, t);
     />
   )), [data, activeCategory, reducedMotion])
 
-  const total  = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
+  const total = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
   const topCat = useMemo(() => data[0], [data])
-
-
-
-  const ariaLabel = useMemo(
-    () => buildChartImageLabel('Top categories', summaryItems, t),
-    [summaryItems, t],
-  )
-
-  const summaryText = useMemo(
-    () => buildChartSummary(summaryItems, t),
-    [summaryItems, t],
-  )
+  const ariaLabel = useMemo(() => buildChartImageLabel('Top categories', summaryItems, t), [summaryItems, t])
+  const summaryText = useMemo(() => buildChartSummary(summaryItems, t), [summaryItems, t])
 
   return (
     <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">

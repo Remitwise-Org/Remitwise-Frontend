@@ -121,7 +121,6 @@ function SpendingVsSavingsChartInner({
         return Math.round((savings / (spending + savings)) * 100)
     }, [data])
 
-    // Generate accessible label and summary
     const summaryItems = useMemo(
         () =>
             data.map(
