@@ -1,17 +1,28 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { ArrowUpRight } from 'lucide-react';
 import { apiClient } from '@/lib/client/apiClient';
 import { runWidgetFetchWithRetry } from '@/lib/client/widgetFetchRetry';
-import { CategoryDonutChart, type CategoryDataPoint } from '@/components/Insights/categoryDonutChart';
-import { RemittanceTrendChart, type TrendDataPoint } from '@/components/Insights/remittanceTrendChart';
+import { SkeletonChart } from '@/components/ui/Skeleton';
+import { type CategoryDataPoint } from '@/components/Insights/categoryDonutChart';
+import { type TrendDataPoint } from '@/components/Insights/remittanceTrendChart';
 import { WidgetErrorState, WidgetEmptyState } from '@/components/ui/WidgetStates';
 import { SkeletonCard } from '@/components/ui/Skeleton';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import PageHeadingLink from '@/components/PageHeadingLink';
 import { useSeo } from '@/lib/hooks/useSeo';
+
+const CategoryDonutChart = dynamic(
+  () => import('@/components/Insights/categoryDonutChart').then(m => ({ default: m.CategoryDonutChart })),
+  { ssr: false },
+)
+const RemittanceTrendChart = dynamic(
+  () => import('@/components/Insights/remittanceTrendChart').then(m => ({ default: m.RemittanceTrendChart })),
+  { ssr: false },
+)
 
 type Period = 'current_month' | 'last_3_months' | 'last_year';
 
@@ -131,8 +142,12 @@ export default function InsightPage() {
                     </div>
                     
                     <div className="grid gap-6 lg:grid-cols-2 items-start">
-                        <CategoryDonutChart data={breakdownData} />
-                        <RemittanceTrendChart data={trendData} />
+                        <Suspense fallback={<SkeletonChart type="donut" />}>
+                            <CategoryDonutChart data={breakdownData} />
+                        </Suspense>
+                        <Suspense fallback={<SkeletonChart type="line" />}>
+                            <RemittanceTrendChart data={trendData} />
+                        </Suspense>
                     </div>
                 </div>
             );

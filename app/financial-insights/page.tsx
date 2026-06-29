@@ -1,18 +1,25 @@
 'use client'
 
-import { lazy, Suspense } from 'react'
+import { Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import { Send, PiggyBank, FileText, Shield } from 'lucide-react'
 import FinancialInsightsHeader from '@/components/FinancialInsightsHeader'
 import StatCard from '@/components/Dashboard/StatCard'
-import { SpendingVsSavingsChart } from '@/components/Insights/spendingVsSavingChart'
 import { TopCategoriesWidget } from '@/components/Insights/TopCategoriesWidget'
+import { SkeletonChart } from '@/components/ui/Skeleton'
 import { useSeo } from '@/lib/hooks/useSeo'
 
-const RemittanceTrendChart = lazy(() =>
-  import('@/components/Insights/remittanceTrendChart').then(m => ({ default: m.RemittanceTrendChart }))
+const SpendingVsSavingsChart = dynamic(
+  () => import('@/components/Insights/spendingVsSavingChart').then(m => ({ default: m.SpendingVsSavingsChart })),
+  { ssr: false },
 )
-const CategoryDonutChart = lazy(() =>
-  import('@/components/Insights/categoryDonutChart').then(m => ({ default: m.CategoryDonutChart }))
+const RemittanceTrendChart = dynamic(
+  () => import('@/components/Insights/remittanceTrendChart').then(m => ({ default: m.RemittanceTrendChart })),
+  { ssr: false },
+)
+const CategoryDonutChart = dynamic(
+  () => import('@/components/Insights/categoryDonutChart').then(m => ({ default: m.CategoryDonutChart })),
+  { ssr: false },
 )
 
 // Summary overview — merges the StatCard breakdown (Total Remittances / Saved /
@@ -72,16 +79,18 @@ export default function FinancialInsightsPage() {
 
           {/* Spending vs Savings — full width on mobile, half on desktop */}
           <div className="lg:col-span-2">
-            <SpendingVsSavingsChart />
+            <Suspense fallback={<SkeletonChart type="bar" />}>
+              <SpendingVsSavingsChart />
+            </Suspense>
           </div>
 
           {/* Trend line */}
-          <Suspense fallback={<div className="h-[308px] rounded-3xl bg-white/5 animate-pulse" />}>
+          <Suspense fallback={<SkeletonChart type="line" />}>
             <RemittanceTrendChart />
           </Suspense>
 
           {/* Category donut */}
-          <Suspense fallback={<div className="h-[308px] rounded-3xl bg-white/5 animate-pulse" />}>
+          <Suspense fallback={<SkeletonChart type="donut" />}>
             <CategoryDonutChart />
           </Suspense>
 

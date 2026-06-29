@@ -1,6 +1,6 @@
  'use client'
 
-import { useMemo, memo } from 'react'
+import { useMemo, useCallback, memo } from 'react'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import { Activity } from 'lucide-react';
 import {
@@ -66,7 +66,7 @@ interface CustomTooltipProps {
   label?: string
 }
 
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null
   const point = payload[0]?.payload as TrendDataPoint
 
@@ -85,7 +85,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       </div>
     </div>
   )
-}
+})
 
 // ── Component ───────────────────────────────────────
 
@@ -126,6 +126,19 @@ function RemittanceTrendChartInner({
   const chartLabel = useMemo(() => buildChartImageLabel('Remittance Trend', summaryItems, t), [summaryItems, t])
   const chartSummary = useMemo(() => buildChartSummary(summaryItems, t), [summaryItems, t])
 
+  const margin = useMemo(() => ({ top: 8, right: 4, bottom: 0, left: -16 }), [])
+  const xAxisTick = useMemo(() => ({ fill: AXIS_COLOR, fontSize: 10 }), [])
+  const yAxisTick = useMemo(() => ({ fill: AXIS_COLOR, fontSize: 11 }), [])
+  const tooltipCursor = useMemo(() => ({ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }), [])
+  const referenceLabel = useMemo(() => ({
+    value: `Avg $${average.toLocaleString()}`,
+    position: 'insideTopRight' as const,
+    fontSize: 10,
+    fill: '#6b7280',
+  }), [average])
+  const activeDot = useMemo(() => ({ r: 5, fill: LINE_COLOR, stroke: '#0A0A0A', strokeWidth: 2 }), [])
+  const tickFormatter = useCallback((v: number) => `$${v >= 1000 ? `${v / 1000}k` : v}`, [])
+
   if (isEmpty) {
     return (
       <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
@@ -152,9 +165,9 @@ function RemittanceTrendChartInner({
         <p className="sr-only" aria-live="polite">
           No remittance trend data available.
         </p>
-      </div>
-    )
-  }
+    </div>
+  )
+}
 
   return (
     <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
@@ -198,7 +211,7 @@ function RemittanceTrendChartInner({
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart
             data={data}
-            margin={{ top: 8, right: 4, bottom: 0, left: -16 }}
+            margin={margin}
             aria-hidden="true"
           >
             <defs>
@@ -212,32 +225,27 @@ function RemittanceTrendChartInner({
 
             <XAxis
               dataKey="date"
-              tick={{ fill: AXIS_COLOR, fontSize: 10 }}
+              tick={xAxisTick}
               axisLine={false}
               tickLine={false}
               interval="preserveStartEnd"
             />
             <YAxis
-              tick={{ fill: AXIS_COLOR, fontSize: 11 }}
+              tick={yAxisTick}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(v: number) => `$${v >= 1000 ? `${v / 1000}k` : v}`}
+              tickFormatter={tickFormatter}
               width={40}
               className="hidden sm:block"
             />
 
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
+            <Tooltip content={CustomTooltip} cursor={tooltipCursor} />
 
             <ReferenceLine
               y={average}
               stroke="rgba(255,255,255,0.15)"
               strokeDasharray="4 4"
-              label={{
-                value: `Avg $${average.toLocaleString()}`,
-                position: 'insideTopRight',
-                fontSize: 10,
-                fill: '#6b7280',
-              }}
+              label={referenceLabel}
             />
 
             <Area
@@ -248,7 +256,7 @@ function RemittanceTrendChartInner({
               fill="url(#trendGradient)"
               dot={false}
               isAnimationActive={!reducedMotion}
-              activeDot={{ r: 5, fill: LINE_COLOR, stroke: '#0A0A0A', strokeWidth: 2 }}
+              activeDot={activeDot}
             />
           </AreaChart>
         </ResponsiveContainer>
