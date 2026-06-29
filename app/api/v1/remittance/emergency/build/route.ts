@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { StellarTransactionBuilder } from '../../../../../../services/transaction-builder-service';
 import { getSession } from '../../../../../../lib/session';
+import { PolicyService } from '../../../../../../services/policy-service';
+import { EventStorageService } from '../../../../../../services/event-storage-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +22,22 @@ export async function POST(req: NextRequest) {
     if (!destinationAccount || !amount) {
       return NextResponse.json(
         { error: 'Bad Request', message: 'Missing destinationAccount or amount' },
+        { status: 400 }
+      );
+    }
+
+    const eventStorage = new EventStorageService();
+    const policyService = new PolicyService(eventStorage);
+
+    const validationResult = await policyService.validateEmergencyTransfer({
+      userId: session.address,
+      amount,
+      assetCode: assetCode || 'XLM',
+    });
+
+    if (!validationResult.valid) {
+      return NextResponse.json(
+        { error: 'Policy Violation', message: validationResult.errors.join(', ') },
         { status: 400 }
       );
     }
