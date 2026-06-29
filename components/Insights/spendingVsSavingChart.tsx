@@ -41,7 +41,7 @@ const GRID_COLOR = 'rgba(255,255,255,0.06)';
 const AXIS_COLOR = '#6b7280';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CustomTooltip({ active, payload, label }: TooltipContentProps<any, any>) {
+export const CustomTooltip = ({ active, payload, label }: TooltipContentProps<any, any>) => {
     if (!active || !payload?.length) return null
 
     return (
@@ -80,7 +80,7 @@ function CustomTooltip({ active, payload, label }: TooltipContentProps<any, any>
 type SpendingTooltipProps = TooltipContentProps<number | string | readonly (number | string)[], string | number>
 
 // ── Custom legend ─────────────────────────────────────────────────────────────
-function CustomLegend() {
+export const CustomLegend = () => {
     return (
         <div className="flex items-center justify-center gap-6 mt-2">
             {[
@@ -111,13 +111,13 @@ function SpendingVsSavingsChartInner({
     data = MOCK_SPENDING_VS_SAVINGS,
 }: SpendingVsSavingsChartProps) {
     const reducedMotion = useReducedMotion()
+
     const savingsRate = useMemo(() => {
         const spending = data.reduce((s, d) => s + d.spending, 0)
         const savings  = data.reduce((s, d) => s + d.savings, 0)
         return Math.round((savings / (spending + savings)) * 100)
     }, [data])
 
-    // Generate accessible label and summary
     const summaryItems = useMemo(
         () =>
             data.map(

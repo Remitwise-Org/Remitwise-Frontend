@@ -22,11 +22,6 @@ export interface CategoryDataPoint {
   percentage: number
 }
 
-interface CustomTooltipProps {
-  active?: boolean
-  payload?: Array<{ color?: string; payload: CategoryDataPoint }>
-}
-
 export const MOCK_CATEGORY_DATA: CategoryDataPoint[] = [
   { name: 'Family Support', amount: 1800, percentage: 56 },
   { name: 'Education',      amount: 850,  percentage: 26 },
@@ -39,7 +34,12 @@ const SLICE_COLORS = INSIGHTS_PALETTE.slice(0, 8); // use first 8 colors
 const AXIS_COLOR = '#6b7280'
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: Array<{ color?: string; payload: CategoryDataPoint }>
+}
+
+export const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (!active || !payload?.length) return null
   const entry = payload[0]
   const data  = entry.payload as CategoryDataPoint
@@ -75,7 +75,7 @@ interface CenterLabelProps {
   total: number
 }
 
-function CenterLabel({ cx, cy, active, total }: CenterLabelProps) {
+export const CenterLabel = ({ cx, cy, active, total }: CenterLabelProps) => {
   return (
     <g>
       {active ? (
@@ -115,28 +115,20 @@ function useReducedMotion() {
 function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutChartProps) {
   const summaryId = useId()
   const { t } = useClientTranslator()
-  const summaryItems = useMemo(() =>
-  data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage}%)`),
-  [data]
-);
-const chartSummary = buildChartSummary(summaryItems, t);
+
+  const summaryItems = useMemo(
+    () =>
+      data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage}%)`),
+    [data],
+  )
+  const chartSummary = buildChartSummary(summaryItems, t)
   const [activeCategory, setActiveCategory] = useState<CategoryDataPoint | null>(null)
   const reducedMotion = useReducedMotion()
 
-  const total  = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
+  const total = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
   const topCat = useMemo(() => data[0], [data])
-
-
-
-  const ariaLabel = useMemo(
-    () => buildChartImageLabel('Top categories', summaryItems, t),
-    [summaryItems, t],
-  )
-
-  const summaryText = useMemo(
-    () => buildChartSummary(summaryItems, t),
-    [summaryItems, t],
-  )
+  const ariaLabel = useMemo(() => buildChartImageLabel('Top categories', summaryItems, t), [summaryItems, t])
+  const summaryText = useMemo(() => buildChartSummary(summaryItems, t), [summaryItems, t])
 
   return (
     <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
