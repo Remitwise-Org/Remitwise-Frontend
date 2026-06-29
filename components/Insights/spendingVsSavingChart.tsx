@@ -1,6 +1,6 @@
  'use client'
 
-import { useMemo, memo } from 'react'
+import { useMemo, useCallback, memo } from 'react'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import {
     BarChart,
@@ -46,7 +46,7 @@ const GRID_COLOR     = 'rgba(255,255,255,0.06)';
 const AXIS_COLOR     = '#6b7280';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CustomTooltip({ active, payload, label }: TooltipContentProps<any, any>) {
+const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: TooltipContentProps<any, any>) {
     if (!active || !payload?.length) return null
 
     return (
@@ -80,18 +80,20 @@ function CustomTooltip({ active, payload, label }: TooltipContentProps<any, any>
             )}
         </div>
     )
-}
+})
 
 type SpendingTooltipProps = TooltipContentProps<number | string | readonly (number | string)[], string | number>
 
 // ── Custom legend ─────────────────────────────────────────────────────────────
-function CustomLegend() {
+const LEGEND_ITEMS = [
+  { color: SPENDING_COLOR, label: 'Spending' },
+  { color: SAVINGS_COLOR,  label: 'Savings'  },
+] as const
+
+const CustomLegend = memo(function CustomLegend() {
     return (
         <div className="flex items-center justify-center gap-6 mt-2">
-            {[
-                { color: SPENDING_COLOR, label: 'Spending' },
-                { color: SAVINGS_COLOR,  label: 'Savings'  },
-            ].map(({ color, label }) => (
+            {LEGEND_ITEMS.map(({ color, label }) => (
                 <div key={label} className="flex items-center gap-2">
                     <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
                     <span className="text-xs text-gray-400">{label}</span>
@@ -99,7 +101,7 @@ function CustomLegend() {
             ))}
         </div>
     )
-}
+})
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -137,6 +139,12 @@ function SpendingVsSavingsChartInner({
     const chartLabel = useMemo(() => buildChartImageLabel('Spending vs Savings', summaryItems, t), [summaryItems, t])
     const chartSummary = useMemo(() => buildChartSummary(summaryItems, t), [summaryItems, t])
 
+    const margin = useMemo(() => ({ top: 4, right: 4, bottom: 0, left: -16 }), [])
+    const axisTick = useMemo(() => ({ fill: AXIS_COLOR, fontSize: 11 }), [])
+    const tooltipCursor = useMemo(() => ({ fill: 'rgba(255,255,255,0.03)' }), [])
+    const barRadius = useMemo(() => [4, 4, 0, 0] as const, [])
+    const tickFormatter = useCallback((v: number) => `$${v >= 1000 ? `${v / 1000}k` : v}`, [])
+
     return (
         <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
             {/* Header */}
@@ -167,7 +175,7 @@ function SpendingVsSavingsChartInner({
                         data={data}
                         barCategoryGap="30%"
                         barGap={4}
-                        margin={{ top: 4, right: 4, bottom: 0, left: -16 }}
+                        margin={margin}
                         aria-hidden="true"
                     >
                         <CartesianGrid
@@ -177,21 +185,21 @@ function SpendingVsSavingsChartInner({
                         />
                         <XAxis
                             dataKey="month"
-                            tick={{ fill: AXIS_COLOR, fontSize: 11 }}
+                            tick={axisTick}
                             axisLine={false}
                             tickLine={false}
                         />
                         <YAxis
-                            tick={{ fill: AXIS_COLOR, fontSize: 11 }}
+                            tick={axisTick}
                             axisLine={false}
                             tickLine={false}
-                            tickFormatter={(v: number) => `$${v >= 1000 ? `${v / 1000}k` : v}`}
+                            tickFormatter={tickFormatter}
                             width={40}
                             className="hidden sm:block"
                         />
-                        <Tooltip content={CustomTooltip as any} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                        <Bar dataKey="spending" name="spending" fill={SPENDING_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
-                        <Bar dataKey="savings"  name="savings"  fill={SAVINGS_COLOR}  radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} />
+                        <Tooltip content={CustomTooltip as any} cursor={tooltipCursor} />
+                        <Bar dataKey="spending" name="spending" fill={SPENDING_COLOR} radius={barRadius} isAnimationActive={!reducedMotion} />
+                        <Bar dataKey="savings"  name="savings"  fill={SAVINGS_COLOR}  radius={barRadius} isAnimationActive={!reducedMotion} />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
