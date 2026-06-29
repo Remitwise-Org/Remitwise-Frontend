@@ -67,7 +67,7 @@ function clearStoredSessionExpiry() {
  *
  * @returns The current expiry UI state plus actions for warning dismissal and reconnect.
  */
-export function useSessionExpiry(): SessionExpiryState {
+export function useSessionExpiry({ clock = Date.now }: { clock?: () => number } = {}): SessionExpiryState {
   const [phase, setPhase] = useState<SessionPhase>('none');
   const [message, setMessage] = useState('');
   const [countdown, setCountdown] = useState(0);
@@ -106,7 +106,7 @@ export function useSessionExpiry(): SessionExpiryState {
     storeSessionExpiry(expiresAt);
     clearTimers();
 
-    const now = Date.now();
+    const now = clock();
     const timeUntilExpiry = expiresAt - now;
     const timeUntilWarning = Math.max(0, timeUntilExpiry - WARNING_SECONDS * 1000);
 
@@ -125,7 +125,7 @@ export function useSessionExpiry(): SessionExpiryState {
     expiryTimerRef.current = setTimeout(() => {
       sessionHandler.handleSessionExpiry();
     }, timeUntilExpiry);
-  }, [clearTimers]);
+  }, [clearTimers, clock]);
 
   const staySignedIn = useCallback(async () => {
     if (process.env.NEXT_PUBLIC_SESSION_REFRESH_ENABLED !== 'true') {
