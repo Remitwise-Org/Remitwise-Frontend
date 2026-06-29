@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Metadata } from "next";
 import PageHeadingLink from "@/components/PageHeadingLink";
+import { getTutorialById, TUTORIALS } from "@/lib/tutorials";
 
 type Props = {
   params: Promise<{ tutorialId: string }>;
@@ -8,18 +9,27 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { tutorialId } = await params;
-  const formattedTitle = tutorialId
+  const tutorial = getTutorialById(tutorialId);
+  const title = tutorial?.title ?? tutorialId
     .replace(/-/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
   return {
-    title: `${formattedTitle} Tutorial | RemitWise`,
-    description: `Step-by-step tutorial for ${formattedTitle} on RemitWise. Track your progress chapter by chapter.`,
+    title: `${title} | RemitWise`,
+    description: tutorial?.description ??
+      `Step-by-step tutorial for ${title} on RemitWise. Track your progress chapter by chapter.`,
   };
+}
+
+export async function generateStaticParams() {
+  return TUTORIALS.map((t) => ({ tutorialId: t.id }));
 }
 
 export default async function TutorialOverviewPage({ params }: Props) {
   const { tutorialId } = await params;
-  const chapters = Array.from({ length: 5 }).map((_, i) => ({
+  const tutorial = getTutorialById(tutorialId);
+
+  const chaptersCount = tutorial?.chaptersCount ?? 5;
+  const chapters = Array.from({ length: chaptersCount }).map((_, i) => ({
     id: String(i),
     title: `Chapter ${i + 1}`,
     description: "Short chapter summary",
@@ -36,6 +46,8 @@ export default async function TutorialOverviewPage({ params }: Props) {
   const resumeIndex = chapters.findIndex((chapter) => chapter.progress < 100);
   const resumeChapter = resumeIndex >= 0 ? resumeIndex : 0;
 
+  const displayTitle = tutorial?.title ?? tutorialId;
+
   return (
     <div className="min-h-screen bg-bg1 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -46,15 +58,15 @@ export default async function TutorialOverviewPage({ params }: Props) {
             </Link>
             <PageHeadingLink
               headingId="tutorial-overview-page-heading"
-              label={`${tutorialId} tutorial`}
+              label={`${displayTitle} tutorial`}
               wrapperClassName="mt-3 flex min-w-0 items-center gap-2"
               headingClassName="text-3xl font-bold text-foreground"
               buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-current/15 text-current/70 transition-colors hover:bg-current/10 hover:text-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010]"
             >
-              {tutorialId}
+              {displayTitle}
             </PageHeadingLink>
             <p className="mt-2 text-sm text-muted max-w-2xl">
-              Continue your learning path and resume the next available chapter when you’re ready.
+              {tutorial?.description ?? "Continue your learning path and resume the next available chapter when you're ready."}
             </p>
           </div>
 
