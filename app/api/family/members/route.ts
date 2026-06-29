@@ -1,122 +1,132 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { withAuth } from '@/lib/auth';
 import { getAllMembers, buildAddMemberTx } from '@/lib/contracts/family-wallet';
-import { AddMemberRequest } from '@/utils/types/family-wallet.types';
+import { resolveContractId } from '@/lib/contracts/network-resolution';
+
+// ---------------------------------------------------------------------------
+// Zod schema for AddMemberRequest body validation
+// ---------------------------------------------------------------------------
+
+const AddMemberSchema = z.object({
+    address: z
+        .string()
+        .regex(/^G[A-Z0-9]{55}$/, 'Invalid Stellar address format'),
+    role: z.enum(['admin', 'sender', 'recipient'], {
+        errorMap: () => ({ message: 'Role must be admin, sender, or recipient' }),
+    }),
+    spendingLimit: z
+        .number({ invalid_type_error: 'spendingLimit must be a number' })
+        .nonnegative('spendingLimit must be non-negative'),
+});
+
+// ---------------------------------------------------------------------------
+// Contract-id guard — returns a 503 response if the contract is unresolved
+// ---------------------------------------------------------------------------
+
+function getContractIdOrError(): NextResponse | null {
+    try {
+        resolveContractId('FAMILY_WALLET');
+        return null;
+    } catch {
+        return NextResponse.json(
+            {
+                error: 'Service Unavailable',
+                message: 'Family wallet contract ID is not configured for this network.',
+            },
+            { status: 503 },
+        );
+    }
+}
+
+// ---------------------------------------------------------------------------
+// GET /api/family/members
+// ---------------------------------------------------------------------------
 
 /**
  * GET /api/family/members
- * Get all family members
- * Protected: Requires authentication
+ *
+ * Returns the list of family members for the authenticated user.
+ * Optionally accepts `?admin=<stellarAddress>` to filter by admin.
+ *
+ * Responses:
+ *   200 – { members: FamilyMember[] }
+ *   401 – Unauthorized (no valid session)
+ *   503 – Contract not configured on this network
+ *   500 – Unexpected server error
  */
-export async function GET(request: NextRequest) {
-    try {
-        // TODO: Get session/auth from request
-        // const session = await getSession(request);
-        // if (!session) {
-        //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        // }
+async function getHandler(request: NextRequest): Promise<NextResponse> {
+    const contractError = getContractIdOrError();
+    if (contractError) return contractError;
 
-        // Contract not yet deployed - return 501
-        return NextResponse.json(
-            {
-                error: 'Not Implemented',
-                message: 'Family wallet contract not yet deployed. This endpoint will be available once the contract is deployed.',
-                documentation: 'Use getAllMembers(adminAddress?) from lib/contracts/family-wallet.ts'
-            },
-            { status: 501 }
-        );
-
-        // TODO: Uncomment when contract is deployed
-        // const adminAddress = request.nextUrl.searchParams.get('admin');
-        // const members = await getAllMembers(adminAddress || undefined);
-        // return NextResponse.json({ members });
-
-    } catch (error) {
-        console.error('Error fetching family members:', error);
-        return NextResponse.json(
-            { error: 'Internal Server Error' },
-            { status: 500 }
-        );
-    }
+    const adminAddress = request.nextUrl.searchParams.get('admin') ?? undefined;
+    const members = await getAllMembers(adminAddress);
+    return NextResponse.json({ members });
 }
+
+export const GET = withAuth(async (request: NextRequest) =>
+    getHandler(request),
+) as (request: NextRequest) => Promise<NextResponse>;
+
+// ---------------------------------------------------------------------------
+// POST /api/family/members
+// ---------------------------------------------------------------------------
 
 /**
  * POST /api/family/members
- * Add a new family member
- * Protected: Requires admin authentication
+ *
+ * Builds a Stellar transaction XDR to add a new family member.
+ * The caller must sign and submit the returned XDR.
+ *
+ * Request body (JSON): { address, role, spendingLimit }
+ *
+ * Responses:
+ *   200 – { transactionXdr: string, message: string }
+ *   400 – Validation error
+ *   401 – Unauthorized (no valid session)
+ *   503 – Contract not configured on this network
+ *   500 – Unexpected server error
  */
-export async function POST(request: NextRequest) {
+async function postHandler(
+    request: NextRequest,
+    adminAddress: string,
+): Promise<NextResponse> {
+    const contractError = getContractIdOrError();
+    if (contractError) return contractError;
+
+    let rawBody: unknown;
     try {
-        // TODO: Get session/auth from request
-        // const session = await getSession(request);
-        // if (!session) {
-        //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        // }
-        // if (session.role !== 'admin') {
-        //   return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 });
-        // }
-
-        // Contract not yet deployed - return 501
+        rawBody = await request.json();
+    } catch {
         return NextResponse.json(
-            {
-                error: 'Not Implemented',
-                message: 'Family wallet contract not yet deployed. This endpoint will be available once the contract is deployed.',
-                documentation: 'Use buildAddMemberTx(adminAddress, memberAddress, role, spendingLimit) from lib/contracts/family-wallet.ts'
-            },
-            { status: 501 }
-        );
-
-        // TODO: Uncomment when contract is deployed
-        // const body: AddMemberRequest = await request.json();
-        // 
-        // // Validate request body
-        // if (!body.address || !body.role || body.spendingLimit === undefined) {
-        //   return NextResponse.json(
-        //     { error: 'Missing required fields: address, role, spendingLimit' },
-        //     { status: 400 }
-        //   );
-        // }
-        //
-        // // Validate Stellar address format
-        // if (!/^G[A-Z0-9]{55}$/.test(body.address)) {
-        //   return NextResponse.json(
-        //     { error: 'Invalid Stellar address format' },
-        //     { status: 400 }
-        //   );
-        // }
-        //
-        // // Validate role
-        // if (!['admin', 'sender', 'recipient'].includes(body.role)) {
-        //   return NextResponse.json(
-        //     { error: 'Invalid role. Must be: admin, sender, or recipient' },
-        //     { status: 400 }
-        //   );
-        // }
-        //
-        // // Validate spending limit
-        // if (body.spendingLimit < 0) {
-        //   return NextResponse.json(
-        //     { error: 'Spending limit must be non-negative' },
-        //     { status: 400 }
-        //   );
-        // }
-        //
-        // const txXdr = await buildAddMemberTx(
-        //   session.address,
-        //   body.address,
-        //   body.role,
-        //   body.spendingLimit
-        // );
-        //
-        // return NextResponse.json({ 
-        //   transactionXdr: txXdr,
-        //   message: 'Transaction built successfully. Sign and submit to add member.'
-        // });
-
-    } catch (error) {
-        console.error('Error adding family member:', error);
-        return NextResponse.json(
-            { error: 'Internal Server Error' },
-            { status: 500 }
+            { error: 'Bad Request', message: 'Request body must be valid JSON' },
+            { status: 400 },
         );
     }
+
+    const parseResult = AddMemberSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+        const issues = parseResult.error.issues.map((i) => i.message).join('; ');
+        return NextResponse.json(
+            { error: 'Validation Error', message: issues },
+            { status: 400 },
+        );
+    }
+
+    const { address, role, spendingLimit } = parseResult.data;
+    const transactionXdr = await buildAddMemberTx(
+        adminAddress,
+        address,
+        role,
+        spendingLimit,
+    );
+
+    return NextResponse.json({
+        transactionXdr,
+        message: 'Transaction built successfully. Sign and submit to add member.',
+    });
 }
+
+export const POST = withAuth(async (request: NextRequest, address: string) =>
+    postHandler(request, address),
+) as (request: NextRequest) => Promise<NextResponse>;
