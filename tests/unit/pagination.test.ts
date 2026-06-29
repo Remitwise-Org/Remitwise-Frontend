@@ -39,6 +39,10 @@ describe('validatePaginationParams', () => {
     expect(validatePaginationParams({ limit: 9999 }).limit).toBe(100);
   });
 
+  it('clamps limit of 1000 down to 100', () => {
+    expect(validatePaginationParams({ limit: 1000 }).limit).toBe(100);
+  });
+
   it('passes cursor through unchanged', () => {
     const { cursor } = validatePaginationParams({ cursor: 'cursor-abc' });
     expect(cursor).toBe('cursor-abc');
@@ -47,6 +51,11 @@ describe('validatePaginationParams', () => {
   it('passes undefined cursor through', () => {
     const { cursor } = validatePaginationParams({});
     expect(cursor).toBeUndefined();
+  });
+
+  it('passes empty string cursor through unchanged', () => {
+    const { cursor } = validatePaginationParams({ cursor: '' });
+    expect(cursor).toBe('');
   });
 });
 
@@ -69,6 +78,13 @@ describe('createPaginatedResponse', () => {
     const data = [{ id: 'x' }, { id: 'y' }, { id: 'z' }];
     const result = createPaginatedResponse(data, 3, true, getId);
     expect(result.nextCursor).toBe('z');
+  });
+
+  it('sets nextCursor to numeric id when getId returns number', () => {
+    const data = [{ id: 1 }, { id: 2 }, { id: 3 }];
+    const getIdNumeric = (item: { id: number }) => item.id;
+    const result = createPaginatedResponse(data, 3, true, getIdNumeric);
+    expect(result.nextCursor).toBe('3');
   });
 
   it('does not set nextCursor when data is empty', () => {
@@ -133,6 +149,11 @@ describe('paginateData', () => {
 
   it('ignores unknown cursor and starts from beginning', () => {
     const result = paginateData(items, 3, getId, 'unknown-cursor');
+    expect(result.data).toEqual([{ id: '1' }, { id: '2' }, { id: '3' }]);
+  });
+
+  it('ignores empty string cursor and starts from beginning', () => {
+    const result = paginateData(items, 3, getId, '');
     expect(result.data).toEqual([{ id: '1' }, { id: '2' }, { id: '3' }]);
   });
 });
