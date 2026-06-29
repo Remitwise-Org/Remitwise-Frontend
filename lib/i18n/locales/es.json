@@ -181,5 +181,14 @@
       "dateLabel": "Fecha objetivo",
       "iconLabel": "Elige un icono"
     }
+  },
+  "emergencyTransfer": {
+    "address_label": "Dirección Stellar del Destinatario",
+    "address_ph": "G...",
+    "err_address": "Ingresa una dirección Stellar válida (empieza con G).",
+    "err_amount": "Ingresa un monto mayor que 0.",
+    "submitting": "Enviando…",
+    "submit_error": "No se pudo crear la transferencia. Inténtalo de nuevo.",
+    "submit_success": "Carga de transferencia lista para firmar."
   }
 }

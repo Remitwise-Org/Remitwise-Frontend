@@ -181,5 +181,14 @@
       "dateLabel": "Target date",
       "iconLabel": "Choose an icon"
     }
+  },
+  "emergencyTransfer": {
+    "address_label": "Recipient Stellar Address",
+    "address_ph": "G...",
+    "err_address": "Enter a valid Stellar address (starts with G).",
+    "err_amount": "Enter an amount greater than 0.",
+    "submitting": "Submitting…",
+    "submit_error": "Failed to build the transfer. Please try again.",
+    "submit_success": "Transfer payload ready for signing."
   }
 }

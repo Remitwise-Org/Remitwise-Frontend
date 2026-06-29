@@ -10,8 +10,17 @@ import {
   ArrowRight,
   Check,
   DollarSign,
+  Loader2,
 } from "lucide-react";
+import { StrKey } from "@stellar/stellar-sdk";
 import { useFocusTrap } from "../../src/lib/hooks/useFocusTrap";
+import { apiClient } from "@/lib/client/apiClient";
+import { useClientTranslator } from "@/lib/i18n/client";
+
+/** Validate a recipient Stellar account (G... ed25519 public key). */
+export function isValidStellarAddress(address: string): boolean {
+  return StrKey.isValidEd25519PublicKey(address.trim());
+}
 
 const EmergencyTransferModal = ({
   isOpen,
@@ -20,14 +29,57 @@ const EmergencyTransferModal = ({
   isOpen: boolean;
   onClose: () => void;
 }) => {
+  const { t } = useClientTranslator();
   const [speed, setSpeed] = useState<"emergency" | "regular">("emergency");
+  const [recipient, setRecipient] = useState<string>("");
   const [amount, setAmount] = useState<number>(0);
   const [agreed, setAgreed] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [touched, setTouched] = useState<{ recipient: boolean; amount: boolean }>({
+    recipient: false,
+    amount: false,
+  });
   const modalRef = useRef<HTMLDivElement>(null);
   const initialFocusRef = useRef<HTMLInputElement>(null);
 
   const priorityFee = speed === "emergency" ? 2.0 : 0.0;
   const total = amount + priorityFee;
+
+  const recipientValid = isValidStellarAddress(recipient);
+  const amountValid = amount > 0;
+  const canSubmit = recipientValid && amountValid && agreed && !submitting;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) {
+      setTouched({ recipient: true, amount: true });
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await apiClient.post("/api/v1/remittance/emergency/build", {
+        body: JSON.stringify({
+          destinationAccount: recipient.trim(),
+          // Send the transfer amount; the priority fee is applied server-side.
+          amount: String(amount),
+          assetCode: "USDC",
+          emergency: speed === "emergency",
+        }),
+      });
+
+      if (!res) return; // session-expiry flow handled by apiClient
+      if (!res.ok) {
+        setSubmitError(t("emergencyTransfer.submit_error"));
+        return;
+      }
+      onClose();
+    } catch {
+      setSubmitError(t("emergencyTransfer.submit_error"));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // Focus trap hook
   useFocusTrap({
@@ -101,19 +153,35 @@ const EmergencyTransferModal = ({
         <div className="space-y-5">
           <div className="group">
             <label
-              htmlFor="recipient-name"
+              htmlFor="recipient-address"
               className="flex items-center gap-2 text-sm font-semibold text-zinc-400 mb-2 group-focus-within:text-white"
             >
               <Users size={16} className="text-red-500" />
-              Recipient Name
+              {t("emergencyTransfer.address_label")}
             </label>
             <input
-              id="recipient-name"
+              id="recipient-address"
               ref={initialFocusRef}
               type="text"
-              placeholder="Enter recipient name"
-              className="w-full rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 text-white placeholder:text-zinc-600 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 outline-none transition-all text-sm sm:text-base"
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              onBlur={() => setTouched((prev) => ({ ...prev, recipient: true }))}
+              placeholder={t("emergencyTransfer.address_ph")}
+              aria-invalid={touched.recipient && !recipientValid}
+              aria-describedby={
+                touched.recipient && !recipientValid ? "recipient-address-error" : undefined
+              }
+              className={`w-full rounded-2xl border bg-zinc-900/40 p-4 text-white placeholder:text-zinc-600 focus:ring-1 focus:ring-red-500/50 outline-none transition-all text-sm sm:text-base ${
+                touched.recipient && !recipientValid
+                  ? "border-red-500"
+                  : "border-zinc-800 focus:border-red-500/50"
+              }`}
             />
+            {touched.recipient && !recipientValid && (
+              <p id="recipient-address-error" role="alert" className="mt-1.5 text-xs text-red-500">
+                {t("emergencyTransfer.err_address")}
+              </p>
+            )}
           </div>
 
           <div className="group">
@@ -143,15 +211,29 @@ const EmergencyTransferModal = ({
               <input
                 id="amount"
                 type="number"
+                min="0"
+                step="0.01"
                 value={amount || ""}
                 onChange={(e) => setAmount(Number(e.target.value))}
+                onBlur={() => setTouched((prev) => ({ ...prev, amount: true }))}
                 placeholder="0.00"
-                className="w-full rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 pr-20 text-white placeholder:text-zinc-600 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 outline-none transition-all font-semibold text-sm sm:text-base"
+                aria-invalid={touched.amount && !amountValid}
+                aria-describedby={touched.amount && !amountValid ? "amount-error" : undefined}
+                className={`w-full rounded-2xl border bg-zinc-900/40 p-4 pr-20 text-white placeholder:text-zinc-600 focus:ring-1 focus:ring-red-500/50 outline-none transition-all font-semibold text-sm sm:text-base ${
+                  touched.amount && !amountValid
+                    ? "border-red-500"
+                    : "border-zinc-800 focus:border-red-500/50"
+                }`}
               />
               <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs sm:text-sm font-bold text-zinc-500 pointer-events-none">
                 USDC
               </span>
             </div>
+            {touched.amount && !amountValid && (
+              <p id="amount-error" role="alert" className="mt-1.5 text-xs text-red-500">
+                {t("emergencyTransfer.err_amount")}
+              </p>
+            )}
           </div>
         </div>
 
@@ -242,19 +324,40 @@ const EmergencyTransferModal = ({
           </span>
         </label>
 
+        {submitError && (
+          <div
+            role="alert"
+            className="mb-4 rounded-2xl border border-red-500/30 bg-red-500/5 p-3 text-xs sm:text-sm text-red-400"
+          >
+            {submitError}
+          </div>
+        )}
+
         <div className="flex gap-3 sm:gap-4">
           <button
             onClick={onClose}
-            className="flex-1 rounded-2xl bg-zinc-900 py-3 sm:py-4 font-bold text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all text-sm sm:text-base"
+            disabled={submitting}
+            className="flex-1 rounded-2xl bg-zinc-900 py-3 sm:py-4 font-bold text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all text-sm sm:text-base disabled:opacity-50"
           >
             Cancel
           </button>
           <button
-            disabled={!agreed || amount <= 0}
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            aria-busy={submitting}
             className="flex-1 flex items-center justify-center gap-2 sm:gap-3 rounded-2xl bg-gradient-to-br from-red-500 to-red-700 py-3 sm:py-4 font-bold text-white shadow-[0_8px_20px_rgba(220,38,38,0.3)] hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:grayscale transition-all text-sm sm:text-base"
           >
-            Review <span className="hidden sm:inline">Transfer</span>{" "}
-            <ArrowRight size={18} />
+            {submitting ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                {t("emergencyTransfer.submitting")}
+              </>
+            ) : (
+              <>
+                Review <span className="hidden sm:inline">Transfer</span>{" "}
+                <ArrowRight size={18} />
+              </>
+            )}
           </button>
         </div>
       </div>
