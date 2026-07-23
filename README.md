@@ -945,15 +945,20 @@ To disable Developer Mode and hide the panels, append `?dev=0` to the URL or cle
 2. **Instant Copying**: Click the Copy icon next to the Request ID to instantly copy the ID to your clipboard.
 3. **Log Investigation**: Provide this copied ID to the backend/platform engineering team or search for it directly in your centralized logging system (e.g. Datadog, Kibana, AWS CloudWatch) to find the complete trace of database operations, external Stellar network interactions, and API response logs associated with that specific user transaction or error.
 
-### Widget Payloads panel
+## SEO & Social Sharing Preview
 
-Navigate to `/dashboard?dev=1`. After the dashboard data loads, the **Widget Payloads** panel (bottom-right) displays the raw `DashboardResponse` returned by `GET /api/dashboard`, split into five collapsible sections:
+RemitWise includes pre-configured Open Graph and Twitter Card metadata so that sharing the app link on platforms like Slack, Twitter, and Facebook renders a rich media preview.
 
-* **remittance** — total sent, split percentages, recent transactions
-* **savings** — savings total, recent goals
-* **bills** — paid count/amount, unpaid bills
-* **insurance** — policy count, monthly premium, active policies
-* **meta** — `cachedAt` timestamp, `ttlSeconds`, `fromCache` flag
+**Configuration File**:
+- Constants are maintained centrally in `lib/config/seo.ts` inside `DEFAULT_SEO`.
+- Edit `DEFAULT_SEO` to customize default title, description, application URL, and image specs.
 
-Click any section header to expand or collapse its JSON. The payload is stored in `sessionStorage` (key: `dev-widget-payload`) so it is still visible after client-side navigation without requiring a new fetch.
+**Metadata Fields**:
+- `metadataBase` resolves relative image/page URLs to absolute paths.
+- `openGraph` properties (`og:title`, `og:description`, `og:url`, `og:image`, `og:type`) are automatically rendered.
+- `twitter` properties (`twitter:card` set to `summary_large_image`, `twitter:title`, `twitter:description`, `twitter:image`) are included.
+
+**Assets**:
+- The default preview image is served from `public/og-image.jpg`.
+
 
