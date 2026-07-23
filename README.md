@@ -237,6 +237,15 @@ Every route handler under `app/api/` is composed from a small set of reusable de
 
 For authenticated browser-side requests, use the shared client API layer documented in [docs/client-api.md](docs/client-api.md). That guide covers when to use `apiClient` instead of raw `fetch`, the `401 -> refresh -> retry once` flow, session-expiry UI surfacing, and logout behavior.
 
+### Transaction Export
+
+Both the standalone **Transactions** page (`/transactions`) and the dashboard
+**Transaction History** page (`/dashboard/transaction-history`) support
+exporting the currently filtered transaction list as **CSV** or **JSON**.
+Click the Export button to open a format picker (CSV for spreadsheets, JSON
+for programmatic consumption). Exports are capped at **10,000 rows** and
+include the filter context (date range) in the download filename.
+
 Route-level page titles now use a shared deep-link heading pattern. Use the shared heading primitive with a stable route-specific id whenever you add or update a primary page title. See [docs/page-heading-deeplinks.md](docs/page-heading-deeplinks.md).
 
 The `/transactions` view only ever lists user-initiated interactions (sends, splits, bill payments, etc.) and its type filter is how a reader narrows that list. See [docs/transactions-user-interaction-filter.md](docs/transactions-user-interaction-filter.md) for the model and what to update if a system-generated entry type is ever added.

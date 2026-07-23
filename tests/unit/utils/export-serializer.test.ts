@@ -6,6 +6,7 @@ import {
   getExportFilename,
   UTF8_BOM,
   ExportRow,
+  EXPORT_MAX_ROWS,
 } from "@/lib/utils/export-serializer";
 
 describe("export-serializer", () => {
@@ -129,6 +130,83 @@ describe("export-serializer", () => {
       const parsed = JSON.parse(json);
       expect(parsed).toEqual(mockRows);
       expect(json).toContain("  "); // Verify pretty printing indentation
+    });
+  });
+
+  describe("serializeToCsv row limit", () => {
+    it("caps output at EXPORT_MAX_ROWS data rows", () => {
+      const hugeRows: ExportRow[] = Array.from({ length: EXPORT_MAX_ROWS + 500 }, (_, i) => ({
+        id: `TX${String(i).padStart(4, "0")}`,
+        type: "Send Money",
+        status: "Completed",
+        amount: -100,
+        currency: "USDC",
+        counterparty: "User",
+        date: "2026-01-01 00:00:00",
+        fee: 0,
+      }));
+
+      const csv = serializeToCsv(hugeRows);
+      const lines = csv.split("\n");
+      // 1 header + EXPORT_MAX_ROWS data rows
+      expect(lines.length).toBe(EXPORT_MAX_ROWS + 1);
+      expect(lines[0]).toBe("id,type,status,amount,currency,counterparty,date,fee");
+    });
+
+    it("handles rows fewer than EXPORT_MAX_ROWS without padding", () => {
+      const smallRows: ExportRow[] = [
+        {
+          id: "TX001",
+          type: "Send Money",
+          status: "Completed",
+          amount: -500,
+          currency: "USDC",
+          counterparty: "Maria Santos",
+          date: "2026-06-02 14:32:15",
+          fee: 0.5,
+        },
+      ];
+      const csv = serializeToCsv(smallRows);
+      const lines = csv.split("\n");
+      // 1 header + 1 data row
+      expect(lines.length).toBe(2);
+    });
+  });
+
+  describe("serializeToJson row limit", () => {
+    it("caps output at EXPORT_MAX_ROWS items", () => {
+      const hugeRows: ExportRow[] = Array.from({ length: EXPORT_MAX_ROWS + 500 }, (_, i) => ({
+        id: `TX${String(i).padStart(4, "0")}`,
+        type: "Send Money",
+        status: "Completed",
+        amount: -100,
+        currency: "USDC",
+        counterparty: "User",
+        date: "2026-01-01 00:00:00",
+        fee: 0,
+      }));
+
+      const json = serializeToJson(hugeRows);
+      const parsed = JSON.parse(json);
+      expect(parsed.length).toBe(EXPORT_MAX_ROWS);
+    });
+
+    it("handles rows fewer than EXPORT_MAX_ROWS without padding", () => {
+      const smallRows: ExportRow[] = [
+        {
+          id: "TX001",
+          type: "Send Money",
+          status: "Completed",
+          amount: -500,
+          currency: "USDC",
+          counterparty: "Maria Santos",
+          date: "2026-06-02 14:32:15",
+          fee: 0.5,
+        },
+      ];
+      const json = serializeToJson(smallRows);
+      const parsed = JSON.parse(json);
+      expect(parsed.length).toBe(1);
     });
   });
 

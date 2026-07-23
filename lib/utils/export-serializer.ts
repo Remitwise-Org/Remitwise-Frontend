@@ -1,3 +1,6 @@
+/** Maximum rows allowed in a single export (one-click download cap). */
+export const EXPORT_MAX_ROWS = 10_000;
+
 export interface ExportRow {
   id: string;
   type: string;
@@ -52,10 +55,9 @@ export function escapeCsvField(value: any): string {
  * Serializes an array of transaction rows into an Excel-compliant CSV string.
  * Includes a UTF-8 BOM by default for locale-safe import in Microsoft Excel.
  */
-export function serializeToCsv(
-  rows: ExportRow[],
-  includeBom: boolean = true
-): string {
+export function serializeToCsv(rows: ExportRow[]): string {
+  const limited = rows.slice(0, EXPORT_MAX_ROWS);
+
   const headers = [
     "id",
     "type",
@@ -68,8 +70,8 @@ export function serializeToCsv(
   ];
 
   const headerRow = headers.map(escapeCsvField).join(",");
-
-  const dataRows = rows.map((row) => {
+  
+  const dataRows = limited.map((row) => {
     return [
       row.id,
       row.type,
@@ -92,7 +94,8 @@ export function serializeToCsv(
  * Serializes an array of transaction rows into a formatted JSON string.
  */
 export function serializeToJson(rows: ExportRow[]): string {
-  return JSON.stringify(rows, null, 2);
+  const limited = rows.slice(0, EXPORT_MAX_ROWS);
+  return JSON.stringify(limited, null, 2);
 }
 
 /**
