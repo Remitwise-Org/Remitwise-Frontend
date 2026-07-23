@@ -1,6 +1,8 @@
 # Components
 
-For component prop standards, including naming, ordering, and boolean-prop conventions, see [docs/PROP_CONVENTIONS.md](PROP_CONVENTIONS.md).
+For the contributor workflow that takes a component from Figma through design
+tokens, Storybook stories, tests, and production integration, see
+[COMPONENT_LIFECYCLE.md](COMPONENT_LIFECYCLE.md).
 
 ## BackToTop
 
