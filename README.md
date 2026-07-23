@@ -699,6 +699,7 @@ GET  /api/admin/audit         # Admin-only audit events
 - All forms are currently disabled (placeholders)
 - UI uses a blue/indigo color scheme
 - Responsive design with mobile-first approach
+- Motion vocabulary and standard animations are documented in [docs/MOTION.md](docs/MOTION.md).
 - Components are structured for easy integration
 
 ## API Endpoints
