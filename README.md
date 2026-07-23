@@ -225,6 +225,7 @@ remitwise-frontend/
 │   └── auth.ts              # Auth middleware
 ├── docs/                    # Documentation
 │   ├── API_ROUTES.md        # API routes documentation
+│   ├── PROP_CONVENTIONS.md  # Component prop naming, ordering, and boolean conventions
 │   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
 │   ├── contract-cache.md    # Contract caching architecture and guidelines
 │   └── FORM_PATTERNS.md     # Form design patterns (inline vs blocking validation, autosave, submit affordance)

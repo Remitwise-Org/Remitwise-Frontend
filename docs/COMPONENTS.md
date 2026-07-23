@@ -1,18 +1,6 @@
 # Components
 
-## Image Alt Attribute Accessibility Check
-
-Build-time enforcement ensuring that no `<img>` or `<Image />` component lacks an `alt` attribute (WCAG 2.1 AA requirement).
-
-**Script:** `scripts/check-img-alt.js`  
-**Command:** `npm run check:img-alt`
-
-### Behavior
-
-- Automatically runs during `npm run lint` and `npm run prebuild` / `npm run build`.
-- Scans source files in `app/`, `components/`, `src/`, `lib/`, `pages/`, and `public/`.
-- Fails the build with exit code 1 if any `<img>` or `<Image />` element lacks an `alt` attribute.
-- Unit tested in `tests/unit/check-img-alt.test.ts`.
+For component prop standards, including naming, ordering, and boolean-prop conventions, see [docs/PROP_CONVENTIONS.md](PROP_CONVENTIONS.md).
 
 ## BackToTop
 
