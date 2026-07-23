@@ -14,8 +14,7 @@ import ToastRegion from "@/components/ToastRegion";
 import SessionExpiryProvider from "@/components/SessionExpiryProvider";
 import CommandPalette from "@/components/CommandPalette";
 import DevRequestIdDisplay from "@/components/DevRequestIdDisplay";
-import "@/lib/utils/idleCallback";
-
+import DevWidgetPayload from "@/components/DevWidgetPayload";
 
 /**
  * Client-side provider boundary for the app.
@@ -39,7 +38,7 @@ export default function Providers({ children }: { children: ReactNode }) {
                 <ToastRegion />
                 <CommandPalette />
                 <DevRequestIdDisplay />
-                <FeatureFlagIndicator />
+                <DevWidgetPayload />
               </SessionExpiryProvider>
             </AsyncOperationsProvider>
           </DensityProvider>

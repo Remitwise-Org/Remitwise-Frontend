@@ -12,7 +12,12 @@ import { useClientTranslator } from '@/lib/i18n/client';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import type { DashboardResponse } from '@/lib/types/dashboard';
 import { useSeo } from '@/lib/hooks/useSeo';
-import { formatLastSynced } from '@/lib/utils/time-ago';
+import {
+  DEV_MODE_STORAGE_KEY,
+  DEV_WIDGET_PAYLOAD_EVENT,
+} from '@/lib/config/developer';
+
+type LoadState = 'loading' | 'error' | 'ready';
 
 export default function DashboardPage() {
   useSeo({
@@ -57,6 +62,21 @@ export default function DashboardPage() {
         }
 
         setData(json);
+
+        // In dev mode, broadcast the raw payload so DevWidgetPayload can
+        // display it. We check sessionStorage rather than URL params here
+        // because the component that owns the query-param logic (DevWidgetPayload)
+        // lives outside this page; reading the persisted flag avoids a second
+        // useSearchParams call and keeps this side-effect lightweight.
+        if (
+          typeof window !== 'undefined' &&
+          sessionStorage.getItem(DEV_MODE_STORAGE_KEY) === 'true'
+        ) {
+          window.dispatchEvent(
+            new CustomEvent(DEV_WIDGET_PAYLOAD_EVENT, { detail: json })
+          );
+        }
+
         setState('ready');
       })
       .catch(() => {

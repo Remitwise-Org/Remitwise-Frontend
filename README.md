@@ -923,11 +923,18 @@ To enable Developer Mode, append the `?dev=1` query parameter to the application
 
 - **Example:** `http://localhost:3000/?dev=1` or `http://localhost:3000/dashboard?dev=1`
 
-Once enabled, a floating **Developer Mode** panel will appear at the bottom-left of the viewport. This panel persists across client-side page transitions within your session.
+Once enabled, two floating panels appear:
+
+| Panel | Position | Purpose |
+|-------|----------|---------|
+| **Developer Mode** (Request ID) | Bottom-left | Shows the `Request ID` of the most recent API response |
+| **Widget Payloads** | Bottom-right | Shows the last-fetched raw `DashboardResponse` payload per widget section |
+
+Both panels persist across client-side page transitions within your session.
 
 ### Disabling Developer Mode
 
-To disable Developer Mode and hide the panel, append `?dev=0` to the URL or clear your session storage:
+To disable Developer Mode and hide the panels, append `?dev=0` to the URL or clear your session storage:
 
 - **Example:** `http://localhost:3000/?dev=0`
 
@@ -936,3 +943,16 @@ To disable Developer Mode and hide the panel, append `?dev=0` to the URL or clea
 1. **Request Tracking**: As you interact with the app, the floating panel automatically updates in real-time to show the `Request ID` of the most recent API response (extracting from `x-request-id`, `x-correlation-id`, etc.).
 2. **Instant Copying**: Click the Copy icon next to the Request ID to instantly copy the ID to your clipboard.
 3. **Log Investigation**: Provide this copied ID to the backend/platform engineering team or search for it directly in your centralized logging system (e.g. Datadog, Kibana, AWS CloudWatch) to find the complete trace of database operations, external Stellar network interactions, and API response logs associated with that specific user transaction or error.
+
+### Widget Payloads panel
+
+Navigate to `/dashboard?dev=1`. After the dashboard data loads, the **Widget Payloads** panel (bottom-right) displays the raw `DashboardResponse` returned by `GET /api/dashboard`, split into five collapsible sections:
+
+* **remittance** — total sent, split percentages, recent transactions
+* **savings** — savings total, recent goals
+* **bills** — paid count/amount, unpaid bills
+* **insurance** — policy count, monthly premium, active policies
+* **meta** — `cachedAt` timestamp, `ttlSeconds`, `fromCache` flag
+
+Click any section header to expand or collapse its JSON. The payload is stored in `sessionStorage` (key: `dev-widget-payload`) so it is still visible after client-side navigation without requiring a new fetch.
+
