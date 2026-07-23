@@ -54,6 +54,30 @@ For widget-style read surfaces that should stay inline while transient failures 
 - `backoff?: number` — base backoff in ms; doubles each attempt and is jittered. Default `1000`.
 - `timeout?: number` — per-request timeout in ms before the request is aborted. Default `10000`. Pass `0` to disable.
 
+### Shared authentication and request IDs
+
+`apiClient` injects `X-Request-ID` into every request so an operator can trace a
+browser action through gateway logs and support reports. The API gateway accepts
+valid client IDs and returns the same ID in its response. One ID is kept for all
+transport retries and for the single replay after a successful session refresh.
+
+The global provider also supplies `Authorization: Bearer <wallet address>` while
+a Stellar wallet is connected. Individual calls may supply `Authorization` or
+`X-Request-ID` in `options.headers`; explicit values are preserved, which is
+useful when forwarding a request from an integration or support tool.
+
+Non-React consumers can set or clear the credential directly:
+
+```ts
+import { apiClient } from '@/lib/client/apiClient';
+
+apiClient.setAuthToken('G...'); // becomes Authorization: Bearer G...
+apiClient.setAuthToken(null);   // clear on logout/disconnect
+```
+
+Do not add these headers manually to ordinary app calls. The API middleware
+allows both `Authorization` and `X-Request-ID` for cross-origin requests.
+
 Return type:
 
 - `Promise<Response | null>` for the verb helpers and `request`.

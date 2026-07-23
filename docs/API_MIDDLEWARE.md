@@ -21,7 +21,7 @@ Three modular, testable helper functions added at the start of the middleware:
 - Sets proper CORS headers:
   - `Access-Control-Allow-Origin` (from request origin or env var)
   - `Access-Control-Allow-Methods` (GET, POST, PUT, DELETE, PATCH, OPTIONS)
-  - `Access-Control-Allow-Headers` (Content-Type, Authorization, X-Requested-With)
+  - `Access-Control-Allow-Headers` (Content-Type, Authorization, X-Request-ID, X-Requested-With)
   - `Access-Control-Allow-Credentials: true`
   - `Vary: Origin` (for proper cache behavior)
 

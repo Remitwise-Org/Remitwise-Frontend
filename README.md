@@ -440,7 +440,7 @@ Cross-Origin Resource Sharing (CORS) is configured to allow requests from the fr
 
 - **Allowed Origins**: Requests from `NEXT_PUBLIC_APP_URL` are allowed (or same-origin)
 - **Allowed Methods**: GET, POST, PUT, DELETE, PATCH, OPTIONS
-- **Allowed Headers**: Content-Type, Authorization, X-Requested-With
+- **Allowed Headers**: Content-Type, Authorization, X-Request-ID, X-Requested-With
 - **Credentials**: Allowed for same-origin requests
 - **Preflight Handling**: OPTIONS requests return 204 No Content with appropriate CORS headers
 
@@ -464,7 +464,7 @@ curl -i -X OPTIONS http://localhost:3000/api/health \
 # Response includes:
 # Access-Control-Allow-Origin: http://localhost:3000
 # Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
-# Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With
+# Access-Control-Allow-Headers: Content-Type, Authorization, X-Request-ID, X-Requested-With
 ```
 
 #### Security Headers
