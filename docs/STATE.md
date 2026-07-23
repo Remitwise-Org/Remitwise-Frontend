@@ -9,6 +9,8 @@ server-state library are not direct dependencies today; add either only when the
 decision rules below justify the extra dependency and the PR includes provider
 setup, tests, and documentation updates.
 
+For detailed guidance on caching strategies, SWR/RTK-Query patterns, and cache invalidation, see [docs/CACHE_STRATEGY.md](./CACHE_STRATEGY.md).
+
 Related entry points:
 
 - `components/Providers.tsx` wires global client providers under the root
