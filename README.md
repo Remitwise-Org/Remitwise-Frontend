@@ -906,46 +906,22 @@ Sentry error monitoring is integrated for client, server, and edge runtimes.
 - Uploaded during build when `SENTRY_AUTH_TOKEN` and CI are present.
 - `hideSourceMaps: true` prevents browser exposure.
 
-For a comprehensive guide on what variables, cookies, and telemetry endpoints are configured—and how to opt out of them—see the [Tracking and Opt-Out Guide](docs/tracking-and-opt-out.md).
+## Consistent Loading State Theme Customization
 
-## Developer Mode & Debugging
+To enable downstream operators, contracts, and frontend engineers to style the loading state consistently, all skeletons expose custom CSS properties and semantic hooks:
 
-RemitWise features a built-in Developer Mode designed for team members, QA, and support engineers to easily locate and copy request IDs for API responses without opening browser developer tools.
+- **CSS Variables**: Exposes `--skeleton-bg-start`, `--skeleton-bg-via`, and `--skeleton-bg-end` to customize the shimmer gradient colors.
+- **Classes & Attributes**: Every skeleton renders with specific selector hooks (e.g. `.loading-skeleton` / `data-loading-state="skeleton"`).
 
-### Enabling Developer Mode
-
-To enable Developer Mode, append the `?dev=1` query parameter to the application URL in your browser:
-
-- **Example:** `http://localhost:3000/?dev=1` or `http://localhost:3000/dashboard?dev=1`
-
-Once enabled, two floating panels appear:
-
-| Panel | Position | Purpose |
-|-------|----------|---------|
-| **Developer Mode** (Request ID) | Bottom-left | Shows the `Request ID` of the most recent API response |
-| **Widget Payloads** | Bottom-right | Shows the last-fetched raw `DashboardResponse` payload per widget section |
-
-Both panels persist across client-side page transitions within your session.
-
-### Disabling Developer Mode
-
-To disable Developer Mode and hide the panels, append `?dev=0` to the URL or clear your session storage:
-
-- **Example:** `http://localhost:3000/?dev=0`
-
-### How to Use for Support and Debugging
-
-1. **Request Tracking**: As you interact with the app, the floating panel automatically updates in real-time to show the `Request ID` of the most recent API response (extracting from `x-request-id`, `x-correlation-id`, etc.).
-2. **Instant Copying**: Click the Copy icon next to the Request ID to instantly copy the ID to your clipboard.
-3. **Log Investigation**: Provide this copied ID to the backend/platform engineering team or search for it directly in your centralized logging system (e.g. Datadog, Kibana, AWS CloudWatch) to find the complete trace of database operations, external Stellar network interactions, and API response logs associated with that specific user transaction or error.
+For full details, selectors list, and examples, see the [Frontend Component States Guide](docs/component-states.md).
 
 ## SEO & Social Sharing Preview
 
 RemitWise includes pre-configured Open Graph and Twitter Card metadata so that sharing the app link on platforms like Slack, Twitter, and Facebook renders a rich media preview.
 
 **Configuration File**:
-- Constants are maintained centrally in `lib/config/seo.ts` inside `DEFAULT_SEO`.
-- Edit `DEFAULT_SEO` to customize default title, description, application URL, and image specs.
+- Constants are maintained centrally in `lib/config/metadata.ts`.
+- Edit `METADATA_CONFIG` to customize default title, description, application URL, and image specs.
 
 **Metadata Fields**:
 - `metadataBase` resolves relative image/page URLs to absolute paths.
@@ -954,5 +930,4 @@ RemitWise includes pre-configured Open Graph and Twitter Card metadata so that s
 
 **Assets**:
 - The default preview image is served from `public/og-image.jpg`.
-
 

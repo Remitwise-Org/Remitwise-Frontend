@@ -73,46 +73,41 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
-  --background: #ffffff;
-  --color-bg2: #f8fafc;
-  --color-bg3: #f1f5f9;
-  --card: linear-gradient(var(--color-bg2), var(--color-bg3));
-  --accent: #dc2626;
-  --skeleton-base: rgba(0, 0, 0, 0.06);
-  --skeleton-highlight: rgba(0, 0, 0, 0.12);
-  --skeleton-static: rgba(0, 0, 0, 0.1);
-  color-scheme: light;
+
+  /* Theme-styleable loading state custom properties */
+  --skeleton-bg-start: rgba(0, 0, 0, 0.06);
+  --skeleton-bg-via: rgba(0, 0, 0, 0.12);
+  --skeleton-bg-end: rgba(0, 0, 0, 0.06);
 }
 
-html.dark {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 0, 0, 0;
-  --background-end-rgb: 0, 0, 0;
-  --background: #010101;
-  --color-bg2: #0f0f0f;
-  --color-bg3: #0a0a0a;
-  --card: linear-gradient(var(--color-bg2), var(--color-bg3));
-  --accent: #dc2626;
-  --skeleton-base: rgba(255, 255, 255, 0.05);
-  --skeleton-highlight: rgba(255, 255, 255, 0.1);
-  --skeleton-static: rgba(255, 255, 255, 0.1);
-  color-scheme: dark;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+    --background: #010101;
+    --color-bg2: #0f0f0f;
+    --color-bg3: #0a0a0a;
+    --card: linear-gradient(var(--color-bg2), var(--color-bg3));
+    --accent: #dc2626;
+
+    /* Theme-styleable loading state custom properties */
+    --skeleton-bg-start: rgba(255, 255, 255, 0.05);
+    --skeleton-bg-via: rgba(255, 255, 255, 0.1);
+    --skeleton-bg-end: rgba(255, 255, 255, 0.05);
+  }
 }
 
-html.light {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-  --background: #ffffff;
-  --color-bg2: #f8fafc;
-  --color-bg3: #f1f5f9;
-  --card: linear-gradient(var(--color-bg2), var(--color-bg3));
-  --accent: #dc2626;
-  --skeleton-base: rgba(0, 0, 0, 0.06);
-  --skeleton-highlight: rgba(0, 0, 0, 0.12);
-  --skeleton-static: rgba(0, 0, 0, 0.1);
-  color-scheme: light;
+.loading-skeleton {
+  background-image: linear-gradient(
+    to right,
+    var(--skeleton-bg-start),
+    var(--skeleton-bg-via),
+    var(--skeleton-bg-end)
+  );
+  background-size: 200% 100%;
 }
+
 
 body {
   color: rgb(var(--foreground-rgb));

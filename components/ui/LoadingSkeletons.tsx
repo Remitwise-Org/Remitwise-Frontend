@@ -11,7 +11,8 @@ function SectionShell({
 }) {
   return (
     <div
-      className={`rounded-3xl border border-white/10 bg-black/40 p-5 sm:p-6 backdrop-blur-sm ${className}`}
+      className={`loading-skeleton-shell rounded-3xl border border-white/10 bg-black/40 p-5 sm:p-6 backdrop-blur-sm ${className}`}
+      data-loading-state="shell"
     >
       {children}
     </div>
@@ -93,8 +94,8 @@ function SummaryKpiSkeleton() {
 
 export function DashboardLoadingSkeleton() {
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <SkeletonGroup className="space-y-8" label="Loading dashboard">
+    <main className="loading-skeleton-dashboard mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" data-loading-state="dashboard">
+      <div className="space-y-8">
         <StatGridSkeleton />
 
         <SectionShell>
@@ -184,7 +185,7 @@ export function DashboardLoadingSkeleton() {
 
 export function BillsLoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-[#010101]">
+    <div className="loading-skeleton-bills min-h-screen bg-[#010101]" data-loading-state="bills">
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <SkeletonGroup className="space-y-8" label="Loading bills">
           <SummaryKpiSkeleton />
@@ -359,7 +360,7 @@ export function TransactionHistoryLoadingSkeleton() {
 
 export function InsightsLoadingSkeleton() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#010101]">
+    <div className="loading-skeleton-insights flex min-h-screen flex-col bg-[#010101]" data-loading-state="insights">
       <main className="flex-grow px-4 pb-20 pt-32 md:px-8">
         <SkeletonGroup className="mx-auto max-w-7xl" label="Loading insights">
           <div className="flex justify-center">

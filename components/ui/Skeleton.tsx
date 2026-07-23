@@ -54,10 +54,11 @@ export function SkeletonGroup({
   label = "Loading",
 }: SkeletonGroupProps) {
   return (
-    <div role="status" aria-busy="true" className={className} style={style}>
-      <span className="sr-only">{label}</span>
-      {children}
-    </div>
+    <div
+      className={`loading-skeleton animate-shimmer ${className}`}
+      style={style}
+      data-loading-state="skeleton"
+    />
   );
 }
 
@@ -74,8 +75,9 @@ export function SkeletonCard({ variant = "default" }: SkeletonCardProps) {
 
   return (
     <div
-      className={`${variants[variant]} border border-white/10`}
+      className={`${variants[variant]} loading-skeleton-card border border-white/10`}
       style={{ backgroundImage: "var(--card)" }}
+      data-loading-state="card"
     >
       <div className="p-6 h-full flex flex-col">
         {variant === "stat" && (
@@ -140,7 +142,7 @@ interface SkeletonListProps {
 export function SkeletonList({ rows = 5, variant = "table" }: SkeletonListProps) {
   if (variant === "table") {
     return (
-      <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 w-full">
+      <div className="loading-skeleton-list bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 w-full" data-loading-state="list">
         <div className="flex justify-between items-start mb-8">
           <div className="space-y-2">
             <Skeleton className="w-40 h-6 rounded" />
@@ -191,7 +193,7 @@ export function SkeletonList({ rows = 5, variant = "table" }: SkeletonListProps)
   }
 
   return (
-    <div className="space-y-4">
+    <div className="loading-skeleton-list space-y-4" data-loading-state="list">
       {[...Array(rows)].map((_, i) => (
         <div
           key={i}
@@ -219,7 +221,7 @@ interface SkeletonChartProps {
 export function SkeletonChart({ type = "bar" }: SkeletonChartProps) {
   if (type === "bar") {
     return (
-      <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
+      <div className="loading-skeleton-chart bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full" data-loading-state="chart">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-start gap-3">
             <Skeleton className="w-10 h-10 rounded-lg" />
@@ -253,7 +255,7 @@ export function SkeletonChart({ type = "bar" }: SkeletonChartProps) {
 
   if (type === "donut") {
     return (
-      <div className="bg-black/40 border border-white/10 rounded-3xl p-6 w-full">
+      <div className="loading-skeleton-chart bg-black/40 border border-white/10 rounded-3xl p-6 w-full" data-loading-state="chart">
         <div className="flex items-start justify-between mb-6">
           <Skeleton className="w-32 h-5 rounded" />
           <Skeleton className="w-12 h-6 rounded" />
@@ -279,7 +281,7 @@ export function SkeletonChart({ type = "bar" }: SkeletonChartProps) {
   }
 
   return (
-    <div className="bg-black/40 border border-white/10 rounded-3xl p-6 w-full">
+    <div className="loading-skeleton-chart bg-black/40 border border-white/10 rounded-3xl p-6 w-full" data-loading-state="chart">
       <div className="flex items-start justify-between mb-6">
         <Skeleton className="w-32 h-5 rounded" />
         <Skeleton className="w-12 h-6 rounded" />
@@ -329,7 +331,7 @@ export function SkeletonWidget({
   children?: React.ReactNode
 }) {
   return (
-    <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 w-full">
+    <div className="loading-skeleton-widget bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 w-full" data-loading-state="widget">
       {title && (
         <div className="flex justify-between items-center mb-6">
           <Skeleton className="w-40 h-6 rounded" />
