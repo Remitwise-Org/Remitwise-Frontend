@@ -228,6 +228,8 @@ For authenticated browser-side requests, use the shared client API layer documen
 
 Route-level page titles now use a shared deep-link heading pattern. Use the shared heading primitive with a stable route-specific id whenever you add or update a primary page title. See [docs/page-heading-deeplinks.md](docs/page-heading-deeplinks.md).
 
+The `/transactions` view only ever lists user-initiated interactions (sends, splits, bill payments, etc.) and its type filter is how a reader narrows that list. See [docs/transactions-user-interaction-filter.md](docs/transactions-user-interaction-filter.md) for the model and what to update if a system-generated entry type is ever added.
+
 ## Per-Route SEO Metadata (`useSeo`)
 
 Each client-side route can define its own `<title>` and `<meta name="description">` using the `useSeo` hook.
