@@ -142,139 +142,52 @@ component per file):
   layer (defaults, locale override, unknown-currency fallback, prop
   forwarding, render-prop children, and the `useFormatter` hook).
 
----
+## WhatsNewContext
 
-## ConfirmDialog / useConfirm (issue #999)
+A context provider that manages the "What's New" onboarding tour panel, which shows
+changelog entries to users on first visit and allows them to replay the tour later.
 
-A non-blocking, Promise-based replacement for `window.confirm` that integrates
-with the app's design system.
+**File:** `lib/context/WhatsNewContext.tsx`
 
-**Files:**
+### Behavior
 
-- `lib/context/ConfirmContext.tsx` — React context, `ConfirmProvider`,
-  `useConfirm` hook, and the internal `useConfirmInternal` hook.
-- `components/ConfirmDialog.tsx` — The rendered dialog UI.
-
-### Quick start
-
-```tsx
-"use client";
-
-import { useConfirm } from "@/lib/context/ConfirmContext";
-
-export default function DeleteButton({ id }: { id: string }) {
-  const { confirm } = useConfirm();
-
-  const handleDelete = async () => {
-    const ok = await confirm({
-      title: "Delete record",
-      description: "This action cannot be undone.",
-      intent: "danger",
-      confirmLabel: "Delete",
-      cancelLabel: "Keep it",
-    });
-    if (ok) {
-      // … proceed with deletion
-    }
-  };
-
-  return (
-    <button onClick={handleDelete} className="…">
-      Delete
-    </button>
-  );
-}
-```
+- **Auto-open:** Opens automatically on first visit when no localStorage entry exists
+  (`remitwise_whats_new_last_seen`).
+- **Persistence:** Stores the last seen changelog entry ID in localStorage to prevent
+  re-showing the same entries.
+- **Replay:** Provides a `replay()` function that clears the stored last seen ID and
+  re-opens the panel, allowing users to see all changelog entries again.
+- **Unread count:** Calculates the number of unread entries based on the stored last
+  seen ID.
 
 ### API
 
-#### `useConfirm()`
-
 ```ts
-const { confirm } = useConfirm();
-const result: boolean = await confirm(options?);
+interface WhatsNewContextValue {
+    isOpen: boolean;
+    open: () => void;
+    close: () => void;
+    toggle: () => void;
+    entries: ChangelogEntry[];
+    readIds: Set<string>;
+    unreadCount: number;
+    markAllRead: () => void;
+    replay: () => void;  // Clears localStorage and re-opens the panel
+}
 ```
-
-Must be called inside a `ConfirmProvider` (already provided globally via
-`components/Providers.tsx`).
-
-`confirm()` opens the dialog and returns a `Promise<boolean>` that resolves:
-
-| User action            | Resolved value |
-|------------------------|---------------|
-| Clicks **Confirm**     | `true`        |
-| Clicks **Cancel**      | `false`       |
-| Clicks the **×** button | `false`      |
-| Presses **Escape**     | `false`       |
-| Clicks the **backdrop** | `false`      |
-
-#### `ConfirmOptions`
-
-| Prop             | Type                   | Default            | Description                              |
-|------------------|------------------------|--------------------|------------------------------------------|
-| `title`          | `string`               | `"Are you sure?"`  | Dialog heading                           |
-| `description`    | `string`               | `""`               | Descriptive body copy (optional)         |
-| `confirmLabel`   | `string`               | `"Confirm"`        | Label for the positive action button     |
-| `cancelLabel`    | `string`               | `"Cancel"`         | Label for the negative action button     |
-| `intent`         | `"primary" \| "danger"` | `"primary"`       | Visual style of the confirm button       |
-
-### `ConfirmProvider`
-
-Wraps the subtree that needs access to `useConfirm`. It is already mounted at
-the top of the app inside `components/Providers.tsx`, so application code does
-not need to add it.
-
-### `ConfirmDialog`
-
-Renders the actual dialog UI. Mount it once near the root; currently placed
-inside `components/Providers.tsx` alongside other singleton UI (toasts, command
-palette, dev panel).
-
-The dialog is:
-
-- **ARIA-accessible** — `role="dialog"`, `aria-modal="true"`,
-  `aria-labelledby`, `aria-describedby` (when description is present).
-- **Focus-managed** — focuses the Confirm button on open; restores the
-  previously focused element on close.
-- **Keyboard navigable** — Tab/Shift+Tab cycle within the dialog; Escape
-  cancels.
-- **Backdrop-dismissible** — clicking the overlay resolves `false`.
-- **Design-token compliant** — uses `primary-600`, `rounded-2xl`, and
-  `bg-black/60` from the Tailwind config; no hard-coded colour values.
-
-### Styling
-
-| Prop value | Confirm button style        |
-|------------|-----------------------------|
-| `"primary"` | `bg-primary-600` (blue)   |
-| `"danger"`  | `bg-red-600` (red)        |
-
-### Accessibility
-
-- Title is linked via `aria-labelledby="confirm-dialog-title"`.
-- Description (when provided) is linked via
-  `aria-describedby="confirm-dialog-description"`.
-- Close button carries `aria-label="Cancel"`.
-- All interactive elements have `focus-visible` outlines using
-  `outline-primary-600`.
 
 ### Integration
 
-`ConfirmProvider` and `ConfirmDialog` are already registered in
-`components/Providers.tsx`. No additional wiring is required.
+- Wrapped in `app/dashboard/layout.tsx` to provide context to dashboard pages.
+- The replay button is exposed in `components/settings/PreferencesSection.tsx` under
+  the Preferences section, allowing users to replay the onboarding tour at any time.
 
 ### Tests
 
-`tests/unit/useConfirm.test.tsx` covers:
-
-- Dialog hidden before `confirm()` is called
-- Dialog shown after `confirm()` is called
-- Resolves `true` on Confirm click
-- Resolves `false` on Cancel, close, Escape, and backdrop clicks
-- Dialog closes after resolution
-- Multiple sequential calls
-- Custom `title`, `description`, `confirmLabel`, `cancelLabel`
-- `intent: "danger"` vs `intent: "primary"` button styling
-- ARIA attributes (`role`, `aria-modal`, `aria-labelledby`,
-  `aria-describedby`, `aria-label`)
-- Throws when `useConfirm` is called outside `ConfirmProvider`
+- `tests/unit/context/WhatsNewContext.test.tsx` covers:
+  - Auto-open on first visit
+  - No auto-open when localStorage has entry
+  - Mark all as read functionality
+  - Replay clears localStorage and opens panel
+  - Toggle functionality
+  - Error when used outside provider
