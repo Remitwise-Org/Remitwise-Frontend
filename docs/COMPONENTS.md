@@ -1,5 +1,7 @@
 # Components
 
+For component prop standards, including naming, ordering, and boolean-prop conventions, see [docs/PROP_CONVENTIONS.md](PROP_CONVENTIONS.md).
+
 ## BackToTop
 
 A floating "back to top" button that appears after the user scrolls past 800px.
