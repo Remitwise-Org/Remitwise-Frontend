@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Copy, Wallet, User, Settings, LogOut } from 'lucide-react';
 import { useFocusTrap } from '../src/lib/hooks/useFocusTrap';
+import { useOnClickOutside } from '../lib/hooks/useOnClickOutside';
 
 interface WalletDropdownProps {
   isOpen: boolean;
@@ -80,27 +81,11 @@ export default function WalletDropdown({
     }
   });
 
-  // ── Close on outside click (supplement the hook's overlay click) ────────────
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (buttonRef?.current && buttonRef.current.contains(target)) {
-        return;
-      }
-
-      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, onClose, buttonRef]);
+  // ── Close on outside click (via shared useOnClickOutside hook) ────────────
+  useOnClickOutside(dropdownRef, onClose, {
+    enabled: isOpen,
+    ignoreRef: buttonRef,
+  });
 
   // ── Arrow-key navigation (WAI-ARIA menu pattern) ───────────────────────────
   const handleArrowKeys = useCallback(

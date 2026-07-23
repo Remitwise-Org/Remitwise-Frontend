@@ -7,8 +7,8 @@ This document catalogs the shared client hooks in the RemitWise frontend. Use th
 ## Table of Contents
 
 1. [useFormAction](#useformaction)
-2. [useSessionExpiry](#usesessionexpiry)
-3. [requestIdleCallback Polyfill](#requestidlecallback-polyfill)
+2. [useOnClickOutside](#useonclickoutside)
+3. [useSessionExpiry](#usesessionexpiry)
 
 ---
 
@@ -75,6 +75,78 @@ export default function SendMoneyForm() {
 - `formAction` is memoized with `useCallback`; it is stable across re-renders unless `url` or `method` changes.
 - The hook cancels in-flight requests on unmount, preventing React "state update on unmounted component" warnings.
 - For `PUT`, `PATCH`, or `DELETE` flows, pass the method as the second argument: `useFormAction('/api/goals/123', 'PUT')`.
+
+---
+
+## useOnClickOutside
+
+**File:** [`lib/hooks/useOnClickOutside.ts`](../lib/hooks/useOnClickOutside.ts)
+
+Shared click-outside detection hook. Use this hook in any popover, dropdown, or menu component instead of wiring up ad-hoc `mousedown` listeners. Handles both mouse and touch events, supports an optional ignore-ref for trigger buttons, and can be toggled on/off via the `enabled` flag.
+
+### Signature
+
+```ts
+function useOnClickOutside(
+  ref: React.RefObject<HTMLElement>,
+  handler: () => void,
+  options?: {
+    enabled?: boolean;    // default: true
+    ignoreRef?: React.RefObject<HTMLElement>;
+  },
+): void
+```
+
+### Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ref` | `React.RefObject<HTMLElement>` | Ref to the container element. Clicks inside this element are ignored. |
+| `handler` | `() => void` | Callback invoked when a click outside the container is detected. |
+| `options.enabled` | `boolean` | Whether the listener is active (e.g. dropdown is open). Defaults to `true`. |
+| `options.ignoreRef` | `React.RefObject<HTMLElement>` | A ref to an element whose clicks should also be ignored (e.g. a toggle button). |
+
+### Events listened
+
+- `mousedown` — desktop clicks / right-clicks.
+- `touchstart` — mobile tap coverage.
+
+### Usage example
+
+```tsx
+import { useRef, useState } from 'react';
+import { useOnClickOutside } from '@/lib/hooks/useOnClickOutside';
+
+export default function DropdownMenu() {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useOnClickOutside(dropdownRef, () => setOpen(false), {
+    enabled: open,
+    ignoreRef: buttonRef,
+  });
+
+  return (
+    <>
+      <button ref={buttonRef} onClick={() => setOpen((v) => !v)}>
+        Toggle
+      </button>
+      {open && (
+        <div ref={dropdownRef} role="menu">
+          {/* menu items */}
+        </div>
+      )}
+    </>
+  );
+}
+```
+
+### Notes
+
+- Event listeners are registered on `document` via `addEventListener` and cleaned up on unmount or when `enabled` transitions to `false`.
+- The `handler` reference should be stable (wrapped in `useCallback`) to avoid unnecessary listener re-registration.
+- Do **not** use this hook for modal overlays — use `useFocusTrap` instead, which includes overlay-click handling alongside focus management and ESC key support.
 
 ---
 
