@@ -19,6 +19,8 @@ import { useClientLocale } from "@/lib/i18n/client";
 import { formatCurrency } from "@/lib/utils/format-currency";
 import TransactionStatusIndicator from "@/components/TransactionStatusIndicator";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
+import PrintReceiptTemplate from "./PrintReceiptTemplate";
+import { STELLAR_CONFIG } from "@/lib/config/stellar";
 
 interface SplitDetail {
   icon: React.ElementType;
@@ -196,14 +198,17 @@ export default function TransactionSuccessReceipt({
               <Share2 className="w-4 h-4" />
               Share
             </button>
-            <button className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-bold hover:bg-white/10 transition-colors">
+            <button 
+              onClick={() => window.print()}
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-bold hover:bg-white/10 transition-colors"
+            >
               <Download className="w-4 h-4" />
               Receipt
             </button>
           </div>
 
           <a
-            href={`https://stellar.expert/explorer/public/tx/${hash}`}
+            href={`${STELLAR_CONFIG.explorerTxUrl}${hash}`}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-red-600/20 mb-6"
@@ -223,6 +228,17 @@ export default function TransactionSuccessReceipt({
           </div>
         </div>
       </div>
+      
+      <PrintReceiptTemplate 
+        txHash={hash}
+        amount={amount}
+        currency={currency}
+        recipientName={recipientName}
+        recipientAddress={recipientAddress}
+        date={date}
+        fee={fee}
+        status="completed"
+      />
     </div>
   );
 }

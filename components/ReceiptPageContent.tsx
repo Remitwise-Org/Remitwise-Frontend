@@ -8,12 +8,15 @@ import {
   Copy,
   Share2,
   ArrowLeft,
+  Printer,
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useSeo } from "@/lib/hooks/useSeo";
 import { isValidTxHash } from "@/lib/remittance/horizon";
 import type { ReceiptData } from "@/lib/remittance/horizon";
+import PrintReceiptTemplate from "./PrintReceiptTemplate";
+import { STELLAR_CONFIG } from "@/lib/config/stellar";
 
 interface ReceiptPageContentProps {
   txHash: string;
@@ -191,19 +194,17 @@ export default function ReceiptPageContent({
             <Share2 className="h-4 w-4" />
             Share
           </button>
-          <a
-            href={`https://stellar.expert/explorer/public/tx/${txHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => window.print()}
             className="flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
           >
-            <ExternalLink className="h-4 w-4" />
-            Explorer
-          </a>
+            <Printer className="h-4 w-4" />
+            Print
+          </button>
         </div>
 
         <a
-          href={`https://stellar.expert/explorer/public/tx/${txHash}`}
+          href={`${STELLAR_CONFIG.explorerTxUrl}${txHash}`}
           target="_blank"
           rel="noopener noreferrer"
           className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold py-4 rounded-xl transition-all shadow-lg shadow-red-600/20 mb-6"
@@ -222,6 +223,21 @@ export default function ReceiptPageContent({
           </Link>
         </div>
       </div>
+      
+      {receiptData && (
+        <PrintReceiptTemplate 
+          txHash={txHash}
+          amount={receiptData.amount}
+          currency={receiptData.currency}
+          recipientName={receiptData.recipient}
+          recipientAddress={receiptData.recipient}
+          senderName={receiptData.sender}
+          senderAddress={receiptData.sender}
+          date={receiptData.date}
+          fee={receiptData.fee}
+          status={receiptData.status === "completed" ? "completed" : "failed"}
+        />
+      )}
     </div>
   );
 }
