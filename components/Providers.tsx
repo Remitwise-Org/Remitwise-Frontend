@@ -12,6 +12,9 @@ import SessionExpiryProvider from "@/components/SessionExpiryProvider";
 import CommandPalette from "@/components/CommandPalette";
 import DevRequestIdDisplay from "@/components/DevRequestIdDisplay";
 
+import { ShortcutHelpProvider } from "@/lib/context/ShortcutHelpContext";
+import ShortcutHelpModal from "@/components/ShortcutHelpModal";
+
 /**
  * Client-side provider boundary for the app.
  *
@@ -29,10 +32,13 @@ export default function Providers({ children }: { children: ReactNode }) {
           <DensityProvider>
             <AsyncOperationsProvider>
               <SessionExpiryProvider>
-                <LayoutWrapper>{children}</LayoutWrapper>
-                <ToastRegion />
-                <CommandPalette />
-                <DevRequestIdDisplay />
+                <ShortcutHelpProvider>
+                  <LayoutWrapper>{children}</LayoutWrapper>
+                  <ToastRegion />
+                  <CommandPalette />
+                  <DevRequestIdDisplay />
+                  <ShortcutHelpModal />
+                </ShortcutHelpProvider>
               </SessionExpiryProvider>
             </AsyncOperationsProvider>
           </DensityProvider>
