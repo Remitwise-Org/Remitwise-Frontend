@@ -1,46 +1,25 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Send, PiggyBank, FileText, Shield } from 'lucide-react';
 
 import StatCard from '@/components/Dashboard/StatCard';
 import { DashboardLoadingSkeleton } from '@/components/ui/LoadingSkeletons';
 import WidgetErrorState from '@/components/ui/WidgetErrorState';
-import { apiClient } from '@/lib/client/apiClient';
+import { StaleBanner } from '@/components/ui/StaleBanner';
+import { useStaleFetch } from '@/lib/hooks/useStaleFetch';
 import { useClientTranslator } from '@/lib/i18n/client';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import type { DashboardResponse } from '@/lib/types/dashboard';
 
-type LoadState = 'loading' | 'error' | 'ready';
-
 export default function DashboardPage() {
   const { t, locale } = useClientTranslator();
-  const [state, setState] = useState<LoadState>('loading');
-  const [data, setData] = useState<DashboardResponse | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
-  // The /api/dashboard route derives the wallet address from the session, so we
-  // never have to pass it from the client. apiClient adds the shared
-  // 401 -> refresh -> retry-once behaviour on top of fetch.
-  const load = useCallback(async () => {
-    setState('loading');
-    try {
-      const res = await apiClient.get('/api/dashboard');
-      // `null` means the session-expiry flow already took over (redirecting).
-      if (!res || !res.ok) {
-        setState('error');
-        return;
-      }
-      const json = (await res.json()) as DashboardResponse;
-      setData(json);
-      setState('ready');
-    } catch {
-      setState('error');
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const { state, data, isStale, staleAt, load } = useStaleFetch<DashboardResponse>({
+    url: '/api/dashboard',
+    cacheKey: 'dashboard-data',
+  });
 
   if (state === 'loading') {
     return <DashboardLoadingSkeleton />;
@@ -98,6 +77,17 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {isStale && !bannerDismissed && (
+        <StaleBanner
+          staleAt={staleAt}
+          onRefresh={() => {
+            setBannerDismissed(false);
+            load();
+          }}
+          onDismiss={() => setBannerDismissed(true)}
+        />
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title={t('dashboard.totalSent')}

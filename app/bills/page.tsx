@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useMemo, useState } from "react";
+import { useRef, useEffect, useMemo, useState, useCallback } from "react";
 import { CalendarClock, Loader2, Layers3, ShieldCheck, Wallet, Clock3 } from "lucide-react";
 import { UnpaidBillsSection } from "@/components/Bills/UnpaidBillsSection";
 import PageHeader from "@/components/PageHeader";
@@ -14,8 +14,39 @@ import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
 import { apiClient } from "@/lib/client/apiClient";
 import { Bill } from "@/lib/contracts/bill-payments";
 import { WidgetErrorState } from "@/components/ui/WidgetStates";
+import { StaleBanner } from "@/components/ui/StaleBanner";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/lib/context/ToastContext";
+
+const BILLS_CACHE_KEY = "bills-data";
+const BILLS_MAX_STALE_AGE_MS = 5 * 60 * 1000; // 5 minutes
+
+interface BillsCacheEnvelope {
+	bills: Bill[];
+	stats: Record<string, unknown>;
+	cachedAt: number;
+}
+
+function readBillsCache(): BillsCacheEnvelope | null {
+	if (typeof window === "undefined") return null;
+	try {
+		const raw = sessionStorage.getItem(BILLS_CACHE_KEY);
+		if (!raw) return null;
+		return JSON.parse(raw) as BillsCacheEnvelope;
+	} catch {
+		return null;
+	}
+}
+
+function writeBillsCache(bills: Bill[], stats: Record<string, unknown>): void {
+	if (typeof window === "undefined") return;
+	try {
+		const envelope: BillsCacheEnvelope = { bills, stats, cachedAt: Date.now() };
+		sessionStorage.setItem(BILLS_CACHE_KEY, JSON.stringify(envelope));
+	} catch {
+		// Quota exceeded or private browsing — degrade silently.
+	}
+}
 
 type AddBillResponse = ActionState & {
 	name?: string;
@@ -120,10 +151,15 @@ export default function Bills() {
 	const [stats, setStats] = useState<any>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
+	const [isStale, setIsStale] = useState(false);
+	const [staleAt, setStaleAt] = useState<number | null>(null);
+	const [bannerDismissed, setBannerDismissed] = useState(false);
 
-	const fetchBillsData = async () => {
+	const fetchBillsData = useCallback(async () => {
 		setIsLoading(true);
 		setError(null);
+		setIsStale(false);
+		setStaleAt(null);
 		try {
 			const [billsRes, statsRes] = await Promise.all([
 				apiClient.get('/api/bills'),
@@ -139,13 +175,11 @@ export default function Bills() {
 			const fetchedBills: Bill[] = billsJson.data?.bills || [];
 			const fetchedStats = statsJson.data;
 
-			setBills(fetchedBills);
-
 			const paidBills = fetchedBills.filter((b: Bill) => b.status === 'paid');
 			const paidAmount = paidBills.reduce((acc: number, b: Bill) => acc + b.amount, 0);
 			const overdueCount = fetchedBills.filter((b: Bill) => (b.status as string) === 'overdue' || (b.status as string) === 'urgent').length;
 
-			setStats({
+			const computedStats = {
 				totalUnpaid: {
 					amount: fetchedStats?.totalUnpaid?.toLocaleString() || '0',
 					pendingCount: fetchedStats?.count || 0
@@ -155,13 +189,29 @@ export default function Bills() {
 					amount: paidAmount.toLocaleString(),
 					paymentCount: paidBills.length
 				}
-			});
+			};
+
+			setBills(fetchedBills);
+			setStats(computedStats);
+			writeBillsCache(fetchedBills, computedStats);
 		} catch (err) {
+			// Attempt stale-data fallback from sessionStorage.
+			const cached = readBillsCache();
+			if (cached) {
+				const ageMs = Date.now() - cached.cachedAt;
+				if (ageMs <= BILLS_MAX_STALE_AGE_MS) {
+					setBills(cached.bills);
+					setStats(cached.stats);
+					setIsStale(true);
+					setStaleAt(cached.cachedAt);
+					return;
+				}
+			}
 			setError(err instanceof Error ? err : new Error("Unknown error"));
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		fetchBillsData();
@@ -200,6 +250,19 @@ export default function Bills() {
 					</div>
 				) : (
 					<>
+						{isStale && !bannerDismissed && (
+							<div className="mb-6">
+								<StaleBanner
+									staleAt={staleAt}
+									onRefresh={() => {
+										setBannerDismissed(false);
+										fetchBillsData();
+									}}
+									onDismiss={() => setBannerDismissed(true)}
+								/>
+							</div>
+						)}
+
 						<section className='mb-8'>
 							<BillPaymentsStatsCards stats={stats} />
 						</section>

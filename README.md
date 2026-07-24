@@ -31,6 +31,16 @@ The frontend includes placeholder pages and components for:
 
 Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
 
+## Stale-Data Warning Banner
+
+When a live fetch fails (network error, non-2xx, or timeout), pages that have previously loaded data show the last-good cached payload together with an amber **StaleBanner** instead of replacing the entire page with an error state. The banner lets users continue working while connectivity recovers and provides a one-click Refresh action.
+
+- **Hook**: `lib/hooks/useStaleFetch.ts` — wraps `apiClient.get()` with a `sessionStorage` fallback.
+- **Component**: `components/ui/StaleBanner.tsx` — dismissible amber banner using `status.warning.*` design tokens.
+- **Wired pages**: Dashboard (`/api/dashboard`) and Bills (`/api/bills` + `/api/bills/total-unpaid`).
+
+See [docs/stale-data-banner.md](docs/stale-data-banner.md) for architecture details, the state machine, and a recipe for adding stale support to new pages.
+
 ## Sentry
 
 Sentry is wired through the client, server, and edge config files with separate environment variables for each runtime:
