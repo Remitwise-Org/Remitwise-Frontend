@@ -36,15 +36,9 @@ The frontend includes placeholder pages and components for:
 
 Dashboard, Bills, Insights, and Transaction History now use route-level skeleton screens built from `components/ui/Skeleton.tsx` and `components/ui/LoadingSkeletons.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
 
-## Stale-Data Warning Banner
+## Browser Support & Polyfills
 
-When a live fetch fails (network error, non-2xx, or timeout), pages that have previously loaded data show the last-good cached payload together with an amber **StaleBanner** instead of replacing the entire page with an error state. The banner lets users continue working while connectivity recovers and provides a one-click Refresh action.
-
-- **Hook**: `lib/hooks/useStaleFetch.ts` — wraps `apiClient.get()` with a `sessionStorage` fallback.
-- **Component**: `components/ui/StaleBanner.tsx` — dismissible amber banner using `status.warning.*` design tokens.
-- **Wired pages**: Dashboard (`/api/dashboard`) and Bills (`/api/bills` + `/api/bills/total-unpaid`).
-
-See [docs/stale-data-banner.md](docs/stale-data-banner.md) for architecture details, the state machine, and a recipe for adding stale support to new pages.
+To maintain a smooth background task experience across all platforms, this app polyfills missing native APIs (such as `window.requestIdleCallback` and `window.cancelIdleCallback` which are unsupported in Safari) using a standardized `setTimeout` wrapper. This polyfill is injected automatically at the client boundary (via `Providers.tsx`), so frontend engineers and downstream libraries can confidently use `requestIdleCallback` without explicit platform guard checks.
 
 ## Sentry
 

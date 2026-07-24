@@ -14,7 +14,8 @@ import ToastRegion from "@/components/ToastRegion";
 import SessionExpiryProvider from "@/components/SessionExpiryProvider";
 import CommandPalette from "@/components/CommandPalette";
 import DevRequestIdDisplay from "@/components/DevRequestIdDisplay";
-import FeatureFlagIndicator from "@/components/FeatureFlagIndicator";
+import "@/lib/utils/idleCallback";
+
 
 /**
  * Client-side provider boundary for the app.
