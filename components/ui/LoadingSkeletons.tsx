@@ -461,67 +461,6 @@ export function GoalsLoadingSkeleton() {
   );
 }
 
-export function TransactionHistoryLoadingSkeletonCompact() {
-  return (
-    <main className="w-full min-h-screen bg-[#010101]">
-      {/* Header */}
-      <div className="border-b border-white/10 px-4 py-6 md:px-20">
-        <Skeleton className="mb-2 h-7 w-48 rounded" />
-        <Skeleton className="h-4 w-32 rounded" />
-      </div>
-
-      <SkeletonGroup
-        className="mx-4 mt-8 space-y-6 md:mx-20"
-        label="Loading transaction history"
-      >
-        {/* Search + action bar */}
-        <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] px-4 py-6">
-          <Skeleton className="mb-4 h-10 w-full rounded-xl" />
-          <div className="flex justify-end gap-3">
-            <Skeleton className="h-9 w-24 rounded-xl" />
-            <Skeleton className="h-9 w-24 rounded-xl" />
-          </div>
-        </div>
-
-        {/* Filters panel */}
-        <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] px-4 py-5">
-          <div className="mb-4 flex items-center gap-2">
-            <Skeleton className="h-4 w-4 rounded" />
-            <Skeleton className="h-4 w-20 rounded" />
-          </div>
-          <div className="mb-4 flex flex-wrap gap-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-24 rounded-xl" />
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-20 rounded-xl" />
-            ))}
-          </div>
-        </div>
-
-        {/* Transaction rows */}
-        <div className="space-y-4">
-          {["today", "yesterday", "earlier"].map((group) => (
-            <section key={group}>
-              <div className="mb-3 flex items-center justify-between border-b border-white/[0.08] pb-3">
-                <Skeleton className="h-5 w-24 rounded" />
-                <Skeleton className="h-4 w-16 rounded" />
-              </div>
-              <div className="space-y-3">
-                {Array.from({ length: group === "today" ? 2 : 3 }).map((_, i) => (
-                  <ListRowSkeleton key={i} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      </SkeletonGroup>
-    </main>
-  );
-}
-
 export function InsightLoadingSkeleton() {
   return (
     <div

@@ -17,9 +17,6 @@ import type {
   Transaction,
   TransactionStatus,
 } from "@/components/Dashboard/TransactionHistoryItem";
-// @ts-ignore
-import { FixedSizeList } from "react-window";
-const List = FixedSizeList as any;
 
 type Direction = "all" | "sent" | "received";
 
@@ -39,21 +36,6 @@ function getGroupKey(
   if (d.getTime() === yesterdayStart.getTime()) return "yesterday";
   return "earlier";
 }
-
-interface VirtualRowProps {
-  index: number;
-  style: React.CSSProperties;
-  data: Transaction[];
-}
-
-const TransactionVirtualRow = ({ index, style, data }: VirtualRowProps) => {
-  const tx = data[index];
-  return (
-    <div style={style}>
-      <TransactionHistoryItem transaction={tx} />
-    </div>
-  );
-};
 
 const TransactionHistoryPage = () => {
   useSeo({
@@ -669,16 +651,10 @@ const TransactionHistoryPage = () => {
                             )}
                       </span>
                     </div>
-                    <div className="h-[500px] w-full max-h-[70vh]">
-                      <List
-                        height={500}
-                        width="100%"
-                        itemCount={txs.length}
-                        itemSize={80}
-                        itemData={txs}
-                      >
-                        {TransactionVirtualRow}
-                      </List>
+                    <div className="space-y-3">
+                      {txs.map((tx) => (
+                        <TransactionHistoryItem key={tx.id} transaction={tx} />
+                      ))}
                     </div>
                   </section>
                 );

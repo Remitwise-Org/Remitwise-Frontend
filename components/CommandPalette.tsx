@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Send, LayoutDashboard, FileText, Shield, Users, Settings, Wallet, X, Command, Clock } from "lucide-react";
+import { Search, Send, LayoutDashboard, FileText, Shield, Users, Settings, Wallet, X, Command, SearchCheck } from "lucide-react";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useRecentItems } from "@/lib/hooks/useRecentItems";
 import { RECENT_COMMANDS_STORAGE_KEY } from "@/lib/config/recent";
@@ -80,6 +80,14 @@ export default function CommandPalette() {
       action: () => router.push("/settings"),
       category: "routes",
     },
+    {
+      id: "search-results",
+      label: "Global Search",
+      description: "Search invoices, addresses, and settings",
+      icon: <SearchCheck className="w-4 h-4" />,
+      action: () => router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`),
+      category: "routes",
+    },
     // Quick Actions
     {
       id: "connect-wallet",
@@ -96,7 +104,8 @@ export default function CommandPalette() {
 
   const filteredCommands = commands.filter((command) =>
     command.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    command.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    command.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (command.id === "search-results" && searchQuery.trim().length > 0)
   );
 
   let recentList: CommandItem[] = [];

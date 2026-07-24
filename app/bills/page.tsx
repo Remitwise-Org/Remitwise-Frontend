@@ -136,21 +136,12 @@ export default function Bills() {
 	const [reminderLead, setReminderLead] = useState("3");
 	const { toast } = useToast();
 
-	const [bills, setBills] = useState<Bill[]>([]);
-	const [stats, setStats] = useState<any>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<Error | null>(null);
-
 	const recurrencePreview = useMemo(() => {
 		if (!isRecurring) return t("bills.form.oneTimeBill");
 		if (frequency === "weekly") return t("bills.form.weeklyOn", { day: weeklyDay });
 		return t("bills.form.monthlyOn", { day: ordinalDay(monthlyDay) });
 	}, [frequency, isRecurring, monthlyDay, weeklyDay, t]);
 
-	const [bills, setBills] = useState<Bill[]>([]);
-	const [stats, setStats] = useState<any>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<Error | null>(null);
 	const [reloadKey, setReloadKey] = useState(0);
 
 	useEffect(() => {

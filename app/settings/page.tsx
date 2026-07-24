@@ -73,9 +73,10 @@ export default function SettingsPage() {
       <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-100 dark:border-gray-800">
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 overflow-hidden px-4 sm:px-6">
           <PageHeadingLink
-            headingId="settings-title"
-            label={t("settings.page_title")}
-            headingClassName="shrink-0 text-base font-semibold text-gray-900 dark:text-white"
+            headingId="settings-page-heading"
+            label="Settings"
+            wrapperClassName="shrink-0"
+            headingClassName="text-base font-semibold text-gray-900 dark:text-white"
           >
             {t("settings.page_title")}
           </h1>

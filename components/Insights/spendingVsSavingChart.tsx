@@ -45,14 +45,13 @@ const SAVINGS_COLOR  = INSIGHTS_PALETTE[1];
 const GRID_COLOR     = 'rgba(255,255,255,0.06)';
 const AXIS_COLOR     = '#6b7280';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: TooltipContentProps<any, any>) {
+const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: TooltipContentProps<number | string | readonly (number | string)[], string | number>) {
     if (!active || !payload?.length) return null
 
     return (
         <div className="rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-3 shadow-2xl text-sm min-w-[160px]">
             <p className="text-gray-400 font-medium mb-2">{label ?? ''}</p>
-            {payload.map((entry: any) => (
+            {payload.map((entry) => (
                 <div key={entry.name} className="flex items-center justify-between gap-4 py-0.5">
                     <div className="flex items-center gap-2">
                         <span
@@ -71,8 +70,8 @@ const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: To
                     <span className="text-gray-500">Ratio</span>
                     <span className="text-gray-300">
                         {Math.round(
-                            ((payload[1].value as number) /
-                                ((payload[0].value as number) + (payload[1].value as number))) *
+                            ((Number(payload[1]?.value ?? 0)) /
+                                ((Number(payload[0]?.value ?? 0) + Number(payload[1]?.value ?? 0)))) *
                             100
                         )}% saved
                     </span>

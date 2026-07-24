@@ -22,7 +22,7 @@ The frontend includes placeholder pages and components for:
 ### Shared Components
 
 - **AddressDisplay**: A component for displaying long strings like Stellar addresses, featuring truncation, a copy-to-clipboard button, and a tooltip showing the full address on hover.
-- **NetworkStatusIndicator**: A pill in the primary header showing the current connection state — green dot + "Online" or red dot + "Offline". Fires a toast on connectivity transitions.
+- **Global Search**: The `/search?q=...` route surfaces matching invoice, address, and settings results from the same search vocabulary used in the command palette.
 
 1. **Dashboard** - Overview of remittances, savings, bills, and insurance
 2. **Send Money** - Remittance sending interface with automatic split preview

@@ -1,88 +1,39 @@
-// app/send/recurring/page.tsx
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/lib/client/apiClient";
-import RecurringScheduleList from "@/components/RecurringScheduleList";
-import RecurringScheduleForm from "@/components/RecurringScheduleForm";
-import { LoadingSkeletons } from "@/components/LoadingSkeletons"; // assume exists
-import { WidgetEmptyState } from "@/components/WidgetEmptyState";
-import { WidgetErrorState } from "@/components/WidgetErrorState";
+import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
 
 export default function RecurringSchedulesPage() {
-  const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
 
-  const { data, isLoading, isError, error } = useQuery(
-    ["recurringSchedules"],
-    () => apiClient.getRecurringSchedules(),
-    { staleTime: 5 * 60 * 1000 }
-  );
-
-  const createMutation = useMutation(
-    (payload) => apiClient.createRecurringSchedule(payload),
-    {
-      onSuccess: () => queryClient.invalidateQueries(["recurringSchedules"]),
-    }
-  );
-
-  const pauseMutation = useMutation(
-    ({ id }) => apiClient.pauseRecurringSchedule(id),
-    { onSuccess: () => queryClient.invalidateQueries(["recurringSchedules"]) }
-  );
-
-  const resumeMutation = useMutation(
-    ({ id }) => apiClient.resumeRecurringSchedule(id),
-    { onSuccess: () => queryClient.invalidateQueries(["recurringSchedules"]) }
-  );
-
-  const deleteMutation = useMutation(
-    ({ id }) => apiClient.deleteRecurringSchedule(id),
-    { onSuccess: () => queryClient.invalidateQueries(["recurringSchedules"]) }
-  );
-
-  const handleCreate = async (data) => {
-    await createMutation.mutateAsync(data);
-    setShowForm(false);
-  };
-
-  const handlePause = async (id) => {
-    await pauseMutation.mutateAsync({ id });
-  };
-
-  const handleResume = async (id) => {
-    await resumeMutation.mutateAsync({ id });
-  };
-
-  const handleDelete = async (id) => {
-    await deleteMutation.mutateAsync({ id });
-  };
-
-  if (isLoading) return <LoadingSkeletons />;
-  if (isError) return <WidgetErrorState error={error?.message || "Failed to load schedules"} />;
-  if (!data || data.length === 0) return <WidgetEmptyState message="No recurring schedules" />;
-
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Recurring Remittance Schedules</h1>
+    <div className="mx-auto max-w-4xl p-6">
+      <div className="mb-6 rounded-2xl border border-white/10 bg-[#0f0f0f] p-6">
+        <h1 className="mb-2 text-2xl font-bold text-white">
+          Recurring Remittance Schedules
+        </h1>
+        <p className="text-sm text-gray-400">
+          This route is available for future recurring schedule management.
+        </p>
+      </div>
+
       <button
-        onClick={() => setShowForm(true)}
-        className="mb-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+        type="button"
+        onClick={() => setShowForm((current) => !current)}
+        className="mb-4 rounded-xl bg-[#FF4B26] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#FF4B26]/80"
       >
-        Create New Schedule
+        {showForm ? "Hide setup" : "Create New Schedule"}
       </button>
+
       {showForm && (
-        <RecurringScheduleForm
-          onCancel={() => setShowForm(false)}
-          onSubmit={handleCreate}
-        />
+        <div className="mb-6 rounded-2xl border border-dashed border-white/15 bg-black/30 p-4 text-sm text-gray-300">
+          Schedule setup is not yet wired into this page.
+        </div>
       )}
-      <RecurringScheduleList
-        schedules={data}
-        onPause={handlePause}
-        onResume={handleResume}
-        onDelete={handleDelete}
+
+      <WidgetEmptyState
+        title="No recurring schedules"
+        description="Create a new schedule to start automating remittances."
       />
     </div>
   );
