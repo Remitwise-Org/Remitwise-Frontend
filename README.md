@@ -2,7 +2,7 @@
 
 Frontend application for the RemitWise remittance and financial planning platform.
 
-> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations. When building UI, follow the [component lifecycle](docs/COMPONENT_LIFECYCLE.md) from Figma and design tokens through stories, tests, and production. For file names, prop interfaces, hook names, and directory layout, see [docs/COMPONENT_NAMING.md](docs/COMPONENT_NAMING.md). For conventions around route naming, layouts, and nested routes, see [docs/ROUTING_PATTERNS.md](docs/ROUTING_PATTERNS.md). Then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers.
+> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations. When building UI, follow the [component lifecycle](docs/COMPONENT_LIFECYCLE.md) from Figma and design tokens through stories, tests, and production, and refer to [docs/RESPONSIVE_TESTING.md](docs/RESPONSIVE_TESTING.md) to verify layout behavior across breakpoints. For conventions around route naming, layouts, and nested routes, see [docs/ROUTING_PATTERNS.md](docs/ROUTING_PATTERNS.md). Then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers.
 
 ## Overview
 
@@ -206,6 +206,9 @@ To run the Playwright end-to-end tests for authentication and protected routes:
 npm run test:e2e
 ```
 
+For validating responsive breakpoints and layouts across different viewports, see the [Responsive Testing Guide](docs/RESPONSIVE_TESTING.md).
+
+
 ## Project Structure
 
 ```
@@ -229,7 +232,8 @@ remitwise-frontend/
 │   ├── API_ROUTES.md        # API routes documentation
 │   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
 │   ├── contract-cache.md    # Contract caching architecture and guidelines
-│   └── frame-budget-rules.md    # Frame budget performance guidelines
+│   ├── frame-budget-rules.md    # Frame budget performance guidelines
+│   └── RESPONSIVE_TESTING.md # Guide to verifying responsive breakpoints and layout behavior
 ├── public/                  # Static assets
 └── package.json
 ```

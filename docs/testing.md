@@ -94,6 +94,9 @@ waits for `http://localhost:3000`, injecting test env vars (`DATABASE_URL`,
 
 **Example:** [tests/e2e/health.spec.ts](../tests/e2e/health.spec.ts)
 
+For details on verifying responsive breakpoints and layout behavior, check the [Responsive Testing Guide](./RESPONSIVE_TESTING.md).
+
+
 ---
 
 ## Script map (`package.json`)
