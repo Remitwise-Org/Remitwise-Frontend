@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ChevronDown, RefreshCw } from "lucide-react"
 import { CTA_TEST_IDS } from "@/lib/cta-testids"
 import { useExchangeRates } from "@/lib/context/RatesContext"
@@ -20,14 +20,18 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
   const [quotePending, setQuotePending] = useState(false)
 
   // Debounce the raw amount so the quote API is only called after the user
-  // pauses typing, preventing one request per keystroke.
-  const debouncedAmount = useDebouncedValue(amount, 400)
+  // pauses typing for 300 ms, preventing one request per keystroke.
+  const debouncedAmount = useDebouncedValue(amount, 300)
 
   const { rates, loading, stale, error: ratesError, refresh } = useExchangeRates()
   const { t } = useClientTranslator()
 
+  // Keep a ref to the current in-flight AbortController so we can cancel it
+  // when the debounced amount or currency changes before the fetch completes.
+  const abortRef = useRef<AbortController | null>(null)
+
   // Fetch a quote whenever the debounced amount or currency changes.
-  // Using the latest debounced value ensures no stale quote is displayed.
+  // Any previous in-flight request is aborted before a new one starts (latest wins).
   useEffect(() => {
     const numValue = parseFloat(debouncedAmount)
     if (!debouncedAmount || isNaN(numValue) || numValue < 1 || numValue > 10000) {
@@ -35,26 +39,31 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
       return
     }
 
-    let cancelled = false
+    // Cancel the previous in-flight request, if any.
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     setQuotePending(true)
 
-    fetch(`/api/remittance/quote?amount=${encodeURIComponent(debouncedAmount)}&currency=${encodeURIComponent(currency)}`)
+    fetch(
+      `/api/remittance/quote?amount=${encodeURIComponent(debouncedAmount)}&currency=${encodeURIComponent(currency)}`,
+      { signal: controller.signal },
+    )
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { quote?: number } | null) => {
-        if (!cancelled) {
-          setQuote(data?.quote ?? null)
-          setQuotePending(false)
-        }
+        setQuote(data?.quote ?? null)
+        setQuotePending(false)
       })
-      .catch(() => {
-        if (!cancelled) {
-          setQuote(null)
-          setQuotePending(false)
-        }
+      .catch((err: unknown) => {
+        // Ignore errors caused by intentional cancellation.
+        if (err instanceof Error && err.name === "AbortError") return
+        setQuote(null)
+        setQuotePending(false)
       })
 
     return () => {
-      cancelled = true
+      controller.abort()
     }
   }, [debouncedAmount, currency])
 
