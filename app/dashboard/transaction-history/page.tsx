@@ -12,6 +12,7 @@ import { TransactionItem } from "@/lib/remittance/horizon";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { useSeo } from "@/lib/hooks/useSeo";
+import { useInfiniteScrollObserver } from "@/lib/hooks/useInfiniteScrollObserver";
 import {
   serializeToCsv,
   serializeToJson,
@@ -202,47 +203,6 @@ const TransactionHistoryPage = () => {
     setDateTo("");
   }, []);
 
-  const handleExport = useCallback(
-    (format: "csv" | "json") => {
-      if (filteredCount === 0) return;
-
-      const rows = Object.values(groupedTransactions)
-        .flat()
-        .map((tx) => ({
-          id: tx.id,
-          type: tx.type,
-          status: tx.status,
-          amount: tx.amount,
-          currency: tx.currency,
-          counterparty: tx.counterpartyName,
-          date: tx.date,
-          fee: tx.fee,
-        }));
-
-      let dataString = "";
-      let mimeType = "";
-      if (format === "csv") {
-        dataString = serializeToCsv(rows);
-        mimeType = "text/csv;charset=utf-8;";
-      } else {
-        dataString = serializeToJson(rows);
-        mimeType = "application/json;charset=utf-8;";
-      }
-
-      const filename = getExportFilename(format, dateFrom, dateTo);
-      const blob = new Blob([dataString], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    },
-    [groupedTransactions, dateFrom, dateTo, filteredCount],
-  );
-
   const hasActiveFilters =
     debouncedSearch.trim().length > 0 ||
     statusFilter !== "all" ||
@@ -345,6 +305,47 @@ const TransactionHistoryPage = () => {
 
   const totalCount = transactions.length;
   const filteredCount = filteredTransactions.length;
+
+  const handleExport = useCallback(
+    (format: "csv" | "json") => {
+      if (filteredCount === 0) return;
+
+      const rows = Object.values(groupedTransactions)
+        .flat()
+        .map((tx) => ({
+          id: tx.id,
+          type: tx.type,
+          status: tx.status,
+          amount: tx.amount,
+          currency: tx.currency,
+          counterparty: tx.counterpartyName,
+          date: tx.date,
+          fee: tx.fee,
+        }));
+
+      let dataString = "";
+      let mimeType = "";
+      if (format === "csv") {
+        dataString = serializeToCsv(rows);
+        mimeType = "text/csv;charset=utf-8;";
+      } else {
+        dataString = serializeToJson(rows);
+        mimeType = "application/json;charset=utf-8;";
+      }
+
+      const filename = getExportFilename(format, dateFrom, dateTo);
+      const blob = new Blob([dataString], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    },
+    [groupedTransactions, dateFrom, dateTo, filteredCount],
+  );
   const isLoading = initialLoading && loading;
   const noTransactions = !isLoading && !error && totalCount === 0;
   const noResults =

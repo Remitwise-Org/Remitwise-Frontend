@@ -34,7 +34,7 @@ function groupResultsByCategory(results: ReturnType<typeof getGlobalSearchResult
   );
 }
 
-export function SearchResultsPage({ searchParams }: SearchResultsPageProps) {
+function SearchResultsPage({ searchParams }: SearchResultsPageProps) {
   const query = searchParams?.q?.trim() ?? "";
   const results = getGlobalSearchResults(query);
   const groupedResults = groupResultsByCategory(results);
@@ -125,6 +125,7 @@ export function SearchResultsPage({ searchParams }: SearchResultsPageProps) {
   );
 }
 
-export default function Page({ searchParams }: SearchResultsPageProps) {
-  return <SearchResultsPage searchParams={searchParams} />;
+export default async function Page({ searchParams }: { searchParams?: Promise<{ q?: string }> }) {
+  const resolvedSearchParams = await searchParams;
+  return <SearchResultsPage searchParams={resolvedSearchParams} />;
 }

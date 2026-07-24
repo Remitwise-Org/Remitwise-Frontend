@@ -101,7 +101,7 @@ export default function InsurancePage() {
     <div className="min-h-screen bg-[#0a0b0f] text-white">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 tall:sticky tall:top-16 375:tall:top-20 tall:z-40 bg-[#0a0b0f] py-4 border-b border-white/[0.04]">
           <div>
             <PageHeadingLink
               headingId="insurance-page-heading"

@@ -183,19 +183,16 @@ export async function middleware(request: NextRequest) {
   const start = Date.now();
   const method = request.method;
   const url = request.nextUrl.pathname;
-  const isApiRoute = url.startsWith("/api/");
+  const isApiRoute = url.startsWith("/api");
   const incomingRequestId = request.headers.get(API_REQUEST_ID_HEADER);
   const requestId =
     incomingRequestId && isValidRequestId(incomingRequestId)
       ? incomingRequestId
       : generateRequestId();
 
-  const isApiRoute = url.startsWith("/api/");
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
-
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
-  requestHeaders.set(API_REQUEST_ID_HEADER, requestId);
 
   // Extract IP or fallback for key
   const forwardedFor = request.headers.get("x-forwarded-for");

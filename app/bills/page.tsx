@@ -15,7 +15,6 @@ import { apiClient } from "@/lib/client/apiClient";
 import { runWidgetFetchWithRetry } from "@/lib/client/widgetFetchRetry";
 import { Bill } from "@/lib/contracts/bill-payments";
 import { WidgetErrorState } from "@/components/ui/WidgetStates";
-import { StaleBanner } from "@/components/ui/StaleBanner";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/lib/context/ToastContext";
 import { CTA_TEST_IDS } from "@/lib/cta-testids";
@@ -167,9 +166,7 @@ export default function Bills() {
 		}
 	}, [toast, bills, t]);
 
-	const fetchBillsData = useCallback(async (signal?: AbortSignal) => {
-		setIsLoading(true);
-		setError(null);
+	const fetchBillsData = async (signal?: AbortSignal) => {
 		try {
 			const [billsRes, statsRes] = await Promise.all([
 				apiClient.get('/api/bills', { signal }),
@@ -185,13 +182,11 @@ export default function Bills() {
 			const fetchedBills: Bill[] = billsJson.data?.bills || [];
 			const fetchedStats = statsJson.data;
 
-			setBills(fetchedBills);
-
 			const paidBills = fetchedBills.filter((b: Bill) => b.status === 'paid');
 			const paidAmount = paidBills.reduce((acc: number, b: Bill) => acc + b.amount, 0);
 			const overdueCount = fetchedBills.filter((b: Bill) => (b.status as string) === 'overdue' || (b.status as string) === 'urgent').length;
 
-			const statsObj = {
+			const statsData = {
 				totalUnpaid: {
 					amount: fetchedStats?.totalUnpaid?.toLocaleString() || '0',
 					pendingCount: fetchedStats?.count || 0
@@ -203,19 +198,11 @@ export default function Bills() {
 				}
 			};
 
-			setStats(statsObj);
-			return { bills: fetchedBills, stats: statsObj };
+			return { bills: fetchedBills, stats: statsData };
 		} catch (err) {
-			setError(err instanceof Error ? err : new Error("Unknown error"));
-			throw err;
-		} finally {
-			setIsLoading(false);
+			throw err instanceof Error ? err : new Error("Unknown error");
 		}
 	}, []);
-
-	useEffect(() => {
-		fetchBillsData();
-	}, [fetchBillsData]);
 
 	const handleRetry = useCallback(() => {
 		setReloadKey((current) => current + 1);
@@ -284,18 +271,7 @@ export default function Bills() {
 					</div>
 				) : (
 					<>
-						{isStale && !bannerDismissed && (
-							<div className="mb-6">
-								<StaleBanner
-									staleAt={staleAt}
-									onRefresh={() => {
-										setBannerDismissed(false);
-										fetchBillsData();
-									}}
-									onDismiss={() => setBannerDismissed(true)}
-								/>
-							</div>
-						)}
+
 
 						<section className='mb-8'>
 							<BillPaymentsStatsCards stats={stats} />

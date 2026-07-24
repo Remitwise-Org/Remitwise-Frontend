@@ -49,3 +49,17 @@ export function usePrefersReducedMotion(): boolean {
 
   return prefersReducedMotion;
 }
+
+export function getStoredMotionPreference(): "system" | "reduced" | "no-preference" {
+  if (typeof window === 'undefined') return 'system';
+  const val = localStorage.getItem('motion-preference');
+  if (val === 'reduced' || val === 'no-preference' || val === 'system') {
+    return val;
+  }
+  return 'system';
+}
+
+export function setStoredMotionPreference(pref: "system" | "reduced" | "no-preference"): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('motion-preference', pref);
+}

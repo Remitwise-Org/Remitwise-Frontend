@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Send, PiggyBank, FileText, Shield } from 'lucide-react';
 import StaleBanner from '@/components/ui/StaleBanner';
 
@@ -15,10 +15,7 @@ import { formatCurrency } from '@/lib/utils/format-currency';
 import { formatLastSynced } from '@/lib/utils/time-ago';
 import type { DashboardResponse } from '@/lib/types/dashboard';
 import { useSeo } from '@/lib/hooks/useSeo';
-import {
-  DEV_MODE_STORAGE_KEY,
-  DEV_WIDGET_PAYLOAD_EVENT,
-} from '@/lib/config/developer';
+import { DEV_MODE_STORAGE_KEY, DEV_WIDGET_PAYLOAD_EVENT } from '@/lib/config/developer';
 
 type LoadState = 'loading' | 'error' | 'ready';
 
@@ -33,6 +30,8 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const isStale = data?.meta?.fromCache ?? false;
+  const staleAt = data ? new Date(data.meta.cachedAt).getTime() : 0;
 
   // The /api/dashboard route derives the wallet address from the session, so we
   // never have to pass it from the client. apiClient adds the shared
@@ -158,7 +157,7 @@ export default function DashboardPage() {
           staleAt={staleAt}
           onRefresh={() => {
             setBannerDismissed(false);
-            load();
+            setReloadKey((prev) => prev + 1);
           }}
           onDismiss={() => setBannerDismissed(true)}
         />

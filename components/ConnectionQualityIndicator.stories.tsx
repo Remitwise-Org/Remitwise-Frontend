@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import ConnectionQualityIndicator from './ConnectionQualityIndicator';
-import { SWRConfig } from 'swr';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock QueryClient for stories

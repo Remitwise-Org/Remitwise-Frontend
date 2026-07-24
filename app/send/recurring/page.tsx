@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CalendarClock } from "lucide-react";
 import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
 
 export default function RecurringSchedulesPage() {
@@ -32,6 +33,7 @@ export default function RecurringSchedulesPage() {
       )}
 
       <WidgetEmptyState
+        icon={CalendarClock}
         title="No recurring schedules"
         description="Create a new schedule to start automating remittances."
       />

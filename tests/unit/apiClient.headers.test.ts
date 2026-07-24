@@ -64,7 +64,8 @@ describe('apiClient shared headers', () => {
       .mockResolvedValueOnce({ status: 401, headers: { get: () => null } })
       .mockResolvedValueOnce({ status: 200, headers: { get: () => null } });
     (sessionHandler.isSessionExpired as ReturnType<typeof vi.fn>)
-      .mockImplementation(async (res: Response) => res?.status === 401);
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false);
     (sessionHandler.refreshSession as ReturnType<typeof vi.fn>).mockResolvedValue(true);
 
     await apiClient.get('/api/account', { retries: 1, backoff: 0 });

@@ -111,6 +111,24 @@ A floating "back to top" button that appears after the user scrolls past 800px.
 
 Wired in `app/layout.tsx` so it is available on every route.
 
+## PageHeader
+
+A reusable page header component used on core pages (like Bills, Family, and Savings Goals) that renders the page title, description, and primary CTA.
+
+**File:** `components/PageHeader.tsx`
+
+### Behavior
+
+- **Sticky on Tall Screens:** On viewports with height >= 800px (configured via `TALL_SCREEN_MIN_HEIGHT` in `lib/config/layout.json` and the `tall` Tailwind theme breakpoint), the header stays sticky (`tall:sticky`) and remains in view during scroll.
+- **Top Offset:** Responsive top offset adjusts to `top-16` / `top-20` based on the fixed primary navigation height to prevent layout overlaps.
+
+### Integration
+
+Used in:
+- `app/bills/page.tsx`
+- `app/family/page.tsx`
+- `app/dashboard/goals/page.tsx`
+
 ## Dashboard — Last synced indicator
 
 A subtle timestamp showing when the dashboard data was last fetched.

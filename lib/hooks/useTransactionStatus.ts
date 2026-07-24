@@ -98,7 +98,9 @@ export function useTransactionStatus(txHash: string | null, options: UseTransact
       setError(err.message || "error");
       scheduleNext(currentAttempt + 1);
     }
-  }, [txHash, maxAttempts, scheduleNext]);
+  }, [txHash, maxAttempts]);
+
+  pollRef.current = poll;
 
   useEffect(() => {
     if (!enabled || !txHash) {

@@ -15,7 +15,7 @@ type TooltipSide = 'top' | 'bottom' | 'left' | 'right'
 
 interface TooltipProps {
   children: React.ReactNode
-  content: React.ReactNode
+  content?: React.ReactNode
   side?: TooltipSide
   delay?: number
   className?: string
