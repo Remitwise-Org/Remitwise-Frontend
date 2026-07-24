@@ -916,3 +916,16 @@ To disable Developer Mode and hide the panel, append `?dev=0` to the URL or clea
 2. **Instant Copying**: Click the Copy icon next to the Request ID to instantly copy the ID to your clipboard.
 3. **Log Investigation**: Provide this copied ID to the backend/platform engineering team or search for it directly in your centralized logging system (e.g. Datadog, Kibana, AWS CloudWatch) to find the complete trace of database operations, external Stellar network interactions, and API response logs associated with that specific user transaction or error.
 
+### Diagnostics Page (`/debug?debug=1`)
+
+Operators, support engineers, and developers can access the system diagnostics page at `/debug?debug=1`.
+
+- **Access URL**: `http://localhost:3000/debug?debug=1` (requests without `?debug=1` return `404 Not Found`).
+- **Emitted Information**:
+  - **Build SHA**: Current Git commit SHA / Sentry release identifier (`BUILD_SHA`).
+  - **Feature Flags**: Status of system feature flags (`custodialMode`, `developerMode`, `recurringRemittance`, `emergencyTransfer`, `familyWallet`, etc.).
+  - **Current Wallet Chain**: Active connected Stellar network or default environment network (e.g. `testnet`, `mainnet`).
+  - **Last Request ID**: The most recent API response request ID tracked across client interactions.
+- **Exporting**: Click **Copy Raw JSON** on the page to export the complete diagnostics payload.
+
+

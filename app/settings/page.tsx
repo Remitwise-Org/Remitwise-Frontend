@@ -74,7 +74,7 @@ export default function SettingsPage() {
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 overflow-hidden px-4 sm:px-6">
           <h1 className="shrink-0 text-base font-semibold text-gray-900 dark:text-white">
             {t("settings.page_title")}
-          </PageHeadingLink>
+          </h1>
           {/* Mobile: horizontal scrollable nav pills */}
           <nav
             className="ml-auto flex min-w-0 flex-1 gap-1 overflow-x-auto sm:hidden scrollbar-none"
