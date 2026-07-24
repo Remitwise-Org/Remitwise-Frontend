@@ -8,12 +8,7 @@ const config: StorybookConfig = {
   stories: [
     "../components/**/*.stories.@(ts|tsx)",
   ],
-  addons: [
-    "@storybook/addon-actions",
-    "@storybook/addon-controls",
-    "@storybook/addon-docs",
-    "@storybook/addon-interactions",
-  ],
+  addons: [],
   framework: {
     name: "@storybook/react-webpack5",
     options: {},
