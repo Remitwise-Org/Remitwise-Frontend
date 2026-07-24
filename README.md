@@ -229,7 +229,7 @@ remitwise-frontend/
 │   ├── API_ROUTES.md        # API routes documentation
 │   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
 │   ├── contract-cache.md    # Contract caching architecture and guidelines
-│   └── frame-budget-rules.md    # Frame budget performance guidelines
+│   └── RELEASE_NOTES_TEMPLATE.md    # Release notes template for contributors
 ├── public/                  # Static assets
 └── package.json
 ```
@@ -274,7 +274,8 @@ Defaults are defined in [`lib/config/seo.ts`](./lib/config/seo.ts):
 ```ts
 export const DEFAULT_SEO = {
   title: "RemitWise - Smart Remittance & Financial Planning",
-  description: "A remittance app that helps families save, plan, and protect — not just send money.",
+  description:
+    "A remittance app that helps families save, plan, and protect — not just send money.",
 };
 ```
 
@@ -282,13 +283,13 @@ If `title` or `description` is omitted from `useSeo(...)`, the corresponding def
 
 ### Behaviour
 
-| Scenario | Result |
-|---|---|
-| `useSeo({ title, description })` | Sets both title and description |
-| `useSeo({ title })` | Sets title; uses `DEFAULT_SEO.description` |
-| `useSeo()` | Uses both defaults |
-| Component unmounts | Reverts to previous route's SEO (stack-based) |
-| Layout already has a `<meta name="description">` | Reuses it — no duplicates created |
+| Scenario                                         | Result                                        |
+| ------------------------------------------------ | --------------------------------------------- |
+| `useSeo({ title, description })`                 | Sets both title and description               |
+| `useSeo({ title })`                              | Sets title; uses `DEFAULT_SEO.description`    |
+| `useSeo()`                                       | Uses both defaults                            |
+| Component unmounts                               | Reverts to previous route's SEO (stack-based) |
+| Layout already has a `<meta name="description">` | Reuses it — no duplicates created             |
 
 ### Server Components
 
@@ -313,7 +314,6 @@ Unit tests live in [`tests/unit/hooks/useSeo.test.tsx`](./tests/unit/hooks/useSe
 - Default metadata is used when values are omitted
 - No duplicate `<meta>` tags are created
 - Stack-based cleanup on unmount
-
 
 **Quick Reference:**
 
@@ -921,7 +921,7 @@ RemitWise features a built-in Developer Mode designed for team members, QA, and 
 
 To enable Developer Mode, append the `?dev=1` query parameter to the application URL in your browser:
 
-* **Example:** `http://localhost:3000/?dev=1` or `http://localhost:3000/dashboard?dev=1`
+- **Example:** `http://localhost:3000/?dev=1` or `http://localhost:3000/dashboard?dev=1`
 
 Once enabled, a floating **Developer Mode** panel will appear at the bottom-left of the viewport. This panel persists across client-side page transitions within your session.
 
@@ -929,24 +929,10 @@ Once enabled, a floating **Developer Mode** panel will appear at the bottom-left
 
 To disable Developer Mode and hide the panel, append `?dev=0` to the URL or clear your session storage:
 
-* **Example:** `http://localhost:3000/?dev=0`
+- **Example:** `http://localhost:3000/?dev=0`
 
 ### How to Use for Support and Debugging
 
 1. **Request Tracking**: As you interact with the app, the floating panel automatically updates in real-time to show the `Request ID` of the most recent API response (extracting from `x-request-id`, `x-correlation-id`, etc.).
 2. **Instant Copying**: Click the Copy icon next to the Request ID to instantly copy the ID to your clipboard.
 3. **Log Investigation**: Provide this copied ID to the backend/platform engineering team or search for it directly in your centralized logging system (e.g. Datadog, Kibana, AWS CloudWatch) to find the complete trace of database operations, external Stellar network interactions, and API response logs associated with that specific user transaction or error.
-
-### Diagnostics Page (`/debug?debug=1`)
-
-Operators, support engineers, and developers can access the system diagnostics page at `/debug?debug=1`.
-
-- **Access URL**: `http://localhost:3000/debug?debug=1` (requests without `?debug=1` return `404 Not Found`).
-- **Emitted Information**:
-  - **Build SHA**: Current Git commit SHA / Sentry release identifier (`BUILD_SHA`).
-  - **Feature Flags**: Status of system feature flags (`custodialMode`, `developerMode`, `recurringRemittance`, `emergencyTransfer`, `familyWallet`, etc.).
-  - **Current Wallet Chain**: Active connected Stellar network or default environment network (e.g. `testnet`, `mainnet`).
-  - **Last Request ID**: The most recent API response request ID tracked across client interactions.
-- **Exporting**: Click **Copy Raw JSON** on the page to export the complete diagnostics payload.
-
-
