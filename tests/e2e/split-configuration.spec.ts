@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { CTA_TEST_IDS } from '@/lib/cta-testids';
 
 /**
  * Smart Money Split Configuration — End-to-End Tests
@@ -114,7 +115,7 @@ test.describe('Smart Money Split Configuration', () => {
     await expect(page.getByText(/ready to submit/i)).toBeVisible();
 
     // Save button should be enabled
-    const saveButton = page.getByRole('button', { name: /save allocation/i });
+    const saveButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
     await expect(saveButton).toBeEnabled();
   });
 
@@ -137,7 +138,7 @@ test.describe('Smart Money Split Configuration', () => {
     await expect(page.getByText(/total must equal 100%/i)).toBeVisible();
 
     // Save button should be disabled
-    const saveButton = page.getByRole('button', { name: /save allocation/i });
+    const saveButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
     await expect(saveButton).toBeDisabled();
 
     // Card should have red border styling (guard active)
@@ -160,7 +161,7 @@ test.describe('Smart Money Split Configuration', () => {
     await expect(page.getByText(/total must equal 100%/i)).toBeVisible();
 
     // Save button disabled
-    const saveButton = page.getByRole('button', { name: /save allocation/i });
+    const saveButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
     await expect(saveButton).toBeDisabled();
   });
 
@@ -182,7 +183,7 @@ test.describe('Smart Money Split Configuration', () => {
     await expect(page.getByText(/ready to submit/i)).toBeVisible();
 
     // Save button enabled
-    const saveButton = page.getByRole('button', { name: /save allocation/i });
+    const saveButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
     await expect(saveButton).toBeEnabled();
   });
 
@@ -204,7 +205,7 @@ test.describe('Smart Money Split Configuration', () => {
     );
 
     // Click save
-    const saveButton = page.getByRole('button', { name: /save allocation/i });
+    const saveButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
     await saveButton.click();
 
     // Verify API response
@@ -252,7 +253,7 @@ test.describe('Smart Money Split Configuration', () => {
       resp.url().includes('/api/split/initialize') && resp.request().method() === 'POST'
     );
 
-    const saveButton = page.getByRole('button', { name: /save allocation/i });
+    const saveButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
     await saveButton.click();
 
     const initResp = await initPromise;
@@ -318,7 +319,7 @@ test.describe('Smart Money Split Configuration', () => {
     await expect(page.getByRole('slider', { name: /insurance/i })).toBeFocused();
 
     await page.keyboard.press('Tab');
-    const saveButton = page.getByRole('button', { name: /save allocation/i });
+    const saveButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
     await expect(saveButton).toBeFocused();
   });
 
@@ -343,7 +344,7 @@ test.describe('Smart Money Split Configuration', () => {
       });
     });
 
-    const saveButton = page.getByRole('button', { name: /save allocation/i });
+    const saveButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
     await saveButton.click();
 
     // Error message should surface
@@ -367,7 +368,7 @@ test.describe('Smart Money Split Configuration', () => {
       });
     });
 
-    const saveButton = page.getByRole('button', { name: /save allocation/i });
+    const saveButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
     await saveButton.click();
 
     await expect(page.getByText(/percentages must sum to 100/i)).toBeVisible();
@@ -390,7 +391,7 @@ test.describe('Smart Money Split Configuration', () => {
       });
     });
 
-    const saveButton = page.getByRole('button', { name: /save allocation/i });
+    const saveButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
     await saveButton.click();
 
     await expect(page.getByText(/unauthorized/i)).toBeVisible();
@@ -410,7 +411,7 @@ test.describe('Smart Money Split Configuration', () => {
     const total = await getTotal(page);
     expect(total).toBe(0);
 
-    const saveButton = page.getByRole('button', { name: /save allocation/i });
+    const saveButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
     await expect(saveButton).toBeDisabled();
   });
 
@@ -424,7 +425,7 @@ test.describe('Smart Money Split Configuration', () => {
     const total = await getTotal(page);
     expect(total).toBe(100);
 
-    const saveButton = page.getByRole('button', { name: /save allocation/i });
+    const saveButton = page.getByTestId(CTA_TEST_IDS.flow.splitConfigurationPrimary);
     await expect(saveButton).toBeEnabled();
   });
 

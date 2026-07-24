@@ -1,0 +1,33 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base"
+  ],
+  "schedule": [
+    "before 3am on Monday"
+  ],
+  "groupName": "minor and patch upgrades",
+  "groupSlug": "minor-patch",
+  "prCreation": "auto",
+  "packageRules": [
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "minor and patch upgrades",
+      "schedule": [
+        "before 3am on Monday"
+      ]
+    },
+    {
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": "major upgrades",
+      "schedule": [
+        "before 3am on Monday"
+      ]
+    }
+  ]
+}

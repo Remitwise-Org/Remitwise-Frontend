@@ -2,7 +2,7 @@
 
 Frontend application for the RemitWise remittance and financial planning platform.
 
-> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map.
+> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers.
 
 ## Overview
 
@@ -19,6 +19,10 @@ This is a Next.js-based frontend skeleton that provides the UI structure for all
 
 The frontend includes placeholder pages and components for:
 
+### Shared Components
+
+- **AddressDisplay**: A component for displaying long strings like Stellar addresses, featuring truncation, a copy-to-clipboard button, and a tooltip showing the full address on hover.
+
 1. **Dashboard** - Overview of remittances, savings, bills, and insurance
 2. **Send Money** - Remittance sending interface with automatic split preview
 3. **Smart Money Split** - Configuration for automatic allocation
@@ -29,7 +33,7 @@ The frontend includes placeholder pages and components for:
 
 ## Loading States
 
-Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
+Dashboard, Bills, Insights, and Transaction History now use route-level skeleton screens built from `components/ui/Skeleton.tsx` and `components/ui/LoadingSkeletons.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
 
 ## Stale-Data Warning Banner
 
@@ -97,6 +101,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ```bash
 # Build for production
 npm run build
+npm run generate:types # Generate TypeScript types from OpenAPI spec
 
 # Start production server
 npm start
@@ -219,6 +224,7 @@ remitwise-frontend/
 │   └── auth.ts              # Auth middleware
 ├── docs/                    # Documentation
 │   ├── API_ROUTES.md        # API routes documentation
+│   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
 │   └── contract-cache.md    # Contract caching architecture and guidelines
 ├── public/                  # Static assets
 └── package.json
@@ -229,6 +235,77 @@ remitwise-frontend/
 See [API Routes Documentation](./docs/API_ROUTES.md) for details on authentication and available endpoints.
 
 For authenticated browser-side requests, use the shared client API layer documented in [docs/client-api.md](docs/client-api.md). That guide covers when to use `apiClient` instead of raw `fetch`, the `401 -> refresh -> retry once` flow, session-expiry UI surfacing, and logout behavior.
+
+Route-level page titles now use a shared deep-link heading pattern. Use the shared heading primitive with a stable route-specific id whenever you add or update a primary page title. See [docs/page-heading-deeplinks.md](docs/page-heading-deeplinks.md).
+
+## Per-Route SEO Metadata (`useSeo`)
+
+Each client-side route can define its own `<title>` and `<meta name="description">` using the `useSeo` hook.
+
+### Quick Start
+
+```tsx
+"use client";
+
+import { useSeo } from "@/lib/hooks/useSeo";
+
+export default function MyPage() {
+  useSeo({
+    title: "My Page | RemitWise",
+    description: "A short description of what this page does.",
+  });
+
+  return <main>{/* page content */}</main>;
+}
+```
+
+### Default Metadata
+
+Defaults are defined in [`lib/config/seo.ts`](./lib/config/seo.ts):
+
+```ts
+export const DEFAULT_SEO = {
+  title: "RemitWise - Smart Remittance & Financial Planning",
+  description: "A remittance app that helps families save, plan, and protect — not just send money.",
+};
+```
+
+If `title` or `description` is omitted from `useSeo(...)`, the corresponding default is used automatically.
+
+### Behaviour
+
+| Scenario | Result |
+|---|---|
+| `useSeo({ title, description })` | Sets both title and description |
+| `useSeo({ title })` | Sets title; uses `DEFAULT_SEO.description` |
+| `useSeo()` | Uses both defaults |
+| Component unmounts | Reverts to previous route's SEO (stack-based) |
+| Layout already has a `<meta name="description">` | Reuses it — no duplicates created |
+
+### Server Components
+
+Async Server Components (e.g. dynamic `[tutorialId]` routes) use Next.js's built-in [`generateMetadata`](https://nextjs.org/docs/app/api-reference/functions/generate-metadata) export instead:
+
+```ts
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const { id } = await params;
+  return { title: `${id} | RemitWise`, description: "..." };
+}
+```
+
+The `api/docs/page.tsx` route uses a static `export const metadata` export for the same reason.
+
+### Tests
+
+Unit tests live in [`tests/unit/hooks/useSeo.test.tsx`](./tests/unit/hooks/useSeo.test.tsx) and cover:
+
+- Title updates correctly
+- Description updates correctly
+- Navigation updates metadata
+- Default metadata is used when values are omitted
+- No duplicate `<meta>` tags are created
+- Stack-based cleanup on unmount
+
 
 **Quick Reference:**
 
@@ -824,3 +901,28 @@ Sentry error monitoring is integrated for client, server, and edge runtimes.
 
 - Uploaded during build when `SENTRY_AUTH_TOKEN` and CI are present.
 - `hideSourceMaps: true` prevents browser exposure.
+
+## Developer Mode & Debugging
+
+RemitWise features a built-in Developer Mode designed for team members, QA, and support engineers to easily locate and copy request IDs for API responses without opening browser developer tools.
+
+### Enabling Developer Mode
+
+To enable Developer Mode, append the `?dev=1` query parameter to the application URL in your browser:
+
+* **Example:** `http://localhost:3000/?dev=1` or `http://localhost:3000/dashboard?dev=1`
+
+Once enabled, a floating **Developer Mode** panel will appear at the bottom-left of the viewport. This panel persists across client-side page transitions within your session.
+
+### Disabling Developer Mode
+
+To disable Developer Mode and hide the panel, append `?dev=0` to the URL or clear your session storage:
+
+* **Example:** `http://localhost:3000/?dev=0`
+
+### How to Use for Support and Debugging
+
+1. **Request Tracking**: As you interact with the app, the floating panel automatically updates in real-time to show the `Request ID` of the most recent API response (extracting from `x-request-id`, `x-correlation-id`, etc.).
+2. **Instant Copying**: Click the Copy icon next to the Request ID to instantly copy the ID to your clipboard.
+3. **Log Investigation**: Provide this copied ID to the backend/platform engineering team or search for it directly in your centralized logging system (e.g. Datadog, Kibana, AWS CloudWatch) to find the complete trace of database operations, external Stellar network interactions, and API response logs associated with that specific user transaction or error.
+

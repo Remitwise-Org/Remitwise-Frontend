@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Users } from 'lucide-react'
+import PageHeadingLink from '@/components/PageHeadingLink'
 
 export default function SendHeader() {
     const router = useRouter()
@@ -19,7 +20,14 @@ export default function SendHeader() {
                     </button>
 
                     <div>
-                        <h1 className="text-xl sm:text-2xl font-bold">Send Remittance</h1>
+                        <PageHeadingLink
+                            headingId="send-page-heading"
+                            label="Send Remittance"
+                            headingClassName="text-xl sm:text-2xl font-bold"
+                            buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101]"
+                        >
+                            Send Remittance
+                        </PageHeadingLink>
                         <p className="text-sm text-[#FFFFFF66] hidden sm:block">Transfer money via Stellar network</p>
                     </div>
                 </div>

@@ -18,6 +18,7 @@ import Link from "next/link";
 import { useClientLocale } from "@/lib/i18n/client";
 import { formatCurrency } from "@/lib/utils/format-currency";
 import TransactionStatusIndicator from "@/components/TransactionStatusIndicator";
+import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
 interface SplitDetail {
   icon: React.ElementType;
@@ -36,7 +37,6 @@ interface TransactionSuccessReceiptProps {
   date: string;
   fee: number;
   splits?: {
-    /** Allocated to daily spending (matches AllocationAmounts.spending) */
     spending: number;
     savings: number;
     bills: number;
@@ -58,6 +58,8 @@ export default function TransactionSuccessReceipt({
 }: TransactionSuccessReceiptProps) {
   const [copied, setCopied] = useState(false);
   const locale = useClientLocale();
+  const prefersReducedMotion = usePrefersReducedMotion();
+
   const formattedAmount = formatCurrency(amount, currency, locale);
   const formattedFee = formatCurrency(fee, currency, locale, {
     minimumFractionDigits: 4,
@@ -75,22 +77,31 @@ export default function TransactionSuccessReceipt({
   };
 
   const splitDetails: SplitDetail[] = splits ? [
-    { icon: Wallet, label: "Daily Spending", amount: splits.spending, percentage: 50, color: "bg-blue-500" },
-    { icon: TrendingUp, label: "Savings", amount: splits.savings, percentage: 30, color: "bg-emerald-500" },
-    { icon: FileText, label: "Bills", amount: splits.bills, percentage: 15, color: "bg-amber-500" },
-    { icon: Shield, label: "Insurance", amount: splits.insurance, percentage: 5, color: "bg-purple-500" },
+    { icon: Wallet,     label: "Daily Spending", amount: splits.spending,  percentage: 50, color: "bg-blue-500"    },
+    { icon: TrendingUp, label: "Savings",         amount: splits.savings,   percentage: 30, color: "bg-emerald-500" },
+    { icon: FileText,   label: "Bills",           amount: splits.bills,     percentage: 15, color: "bg-amber-500"   },
+    { icon: Shield,     label: "Insurance",       amount: splits.insurance, percentage: 5,  color: "bg-purple-500"  },
   ] : [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="relative w-full max-w-lg bg-[#0A0A0A] border border-white/10 rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm ${
+        prefersReducedMotion ? '' : 'animate-in fade-in duration-300'
+      }`}
+    >
+      <div
+        className={`relative w-full max-w-lg bg-[#0A0A0A] border border-white/10 rounded-[32px] overflow-hidden shadow-2xl ${
+          prefersReducedMotion ? '' : 'animate-in zoom-in-95 duration-300'
+        }`}
+      >
         {/* Atmospheric Glow */}
         <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-red-600/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
-        
+
         {/* Close Button */}
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors z-10"
+          aria-label="Close receipt"
         >
           <X className="w-5 h-5" />
         </button>
@@ -104,7 +115,6 @@ export default function TransactionSuccessReceipt({
             <h2 className="text-2xl font-bold text-white mb-1">Transfer Successful</h2>
             <p className="text-gray-500 text-sm">Your money is on its way!</p>
 
-            {/* Live network-confirmation status — polls the hash to a terminal state */}
             <div className="mt-4 flex justify-center">
               <TransactionStatusIndicator txHash={hash} />
             </div>
@@ -140,7 +150,7 @@ export default function TransactionSuccessReceipt({
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-500 font-medium">Transaction ID</span>
-              <button 
+              <button
                 onClick={() => copyToClipboard(hash)}
                 className="flex items-center gap-1.5 text-red-600 hover:text-red-500 transition-colors"
               >
@@ -169,8 +179,8 @@ export default function TransactionSuccessReceipt({
                       <span className="text-white font-bold">{formatCurrency(split.amount, currency, locale)}</span>
                     </div>
                     <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full ${split.color} rounded-full`} 
+                      <div
+                        className={`h-full ${split.color} rounded-full`}
                         style={{ width: `${split.percentage}%` }}
                       />
                     </div>
@@ -191,7 +201,7 @@ export default function TransactionSuccessReceipt({
               Receipt
             </button>
           </div>
-          
+
           <a
             href={`https://stellar.expert/explorer/public/tx/${hash}`}
             target="_blank"
@@ -203,8 +213,8 @@ export default function TransactionSuccessReceipt({
           </a>
 
           <div className="text-center">
-            <Link 
-              href="/dashboard" 
+            <Link
+              href="/dashboard"
               className="text-gray-500 hover:text-white text-sm font-medium inline-flex items-center gap-1 transition-colors"
             >
               Return to Dashboard

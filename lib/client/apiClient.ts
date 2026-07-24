@@ -17,6 +17,8 @@
  * - The existing `401 -> refresh -> retry once` session-expiry flow and the
  *   `Response | null` contract, unchanged.
  * - An optional typed `getJson<T>()` helper that parses and validates the body.
+ * - A "session expired" interceptor that redirects to the sign-in page with the
+ *   current route preserved in `?next=` when refresh cannot recover the request.
  *
  * Aborts are first-class: a caller-supplied `signal` (e.g. from `useFormAction`
  * or a component unmount) cancels immediately and is never retried.
@@ -253,7 +255,9 @@ async function fetchWithRetry(url: string, options: ApiClientOptions): Promise<R
  *   contains `{ message: 'Session expired' }`.
  * - Attempts `POST /api/auth/refresh` once, then replays the original request once.
  * - Falls back to the terminal session-expiry flow and returns `null` if refresh
- *   cannot recover the request.
+ *   cannot recover the request. When that happens the caller is redirected to
+ *   the sign-in page with the current route preserved in `?next=` so the user
+ *   is sent back to where they were after re-authentication.
  *
  * @param url - API endpoint URL.
  * @param options - Standard `fetch` options plus optional `retries`, `backoff`, and `timeout`.
@@ -261,6 +265,16 @@ async function fetchWithRetry(url: string, options: ApiClientOptions): Promise<R
  */
 async function request(url: string, options?: ApiClientOptions): Promise<Response | null> {
   const response = await fetchWithRetry(url, options || {});
+
+  if (response && response.headers && typeof window !== 'undefined') {
+    const requestId = response.headers.get('x-request-id') ||
+                      response.headers.get('x-correlation-id') ||
+                      response.headers.get('request-id') ||
+                      response.headers.get('correlation-id');
+    if (requestId) {
+      window.dispatchEvent(new CustomEvent('dev-request-id-updated', { detail: requestId }));
+    }
+  }
 
   // Check if session expired
   if (await sessionHandler.isSessionExpired(response)) {
@@ -417,6 +431,21 @@ export class ApiClientError extends Error {
  * authentication errors. `getJson` returns the parsed body (or `null`) instead.
  */
 export const apiClient = {
+  request,
+  get,
+  head,
+  post,
+  put,
+  patch,
+  delete: del,
+  getJson,
+  // Recurring schedule methods
+  getRecurringSchedules: (options) => apiClient.getJson('/api/remittance/recurring', options),
+  createRecurringSchedule: (payload, options) => apiClient.post('/api/remittance/recurring', { ...options, body: JSON.stringify(payload) }),
+  pauseRecurringSchedule: (id, options) => apiClient.patch(`/api/remittance/recurring/${id}`, { ...options, body: JSON.stringify({ action: 'pause' }) }),
+  resumeRecurringSchedule: (id, options) => apiClient.patch(`/api/remittance/recurring/${id}`, { ...options, body: JSON.stringify({ action: 'resume' }) }),
+  deleteRecurringSchedule: (id, options) => apiClient.del(`/api/remittance/recurring/${id}`, options),
+
   request,
   get,
   head,

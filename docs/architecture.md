@@ -64,9 +64,62 @@ All pages live under `app/` and use the Next.js App Router convention (`page.tsx
 /tutorial                app/tutorial/page.tsx
 /tutorial/[tutorialId]   app/tutorial/[tutorialId]/page.tsx
 /tutorial/[tutorialId]/chapter/[chapterId]  app/tutorial/[tutorialId]/chapter/[chapterId]/page.tsx
+/* (no match)           app/not-found.tsx          — 404 page with primary navigation links
 ```
 
+**404 handling:** `app/not-found.tsx` is the Next.js App Router [not-found convention](https://nextjs.org/docs/app/api-reference/file-conventions/not-found).
+It is rendered automatically whenever `notFound()` is called inside a Server Component
+or when no route matches the incoming URL.  The page renders the six primary navigation
+links (Send, Dashboard, Bills, Insurance, Family, Settings) plus a "Go to Home" call-to-
+action so users can self-recover without using the browser back button.  It uses only
+design tokens from `tailwind.config.js` — no hardcoded colours, spacing, or radii.
+
 The shared layout (`app/layout.tsx`) wraps every page with providers, fonts, and the global nav.
+
+## Deep-link support for dashboard widgets
+ 
+Each dashboard widget accepts a `?widget=<id>` query parameter so support
+teams can share a URL that lands directly on the relevant panel.
+ 
+### How it works
+ 
+1. The canonical widget IDs live in `lib/config/widgets.ts` as the
+   `WIDGET_IDS` constant. **Do not rename these values** — they are part of
+   the public URL surface and breaking changes require a migration notice.
+2. Every widget passes its ID to `useWidgetDeepLink(id)` (from
+   `lib/hooks/useWidgetDeepLink.ts`) and attaches the returned `ref` to its
+   root element. The hook also sets `id={widgetId}` on that element so native
+   fragment navigation (`#six-month-trends`) works as a fallback.
+3. On mount the hook reads `useSearchParams().get('widget')`. If the value
+   matches this widget's ID it smooth-scrolls the element into view and
+   briefly pulses a brand-red outline (`widget-highlight` CSS class defined
+   in `app/globals.css`). The pulse is suppressed for
+   `prefers-reduced-motion: reduce` users.
+### Supported widget IDs
+ 
+| `?widget=` value       | Widget                     |
+|------------------------|----------------------------|
+| `six-month-trends`     | SixMonthTrendsWidget       |
+| `money-distribution`   | MoneyDistributionWidget    |
+| `recent-transactions`  | RecentTransactionsWidget   |
+| `savings-by-goal`      | SavingsByGoalWidget        |
+ 
+### Example URLs
+ 
+```
+/dashboard?widget=six-month-trends
+/dashboard?widget=money-distribution
+/dashboard?widget=recent-transactions
+/dashboard?widget=savings-by-goal
+```
+ 
+### Adding a new widget
+ 
+1. Add a new entry to `WIDGET_IDS` in `lib/config/widgets.ts`.
+2. Call `useWidgetDeepLink(WIDGET_IDS.YOUR_WIDGET)` inside the component and
+   attach the returned `ref` + `id` prop to the root element.
+3. Add the widget to the table above and to the test in
+   `components/Dashboard/dashboard-widget-deeplink.test.tsx`.
 
 **Insights consolidation:** The previously duplicated `/insights` and `/financial-insight`
 routes were merged into the single canonical `/financial-insights` page (header + summary

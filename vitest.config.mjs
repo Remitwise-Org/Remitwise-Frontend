@@ -1,9 +1,13 @@
-import { defineConfig } from 'vitest/config'
-import path from 'path'
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+import { defineConfig } from 'vitest/config';
+
+const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   test: {
-    pool: 'vmForks',
+    pool: 'threads',
+    singleThread: true,
     include: [
       'lib/contracts/**/*.test.ts',
       'lib/**/*.test.ts',
@@ -21,10 +25,19 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    deps: {
+      inline: ['@reduxjs/toolkit', 'recharts'],
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['lib/contracts/**/*.ts', 'app/**/*.ts', 'app/**/*.tsx', 'lib/**/*.ts', 'components/**/*.tsx'],
+      include: [
+        'lib/contracts/**/*.ts',
+        'app/**/*.ts',
+        'app/**/*.tsx',
+        'lib/**/*.ts',
+        'components/**/*.tsx',
+      ],
       exclude: [
         'lib/contracts/**/*.test.ts',
         'lib/**/*.test.ts',
@@ -34,7 +47,10 @@ export default defineConfig({
       ],
     },
     alias: {
-      '@': path.resolve(__dirname, './'),
+      '@': rootDir,
+    },
+    typecheck: {
+      tsconfig: './tsconfig.test.json',
     },
   },
-})
+});

@@ -2,6 +2,7 @@
 
 import { Zap, ArrowLeft, ShieldCheck, User, CreditCard } from "lucide-react";
 import AutomaticSplitCard from "./AutomaticSplitCard";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import { useClientLocale } from "@/lib/i18n/client";
 import { formatCurrency } from "@/lib/utils/format-currency";
 
@@ -30,13 +31,13 @@ export default function ReviewStep({
 
   return (
     <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col lg:flex-row gap-8">
+      <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
         <div className="lg:flex-[1.5] space-y-6">
-          <div className="bg-[#0c0c0c] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+          <div className="bg-[#0c0c0c] border border-white/5 rounded-[2rem] p-5 375:p-6 sm:p-8 shadow-2xl relative overflow-hidden">
              {/* Subtle Gradient Glow */}
             <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-red-900/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
 
-            <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+            <h2 className="text-xl 375:text-2xl font-bold text-white mb-6 sm:mb-8 flex items-center gap-3">
               <ShieldCheck className="w-6 h-6 text-red-500" />
               Review Transaction
             </h2>
@@ -60,7 +61,7 @@ export default function ReviewStep({
                 </div>
                 <div>
                   <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold mb-1">Amount to Send</p>
-                  <p className="text-3xl font-bold text-white">
+                  <p className="text-2xl 375:text-3xl font-bold text-white break-words">
                     {formattedAmount}
                   </p>
                 </div>
@@ -78,9 +79,10 @@ export default function ReviewStep({
                 id="send-confirm-btn"
                 onClick={onConfirm}
                 disabled={isPending}
+                data-testid={CTA_TEST_IDS.flow.sendReviewPrimary}
                 aria-busy={isPending}
                 aria-label={isPending ? "Processing your transfer, please wait" : "Confirm and send remittance"}
-                className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-red-900 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/40 flex items-center justify-center gap-3"
+                className="w-full min-h-11 px-4 py-4 bg-red-600 hover:bg-red-700 disabled:bg-red-900 disabled:cursor-not-allowed text-white rounded-2xl text-base 375:text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/40 flex items-center justify-center gap-3 text-center break-words"
               >
                 {isPending ? (
                   <>
@@ -119,7 +121,7 @@ export default function ReviewStep({
               <button
                 onClick={onBack}
                 disabled={isPending}
-                className="w-full py-4 bg-transparent hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-400 rounded-2xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full min-h-11 px-4 py-4 bg-transparent hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-400 rounded-2xl text-sm font-medium transition-colors flex items-center justify-center gap-2 text-center break-words"
               >
                 <ArrowLeft className="w-5 h-5" />
                 Back to Amount
@@ -141,7 +143,7 @@ export default function ReviewStep({
                 <button 
                   onClick={onEmergencyAction}
                   disabled={isPending}
-                  className="text-red-500 text-sm font-bold hover:text-red-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="min-h-11 max-w-full text-left text-red-500 text-sm font-bold hover:text-red-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors break-words"
                 >
                   Switch to Emergency Transfer →
                 </button>
@@ -157,4 +159,3 @@ export default function ReviewStep({
     </div>
   );
 }
-

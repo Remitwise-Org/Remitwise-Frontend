@@ -14,9 +14,9 @@ vi.mock('next/headers', () => ({
 const cookies = vi.mocked(cookiesImport) as any;
 
 describe('Recurring Remittance API Integration Tests', () => {
-  const userA = 'GAYEIL5YGIDGXV527LIVL7E4GMUQCDDNNZNKQ7HE4EEAOV2ZVMZRETWP';
-  const userB = 'GCSE4CBGKLI6SHRCXS33BC2BNHYV3G4LKEMTFY6YNNMM5Y5CN7YX3TPJ';
-  const recipient = 'GBHSX43CSCNRVUKIE6C34DK5O75UT3CIXVAAFDLJRQYKG7KD7X3PY24Z';
+  const userA = 'GBPABUP5J7BKR3QYCPGX6JV5L6TBLIZZIODF5RA634K6U4NBLLHC5WNU';
+  const userB = 'GCHQA7EYYL7TKLR7N6CRWTEWE45AUDQZMVATZX6VTHRIHB5W2M7R2R34';
+  const recipient = 'GDNZCYDH24SG4RWKTCGIH75KCGSYFXOQVPMSC7S6I2E66C2PHFNKE3LM';
 
   let sessionA: string;
   let sessionB: string;
@@ -245,11 +245,12 @@ describe('Recurring Remittance API Integration Tests', () => {
       let scheduleId: string;
 
       beforeEach(async () => {
+        vi.clearAllMocks();
         // Create a schedule for User A
         mockCookieStore(sessionA);
         const reqCreate = new NextRequest('http://localhost/api/remittance/recurring', {
           method: 'POST',
-          body: JSON.stringify({
+          body: await JSON.stringify({
             recipientAddress: recipient,
             amount: 100,
             currency: 'USD',
@@ -323,11 +324,12 @@ describe('Recurring Remittance API Integration Tests', () => {
       let scheduleId: string;
 
       beforeEach(async () => {
+        vi.clearAllMocks();
         // Create a schedule for User A
         mockCookieStore(sessionA);
         const reqCreate = new NextRequest('http://localhost/api/remittance/recurring', {
           method: 'POST',
-          body: JSON.stringify({
+          body: await JSON.stringify({
             recipientAddress: recipient,
             amount: 100,
             currency: 'USD',

@@ -1,4 +1,19 @@
-// Vitest setup - extend expect() with jest-dom matchers (toBeInTheDocument, etc.)
-// The /vitest entry registers the matchers against Vitest's expect and augments
-// its Assertion types, which is the correct integration path for Vitest 4.x.
 import '@testing-library/jest-dom/vitest';
+import { vi } from 'vitest';
+
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(), // deprecated
+      removeListener: vi.fn(), // deprecated
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
+

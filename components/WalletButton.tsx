@@ -5,6 +5,7 @@ import { Wallet, ChevronDown } from 'lucide-react';
 import WalletDropdown from './WalletDropdown';
 import { logout } from '@/lib/client/logout';
 import { useWallet } from 'stellar-wallet-kit';
+import { useToast } from '@/lib/context/ToastContext';
 
 const truncateAddress = (address: string) => {
   if (!address) return '';
@@ -13,9 +14,11 @@ const truncateAddress = (address: string) => {
 
 const WalletButton = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { account, isConnected: connected, connect, disconnect, network } = useWallet();
   const address = account?.address ?? '';
+  const { toast } = useToast();
 
   const closeDropdown = () => {
     setIsOpen(false);
@@ -23,8 +26,13 @@ const WalletButton = () => {
   };
 
   const handleConnect = async () => {
-    await connect();
-    setIsOpen(false);
+    try {
+      setIsConnecting(true);
+      await connect();
+      setIsOpen(false);
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   const handleDisconnect = async () => {
@@ -41,14 +49,15 @@ const WalletButton = () => {
         onClick={() => setIsOpen((value) => !value)}
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-red/40 focus:ring-offset-2 focus:ring-offset-transparent ${
+        aria-label={connected ? `Wallet ${truncateAddress(address || '')}` : 'Connect wallet'}
+        className={`touch-target flex max-w-full items-center justify-center gap-2 rounded-full px-3 py-2 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-red/40 focus:ring-offset-2 focus:ring-offset-transparent 375:px-4 ${
           connected
             ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
             : 'bg-gradient-to-r from-brand-red to-[#B01C1C] text-white shadow-[0_0_24px_rgba(215,35,35,0.24)] hover:opacity-95'
         }`}
       >
-        <Wallet className="w-4 h-4 text-current" />
-        <span className="font-medium text-sm whitespace-nowrap">
+        <Wallet className="h-4 w-4 flex-shrink-0 text-current" />
+        <span className="hidden max-w-[7rem] truncate font-medium text-sm 375:inline">
           {connected ? truncateAddress(address || '') : 'Connect Wallet'}
         </span>
         {connected && (
@@ -57,7 +66,7 @@ const WalletButton = () => {
           </span>
         )}
         <ChevronDown
-          className={`w-4 h-4 text-white transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`hidden h-4 w-4 flex-shrink-0 text-white transition-transform 375:block ${isOpen ? 'rotate-180' : ''}`}
           aria-hidden="true"
         />
       </button>
@@ -65,6 +74,7 @@ const WalletButton = () => {
       <WalletDropdown
         isOpen={isOpen}
         isConnected={connected}
+        isConnecting={isConnecting}
         walletAddress={address || ''}
         network={network || 'Testnet'}
         buttonRef={buttonRef}

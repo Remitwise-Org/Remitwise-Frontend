@@ -12,6 +12,8 @@ colors = {
     "brand_red": "#D72323",
     "white": "#ffffff",
     "gray400": "#9CA3AF",  # Tailwind gray-400
+    "gray100": "#F3F4F6",
+    "track": "#1F1F1F"
 }
 
 pairs = [
@@ -21,6 +23,8 @@ pairs = [
     ("brand_red", "background"),
     ("brand_red", "surface"),
     ("white", "brand_red"),
+    ("gray100", "track"),
+    ("white", "track"),
 ]
 
 

@@ -3,12 +3,14 @@
 import { ReactNode } from "react";
 import { WalletProvider } from "stellar-wallet-kit";
 import { DensityProvider } from "@/lib/context/DensityContext";
+import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { ToastProvider } from "@/lib/context/ToastContext";
 import { AsyncOperationsProvider } from "@/lib/context/AsyncOperationsContext";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import ToastRegion from "@/components/ToastRegion";
 import SessionExpiryProvider from "@/components/SessionExpiryProvider";
 import CommandPalette from "@/components/CommandPalette";
+import DevRequestIdDisplay from "@/components/DevRequestIdDisplay";
 
 /**
  * Client-side provider boundary for the app.
@@ -22,17 +24,20 @@ import CommandPalette from "@/components/CommandPalette";
 export default function Providers({ children }: { children: ReactNode }) {
   return (
     <WalletProvider>
-      <ToastProvider>
-        <DensityProvider>
-          <AsyncOperationsProvider>
-            <SessionExpiryProvider>
-              <LayoutWrapper>{children}</LayoutWrapper>
-              <ToastRegion />
-              <CommandPalette />
-            </SessionExpiryProvider>
-          </AsyncOperationsProvider>
-        </DensityProvider>
-      </ToastProvider>
+      <ThemeProvider>
+        <ToastProvider>
+          <DensityProvider>
+            <AsyncOperationsProvider>
+              <SessionExpiryProvider>
+                <LayoutWrapper>{children}</LayoutWrapper>
+                <ToastRegion />
+                <CommandPalette />
+                <DevRequestIdDisplay />
+              </SessionExpiryProvider>
+            </AsyncOperationsProvider>
+          </DensityProvider>
+        </ToastProvider>
+      </ThemeProvider>
     </WalletProvider>
   );
 }

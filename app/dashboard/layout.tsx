@@ -10,14 +10,14 @@ export default function DashboardLayout({
 }) {
   return (
     <WhatsNewProvider>
-      <div className="min-h-screen bg-bg3">
+      <div className="min-h-screen overflow-x-hidden bg-bg3">
         <PrimaryNav />
         <SubNav />
         {/* 
                     pt-20 for PrimaryNav (80px) 
                     + pt-16 for SubNav (64px) = 144px 
                 */}
-        <div className="pt-36">{children}</div>
+        <div className="pt-32 375:pt-36">{children}</div>
         <WhatsNewPanel />
       </div>
     </WhatsNewProvider>

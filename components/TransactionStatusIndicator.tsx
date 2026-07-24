@@ -71,7 +71,7 @@ export default function TransactionStatusIndicator({
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const shouldPoll = Boolean(txHash) && live !== false;
-  const polled = useTransactionStatus(shouldPoll ? txHash : null, pollOptions);
+  const polled = useTransactionStatus(shouldPoll ? (txHash ?? null) : null, pollOptions);
 
   // Live status wins when polling; otherwise fall back to the controlled prop.
   const effective: DisplayStatus = shouldPoll

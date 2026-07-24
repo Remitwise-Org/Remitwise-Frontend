@@ -78,7 +78,7 @@ export async function GET() {
 }
 
 /** Hydrate the locale cookie from saved preferences on profile load. */
-export async function setLocaleFromPreferences(request: NextRequest) {
+async function setLocaleFromPreferences(request: NextRequest) {
   try {
     const { address } = await requireAuth();
     const user = await prisma.user.findUnique({

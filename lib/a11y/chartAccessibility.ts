@@ -1,9 +1,19 @@
 /**
  * Accessibility utilities for Recharts visualizations.
- * 
+ *
  * Generates accessible names and summaries for charts using aria-label and sr-only patterns.
  * All functions are locale-aware and format numbers/percentages according to the user's locale.
  */
+
+import {
+  formatNumericValue,
+  type NumericFormatOptions,
+} from "../i18n/formatters";
+
+// Local type referenced by the chart helpers below. It mirrors the public
+// `TrendChartDataPoint` shape exposed by this module so the file remains
+// self-contained for tests that import only a subset.
+type TrendChartValue = string | number | null | undefined;
 
 /**
  * Represents a data point with name and amount for pie/donut charts.
@@ -19,11 +29,11 @@ interface PieChartDataPoint {
 /**
  * Represents a data point with month/date and multiple series values.
  */
-interface TrendChartDataPoint {
+export interface TrendChartDataPoint {
   [key: string]: string | number | undefined;
   month?: string;
   date?: string;
-}
+};
 
 /**
  * Generates an aria-label for a pie or donut chart from its data.
@@ -71,7 +81,7 @@ export function generatePieChartSummary(data: PieChartDataPoint[]): string {
   }
 
   const items = data.map((item) => {
-    const amount = item.amount ? `$${formatCurrency(item.amount)}` : "—";
+    const amount = item.amount ? `$${formatCurrency(item.amount)}` : "\u2014";
     const percent = item.displayPercent || item.percentage || 0;
     const percentStr = String(percent).replace('%', '').trim();
     return `${item.name}: ${amount}, ${percentStr} percent`;
@@ -92,9 +102,9 @@ export function generatePieChartSummary(data: PieChartDataPoint[]): string {
  * generateTrendChartLabel("6-Month Trends", chartData, ["remittances", "savings"])
  * // Returns: "6-Month Trends: July remittances $2800 savings $1200, August remittances..."
  */
-export function generateTrendChartLabel(
+export function generateTrendChartLabel<T extends TrendChartDataPoint>(
   title: string,
-  data: TrendChartDataPoint[],
+  data: ReadonlyArray<T>,
   seriesKeys: string[]
 ): string {
   if (!data || data.length === 0) {
@@ -112,7 +122,7 @@ export function generateTrendChartLabel(
     const period = point.month || point.date || "Unknown";
     const values = seriesKeys
       .map((key) => {
-        const value = point[key];
+        const value = (point as Record<string, TrendChartValue>)[key];
         if (value === undefined || value === null) return null;
         const formatted = formatCurrency(Number(value));
         return `${key} $${formatted}`;
@@ -134,8 +144,8 @@ export function generateTrendChartLabel(
  * @param seriesKeys - Names of data series to include
  * @returns Formatted string suitable for sr-only display
  */
-export function generateTrendChartSummary(
-  data: TrendChartDataPoint[],
+export function generateTrendChartSummary<T extends TrendChartDataPoint>(
+  data: ReadonlyArray<T>,
   seriesKeys: string[]
 ): string {
   if (!data || data.length === 0) {
@@ -146,7 +156,7 @@ export function generateTrendChartSummary(
     const period = point.month || point.date || "Unknown";
     const values = seriesKeys
       .map((key) => {
-        const value = point[key];
+        const value = (point as Record<string, TrendChartValue>)[key];
         if (value === undefined || value === null) return null;
         const formatted = formatCurrency(Number(value));
         return `${key} $${formatted}`;
@@ -169,9 +179,9 @@ export function generateTrendChartSummary(
  * @param series2Key - Second series key (e.g. "savings")
  * @returns Accessible label summarizing the chart content
  */
-export function generateBarChartLabel(
+export function generateBarChartLabel<T extends TrendChartDataPoint>(
   title: string,
-  data: TrendChartDataPoint[],
+  data: ReadonlyArray<T>,
   series1Key: string,
   series2Key: string
 ): string {
@@ -188,11 +198,13 @@ export function generateBarChartLabel(
 
   const items = summaryData.map((point) => {
     const period = point.month || point.date || "Unknown";
-    const val1 = point[series1Key]
-      ? `${series1Key} $${formatCurrency(Number(point[series1Key]))}`
+    const series1Value = (point as Record<string, TrendChartValue>)[series1Key];
+    const series2Value = (point as Record<string, TrendChartValue>)[series2Key];
+    const val1 = series1Value
+      ? `${series1Key} $${formatCurrency(Number(series1Value))}`
       : "";
-    const val2 = point[series2Key]
-      ? `${series2Key} $${formatCurrency(Number(point[series2Key]))}`
+    const val2 = series2Value
+      ? `${series2Key} $${formatCurrency(Number(series2Value))}`
       : "";
     const values = [val1, val2].filter(Boolean).join(", ");
     return `${period} ${values}`;
@@ -209,8 +221,8 @@ export function generateBarChartLabel(
  * @param series2Key - Second series key
  * @returns Formatted string suitable for sr-only display
  */
-export function generateBarChartSummary(
-  data: TrendChartDataPoint[],
+export function generateBarChartSummary<T extends TrendChartDataPoint>(
+  data: ReadonlyArray<T>,
   series1Key: string,
   series2Key: string
 ): string {
@@ -220,11 +232,13 @@ export function generateBarChartSummary(
 
   const items = data.map((point) => {
     const period = point.month || point.date || "Unknown";
-    const val1 = point[series1Key]
-      ? `${series1Key} $${formatCurrency(Number(point[series1Key]))}`
+    const series1Value = (point as Record<string, TrendChartValue>)[series1Key];
+    const series2Value = (point as Record<string, TrendChartValue>)[series2Key];
+    const val1 = series1Value
+      ? `${series1Key} $${formatCurrency(Number(series1Value))}`
       : "";
-    const val2 = point[series2Key]
-      ? `${series2Key} $${formatCurrency(Number(point[series2Key]))}`
+    const val2 = series2Value
+      ? `${series2Key} $${formatCurrency(Number(series2Value))}`
       : "";
     const values = [val1, val2].filter(Boolean).join(", ");
     return `${period}: ${values}`;
@@ -241,18 +255,19 @@ export function generateBarChartSummary(
  * @param locale - Locale string (e.g. "en-US", "es-ES"). Defaults to "en-US".
  * @returns Formatted currency string without $ symbol
  */
-export function formatCurrency(value: number, locale = "en-US"): string {
+export function formatCurrency(value: number, locale: string = "en-US"): string {
+  // Routed through the shared formatter so chart accessibility strings follow
+  // the same rounding rules as the visible UI (issue #732).
+  const options: NumericFormatOptions = {
+    locale,
+    style: "decimal",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  };
   try {
-    return new Intl.NumberFormat(locale, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(value);
+    return formatNumericValue(value, options);
   } catch {
-    // Fallback for invalid locale
-    return new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(value);
+    return formatNumericValue(value, { ...options, locale: "en-US" });
   }
 }
 

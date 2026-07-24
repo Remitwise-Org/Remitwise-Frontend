@@ -12,5 +12,5 @@ export async function POST() {
     );
   }
   
-  return Response.json({ success: true, address: session.address });
+  return Response.json({ success: true, address: session.address, expiresAt: session.expiresAt });
 }

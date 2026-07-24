@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useToast } from "@/lib/context/ToastContext";
 import { useClientTranslator } from "@/lib/i18n/client";
+import type { AutosaveState } from "@/lib/hooks/useAutosave";
 
 // ─── Reusable primitives ──────────────────────────────────────────────────────
 
@@ -82,21 +83,32 @@ export function FieldRow({
 
 export function TextInput({
   defaultValue,
+  value,
+  onChange,
   placeholderKey,
   type = "text",
   disabled,
 }: {
   defaultValue?: string;
+  value?: string;
+  onChange?: (value: string) => void;
   placeholderKey?: string;
   type?: string;
   disabled?: boolean;
 }) {
   const { t } = useClientTranslator();
+  const isControlled = value !== undefined;
 
   return (
     <input
       type={type}
-      defaultValue={defaultValue}
+      defaultValue={isControlled ? undefined : defaultValue}
+      value={isControlled ? value : undefined}
+      onChange={
+        isControlled && onChange
+          ? (e) => onChange(e.target.value)
+          : undefined
+      }
       placeholder={placeholderKey ? t(placeholderKey) : undefined}
       disabled={disabled}
       className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3.5 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 dark:disabled:bg-gray-900 disabled:text-gray-400 transition-colors"
@@ -158,25 +170,34 @@ export function Toggle({
 
 export function SaveButton({
   labelKey = "settings.save_changes",
+  saveState: externalState,
+  onSave,
 }: {
   labelKey?: string;
+  saveState?: AutosaveState;
+  onSave?: () => void;
 }) {
   const { t } = useClientTranslator();
-  const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
-  // @ts-ignore
+  const [internalState, setInternalState] = useState<AutosaveState>("idle");
   const { toast } = useToast();
 
+  const state = externalState ?? internalState;
+
   const handleClick = () => {
-    setState("saving");
+    if (onSave) {
+      onSave();
+      return;
+    }
+    setInternalState("saving");
     setTimeout(() => {
-      setState("saved");
+      setInternalState("saved");
       toast({
         variant: "success",
         title: t("settings.preferences_saved_title"),
         description: t("settings.preferences_saved_description"),
         duration: 2000,
       });
-      setTimeout(() => setState("idle"), 2000);
+      setTimeout(() => setInternalState("idle"), 2000);
     }, 800);
   };
 
@@ -190,21 +211,7 @@ export function SaveButton({
         className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:opacity-60 transition-colors min-w-[130px] justify-center"
       >
         {state === "saving" ? (
-          <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
+          <Loader2 className="h-4 w-4 animate-spin" />
         ) : state === "saved" ? (
           <>
             <Check className="h-4 w-4" />

@@ -13,6 +13,7 @@ import {
   Wallet,
   ArrowRightLeft,
 } from "lucide-react";
+import { getExplorerTxUrl } from "@/lib/utils/explorer";
 
 interface TransactionProofProps {
   hash: string;
@@ -211,15 +212,22 @@ export default function TransactionProofCard({
           </div>
         </div>
 
-        <a
-          href={`https://stellar.expert/explorer/public/tx/${hash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full flex items-center justify-center gap-2 bg-[#2664eb] hover:bg-blue-700 text-white font-bold py-4 px-4 rounded-xl transition-all shadow-md hover:shadow-lg transform active:scale-[0.98]"
-        >
-          View on Stellar Explorer
-          <ExternalLink className="w-4 h-4" />
-        </a>
+        {(() => {
+          const explorerUrl = getExplorerTxUrl(hash);
+          if (!explorerUrl) return null;
+
+          return (
+            <a
+              href={explorerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 bg-[#2664eb] hover:bg-blue-700 text-white font-bold py-4 px-4 rounded-xl transition-all shadow-md hover:shadow-lg transform active:scale-[0.98]"
+            >
+              View on Stellar Explorer
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          );
+        })()}
       </div>
     </div>
   );

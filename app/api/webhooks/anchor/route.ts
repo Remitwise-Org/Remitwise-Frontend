@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { NextResponse } from 'next/server'
 import { getTranslator } from '../../../../lib/i18n'
 import crypto from 'crypto'
@@ -13,7 +14,7 @@ import {
 
 registerGracefulShutdown();
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     if (isShuttingDown()) {
       return NextResponse.json({ error: 'Server is shutting down' }, { status: 503 })
@@ -85,7 +86,7 @@ async function handleAnchorEvent(payload: any): Promise<WebhookProcessResult> {
     switch (event_type) {
       case 'deposit_completed':
         if (txId) {
-          await updateAnchorFlowStatusByTransactionId(txId, 'completed')
+          updateAnchorFlowStatusByTransactionId(txId, 'completed')
         }
         recordAuditEvent({
           type: 'anchor.webhook.deposit_completed',
@@ -99,6 +100,10 @@ async function handleAnchorEvent(payload: any): Promise<WebhookProcessResult> {
       case 'withdrawal_failed':
         if (txId) {
           await updateAnchorFlowStatusByTransactionId(txId, 'failed')
+        }
+        recordAuditEvent({
+          type: 'anchor.webhook.withdrawal_failed',
+          actor: 'anchor-webhook',
           message: `Withdrawal failed for ${txId || 'unknown'}`,
           metadata: { transaction_id: txId || null, status },
         })

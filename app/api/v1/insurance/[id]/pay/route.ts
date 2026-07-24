@@ -1,9 +1,10 @@
+import { NextRequest } from "next/server";
 import { NextResponse } from 'next/server'
 import { getTranslator } from '../../../../../../lib/i18n'
 import { buildPayPremiumTx } from '../../../../../../lib/contracts/insurance'
 import { StrKey } from '@stellar/stellar-sdk'
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const t = getTranslator(req);
 

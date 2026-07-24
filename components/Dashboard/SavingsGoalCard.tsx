@@ -122,7 +122,7 @@ export default function SavingsGoalCard({
             />
 
             <div className="relative z-10 flex flex-col gap-5">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-start justify-between gap-3 375:gap-4">
                     <div
                         className="w-12 h-12 rounded-[14px] flex items-center justify-center"
                         style={{
@@ -133,7 +133,7 @@ export default function SavingsGoalCard({
                     </div>
 
                     <div
-                        className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold"
+                        className="inline-flex max-w-full shrink items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold"
                         style={{
                             background: statusStyles.background,
                             border: `1px solid ${statusStyles.border}`,
@@ -141,18 +141,20 @@ export default function SavingsGoalCard({
                         }}
                     >
                         <statusStyles.icon className="w-3.5 h-3.5" />
-                        {statusStyles.label}
+                        <span className="truncate">{statusStyles.label}</span>
                     </div>
                 </div>
 
-                <div className="space-y-1">
-                    <h3 className="text-lg font-bold text-white tracking-tight line-clamp-1">{title}</h3>
-                    <p className="text-sm tracking-tight text-white/60 line-clamp-2">{description}</p>
+                <div className="min-w-0 space-y-1">
+                    <h3 className="min-w-0 text-lg font-bold tracking-tight text-white line-clamp-2 [overflow-wrap:anywhere]">
+                        {title}
+                    </h3>
+                    <p className="min-w-0 text-sm tracking-tight text-white/60 line-clamp-2 [overflow-wrap:anywhere]">{description}</p>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-[1.3fr_0.9fr]">
-                    <div className="space-y-2">
-                        <div className="flex items-baseline gap-2">
+                <div className="grid min-w-0 gap-4 tablet:grid-cols-[1.3fr_0.9fr]">
+                    <div className="min-w-0 space-y-2">
+                        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
                             <span className="text-2xl font-bold text-white tracking-wide">
                                 {formatCurrency(currentAmount)}
                             </span>
@@ -160,16 +162,16 @@ export default function SavingsGoalCard({
                                 of {formatCurrency(targetAmount)}
                             </span>
                         </div>
-                        <div className="text-sm font-semibold text-white/70">
+                        <div className="min-w-0 break-words text-sm font-semibold text-white/70">
                             {isComplete
                                 ? t('savingsGoals.card.complete')
                                 : t('savingsGoals.card.needMore', { amount: formatCurrency(remaining) })}
                         </div>
                     </div>
-                    <div className="rounded-[18px] border border-white/10 bg-white/5 p-3">
-                        <p className="text-xs uppercase tracking-[0.32em] text-white/40">{t('savingsGoals.card.target')}</p>
-                        <p className="mt-1 text-sm font-semibold text-white">{formatDate(targetDate)}</p>
-                        <p className={`mt-2 text-sm font-semibold ${isOverdue ? 'text-red-300' : isComplete ? 'text-emerald-200' : 'text-white/70'}`}>
+                    <div className="min-w-0 rounded-[18px] border border-white/10 bg-white/5 p-3">
+                        <p className="truncate text-xs uppercase tracking-[0.2em] text-white/40">{t('savingsGoals.card.target')}</p>
+                        <p className="mt-1 break-words text-sm font-semibold text-white">{formatDate(targetDate)}</p>
+                        <p className={`mt-2 break-words text-sm font-semibold ${isOverdue ? 'text-red-300' : isComplete ? 'text-emerald-200' : 'text-white/70'}`}>
                             {targetInfoLabel}
                         </p>
                     </div>
@@ -190,17 +192,17 @@ export default function SavingsGoalCard({
                             }}
                         />
                     </div>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <span className="text-sm font-semibold text-white">
+                    <div className="flex flex-col gap-2 tablet:flex-row tablet:items-center tablet:justify-between">
+                        <span className="min-w-0 break-words text-sm font-semibold text-white">
                             {percentage.toFixed(0)}% complete
                         </span>
-                        <span className="text-sm text-white/60">
+                        <span className="min-w-0 break-words text-sm text-white/60">
                             {isComplete ? t('savingsGoals.card.goalMet') : t('savingsGoals.card.remaining', { amount: formatCurrency(remaining) })}
                         </span>
                     </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 tablet:grid-cols-2">
                     <button
                         type="button"
                         onClick={onAddFunds}

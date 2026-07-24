@@ -53,7 +53,7 @@ interface BuildRemittanceResponse {
 
 // ── Validation ────────────────────────────────────────────────────────────────
 
-function validateBuildRequest(body: unknown): BuildRemittanceRequest {
+export function validateBuildRequest(body: unknown): BuildRemittanceRequest {
   if (!body || typeof body !== 'object') {
     throw new Error('Request body must be a JSON object');
   }
@@ -81,10 +81,13 @@ function validateBuildRequest(body: unknown): BuildRemittanceRequest {
     throw new Error('currency must be either XLM or USDC');
   }
 
-  // Validate memo (optional)
+  // Validate memo (optional) — Stellar Memo.text is limited to 28 bytes
   const memo = typeof o.memo === 'string' ? o.memo.trim() : undefined;
-  if (memo && memo.length > 28) {
-    throw new Error('memo must be 28 characters or less');
+  if (memo) {
+    const byteLength = new TextEncoder().encode(memo).length;
+    if (byteLength > 28) {
+      throw new Error('memo must be 28 bytes or less');
+    }
   }
 
   return {
