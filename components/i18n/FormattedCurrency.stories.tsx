@@ -114,3 +114,23 @@ export const RoundToWholeUnit: Story = {
     await expect(element).toBeVisible();
   },
 };
+
+/**
+ * RTL layout preview — wraps the story in `<div dir="rtl" lang="ar">` so
+ * Arabic/Hebrew script and number formatting can be inspected side by side
+ * with the LTR stories above.
+ */
+export const ArabicRtlPreview: Story = {
+  args: {
+    value: 9999.99,
+    currency: "USD",
+    locale: "ar-SA",
+  },
+  decorators: [
+    (Story) => (
+      <div dir="rtl" lang="ar" style={{ padding: 24, fontFamily: "monospace", color: "white", background: "#0A0A0A" }}>
+        <Story />
+      </div>
+    ),
+  ],
+};

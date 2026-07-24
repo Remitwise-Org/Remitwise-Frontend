@@ -66,3 +66,21 @@ export const SpanishOverride: Story = {
     locale: "es-ES",
   },
 };
+
+/**
+ * RTL layout preview — wraps the story in `<div dir="rtl" lang="ar">` so
+ * Arabic numeral formatting and right-to-left text direction can be verified.
+ */
+export const ArabicRtlPreview: Story = {
+  args: {
+    value: 1234567.89,
+    locale: "ar-SA",
+  },
+  decorators: [
+    (Story) => (
+      <div dir="rtl" lang="ar" style={{ padding: 24, fontFamily: "monospace", color: "white", background: "#0A0A0A" }}>
+        <Story />
+      </div>
+    ),
+  ],
+};

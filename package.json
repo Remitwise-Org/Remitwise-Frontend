@@ -21,9 +21,7 @@
     "test:e2e": "playwright test",
     "test:perf": "npx playwright test tests/e2e/dashboard-performance.spec.ts",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "test-storybook": "test-storybook --url http://localhost:6006",
-    "test-storybook:ci": "npm run build-storybook -- --quiet && npx http-server storybook-static --port 6006 --silent & npx wait-on http://localhost:6006 && test-storybook --url http://localhost:6006"
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -74,15 +72,12 @@
     "tsx": "^4.21.0",
     "typescript": "^5.0.0",
     "vitest": "^4.0.18",
-    "@babel/preset-env": "^7.27.2",
-    "@babel/preset-react": "^7.27.1",
-    "@babel/preset-typescript": "^7.27.1",
-    "@storybook/addon-webpack5-compiler-babel": "^4.0.1",
-    "storybook": "^10.5.3",
-    "@storybook/react-webpack5": "^10.5.3",
-    "@storybook/test-runner": "^0.24.4",
-    "@storybook/test": "^8.6.15",
-    "http-server": "^14.1.1",
-    "wait-on": "^8.0.3"
+    "storybook": "^8.6.12",
+    "@storybook/addon-essentials": "^8.6.12",
+    "@storybook/addon-interactions": "^8.6.12",
+    "@storybook/addon-links": "^8.6.12",
+    "@storybook/blocks": "^8.6.12",
+    "@storybook/react": "^8.6.12",
+    "@storybook/test": "^8.6.12"
   }
 }

@@ -1,38 +1,19 @@
-import type { StorybookConfig } from "@storybook/react-webpack5";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-const dirname = path.dirname(fileURLToPath(import.meta.url));
+import type { StorybookConfig } from '@storybook/react'
 
 const config: StorybookConfig = {
-  stories: [
-    "../components/**/*.stories.@(ts|tsx)",
-  ],
+  stories: ['../components/**/*.stories.tsx', '../components/**/*.stories.ts'],
   addons: [
-    "@storybook/addon-webpack5-compiler-babel",
+    '@storybook/addon-links',
+    '@storybook/addon-essentials',
+    '@storybook/addon-interactions',
   ],
   framework: {
-    name: "@storybook/react-webpack5",
+    name: '@storybook/react',
     options: {},
   },
-  staticDirs: ["../public"],
-  babel: async (config) => ({
-    ...config,
-    presets: [
-      ...(config.presets || []),
-      ["@babel/preset-env", { targets: { esmodules: true } }],
-      ["@babel/preset-react", { runtime: "automatic" }],
-      "@babel/preset-typescript",
-    ],
-  }),
-  webpackFinal: async (baseConfig) => {
-    baseConfig.resolve = baseConfig.resolve || {};
-    baseConfig.resolve.alias = {
-      ...baseConfig.resolve.alias,
-      "@": path.resolve(dirname, ".."),
-    };
-    return baseConfig;
+  docs: {
+    autodocs: 'tag',
   },
-};
+}
 
-export default config;
+export default config
