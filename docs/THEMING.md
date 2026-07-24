@@ -25,6 +25,9 @@ All current CSS custom properties are declared in `app/globals.css`.
 | `--color-bg3` | Not declared | `#0a0a0a` | Lower layer of the dark card gradient. | Used by `--card`. |
 | `--card` | Not declared | `linear-gradient(var(--color-bg2), var(--color-bg3))` | Reusable dark card background gradient. | Declared for card-like surfaces that need a CSS variable. |
 | `--accent` | Not declared | `#dc2626` | Primary red accent for dark-mode UI emphasis. Prefer Tailwind `brand.red` or `red.600` in JSX unless CSS needs a variable. | Declared for CSS-level accent styling. |
+| `--skeleton-base` | `rgba(0, 0, 0, 0.06)` | `rgba(255, 255, 255, 0.05)` | Resting fill of an animated skeleton placeholder, and the two ends of its shimmer gradient. | `.rw-skeleton--shimmer` |
+| `--skeleton-highlight` | `rgba(0, 0, 0, 0.12)` | `rgba(255, 255, 255, 0.1)` | Travelling highlight at the midpoint of the shimmer gradient. | `.rw-skeleton--shimmer` |
+| `--skeleton-static` | `rgba(0, 0, 0, 0.1)` | `rgba(255, 255, 255, 0.1)` | Flat fill of a non-animated skeleton placeholder — the static variant, and what the shimmer variant falls back to under `prefers-reduced-motion: reduce`. Set to the shimmer's *highlight* value, not its base, so removing the animation does not also make the placeholder fainter. | `.rw-skeleton` |
 
 The active global body styles are intentionally minimal:
 
@@ -147,6 +150,15 @@ These utilities are defined in `app/globals.css`.
 | `.safari-safe-right` | `padding-right: env(safe-area-inset-right)` | Respect iOS right safe area. |
 | `.touch-target` | `min-height: 44px; min-width: 44px` | Minimum accessible square touch target. |
 | `.touch-target-wide` | `min-height: 44px; min-width: 88px` | Minimum accessible wide touch target for buttons. |
+
+Two further classes are emitted into Tailwind's `components` layer, so any
+utility passed in `className` still wins over them. Apply them through the
+`<Skeleton />` component rather than by hand — see `docs/COMPONENTS.md`.
+
+| Class | CSS output | Semantic role |
+| --- | --- | --- |
+| `.rw-skeleton` | `background-color: var(--skeleton-static)` | Static skeleton placeholder; never animates. |
+| `.rw-skeleton--shimmer` | Shimmer gradient from the `--skeleton-*` tokens, animated by `rw-skeleton-shimmer`. Reset to the static fill under `prefers-reduced-motion: reduce`. | Animated skeleton placeholder. |
 
 ## Contributor Checklist
 
