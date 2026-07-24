@@ -461,7 +461,7 @@ export function GoalsLoadingSkeleton() {
   );
 }
 
-export function TransactionHistoryLoadingSkeleton() {
+export function TransactionHistoryLoadingSkeletonCompact() {
   return (
     <main className="w-full min-h-screen bg-[#010101]">
       {/* Header */}

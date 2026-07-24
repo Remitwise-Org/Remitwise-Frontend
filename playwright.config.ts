@@ -92,7 +92,7 @@ export default defineConfig({
 
     // 🔥 Critical: Inject required environment variables for CI
     env: {
-      DATABASE_URL: 'file:./ci.db', // Required for Prisma in CI
+      DATABASE_URL: `file:${path.resolve(__dirname, 'prisma/ci.db')}`, // Required for Prisma in CI
       SESSION_PASSWORD:
         'supersecurelongsessionpasswordatleast32characters!!',
       AUTH_SECRET: 'ci-test-secret',

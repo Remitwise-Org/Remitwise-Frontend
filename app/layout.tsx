@@ -21,12 +21,13 @@ export const viewport: Viewport = {
 
 const themeScript = `(function(){try{var key='theme-preference';var theme=localStorage.getItem(key);if(theme!=='light'&&theme!=='dark'&&theme!=='system'){theme='system';}var root=document.documentElement;if(theme==='dark'){root.classList.add('dark');root.classList.remove('light');}else if(theme==='light'){root.classList.remove('dark');root.classList.add('light');}else{root.classList.remove('light');var mql=window.matchMedia('(prefers-color-scheme: dark)');root.classList.toggle('dark', mql.matches);} }catch(e){}})();`; 
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const nonce = headers().get("x-nonce") || "";
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") || "";
 
   return (
     <html lang="en">
