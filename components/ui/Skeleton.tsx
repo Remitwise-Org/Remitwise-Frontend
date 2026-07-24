@@ -1,14 +1,63 @@
+import type { CSSProperties, ReactNode } from "react";
+
+/**
+ * How a skeleton placeholder is painted.
+ *
+ * - `shimmer` — a highlight travels across the placeholder. Automatically
+ *   degrades to the static rendering when the user has
+ *   `prefers-reduced-motion: reduce` set (handled in CSS, see `app/globals.css`).
+ * - `static` — a flat fill that never animates, for any motion setting.
+ */
+export type SkeletonVariant = "shimmer" | "static";
+
 interface SkeletonProps {
   className?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
+  /** Defaults to `shimmer`. See {@link SkeletonVariant}. */
+  variant?: SkeletonVariant;
 }
 
-export function Skeleton({ className = "", style }: SkeletonProps) {
+/**
+ * A single placeholder shape. Purely decorative, so it is hidden from
+ * assistive technology — wrap a set of them in {@link SkeletonGroup} to
+ * announce the loading state instead.
+ */
+export function Skeleton({ className = "", style, variant = "shimmer" }: SkeletonProps) {
+  const classes = ["rw-skeleton"];
+  if (variant === "shimmer") classes.push("rw-skeleton--shimmer");
+  if (className) classes.push(className);
+
+  return <div aria-hidden="true" className={classes.join(" ")} style={style} />;
+}
+
+interface SkeletonGroupProps {
+  children: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+  /**
+   * Announced while the placeholder is on screen. Keep it specific to the
+   * surface being loaded ("Loading transaction history") so a screen reader
+   * user knows what is coming.
+   */
+  label?: string;
+}
+
+/**
+ * Wraps a set of placeholder shapes in a polite live region so screen reader
+ * users are told the surface is still loading, rather than meeting a run of
+ * empty, unlabelled boxes.
+ */
+export function SkeletonGroup({
+  children,
+  className,
+  style,
+  label = "Loading",
+}: SkeletonGroupProps) {
   return (
-    <div
-      className={`animate-shimmer bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] ${className}`}
-      style={style}
-    />
+    <div role="status" aria-busy="true" className={className} style={style}>
+      <span className="sr-only">{label}</span>
+      {children}
+    </div>
   );
 }
 
@@ -237,7 +286,7 @@ export function SkeletonChart({ type = "bar" }: SkeletonChartProps) {
       </div>
 
       <div className="h-[200px] flex items-center justify-center">
-        <svg className="w-full h-full" viewBox="0 0 400 200">
+        <svg aria-hidden="true" className="w-full h-full" viewBox="0 0 400 200">
           <path
             d="M0 150 Q 50 100, 100 120 T 200 80 T 300 100 T 400 60"
             fill="none"
@@ -272,12 +321,12 @@ export function SkeletonChart({ type = "bar" }: SkeletonChartProps) {
   );
 }
 
-export function SkeletonWidget({ 
-  title, 
-  children 
-}: { 
-  title?: string; 
-  children?: React.ReactNode 
+export function SkeletonWidget({
+  title,
+  children
+}: {
+  title?: string;
+  children?: React.ReactNode
 }) {
   return (
     <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 w-full">
