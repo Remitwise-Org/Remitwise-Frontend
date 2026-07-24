@@ -7,10 +7,10 @@ This document describes the design, contract, constraints, and known limitations
 Idempotency protects critical write endpoints (such as remittance transfers or payments) from duplicate execution due to network retries, double-clicking, or client failures. It ensures that making identical requests multiple times has the same effect as making a single request.
 
 The idempotency layer is implemented across the following files:
-* [store.ts](file:///home/ekwe/grantfox/Remitwise-Frontend/lib/idempotency/store.ts) – In-memory storage with TTL expiration support.
-* [middleware.ts](file:///home/ekwe/grantfox/Remitwise-Frontend/lib/idempotency/middleware.ts) – HTTP Middleware to inspect, intercept, and cache responses.
-* [config.ts](file:///home/ekwe/grantfox/Remitwise-Frontend/lib/idempotency/config.ts) – Key constants (TTL duration, header names, etc.).
-* [index.ts](file:///home/ekwe/grantfox/Remitwise-Frontend/lib/idempotency/index.ts) – Main entrypoint exporting types and functions.
+* [store.ts](../lib/idempotency/store.ts) – In-memory storage with TTL expiration support.
+* [middleware.ts](../lib/idempotency/middleware.ts) – HTTP Middleware to inspect, intercept, and cache responses.
+* [config.ts](../lib/idempotency/config.ts) – Key constants (TTL duration, header names, etc.).
+* [index.ts](../lib/idempotency/index.ts) – Main entrypoint exporting types and functions.
 
 ---
 

@@ -7,7 +7,7 @@ it runs, describes the `tests/` layout, states the coverage and gate expectation
 gives a copy-paste recipe for adding a test with each runner.
 
 > New here? Read [CONTRIBUTING.md](../CONTRIBUTING.md) first for branch naming and PR
-> expectations, then come back here when you need to add or run tests.
+> expectations, and see [TESTING_STANDARDS.md](TESTING_STANDARDS.md) for contributor testing expectations.
 
 ---
 

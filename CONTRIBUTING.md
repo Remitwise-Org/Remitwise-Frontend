@@ -61,9 +61,7 @@ npm run dev
 
 ## Test Commands
 
-All commands below are verified against `package.json`. For the full multi-runner
-reference — when to use each runner, the `tests/` layout, coverage expectations, and a
-recipe for adding a test with each runner — see [docs/testing.md](docs/testing.md).
+All commands below are verified against `package.json`. For contributor testing guidelines and expectations, see [docs/TESTING_STANDARDS.md](docs/TESTING_STANDARDS.md). For the full multi-runner reference and test recipes, see [docs/testing.md](docs/testing.md).
 
 ### Quick reference
 
