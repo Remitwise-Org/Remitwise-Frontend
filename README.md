@@ -36,18 +36,6 @@ The frontend includes placeholder pages and components for:
 
 Dashboard, Bills, Insights, and Transaction History now use route-level skeleton screens built from `components/ui/Skeleton.tsx` and `components/ui/LoadingSkeletons.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
 
-## Recent Items (Command Palette)
-
-The Command Palette (`Ctrl/⌘ + K`) now tracks the **top 5 items the current user opened recently**, persisted in `localStorage` under the key defined in [`lib/config/recent.ts`](./lib/config/recent.ts). When the palette opens with an empty search query, a "Recently Opened" section appears at the top, showing the last 5 commands selected. The feature is powered by the generic [`useRecentItems`](./lib/hooks/useRecentItems.ts) hook, which can be reused for any component that needs MRU tracking.
-
-**Key details:**
-
-- **Storage key:** `remitwise_recent_commands` (configured in `lib/config/recent.ts`)
-- **Hook:** `useRecentItems<T>(storageKey, maxItems?, isEqual?)` — generic, reusable, SSR-safe
-- **Deduplication:** Re-selecting an item moves it to the top without creating duplicates
-- **Cap:** Oldest items are evicted when the list exceeds 5
-- **Graceful degradation:** If `localStorage` is unavailable the feature silently falls back to an empty list
-
 ## Browser Support & Polyfills
 
 To maintain a smooth background task experience across all platforms, this app polyfills missing native APIs (such as `window.requestIdleCallback` and `window.cancelIdleCallback` which are unsupported in Safari) using a standardized `setTimeout` wrapper. This polyfill is injected automatically at the client boundary (via `Providers.tsx`), so frontend engineers and downstream libraries can confidently use `requestIdleCallback` without explicit platform guard checks.
