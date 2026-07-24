@@ -8,15 +8,18 @@ const config: StorybookConfig = {
   stories: [
     "../components/**/*.stories.@(ts|tsx)",
   ],
-  addons: [],
+  addons: [
+    "@storybook/addon-webpack5-compiler-babel",
+  ],
   framework: {
     name: "@storybook/react-webpack5",
     options: {},
   },
   staticDirs: ["../public"],
-  typescript: {
-    reactDocgen: "react-docgen",
-  },
+  babel: async (config) => ({
+    ...config,
+    presets: [...(config.presets || []), "@babel/preset-typescript"],
+  }),
   webpackFinal: async (baseConfig) => {
     baseConfig.resolve = baseConfig.resolve || {};
     baseConfig.resolve.alias = {
