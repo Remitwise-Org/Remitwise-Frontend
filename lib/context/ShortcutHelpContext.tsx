@@ -37,8 +37,8 @@ export function ShortcutHelpProvider({ children }: { children: React.ReactNode }
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggle]);
 
   return (
