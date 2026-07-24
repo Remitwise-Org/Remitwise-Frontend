@@ -32,6 +32,7 @@ type Story = StoryObj<typeof meta>;
 export const Plain: Story = {
   args: {
     value: 1234567.89,
+    maximumFractionDigits: 2,
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

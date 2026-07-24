@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { userEvent, within, expect } from "@storybook/test";
 import { Search, Filter, Download, Plus } from "lucide-react";
+import { DensityProvider } from "@/lib/context/DensityContext";
 import Toolbar from "./Toolbar";
 
 const meta = {
@@ -16,6 +17,13 @@ const meta = {
       options: ["comfortable", "compact"],
     },
   },
+  decorators: [
+    (Story) => (
+      <DensityProvider>
+        <Story />
+      </DensityProvider>
+    ),
+  ],
 } satisfies Meta<typeof Toolbar>;
 
 export default meta;
