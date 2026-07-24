@@ -4,6 +4,75 @@ For the contributor workflow that takes a component from Figma through design
 tokens, Storybook stories, tests, and production integration, see
 [COMPONENT_LIFECYCLE.md](COMPONENT_LIFECYCLE.md).
 
+## AccessibleCalendarGrid
+
+A fully accessible calendar grid date-picker that meets **WCAG 2.1 AA**.
+
+**File:** `components/ui/AccessibleCalendarGrid.tsx`
+
+### Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `CalendarDate \| null` | `null` | Currently selected date |
+| `onChange` | `(date: CalendarDate) => void` | — | Fired when the user selects a date |
+| `minDate` | `CalendarDate` | — | Minimum selectable date (inclusive) |
+| `maxDate` | `CalendarDate` | — | Maximum selectable date (inclusive) |
+| `locale` | `string` | `"en-US"` | Locale for month/weekday names (e.g. `"ar-SA"`, `"fr-FR"`) |
+| `firstDayOfWeek` | `0 \| 1` | `0` | `0` = Sunday, `1` = Monday (ISO 8601) |
+| `className` | `string` | — | Extra classes on the wrapper |
+| `ariaLabel` | `string` | `"Calendar"` | Accessible label for the widget |
+
+### Keyboard navigation
+
+| Key | Action |
+|---|---|
+| Arrow Left / Right | Move focus one day backward / forward |
+| Arrow Up / Down | Move focus one week backward / forward |
+| Home | First day of the current week |
+| End | Last day of the current week |
+| Page Up | Previous month |
+| Page Down | Next month |
+| Enter / Space | Select the focused date |
+| Tab | Move to the prev/next month navigation buttons |
+
+### Accessibility
+
+- Container: `role="application"` with `aria-label`
+- Grid: `role="grid"` labelled by the month/year heading
+- Column headers: `role="columnheader"` (weekday abbreviations)
+- Day cells: `role="gridcell"` with `aria-selected`, `aria-disabled`, `aria-label` (full long-form date string), and `aria-current="date"` for today
+- Month navigation: announced via `aria-live="polite"` region
+- Focus ring: `ring-focus` token (3 px), `ring-offset-focus` token (4 px)
+- Touch targets: `h-11 w-11` (44 × 44 px, WCAG 2.1 minimum)
+- Roving `tabIndex` pattern keeps a single tab stop in the grid
+
+### RTL
+
+Pass an RTL locale (`"ar"`, `"he"`, `"fa"`, `"ur"`, …) and the component automatically sets `dir="rtl"` on its wrapper and flips the prev/next chevrons.
+
+### Usage
+
+```tsx
+import { AccessibleCalendarGrid } from "@/components/ui/AccessibleCalendarGrid";
+
+<AccessibleCalendarGrid
+  value={{ year: 2026, month: 7, day: 15 }}
+  onChange={(date) => console.log(date)}
+  ariaLabel="Remittance date picker"
+/>
+```
+
+### Stories
+
+`Components/UI/AccessibleCalendarGrid` — eight stories covering: `Default`, `WithSelectedDate`, `Controlled`, `WithMinMax`, `RTLArabic`, `RTLHebrew`, `MondayFirstDay`, `FrenchLocale`, `JapaneseLocale`.
+
+### Tests
+
+`components/ui/AccessibleCalendarGrid.test.tsx` — 30 tests covering ARIA roles and structure, keyboard navigation (Arrow keys, Page Up/Down, Enter/Space), mouse interaction, RTL, and four axe audit passes (zero violations).
+
+---
+
 ## BackToTop
 
 - [Layout Patterns](docs/LAYOUT_PATTERNS.md): conventions for page shells, stat rows, and cards used across the app.
