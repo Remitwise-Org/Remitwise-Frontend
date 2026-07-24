@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "node scripts/patch-next-config.js",
     "generate:types": "openapi-typescript ./openapi.yaml --output ./src/api/types.ts",
     "prebuild": "npm run generate:types",
     "dev": "next dev",
