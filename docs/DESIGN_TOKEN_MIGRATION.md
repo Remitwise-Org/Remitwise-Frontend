@@ -5,7 +5,8 @@
 This document covers the two operations that are easy to get wrong —
 **renaming** a token and **deprecating** one — and walks through each with real
 examples from this codebase. For the full catalogue of tokens and their semantic
-roles see [docs/THEMING.md](THEMING.md).
+roles see [docs/THEMING.md](THEMING.md), and refer to the
+[Design System Roadmap](DESIGN_SYSTEM_ROADMAP.md) for active token deprecations and planned migrations.
 
 ---
 

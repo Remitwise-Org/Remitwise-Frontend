@@ -2,6 +2,8 @@
 
 Audience: contributors adding or changing React components in RemitWise.
 
+Before planning or building a new component, check the [Design System Roadmap](DESIGN_SYSTEM_ROADMAP.md) to ensure it is not already planned or deprecating existing patterns.
+
 This workflow turns a Figma handoff into a token-based, documented, tested,
 production component. The existing `Toast` is the concrete example:
 
