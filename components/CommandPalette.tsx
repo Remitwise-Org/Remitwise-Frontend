@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Send, LayoutDashboard, FileText, Shield, Users, Settings, Wallet, X, Command } from "lucide-react";
+import { Search, Send, LayoutDashboard, FileText, Shield, Users, Settings, Wallet, X, Command, Clock } from "lucide-react";
 import { useClientTranslator } from "@/lib/i18n/client";
+import { useRecentItems } from "@/lib/hooks/useRecentItems";
+import { RECENT_COMMANDS_STORAGE_KEY } from "@/lib/config/recent";
 
 interface CommandItem {
   id: string;
@@ -22,6 +24,11 @@ export default function CommandPalette() {
   const { t } = useClientTranslator();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  const { items: recentCommandIds, addItem: addRecentCommandId } = useRecentItems<string>(
+    RECENT_COMMANDS_STORAGE_KEY,
+    5
+  );
 
   const commands: CommandItem[] = [
     // Routes
@@ -92,8 +99,21 @@ export default function CommandPalette() {
     command.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const routes = filteredCommands.filter((c) => c.category === "routes");
-  const actions = filteredCommands.filter((c) => c.category === "actions");
+  let recentList: CommandItem[] = [];
+  let routeList = filteredCommands.filter((c) => c.category === "routes");
+  let actionList = filteredCommands.filter((c) => c.category === "actions");
+
+  if (searchQuery === "") {
+    recentList = recentCommandIds
+      .map((id) => commands.find((c) => c.id === id))
+      .filter((c): c is CommandItem => c !== undefined);
+
+    const recentIds = new Set(recentList.map((c) => c.id));
+    routeList = routeList.filter((c) => !recentIds.has(c.id));
+    actionList = actionList.filter((c) => !recentIds.has(c.id));
+  }
+
+  const displayedCommands = [...recentList, ...routeList, ...actionList];
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -110,24 +130,23 @@ export default function CommandPalette() {
       if (isOpen) {
         if (e.key === "ArrowDown") {
           e.preventDefault();
-          setSelectedIndex((prev) => (prev + 1) % filteredCommands.length);
+          setSelectedIndex((prev) => (prev + 1) % displayedCommands.length);
         }
         if (e.key === "ArrowUp") {
           e.preventDefault();
-          setSelectedIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
+          setSelectedIndex((prev) => (prev - 1 + displayedCommands.length) % displayedCommands.length);
         }
         // Enter to execute
-        if (e.key === "Enter" && filteredCommands[selectedIndex]) {
+        if (e.key === "Enter" && displayedCommands[selectedIndex]) {
           e.preventDefault();
-          filteredCommands[selectedIndex].action();
-          setIsOpen(false);
+          handleCommandClick(displayedCommands[selectedIndex]);
         }
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, filteredCommands, selectedIndex]);
+  }, [isOpen, displayedCommands, selectedIndex]);
 
   useEffect(() => {
     if (isOpen) {
@@ -141,6 +160,7 @@ export default function CommandPalette() {
   }, [searchQuery]);
 
   const handleCommandClick = (command: CommandItem) => {
+    addRecentCommandId(command.id);
     command.action();
     setIsOpen(false);
     setSearchQuery("");
@@ -180,18 +200,19 @@ export default function CommandPalette() {
 
         {/* Command List */}
         <div className="max-h-[400px] overflow-y-auto p-2">
-          {filteredCommands.length === 0 ? (
+          {displayedCommands.length === 0 ? (
             <div className="py-8 text-center text-gray-500 text-sm">
               No commands found
             </div>
           ) : (
             <>
-              {routes.length > 0 && (
+              {recentList.length > 0 && (
                 <div className="mb-2">
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Routes
+                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    Recently Opened
                   </div>
-                  {routes.map((command, index) => (
+                  {recentList.map((command, index) => (
                     <button
                       key={command.id}
                       onClick={() => handleCommandClick(command)}
@@ -213,17 +234,44 @@ export default function CommandPalette() {
                 </div>
               )}
 
-              {actions.length > 0 && (
-                <div>
+              {routeList.length > 0 && (
+                <div className="mb-2">
                   <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Quick Actions
+                    Routes
                   </div>
-                  {actions.map((command, index) => (
+                  {routeList.map((command, index) => (
                     <button
                       key={command.id}
                       onClick={() => handleCommandClick(command)}
                       className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors ${
-                        routes.length + index === selectedIndex
+                        recentList.length + index === selectedIndex
+                          ? "bg-white/10 text-white"
+                          : "text-gray-300 hover:bg-white/5"
+                      }`}
+                    >
+                      <div className="p-2 bg-white/5 rounded-lg">{command.icon}</div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">{command.label}</div>
+                        {command.description && (
+                          <div className="text-xs text-gray-500">{command.description}</div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {actionList.length > 0 && (
+                <div>
+                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Quick Actions
+                  </div>
+                  {actionList.map((command, index) => (
+                    <button
+                      key={command.id}
+                      onClick={() => handleCommandClick(command)}
+                      className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors ${
+                        recentList.length + routeList.length + index === selectedIndex
                           ? "bg-white/10 text-white"
                           : "text-gray-300 hover:bg-white/5"
                       }`}
