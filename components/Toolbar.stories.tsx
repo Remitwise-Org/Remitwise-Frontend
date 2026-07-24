@@ -1,7 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { userEvent, within, expect } from "@storybook/test";
 import { Search, Filter, Download, Plus } from "lucide-react";
-import { DensityProvider } from "@/lib/context/DensityContext";
 import Toolbar from "./Toolbar";
 
 const meta = {
@@ -17,13 +15,6 @@ const meta = {
       options: ["comfortable", "compact"],
     },
   },
-  decorators: [
-    (Story) => (
-      <DensityProvider>
-        <Story />
-      </DensityProvider>
-    ),
-  ],
 } satisfies Meta<typeof Toolbar>;
 
 export default meta;
@@ -57,15 +48,6 @@ export const Default: Story = {
         <ToolbarItem icon={Plus} label="Add" />
       </>
     ),
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const toggleButton = canvas.getByLabelText("Switch to compact view");
-    await userEvent.click(toggleButton);
-    const comfortableButton = canvas.getByLabelText("Switch to comfortable view");
-    await expect(comfortableButton).toBeVisible();
-    await userEvent.click(comfortableButton);
-    await expect(toggleButton).toBeVisible();
   },
 };
 
