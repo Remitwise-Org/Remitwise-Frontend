@@ -6,6 +6,7 @@
  * `components/Toast.stories.tsx` and `components/Nav.stories.tsx`.
  */
 import type { Meta, StoryObj } from "@storybook/react";
+import { within, expect } from "@storybook/test";
 import { FormattedNumber } from "./FormattedNumber";
 
 const meta = {
@@ -32,12 +33,22 @@ export const Plain: Story = {
   args: {
     value: 1234567.89,
   },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const element = canvas.getByText("1,234,567.89");
+    await expect(element).toBeVisible();
+  },
 };
 
 export const Percent: Story = {
   args: {
     value: 0.42,
     style: "percent",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const element = canvas.getByText("42%");
+    await expect(element).toBeVisible();
   },
 };
 
