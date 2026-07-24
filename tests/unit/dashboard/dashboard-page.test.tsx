@@ -61,7 +61,7 @@ describe('DashboardPage — StatCard summary row', () => {
     get.mockReturnValue(new Promise(() => {})); // never resolves
     const { container } = render(<DashboardPage />);
 
-    expect(container.querySelector('.animate-shimmer')).toBeTruthy();
+    expect(container.querySelector('.rw-skeleton--shimmer')).toBeTruthy();
     expect(screen.queryByText('$1,240.50')).not.toBeInTheDocument();
   });
 
@@ -268,7 +268,7 @@ describe('DashboardPage — stale-data banner', () => {
 
     const { container } = render(<DashboardPage />);
 
-    expect(container.querySelector('.animate-shimmer')).toBeTruthy();
+    expect(container.querySelector('.rw-skeleton--shimmer')).toBeTruthy();
     expect(screen.queryByText(/unable to load data/i)).not.toBeInTheDocument();
 
     await act(async () => {
