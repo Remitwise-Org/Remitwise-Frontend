@@ -19,6 +19,7 @@ interface TooltipProps {
   side?: TooltipSide
   delay?: number
   className?: string
+  disabledReason?: string
 }
 
 const SIDE_STYLES: Record<TooltipSide, string> = {
@@ -34,6 +35,7 @@ export default function Tooltip({
   side = 'top',
   delay = 300,
   className = '',
+  disabledReason,
 }: TooltipProps) {
   const [open, setOpen] = useState(false)
   const tooltipId = useId()
@@ -42,6 +44,11 @@ export default function Tooltip({
   const showTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
 
+  const child = Children.only(children)
+  const isDisabled =
+    isValidElement<Record<string, unknown>>(child) &&
+    child.props.disabled === true
+
   const clearTimeouts = useCallback(() => {
     if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current)
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current)
@@ -49,8 +56,8 @@ export default function Tooltip({
 
   const show = useCallback(() => {
     clearTimeouts()
-    showTimeoutRef.current = setTimeout(() => setOpen(true), delay)
-  }, [clearTimeouts, delay])
+    showTimeoutRef.current = setTimeout(() => setOpen(true), isDisabled ? 0 : delay)
+  }, [clearTimeouts, delay, isDisabled])
 
   const hide = useCallback(() => {
     clearTimeouts()
@@ -76,11 +83,16 @@ export default function Tooltip({
     }
   }, [open])
 
-  const child = Children.only(children)
+  const tooltipVisible = open || (isDisabled && !!disabledReason)
+  const displayContent = isDisabled && disabledReason ? disabledReason : content
+
+  const triggerProps: Record<string, unknown> = {}
+  if (tooltipVisible) {
+    triggerProps['aria-describedby'] = tooltipId
+  }
+
   const trigger = isValidElement<Record<string, unknown>>(child)
-    ? cloneElement(child, {
-        'aria-describedby': open ? tooltipId : undefined,
-      })
+    ? cloneElement(child, triggerProps)
     : child
 
   return (
@@ -94,16 +106,18 @@ export default function Tooltip({
       onKeyDown={handleKeyDown}
     >
       {trigger}
-      <span
-        ref={tooltipRef}
-        id={tooltipId}
-        role="tooltip"
-        className={`${
-          open ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        } absolute z-50 px-3 py-1.5 text-sm text-white bg-gray-900 rounded-md shadow-lg transition-opacity duration-150 whitespace-nowrap ${SIDE_STYLES[side]} ${className}`}
-      >
-        {content}
-      </span>
+      {tooltipVisible && (
+        <span
+          ref={tooltipRef}
+          id={tooltipId}
+          role="tooltip"
+          aria-live="polite"
+          data-testid="disabled-tooltip"
+          className={`absolute z-50 px-3 py-1.5 text-sm text-white bg-gray-900 rounded-md shadow-lg transition-opacity duration-150 whitespace-nowrap ${SIDE_STYLES[side]} ${className}`}
+        >
+          {displayContent}
+        </span>
+      )}
     </span>
   )
 }

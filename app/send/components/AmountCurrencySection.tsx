@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { ChevronDown, RefreshCw } from "lucide-react"
 import { CTA_TEST_IDS } from "@/lib/cta-testids"
+import Tooltip from "@/components/Tooltip"
 import { useExchangeRates } from "@/lib/context/RatesContext"
 import { useClientTranslator } from "@/lib/i18n/client"
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue"
@@ -183,13 +184,19 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
 
       {/* Primary CTA */}
       <div className="flex flex-col gap-4 mt-8">
-        <button
-          onClick={handleReview}
-          disabled={!isValid}
-          className="w-full min-h-11 px-4 py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-base 375:text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 flex items-center justify-center gap-2 text-center break-words"
+        <Tooltip
+          disabledReason="Enter an amount between $1 and $10,000 to continue"
+          side="top"
         >
-          Review Transaction
-        </button>
+          <button
+            onClick={handleReview}
+            disabled={!isValid}
+            data-testid={CTA_TEST_IDS.flow.sendAmountPrimary}
+            className="w-full min-h-11 px-4 py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-base 375:text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 flex items-center justify-center gap-2 text-center break-words"
+          >
+            Review Transaction
+          </button>
+        </Tooltip>
 
         <button
           onClick={onBack}
