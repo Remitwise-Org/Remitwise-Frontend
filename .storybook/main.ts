@@ -1,5 +1,8 @@
 import type { StorybookConfig } from "@storybook/react-webpack5";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const config: StorybookConfig = {
   stories: [
@@ -23,7 +26,7 @@ const config: StorybookConfig = {
     baseConfig.resolve = baseConfig.resolve || {};
     baseConfig.resolve.alias = {
       ...baseConfig.resolve.alias,
-      "@": path.resolve(__dirname, ".."),
+      "@": path.resolve(dirname, ".."),
     };
     return baseConfig;
   },
