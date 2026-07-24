@@ -223,7 +223,8 @@ remitwise-frontend/
 ├── docs/                    # Documentation
 │   ├── API_ROUTES.md        # API routes documentation
 │   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
-│   └── contract-cache.md    # Contract caching architecture and guidelines
+│   ├── contract-cache.md    # Contract caching architecture and guidelines
+│   └── frame-budget-rules.md    # Frame budget performance guidelines
 ├── public/                  # Static assets
 └── package.json
 ```
