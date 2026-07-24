@@ -18,7 +18,12 @@ const config: StorybookConfig = {
   staticDirs: ["../public"],
   babel: async (config) => ({
     ...config,
-    presets: [...(config.presets || []), "@babel/preset-typescript"],
+    presets: [
+      ...(config.presets || []),
+      ["@babel/preset-env", { targets: { esmodules: true } }],
+      ["@babel/preset-react", { runtime: "automatic" }],
+      "@babel/preset-typescript",
+    ],
   }),
   webpackFinal: async (baseConfig) => {
     baseConfig.resolve = baseConfig.resolve || {};
