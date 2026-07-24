@@ -53,6 +53,8 @@ PII scrubbing is applied before events leave the app:
 
 Keep the auth token out of the repo and store it only in CI secrets.
 
+For more details on tracking, cookies, and telemetry configuration, see the [Tracking and Opt-Out Guide](docs/tracking-and-opt-out.md).
+
 ## Getting Started
 
 ### Environment Configuration
@@ -891,6 +893,8 @@ Sentry error monitoring is integrated for client, server, and edge runtimes.
 
 - Uploaded during build when `SENTRY_AUTH_TOKEN` and CI are present.
 - `hideSourceMaps: true` prevents browser exposure.
+
+For a comprehensive guide on what variables, cookies, and telemetry endpoints are configured—and how to opt out of them—see the [Tracking and Opt-Out Guide](docs/tracking-and-opt-out.md).
 
 ## Developer Mode & Debugging
 
