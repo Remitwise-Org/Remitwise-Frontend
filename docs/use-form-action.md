@@ -92,3 +92,9 @@ npx vitest run lib/hooks/useFormAction.test.ts --coverage
 ```
 
 Coverage target: ≥ 90 % branches.
+
+## Related Documentation
+
+- [Form Patterns](FORM_PATTERNS.md) — Comprehensive guide on inline vs blocking validation, autosave, and submit affordances.
+- [Component States](component-states.md) — Visual design specifications for loading, error, and disabled states.
+

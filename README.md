@@ -233,7 +233,7 @@ remitwise-frontend/
 │   ├── API_ROUTES.md        # API routes documentation
 │   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
 │   ├── contract-cache.md    # Contract caching architecture and guidelines
-│   └── KEYBOARD_SHORTCUTS.md  # Keyboard shortcut reference
+│   └── FORM_PATTERNS.md     # Form design patterns (inline vs blocking validation, autosave, submit affordance)
 ├── public/                  # Static assets
 └── package.json
 ```
