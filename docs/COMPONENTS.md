@@ -1,5 +1,42 @@
 # Components
 
+## Toolbar
+
+A responsive container for action items with an integrated density switch. Items wrap (stack) when the viewport is too narrow to display them on one row.
+
+**File:** `components/Toolbar.tsx`
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `React.ReactNode` | required | Toolbar action items |
+| `density` | `'comfortable' \| 'compact'` | `useDensity()` context | Display density; overrides the context value when provided |
+| `className` | `string` | `''` | Additional CSS classes forwarded to the root element |
+
+### Behavior
+
+- **Density switch:** A toggle button is rendered at the right end of the toolbar. Clicking it cycles between `comfortable` (roomier spacing) and `compact` (tighter spacing). The change is persisted to localStorage via the `DensityProvider` context.
+- **Responsive wrapping:** Items use `flex-wrap` so they naturally stack into additional rows when the container is too narrow.
+- **Density-aware spacing:** When `compact`, the toolbar uses `gap-space-xs` / `p-space-xs`; when `comfortable`, it uses `gap-space-sm` / `p-space-sm`.
+
+### Accessibility
+
+- Root element has `role="toolbar"` and `aria-orientation="horizontal"`.
+- The density toggle has `aria-label` that describes the action ("Switch to compact view" / "Switch to comfortable view") and `aria-pressed` reflecting the current compact state.
+
+### Integration
+
+Wired into the density system via `useDensity()` from `@/lib/context/DensityContext`. The density preference is centralised in `lib/config/density.ts`.
+
+### Storybook
+
+- `Components/Toolbar` (`Default`, `Compact`, `SingleItem`, `ManyItems`)
+
+### Tests
+
+- `components/Toolbar.test.tsx` covers rendering, density toggle, aria attributes, class application, prop forwarding, and wrapping behavior.
+
 ## BackToTop
 
 A floating "back to top" button that appears after the user scrolls past 800px.
