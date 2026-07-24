@@ -111,3 +111,56 @@ component per file):
 - `tests/unit/components/i18n/FormattedCurrency.test.tsx` covers the React
   layer (defaults, locale override, unknown-currency fallback, prop
   forwarding, render-prop children, and the `useFormatter` hook).
+
+## ConsentBanner (issue #988)
+
+An analytics consent banner with Global Privacy Control (GPC) support.
+
+**File:** `components/ConsentBanner.tsx`
+**Logic:** `lib/consent/consent.ts`
+
+### Behavior
+
+- **Default-off in EU:** Users with an EU/EEA/UK/CH browser locale see the
+  banner on first visit. Non-EU users are default-on (no banner).
+- **GPC signal:** When `navigator.globalPrivacyControl` is `true`, analytics
+  are silently denied — the banner is never shown.
+- **Cookie persistence:** The user's choice is stored in a `rw-analytics-consent`
+  cookie (180-day expiry, `SameSite=Lax`).
+- **Sentry gating:** `sentry.client.config.ts` checks `isAnalyticsAllowed()`
+  before calling `Sentry.init()`. If consent is not `"granted"`, Sentry does
+  not initialise at all.
+- **Accept → reload:** Accepting triggers a page reload so Sentry can
+  initialise with the new consent state.
+- **Decline → hide:** Declining hides the banner without a reload.
+
+### Accessibility
+
+- `role="dialog"` with `aria-label` sourced from i18n.
+- Both buttons have unique IDs (`consent-accept-btn`, `consent-decline-btn`)
+  for browser testing.
+- Focus-visible ring using `primary-400` with `ring-offset-slate-900`.
+- Keyboard-navigable: both buttons are tabbable in DOM order.
+
+### Styling
+
+- Fixed position: `bottom-0 inset-x-0 z-50`.
+- Glass morphism: `bg-slate-900/95 backdrop-blur-md` with subtle top border.
+- Dark-mode aware via `dark:` variants.
+- Uses the existing `slide-in-bottom` animation from `tailwind.config.js`.
+- Responsive: stacks vertically on mobile, horizontal on tablet+.
+- Uses design tokens only — no hard-coded colours, spacing, or radii.
+
+### Integration
+
+Wired in `components/Providers.tsx` so it is available on every route.
+
+### Tests
+
+- `tests/unit/consent/consent.test.ts` covers the pure consent logic
+  (GPC detection, EU locale heuristic, cookie read/write, consent resolution,
+  and negative tests proving GPC always overrides).
+- `tests/unit/components/ConsentBanner.test.tsx` covers the React component
+  (visibility states, accept/decline interactions, accessibility attributes,
+  and keyboard navigation).
+
