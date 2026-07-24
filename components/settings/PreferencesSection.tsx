@@ -6,6 +6,7 @@ import { useDensity } from "@/lib/context/DensityContext";
 import { useTheme } from "@/lib/context/ThemeContext";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useAutosave } from "@/lib/hooks/useAutosave";
+import { useSafeReload } from "@/lib/hooks/useSafeReload";
 import {
   SectionCard,
   SectionHeader,
@@ -39,7 +40,8 @@ export function PreferencesSection() {
     await new Promise((resolve) => setTimeout(resolve, 300));
   }, []);
 
-  const { saveState, triggerSave } = useAutosave(onSave);
+  const { saveState, isDirty, triggerSave } = useAutosave(onSave);
+  useSafeReload(isDirty);
 
   const handleThemeChange = (id: "system" | "light" | "dark") => {
     setTheme(id);
