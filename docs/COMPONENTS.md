@@ -1,5 +1,42 @@
 # Components
 
+## Toolbar
+
+A responsive container for action items with an integrated density switch. Items wrap (stack) when the viewport is too narrow to display them on one row.
+
+**File:** `components/Toolbar.tsx`
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `React.ReactNode` | required | Toolbar action items |
+| `density` | `'comfortable' \| 'compact'` | `useDensity()` context | Display density; overrides the context value when provided |
+| `className` | `string` | `''` | Additional CSS classes forwarded to the root element |
+
+### Behavior
+
+- **Density switch:** A toggle button is rendered at the right end of the toolbar. Clicking it cycles between `comfortable` (roomier spacing) and `compact` (tighter spacing). The change is persisted to localStorage via the `DensityProvider` context.
+- **Responsive wrapping:** Items use `flex-wrap` so they naturally stack into additional rows when the container is too narrow.
+- **Density-aware spacing:** When `compact`, the toolbar uses `gap-space-xs` / `p-space-xs`; when `comfortable`, it uses `gap-space-sm` / `p-space-sm`.
+
+### Accessibility
+
+- Root element has `role="toolbar"` and `aria-orientation="horizontal"`.
+- The density toggle has `aria-label` that describes the action ("Switch to compact view" / "Switch to comfortable view") and `aria-pressed` reflecting the current compact state.
+
+### Integration
+
+Wired into the density system via `useDensity()` from `@/lib/context/DensityContext`. The density preference is centralised in `lib/config/density.ts`.
+
+### Storybook
+
+- `Components/Toolbar` (`Default`, `Compact`, `SingleItem`, `ManyItems`)
+
+### Tests
+
+- `components/Toolbar.test.tsx` covers rendering, density toggle, aria attributes, class application, prop forwarding, and wrapping behavior.
+
 ## BackToTop
 
 A floating "back to top" button that appears after the user scrolls past 800px.
@@ -33,6 +70,30 @@ A floating "back to top" button that appears after the user scrolls past 800px.
 ### Integration
 
 Wired in `app/layout.tsx` so it is available on every route.
+
+## Dashboard — Last synced indicator
+
+A subtle timestamp showing when the dashboard data was last fetched.
+
+**File:** `app/dashboard/page.tsx`
+
+### Behavior
+
+- Renders as a right-aligned `text-xs text-gray-500` line below the StatCard grid.
+- Displays relative time: "Updated just now", "Updated 5 min ago", "Updated 1 hour ago".
+- Falls back to a locale-aware absolute date after 24 hours (e.g. "Updated Jan 15, 2:30 PM").
+- Uses the active user locale (plumbed from `useClientTranslator`).
+- Hides entirely when `meta.cachedAt` is missing or invalid (no DOM node emitted).
+
+### Source of truth
+
+- `lib/utils/time-ago.ts` — `formatLastSynced(isoString, locale)` pure function.
+- `lib/types/dashboard.ts` — `DashboardResponse.meta.cachedAt` is the server-provided ISO-8601 string.
+
+### Tests
+
+- `lib/utils/time-ago.test.ts` — unit tests for the formatting utility.
+- `tests/unit/dashboard/dashboard-page.test.tsx` — integration test verifying the rendered text.
 
 ## Locale-aware formatting (issue #732)
 
@@ -164,3 +225,45 @@ Wired in `components/Providers.tsx` so it is available on every route.
   (visibility states, accept/decline interactions, accessibility attributes,
   and keyboard navigation).
 
+## Receipt Route
+
+A shareable public URL for viewing transaction receipts with social preview
+cards (Open Graph / Twitter Card meta tags).
+
+**Route:** `/receipt/[txHash]`
+
+**Files:**
+- `app/receipt/[txHash]/page.tsx` — server component that fetches transaction
+  data from Horizon and sets OG meta tags via `generateMetadata`.
+- `components/ReceiptPageContent.tsx` — client component rendering the receipt
+  UI and calling `useSeo` for client-side title/description.
+
+### Behavior
+
+- Validates `txHash` as a 64-character hex string; shows an error state for
+  invalid hashes.
+- Fetches the transaction via `fetchTransactionReceipt` from Horizon.
+- If the transaction is not found, shows a "Transaction Not Found" state.
+- On success, displays the receipt: status badge, amount, transaction hash,
+  recipient, sender, date, network fee, and optional memo.
+- Share button uses the Web Share API when available; falls back to copying
+  the URL.
+- Explorer links point to stellar.expert.
+
+### Meta Tags (Social Preview)
+
+The `generateMetadata` function sets:
+
+| Tag | Value |
+|-----|-------|
+| `og:title` | `Receipt {short_hash}… \| RemitWise` |
+| `og:description` | `View receipt for transaction {short_hash}… on RemitWise.` |
+| `og:type` | `website` |
+| `og:image` | Logo image from `/logo.svg` |
+| `twitter:card` | `summary_large_image` |
+| `twitter:site` | `@RemitWise` |
+
+### Tests
+
+- `tests/unit/components/ReceiptPageContent.test.tsx` covers the receipt page
+  content component for valid/invalid hashes and successful/missing transactions.
