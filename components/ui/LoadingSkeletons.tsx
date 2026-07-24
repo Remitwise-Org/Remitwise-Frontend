@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { Skeleton, SkeletonCard } from "@/components/ui/Skeleton";
+import { Skeleton, SkeletonCard, SkeletonGroup } from "@/components/ui/Skeleton";
 
 function SectionShell({
   children,
@@ -94,7 +94,7 @@ function SummaryKpiSkeleton() {
 export function DashboardLoadingSkeleton() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="space-y-8">
+      <SkeletonGroup className="space-y-8" label="Loading dashboard">
         <StatGridSkeleton />
 
         <SectionShell>
@@ -177,7 +177,7 @@ export function DashboardLoadingSkeleton() {
             </div>
           </SectionShell>
         </div>
-      </div>
+      </SkeletonGroup>
     </main>
   );
 }
@@ -186,7 +186,7 @@ export function BillsLoadingSkeleton() {
   return (
     <div className="min-h-screen bg-[#010101]">
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <div className="space-y-8">
+        <SkeletonGroup className="space-y-8" label="Loading bills">
           <SummaryKpiSkeleton />
 
           <SectionShell>
@@ -235,7 +235,7 @@ export function BillsLoadingSkeleton() {
               </div>
             </SectionShell>
           </div>
-        </div>
+        </SkeletonGroup>
       </main>
     </div>
   );
@@ -361,7 +361,7 @@ export function InsightsLoadingSkeleton() {
   return (
     <div className="flex min-h-screen flex-col bg-[#010101]">
       <main className="flex-grow px-4 pb-20 pt-32 md:px-8">
-        <div className="mx-auto max-w-7xl">
+        <SkeletonGroup className="mx-auto max-w-7xl" label="Loading insights">
           <div className="flex justify-center">
             <div className="w-full max-w-md rounded-3xl border border-white/10 bg-black/40 p-6 backdrop-blur-sm">
               <div className="mb-8 flex items-start gap-3">
@@ -398,7 +398,7 @@ export function InsightsLoadingSkeleton() {
               </div>
             </div>
           </div>
-        </div>
+        </SkeletonGroup>
       </main>
     </div>
   );
@@ -406,7 +406,10 @@ export function InsightsLoadingSkeleton() {
 
 export function GoalsLoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-[#010101] safari-safe-bottom">
+    <SkeletonGroup
+      className="min-h-screen bg-[#010101] safari-safe-bottom"
+      label="Loading savings goals"
+    >
       {/* Page header */}
       <div className="border-b border-white/10 px-5 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
@@ -454,7 +457,7 @@ export function GoalsLoadingSkeleton() {
           ))}
         </div>
       </main>
-    </div>
+    </SkeletonGroup>
   );
 }
 
@@ -467,7 +470,10 @@ export function TransactionHistoryLoadingSkeleton() {
         <Skeleton className="h-4 w-32 rounded" />
       </div>
 
-      <div className="mx-4 mt-8 space-y-6 md:mx-20">
+      <SkeletonGroup
+        className="mx-4 mt-8 space-y-6 md:mx-20"
+        label="Loading transaction history"
+      >
         {/* Search + action bar */}
         <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] px-4 py-6">
           <Skeleton className="mb-4 h-10 w-full rounded-xl" />
@@ -511,7 +517,7 @@ export function TransactionHistoryLoadingSkeleton() {
             </section>
           ))}
         </div>
-      </div>
+      </SkeletonGroup>
     </main>
   );
 }
@@ -522,7 +528,7 @@ export function InsightLoadingSkeleton() {
       className="min-h-screen p-4 sm:p-6 lg:p-8"
       style={{ background: "linear-gradient(180deg, #0F0F0F 0%, #0A0A0A 100%)" }}
     >
-      <div className="mx-auto max-w-[928px] space-y-6">
+      <SkeletonGroup className="mx-auto max-w-[928px] space-y-6" label="Loading insight">
         {/* Title + period selector row */}
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <Skeleton className="h-8 w-44 rounded" />
@@ -547,7 +553,7 @@ export function InsightLoadingSkeleton() {
           <SkeletonCard variant="chart" />
           <SkeletonCard variant="chart" />
         </div>
-      </div>
+      </SkeletonGroup>
     </div>
   );
 }
