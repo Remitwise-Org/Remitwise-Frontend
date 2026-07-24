@@ -101,6 +101,22 @@ describe('DashboardPage — StatCard summary row', () => {
     expect(screen.getByText('—')).toBeInTheDocument();
   });
 
+  it('shows the last synced indicator with a relative timestamp', async () => {
+    get.mockResolvedValue(
+      okResponse(
+        makeResponse({
+          meta: { cachedAt: '2026-07-24T11:55:00Z', ttlSeconds: 30, fromCache: false },
+        })
+      )
+    );
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-24T12:00:00Z'));
+    render(<DashboardPage />);
+
+    expect(await screen.findByText('Updated 5 min ago')).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
   it('formats amounts for the es locale', async () => {
     Object.defineProperty(navigator, 'language', { value: 'es-ES', configurable: true });
     get.mockResolvedValue(

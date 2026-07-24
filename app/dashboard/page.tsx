@@ -12,6 +12,7 @@ import { useClientTranslator } from '@/lib/i18n/client';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import type { DashboardResponse } from '@/lib/types/dashboard';
 import { useSeo } from '@/lib/hooks/useSeo';
+import { formatLastSynced } from '@/lib/utils/time-ago';
 
 type LoadState = 'loading' | 'error' | 'ready';
 
@@ -153,6 +154,10 @@ export default function DashboardPage() {
           detail2={policiesDetail}
         />
       </div>
+
+      <p className="text-xs text-gray-500 text-right">
+        {formatLastSynced(data.meta.cachedAt, locale)}
+      </p>
     </div>
   );
 }

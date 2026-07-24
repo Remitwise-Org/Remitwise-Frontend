@@ -34,6 +34,30 @@ A floating "back to top" button that appears after the user scrolls past 800px.
 
 Wired in `app/layout.tsx` so it is available on every route.
 
+## Dashboard — Last synced indicator
+
+A subtle timestamp showing when the dashboard data was last fetched.
+
+**File:** `app/dashboard/page.tsx`
+
+### Behavior
+
+- Renders as a right-aligned `text-xs text-gray-500` line below the StatCard grid.
+- Displays relative time: "Updated just now", "Updated 5 min ago", "Updated 1 hour ago".
+- Falls back to a locale-aware absolute date after 24 hours (e.g. "Updated Jan 15, 2:30 PM").
+- Uses the active user locale (plumbed from `useClientTranslator`).
+- Hides entirely when `meta.cachedAt` is missing or invalid (no DOM node emitted).
+
+### Source of truth
+
+- `lib/utils/time-ago.ts` — `formatLastSynced(isoString, locale)` pure function.
+- `lib/types/dashboard.ts` — `DashboardResponse.meta.cachedAt` is the server-provided ISO-8601 string.
+
+### Tests
+
+- `lib/utils/time-ago.test.ts` — unit tests for the formatting utility.
+- `tests/unit/dashboard/dashboard-page.test.tsx` — integration test verifying the rendered text.
+
 ## Locale-aware formatting (issue #732)
 
 A single source of truth for locale-aware numeric display, used so a rounding
