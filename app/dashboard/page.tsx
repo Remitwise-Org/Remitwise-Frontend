@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Send, PiggyBank, FileText, Shield } from 'lucide-react';
 
 import StatCard from '@/components/Dashboard/StatCard';
@@ -12,8 +12,7 @@ import { useClientTranslator } from '@/lib/i18n/client';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import type { DashboardResponse } from '@/lib/types/dashboard';
 import { useSeo } from '@/lib/hooks/useSeo';
-
-type LoadState = 'loading' | 'error' | 'ready';
+import { formatLastSynced } from '@/lib/utils/time-ago';
 
 export default function DashboardPage() {
   useSeo({
@@ -127,6 +126,17 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {isStale && !bannerDismissed && (
+        <StaleBanner
+          staleAt={staleAt}
+          onRefresh={() => {
+            setBannerDismissed(false);
+            load();
+          }}
+          onDismiss={() => setBannerDismissed(true)}
+        />
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title={t('dashboard.totalSent')}
@@ -153,6 +163,10 @@ export default function DashboardPage() {
           detail2={policiesDetail}
         />
       </div>
+
+      <p className="text-xs text-gray-500 text-right">
+        {formatLastSynced(data.meta.cachedAt, locale)}
+      </p>
     </div>
   );
 }

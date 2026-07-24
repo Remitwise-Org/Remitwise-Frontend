@@ -22,6 +22,7 @@ The frontend includes placeholder pages and components for:
 ### Shared Components
 
 - **AddressDisplay**: A component for displaying long strings like Stellar addresses, featuring truncation, a copy-to-clipboard button, and a tooltip showing the full address on hover.
+- **NetworkStatusIndicator**: A pill in the primary header showing the current connection state — green dot + "Online" or red dot + "Offline". Fires a toast on connectivity transitions.
 
 1. **Dashboard** - Overview of remittances, savings, bills, and insurance
 2. **Send Money** - Remittance sending interface with automatic split preview
@@ -68,6 +69,8 @@ PII scrubbing is applied before events leave the app:
 - Edge events stay minimal and do not attach replay or extra scrubbing.
 
 Keep the auth token out of the repo and store it only in CI secrets.
+
+For more details on tracking, cookies, and telemetry configuration, see the [Tracking and Opt-Out Guide](docs/tracking-and-opt-out.md).
 
 ## Getting Started
 
@@ -134,6 +137,10 @@ This project uses a multi-tool testing strategy. Note that **Jest is not used** 
 - **Property Tests**
   - Used for: Property-based testing
   - Command: `npm run test:property`
+
+- **Image Alt Attribute Accessibility Check**
+  - Used for: Build-time enforcement ensuring no `<img>` or `<Image />` tag lacks an `alt` attribute
+  - Command: `npm run check:img-alt` (wired into `npm run lint` and `npm run prebuild`)
 
 > **Full guide:** see [docs/testing.md](docs/testing.md) for the complete multi-runner
 > reference — when to use Vitest vs. node:test vs. Playwright, a map of every
@@ -231,18 +238,25 @@ remitwise-frontend/
 ├── docs/                    # Documentation
 │   ├── API_ROUTES.md        # API routes documentation
 │   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
-│   └── contract-cache.md    # Contract caching architecture and guidelines
+│   ├── contract-cache.md    # Contract caching architecture and guidelines
+│   └── FORM_PATTERNS.md     # Form design patterns (inline vs blocking validation, autosave, submit affordance)
 ├── public/                  # Static assets
 └── package.json
 ```
+
+The full keyboard shortcut reference lives at [docs/KEYBOARD_SHORTCUTS.md](docs/KEYBOARD_SHORTCUTS.md) — every registered shortcut, where it's handled, and how to add or change one.
 
 ## API Routes
 
 See [API Routes Documentation](./docs/API_ROUTES.md) for details on authentication and available endpoints.
 
+Every route handler under `app/api/` is composed from a small set of reusable decorators (`withAuth`, `validatedRoute`, `withApiErrorHandler`). See [docs/api-route-decorators.md](./docs/api-route-decorators.md) for what each one does and when to use it.
+
 For authenticated browser-side requests, use the shared client API layer documented in [docs/client-api.md](docs/client-api.md). That guide covers when to use `apiClient` instead of raw `fetch`, the `401 -> refresh -> retry once` flow, session-expiry UI surfacing, and logout behavior.
 
 Route-level page titles now use a shared deep-link heading pattern. Use the shared heading primitive with a stable route-specific id whenever you add or update a primary page title. See [docs/page-heading-deeplinks.md](docs/page-heading-deeplinks.md).
+
+The `/transactions` view only ever lists user-initiated interactions (sends, splits, bill payments, etc.) and its type filter is how a reader narrows that list. See [docs/transactions-user-interaction-filter.md](docs/transactions-user-interaction-filter.md) for the model and what to update if a system-generated entry type is ever added.
 
 ## Per-Route SEO Metadata (`useSeo`)
 
@@ -272,7 +286,8 @@ Defaults are defined in [`lib/config/seo.ts`](./lib/config/seo.ts):
 ```ts
 export const DEFAULT_SEO = {
   title: "RemitWise - Smart Remittance & Financial Planning",
-  description: "A remittance app that helps families save, plan, and protect — not just send money.",
+  description:
+    "A remittance app that helps families save, plan, and protect — not just send money.",
 };
 ```
 
@@ -280,13 +295,13 @@ If `title` or `description` is omitted from `useSeo(...)`, the corresponding def
 
 ### Behaviour
 
-| Scenario | Result |
-|---|---|
-| `useSeo({ title, description })` | Sets both title and description |
-| `useSeo({ title })` | Sets title; uses `DEFAULT_SEO.description` |
-| `useSeo()` | Uses both defaults |
-| Component unmounts | Reverts to previous route's SEO (stack-based) |
-| Layout already has a `<meta name="description">` | Reuses it — no duplicates created |
+| Scenario                                         | Result                                        |
+| ------------------------------------------------ | --------------------------------------------- |
+| `useSeo({ title, description })`                 | Sets both title and description               |
+| `useSeo({ title })`                              | Sets title; uses `DEFAULT_SEO.description`    |
+| `useSeo()`                                       | Uses both defaults                            |
+| Component unmounts                               | Reverts to previous route's SEO (stack-based) |
+| Layout already has a `<meta name="description">` | Reuses it — no duplicates created             |
 
 ### Server Components
 
@@ -311,7 +326,6 @@ Unit tests live in [`tests/unit/hooks/useSeo.test.tsx`](./tests/unit/hooks/useSe
 - Default metadata is used when values are omitted
 - No duplicate `<meta>` tags are created
 - Stack-based cleanup on unmount
-
 
 **Quick Reference:**
 
@@ -715,6 +729,7 @@ GET  /api/admin/audit         # Admin-only audit events
 - All forms are currently disabled (placeholders)
 - UI uses a blue/indigo color scheme
 - Responsive design with mobile-first approach
+- Motion vocabulary and standard animations are documented in [docs/MOTION.md](docs/MOTION.md).
 - Components are structured for easy integration
 
 ## API Endpoints
@@ -908,6 +923,8 @@ Sentry error monitoring is integrated for client, server, and edge runtimes.
 - Uploaded during build when `SENTRY_AUTH_TOKEN` and CI are present.
 - `hideSourceMaps: true` prevents browser exposure.
 
+For a comprehensive guide on what variables, cookies, and telemetry endpoints are configured—and how to opt out of them—see the [Tracking and Opt-Out Guide](docs/tracking-and-opt-out.md).
+
 ## Developer Mode & Debugging
 
 RemitWise features a built-in Developer Mode designed for team members, QA, and support engineers to easily locate and copy request IDs for API responses without opening browser developer tools.
@@ -916,7 +933,7 @@ RemitWise features a built-in Developer Mode designed for team members, QA, and 
 
 To enable Developer Mode, append the `?dev=1` query parameter to the application URL in your browser:
 
-* **Example:** `http://localhost:3000/?dev=1` or `http://localhost:3000/dashboard?dev=1`
+- **Example:** `http://localhost:3000/?dev=1` or `http://localhost:3000/dashboard?dev=1`
 
 Once enabled, a floating **Developer Mode** panel will appear at the bottom-left of the viewport. This panel persists across client-side page transitions within your session.
 
@@ -924,11 +941,10 @@ Once enabled, a floating **Developer Mode** panel will appear at the bottom-left
 
 To disable Developer Mode and hide the panel, append `?dev=0` to the URL or clear your session storage:
 
-* **Example:** `http://localhost:3000/?dev=0`
+- **Example:** `http://localhost:3000/?dev=0`
 
 ### How to Use for Support and Debugging
 
 1. **Request Tracking**: As you interact with the app, the floating panel automatically updates in real-time to show the `Request ID` of the most recent API response (extracting from `x-request-id`, `x-correlation-id`, etc.).
 2. **Instant Copying**: Click the Copy icon next to the Request ID to instantly copy the ID to your clipboard.
 3. **Log Investigation**: Provide this copied ID to the backend/platform engineering team or search for it directly in your centralized logging system (e.g. Datadog, Kibana, AWS CloudWatch) to find the complete trace of database operations, external Stellar network interactions, and API response logs associated with that specific user transaction or error.
-

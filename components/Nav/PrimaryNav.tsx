@@ -9,6 +9,7 @@ import MobileNav from "./MobileNav";
 import { useWhatsNewOptional } from "@/lib/context/WhatsNewContext";
 import WhatsNewBadge from "@/components/Dashboard/WhatsNewBadge";
 import WrongNetworkBanner from "@/components/WrongNetworkBanner";
+import NetworkStatusIndicator from "@/components/NetworkStatusIndicator";
 
 const PrimaryNav = () => {
     const pathname = usePathname();
@@ -78,6 +79,7 @@ const PrimaryNav = () => {
                                 <WhatsNewBadge className="top-1.5 right-1.5 w-5 h-5" />
                             </button>
                         )}
+                        <NetworkStatusIndicator />
                         <WalletButton />
                         <div className="lg:hidden">
                             <MobileNav />

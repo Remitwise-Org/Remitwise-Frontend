@@ -440,18 +440,9 @@ export const apiClient = {
   delete: del,
   getJson,
   // Recurring schedule methods
-  getRecurringSchedules: (options) => apiClient.getJson('/api/remittance/recurring', options),
-  createRecurringSchedule: (payload, options) => apiClient.post('/api/remittance/recurring', { ...options, body: JSON.stringify(payload) }),
-  pauseRecurringSchedule: (id, options) => apiClient.patch(`/api/remittance/recurring/${id}`, { ...options, body: JSON.stringify({ action: 'pause' }) }),
-  resumeRecurringSchedule: (id, options) => apiClient.patch(`/api/remittance/recurring/${id}`, { ...options, body: JSON.stringify({ action: 'resume' }) }),
-  deleteRecurringSchedule: (id, options) => apiClient.del(`/api/remittance/recurring/${id}`, options),
-
-  request,
-  get,
-  head,
-  post,
-  put,
-  patch,
-  delete: del,
-  getJson,
+  getRecurringSchedules: (options?: ApiClientOptions) => apiClient.getJson('/api/remittance/recurring', options),
+  createRecurringSchedule: (payload: unknown, options?: ApiClientOptions) => apiClient.post('/api/remittance/recurring', { ...options, body: JSON.stringify(payload) }),
+  pauseRecurringSchedule: (id: string, options?: ApiClientOptions) => apiClient.patch(`/api/remittance/recurring/${id}`, { ...options, body: JSON.stringify({ action: 'pause' }) }),
+  resumeRecurringSchedule: (id: string, options?: ApiClientOptions) => apiClient.patch(`/api/remittance/recurring/${id}`, { ...options, body: JSON.stringify({ action: 'resume' }) }),
+  deleteRecurringSchedule: (id: string, options?: ApiClientOptions) => apiClient.del(`/api/remittance/recurring/${id}`, options),
 };

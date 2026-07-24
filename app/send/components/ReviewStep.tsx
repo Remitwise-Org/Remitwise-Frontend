@@ -3,6 +3,7 @@
 import { Zap, ArrowLeft, ShieldCheck, User, CreditCard } from "lucide-react";
 import AutomaticSplitCard from "./AutomaticSplitCard";
 import { CTA_TEST_IDS } from "@/lib/cta-testids";
+import Tooltip from "@/components/Tooltip";
 import { useClientLocale } from "@/lib/i18n/client";
 import { formatCurrency } from "@/lib/utils/format-currency";
 
@@ -75,16 +76,20 @@ export default function ReviewStep({
             </div>
 
             <div className="mt-10 space-y-4">
-              <button
-                id="send-confirm-btn"
-                onClick={onConfirm}
-                disabled={isPending}
-                data-testid={CTA_TEST_IDS.flow.sendReviewPrimary}
-                aria-busy={isPending}
-                aria-label={isPending ? "Processing your transfer, please wait" : "Confirm and send remittance"}
-                className="w-full min-h-11 px-4 py-4 bg-red-600 hover:bg-red-700 disabled:bg-red-900 disabled:cursor-not-allowed text-white rounded-2xl text-base 375:text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/40 flex items-center justify-center gap-3 text-center break-words"
+              <Tooltip
+                disabledReason="Your transaction is being processed, please wait"
+                side="top"
               >
-                {isPending ? (
+                <button
+                  id="send-confirm-btn"
+                  onClick={onConfirm}
+                  disabled={isPending}
+                  data-testid={CTA_TEST_IDS.flow.sendReviewPrimary}
+                  aria-busy={isPending}
+                  aria-label={isPending ? "Processing your transfer, please wait" : "Confirm and send remittance"}
+                  className="w-full min-h-11 px-4 py-4 bg-red-600 hover:bg-red-700 disabled:bg-red-900 disabled:cursor-not-allowed text-white rounded-2xl text-base 375:text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/40 flex items-center justify-center gap-3 text-center break-words"
+                >
+                  {isPending ? (
                   <>
                     {/* Inline SVG spinner — no extra dependency, works with prefers-reduced-motion via CSS media query */}
                     <svg
@@ -117,6 +122,7 @@ export default function ReviewStep({
                   </>
                 )}
               </button>
+              </Tooltip>
 
               <button
                 onClick={onBack}

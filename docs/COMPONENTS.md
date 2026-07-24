@@ -1,6 +1,24 @@
 # Components
 
+## Image Alt Attribute Accessibility Check
+
+Build-time enforcement ensuring that no `<img>` or `<Image />` component lacks an `alt` attribute (WCAG 2.1 AA requirement).
+
+**Script:** `scripts/check-img-alt.js`  
+**Command:** `npm run check:img-alt`
+
+### Behavior
+
+- Automatically runs during `npm run lint` and `npm run prebuild` / `npm run build`.
+- Scans source files in `app/`, `components/`, `src/`, `lib/`, `pages/`, and `public/`.
+- Fails the build with exit code 1 if any `<img>` or `<Image />` element lacks an `alt` attribute.
+- Unit tested in `tests/unit/check-img-alt.test.ts`.
+
 ## BackToTop
+
+- [Layout Patterns](docs/LAYOUT_PATTERNS.md): conventions for page shells, stat rows, and cards used across the app.
+
+See also: [Layout Patterns](./LAYOUT_PATTERNS.md) for how these components compose into full pages.
 
 A floating "back to top" button that appears after the user scrolls past 800px.
 
@@ -33,6 +51,30 @@ A floating "back to top" button that appears after the user scrolls past 800px.
 ### Integration
 
 Wired in `app/layout.tsx` so it is available on every route.
+
+## Dashboard — Last synced indicator
+
+A subtle timestamp showing when the dashboard data was last fetched.
+
+**File:** `app/dashboard/page.tsx`
+
+### Behavior
+
+- Renders as a right-aligned `text-xs text-gray-500` line below the StatCard grid.
+- Displays relative time: "Updated just now", "Updated 5 min ago", "Updated 1 hour ago".
+- Falls back to a locale-aware absolute date after 24 hours (e.g. "Updated Jan 15, 2:30 PM").
+- Uses the active user locale (plumbed from `useClientTranslator`).
+- Hides entirely when `meta.cachedAt` is missing or invalid (no DOM node emitted).
+
+### Source of truth
+
+- `lib/utils/time-ago.ts` — `formatLastSynced(isoString, locale)` pure function.
+- `lib/types/dashboard.ts` — `DashboardResponse.meta.cachedAt` is the server-provided ISO-8601 string.
+
+### Tests
+
+- `lib/utils/time-ago.test.ts` — unit tests for the formatting utility.
+- `tests/unit/dashboard/dashboard-page.test.tsx` — integration test verifying the rendered text.
 
 ## Locale-aware formatting (issue #732)
 
@@ -111,3 +153,140 @@ component per file):
 - `tests/unit/components/i18n/FormattedCurrency.test.tsx` covers the React
   layer (defaults, locale override, unknown-currency fallback, prop
   forwarding, render-prop children, and the `useFormatter` hook).
+
+---
+
+## ConfirmDialog / useConfirm (issue #999)
+
+A non-blocking, Promise-based replacement for `window.confirm` that integrates
+with the app's design system.
+
+**Files:**
+
+- `lib/context/ConfirmContext.tsx` — React context, `ConfirmProvider`,
+  `useConfirm` hook, and the internal `useConfirmInternal` hook.
+- `components/ConfirmDialog.tsx` — The rendered dialog UI.
+
+### Quick start
+
+```tsx
+"use client";
+
+import { useConfirm } from "@/lib/context/ConfirmContext";
+
+export default function DeleteButton({ id }: { id: string }) {
+  const { confirm } = useConfirm();
+
+  const handleDelete = async () => {
+    const ok = await confirm({
+      title: "Delete record",
+      description: "This action cannot be undone.",
+      intent: "danger",
+      confirmLabel: "Delete",
+      cancelLabel: "Keep it",
+    });
+    if (ok) {
+      // … proceed with deletion
+    }
+  };
+
+  return (
+    <button onClick={handleDelete} className="…">
+      Delete
+    </button>
+  );
+}
+```
+
+### API
+
+#### `useConfirm()`
+
+```ts
+const { confirm } = useConfirm();
+const result: boolean = await confirm(options?);
+```
+
+Must be called inside a `ConfirmProvider` (already provided globally via
+`components/Providers.tsx`).
+
+`confirm()` opens the dialog and returns a `Promise<boolean>` that resolves:
+
+| User action            | Resolved value |
+|------------------------|---------------|
+| Clicks **Confirm**     | `true`        |
+| Clicks **Cancel**      | `false`       |
+| Clicks the **×** button | `false`      |
+| Presses **Escape**     | `false`       |
+| Clicks the **backdrop** | `false`      |
+
+#### `ConfirmOptions`
+
+| Prop             | Type                   | Default            | Description                              |
+|------------------|------------------------|--------------------|------------------------------------------|
+| `title`          | `string`               | `"Are you sure?"`  | Dialog heading                           |
+| `description`    | `string`               | `""`               | Descriptive body copy (optional)         |
+| `confirmLabel`   | `string`               | `"Confirm"`        | Label for the positive action button     |
+| `cancelLabel`    | `string`               | `"Cancel"`         | Label for the negative action button     |
+| `intent`         | `"primary" \| "danger"` | `"primary"`       | Visual style of the confirm button       |
+
+### `ConfirmProvider`
+
+Wraps the subtree that needs access to `useConfirm`. It is already mounted at
+the top of the app inside `components/Providers.tsx`, so application code does
+not need to add it.
+
+### `ConfirmDialog`
+
+Renders the actual dialog UI. Mount it once near the root; currently placed
+inside `components/Providers.tsx` alongside other singleton UI (toasts, command
+palette, dev panel).
+
+The dialog is:
+
+- **ARIA-accessible** — `role="dialog"`, `aria-modal="true"`,
+  `aria-labelledby`, `aria-describedby` (when description is present).
+- **Focus-managed** — focuses the Confirm button on open; restores the
+  previously focused element on close.
+- **Keyboard navigable** — Tab/Shift+Tab cycle within the dialog; Escape
+  cancels.
+- **Backdrop-dismissible** — clicking the overlay resolves `false`.
+- **Design-token compliant** — uses `primary-600`, `rounded-2xl`, and
+  `bg-black/60` from the Tailwind config; no hard-coded colour values.
+
+### Styling
+
+| Prop value | Confirm button style        |
+|------------|-----------------------------|
+| `"primary"` | `bg-primary-600` (blue)   |
+| `"danger"`  | `bg-red-600` (red)        |
+
+### Accessibility
+
+- Title is linked via `aria-labelledby="confirm-dialog-title"`.
+- Description (when provided) is linked via
+  `aria-describedby="confirm-dialog-description"`.
+- Close button carries `aria-label="Cancel"`.
+- All interactive elements have `focus-visible` outlines using
+  `outline-primary-600`.
+
+### Integration
+
+`ConfirmProvider` and `ConfirmDialog` are already registered in
+`components/Providers.tsx`. No additional wiring is required.
+
+### Tests
+
+`tests/unit/useConfirm.test.tsx` covers:
+
+- Dialog hidden before `confirm()` is called
+- Dialog shown after `confirm()` is called
+- Resolves `true` on Confirm click
+- Resolves `false` on Cancel, close, Escape, and backdrop clicks
+- Dialog closes after resolution
+- Multiple sequential calls
+- Custom `title`, `description`, `confirmLabel`, `cancelLabel`
+- `intent: "danger"` vs `intent: "primary"` button styling
+- ARIA attributes (`role`, `aria-modal`, `aria-labelledby`,
+  `aria-describedby`, `aria-label`)
+- Throws when `useConfirm` is called outside `ConfirmProvider`

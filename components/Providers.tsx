@@ -1,11 +1,14 @@
 "use client";
 
 import { ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WalletProvider } from "stellar-wallet-kit";
 import { DensityProvider } from "@/lib/context/DensityContext";
 import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { ToastProvider } from "@/lib/context/ToastContext";
+import { NetworkStatusProvider } from "@/lib/context/NetworkStatusContext";
 import { AsyncOperationsProvider } from "@/lib/context/AsyncOperationsContext";
+import { ConfirmProvider } from "@/lib/context/ConfirmContext";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import ToastRegion from "@/components/ToastRegion";
 import SessionExpiryProvider from "@/components/SessionExpiryProvider";
@@ -27,6 +30,7 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <WalletProvider>
       <ThemeProvider>
+        <NetworkStatusProvider>
         <ToastProvider>
           <DensityProvider>
             <AsyncOperationsProvider>
@@ -35,10 +39,12 @@ export default function Providers({ children }: { children: ReactNode }) {
                 <ToastRegion />
                 <CommandPalette />
                 <DevRequestIdDisplay />
+                <FeatureFlagIndicator />
               </SessionExpiryProvider>
             </AsyncOperationsProvider>
           </DensityProvider>
         </ToastProvider>
+        </NetworkStatusProvider>
       </ThemeProvider>
     </WalletProvider>
   );

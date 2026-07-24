@@ -190,5 +190,12 @@
     "submitting": "Submitting…",
     "submit_error": "Failed to build the transfer. Please try again.",
     "submit_success": "Transfer payload ready for signing."
+  },
+  "consent": {
+    "title": "We value your privacy.",
+    "body": "We use analytics to improve your experience. You can accept or decline — your choice is saved and respected.",
+    "accept": "Accept Analytics",
+    "decline": "Decline",
+    "ariaLabel": "Analytics consent"
   }
 }

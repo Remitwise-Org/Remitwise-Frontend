@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Download, FilterIcon, Loader2, SearchX, Inbox, X } from "lucide-react";
+import { Download, FilterIcon, SearchX, Inbox, X } from "lucide-react";
 import TransactionHistoryItem from "@/components/Dashboard/TransactionHistoryItem";
 import TransactionHistoryHeader from "./components/transaction-history-header";
 import TransactionHistorySearchInput from "./components/transaction-history-search-input";
 import Button from "./components/transaction-history-button";
+import TransactionHistoryLoadMore from "./components/transaction-history-load-more";
 import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
 import { TransactionItem } from "@/lib/remittance/horizon";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { useSeo } from "@/lib/hooks/useSeo";
+import { serializeToCsv } from "@/lib/utils/export-serializer";
 import type {
   Transaction,
   TransactionStatus,
@@ -165,6 +167,12 @@ const TransactionHistoryPage = () => {
       fetchTransactions(cursor, false);
     }
   }, [hasMore, loadingMore, cursor, fetchTransactions]);
+
+  const { sentinelRef } = useInfiniteScrollObserver({
+    hasMore,
+    loading: loadingMore,
+    onLoadMore: handleLoadMore,
+  });
 
   const handleClearFilters = useCallback(() => {
     setSearchTerm("");
@@ -347,14 +355,7 @@ const TransactionHistoryPage = () => {
 
                 if (rows.length === 0) return;
 
-                const csv = [
-                  Object.keys(rows[0]).join(","),
-                  ...rows.map((row) =>
-                    Object.values(row)
-                      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
-                      .join(","),
-                  ),
-                ].join("\n");
+                const csv = serializeToCsv(rows);
 
                 const blob = new Blob([csv], {
                   type: "text/csv;charset=utf-8",
@@ -686,25 +687,16 @@ const TransactionHistoryPage = () => {
           </div>
         )}
 
-        {/* Load More Button */}
+        {/* Load More: sentinel-driven auto-load with an always-present
+            manual button fallback (see TransactionHistoryLoadMore) */}
         {hasMore && !loading && filteredCount > 0 && (
-          <div className="mt-8 text-center">
-            <button
-              type="button"
-              onClick={handleLoadMore}
-              disabled={loadingMore}
-              className="min-h-[48px] rounded-xl bg-[#FF4B26] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#FF4B26]/80 disabled:opacity-50 disabled:cursor-not-allowed sm:text-base"
-            >
-              {loadingMore ? "Loading..." : t("transactionHistory.loadMore")}
-            </button>
-          </div>
-        )}
-
-        {/* Loading More Indicator */}
-        {loadingMore && filteredCount > 0 && (
-          <div className="mt-4 flex justify-center">
-            <Loader2 className="w-6 h-6 text-[#FF4B26] animate-spin" />
-          </div>
+          <TransactionHistoryLoadMore
+            loading={loadingMore}
+            onLoadMore={handleLoadMore}
+            sentinelRef={sentinelRef}
+            label={t("transactionHistory.loadMore")}
+            loadingLabel="Loading..."
+          />
         )}
       </div>
     </main>

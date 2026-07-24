@@ -211,6 +211,7 @@ export function DashboardLayout() {
 ## Related Documentation
 For deep dives into related patterns, see:
 - [Error Handling Strategy](file:///c:/Users/HP/Remitwise-Frontend/docs/error-handling.md) — Covers global error boundaries and logger configurations.
-- [Form Action Hook Guide](file:///c:/Users/HP/Remitwise-Frontend/docs/use-form-action.md) — Explains state transitions during AJAX form requests.
+- [Form Design & Validation Patterns](FORM_PATTERNS.md) — Covers inline vs blocking validation, autosave, and submit affordance.
+- [Form Action Hook Guide](use-form-action.md) — Explains state transitions during AJAX form requests.
 - [Client API Guide](file:///c:/Users/HP/Remitwise-Frontend/docs/client-api.md) — Explains `apiClient` requests, retry delays, and session expiry flows.
 - [Status Semantics Handoff](file:///c:/Users/HP/Remitwise-Frontend/docs/color-contrast-status-semantics-handoff.md) — Visual design specifications for semantic statuses.

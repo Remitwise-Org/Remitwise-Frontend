@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "generate:types": "openapi-typescript ./openapi.yaml --output ./src/api/types.ts",
-    "prebuild": "npm run generate:types",
+    "check:img-alt": "node scripts/check-img-alt.js",
+    "prebuild": "npm run generate:types && npm run check:img-alt",
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "eslint . && npm run check:img-alt",
     "test": "npm run test:unit",
     "test:coverage": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner --coverage",
     "test:watch": "node node_modules/vitest/vitest.mjs --config vitest.config.mjs --configLoader runner",
@@ -19,7 +20,9 @@
     "test:property": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/property",
     "test:integration": "node --test tests/integration/auth.test.cjs tests/integration/health.test.cjs tests/integration/validation.test.cjs && node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/integration/api",
     "test:e2e": "playwright test",
-    "test:perf": "npx playwright test tests/e2e/dashboard-performance.spec.ts"
+    "test:perf": "npx playwright test tests/e2e/dashboard-performance.spec.ts",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -27,6 +30,7 @@
     "@sentry/nextjs": "^10.60.0",
     "@stellar/stellar-sdk": "^11.2.2",
     "@tailwindcss/container-queries": "^0.1.1",
+    "@tanstack/react-query": "^5.101.4",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "clsx": "^2.1.1",
@@ -69,6 +73,13 @@
     "tailwindcss": "^3.3.0",
     "tsx": "^4.21.0",
     "typescript": "^5.0.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "storybook": "^8.6.12",
+    "@storybook/addon-essentials": "^8.6.12",
+    "@storybook/addon-interactions": "^8.6.12",
+    "@storybook/addon-links": "^8.6.12",
+    "@storybook/blocks": "^8.6.12",
+    "@storybook/react": "^8.6.12",
+    "@storybook/test": "^8.6.12"
   }
 }

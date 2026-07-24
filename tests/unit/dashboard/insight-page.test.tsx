@@ -40,7 +40,7 @@ describe('InsightPage', () => {
         expect(screen.getByText('Financial Insights')).toBeInTheDocument();
         // Since we mock SkeletonCard, let's just check if it renders
         // Actually SkeletonCard is not mocked, so we check for shimmer
-        expect(document.querySelector('.animate-shimmer')).toBeInTheDocument();
+        expect(document.querySelector('.rw-skeleton--shimmer')).toBeInTheDocument();
     });
 
     it('renders error state if API fails', async () => {
