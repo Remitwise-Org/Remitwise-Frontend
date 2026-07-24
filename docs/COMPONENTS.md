@@ -111,3 +111,46 @@ component per file):
 - `tests/unit/components/i18n/FormattedCurrency.test.tsx` covers the React
   layer (defaults, locale override, unknown-currency fallback, prop
   forwarding, render-prop children, and the `useFormatter` hook).
+
+## Receipt Route
+
+A shareable public URL for viewing transaction receipts with social preview
+cards (Open Graph / Twitter Card meta tags).
+
+**Route:** `/receipt/[txHash]`
+
+**Files:**
+- `app/receipt/[txHash]/page.tsx` — server component that fetches transaction
+  data from Horizon and sets OG meta tags via `generateMetadata`.
+- `components/ReceiptPageContent.tsx` — client component rendering the receipt
+  UI and calling `useSeo` for client-side title/description.
+
+### Behavior
+
+- Validates `txHash` as a 64-character hex string; shows an error state for
+  invalid hashes.
+- Fetches the transaction via `fetchTransactionReceipt` from Horizon.
+- If the transaction is not found, shows a "Transaction Not Found" state.
+- On success, displays the receipt: status badge, amount, transaction hash,
+  recipient, sender, date, network fee, and optional memo.
+- Share button uses the Web Share API when available; falls back to copying
+  the URL.
+- Explorer links point to stellar.expert.
+
+### Meta Tags (Social Preview)
+
+The `generateMetadata` function sets:
+
+| Tag | Value |
+|-----|-------|
+| `og:title` | `Receipt {short_hash}… | RemitWise` |
+| `og:description` | `View receipt for transaction {short_hash}… on RemitWise.` |
+| `og:type` | `website` |
+| `og:image` | Logo image from `/logo.svg` |
+| `twitter:card` | `summary_large_image` |
+| `twitter:site` | `@RemitWise` |
+
+### Tests
+
+- `tests/unit/components/ReceiptPageContent.test.tsx` covers the receipt page
+  content component for valid/invalid hashes and successful/missing transactions.
