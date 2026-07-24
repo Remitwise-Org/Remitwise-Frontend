@@ -142,7 +142,7 @@ These utilities are defined in `app/globals.css`.
 | --- | --- | --- |
 | `.starry-bg` | Repeating radial dot background at `40px` size. | Decorative dark-page background. |
 | `.safari-safe-top` | `padding-top: env(safe-area-inset-top)` | Respect iOS top safe area. |
-| `.safari-safe-bottom` | `padding-bottom: env(safe-area-inset-bottom)` | Respect iOS bottom safe area. |
+| `.safari-safe-bottom` | `padding-bottom: env(safe-area-inset-bottom)` | Respect iOS bottom safe area. Requires `viewport-fit=cover` (set globally in `app/layout.tsx`) or the inset reads as `0px`. Elements with existing base padding should use the `calc(theme(spacing.N)+env(...))` pattern instead — see `docs/tailwind-extensions.md`. |
 | `.safari-safe-left` | `padding-left: env(safe-area-inset-left)` | Respect iOS left safe area. |
 | `.safari-safe-right` | `padding-right: env(safe-area-inset-right)` | Respect iOS right safe area. |
 | `.touch-target` | `min-height: 44px; min-width: 44px` | Minimum accessible square touch target. |
