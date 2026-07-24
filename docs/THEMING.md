@@ -9,7 +9,8 @@ This project uses two theming layers:
 
 Prefer these tokens before adding raw colors, spacing, focus rings, breakpoints,
 or animation values. If a new value is needed, add it to the token layer first
-and document its semantic role here in the same PR.
+and document its semantic role here in the same PR. For surface hierarchy and
+shadow use, see [docs/ELEVATION.md](ELEVATION.md).
 
 ## CSS Custom Properties
 

@@ -9,6 +9,7 @@ Frontend application for the RemitWise remittance and financial planning platfor
 This is a Next.js-based frontend skeleton that provides the UI structure for all RemitWise features. The application is built with:
 
 - [Prisma data model and durability boundary](./docs/data-model.md)
+- [Elevation and shadow guidance](./docs/ELEVATION.md)
 
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type safety
