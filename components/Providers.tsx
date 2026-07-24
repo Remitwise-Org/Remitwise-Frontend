@@ -6,6 +6,7 @@ import { WalletProvider } from "stellar-wallet-kit";
 import { DensityProvider } from "@/lib/context/DensityContext";
 import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { ToastProvider } from "@/lib/context/ToastContext";
+import { NetworkStatusProvider } from "@/lib/context/NetworkStatusContext";
 import { AsyncOperationsProvider } from "@/lib/context/AsyncOperationsContext";
 import { ConfirmProvider } from "@/lib/context/ConfirmContext";
 import LayoutWrapper from "@/components/LayoutWrapper";
@@ -28,6 +29,7 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <WalletProvider>
       <ThemeProvider>
+        <NetworkStatusProvider>
         <ToastProvider>
           <DensityProvider>
             <AsyncOperationsProvider>
@@ -44,6 +46,7 @@ export default function Providers({ children }: { children: ReactNode }) {
             </AsyncOperationsProvider>
           </DensityProvider>
         </ToastProvider>
+        </NetworkStatusProvider>
       </ThemeProvider>
     </WalletProvider>
   );
