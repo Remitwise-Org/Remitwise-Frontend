@@ -177,97 +177,123 @@ component per file):
   layer (defaults, locale override, unknown-currency fallback, prop
   forwarding, render-prop children, and the `useFormatter` hook).
 
-## ConsentBanner (issue #988)
+## Skeleton (issue #932)
 
-An analytics consent banner with Global Privacy Control (GPC) support.
+Loading placeholders. Two variants: an animated **shimmer** and a flat
+**static** fill. The shimmer variant falls back to the static rendering for
+users who have asked for reduced motion.
 
-**File:** `components/ConsentBanner.tsx`
-**Logic:** `lib/consent/consent.ts`
+**File:** `components/ui/Skeleton.tsx`
 
-### Behavior
+### `<Skeleton />`
 
-- **Default-off in EU:** Users with an EU/EEA/UK/CH browser locale see the
-  banner on first visit. Non-EU users are default-on (no banner).
-- **GPC signal:** When `navigator.globalPrivacyControl` is `true`, analytics
-  are silently denied — the banner is never shown.
-- **Cookie persistence:** The user's choice is stored in a `rw-analytics-consent`
-  cookie (180-day expiry, `SameSite=Lax`).
-- **Sentry gating:** `sentry.client.config.ts` checks `isAnalyticsAllowed()`
-  before calling `Sentry.init()`. If consent is not `"granted"`, Sentry does
-  not initialise at all.
-- **Accept → reload:** Accepting triggers a page reload so Sentry can
-  initialise with the new consent state.
-- **Decline → hide:** Declining hides the banner without a reload.
+A single placeholder shape.
+
+| Prop | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `variant` | `"shimmer" \| "static"` | `"shimmer"` | `shimmer` animates a highlight across the shape; `static` never animates. |
+| `className` | `string` | `""` | Sizing and radius, as Tailwind utilities. |
+| `style` | `CSSProperties` | — | For values Tailwind cannot express, e.g. a percentage height. |
+
+```tsx
+<Skeleton className="h-4 w-24 rounded" />                  // shimmer
+<Skeleton variant="static" className="h-4 w-24 rounded" /> // never animates
+```
+
+### Reduced motion
+
+`variant="shimmer"` means "animate *unless the user has asked us not to*". It
+is not an override: under `prefers-reduced-motion: reduce` a shimmer skeleton
+renders identically to a static one. This satisfies WCAG 2.1 SC 2.2.2 (Pause,
+Stop, Hide) — the shimmer is an automatic animation that runs for longer than
+five seconds and has no pause control.
+
+The fallback lives in `app/globals.css`, not in the component, for three
+reasons:
+
+- it is correct during server rendering and before hydration, whereas a
+  `matchMedia` hook would flash the animation on first paint;
+- it cannot cause a hydration mismatch;
+- it keeps `Skeleton` usable from server components, which is where the
+  `app/**/loading.tsx` routes render it.
+
+`usePrefersReducedMotion()` (`lib/hooks/`) is still the right tool for
+JS-driven animation. It is deliberately *not* used here.
+
+The reduced-motion rule drops `background-image` as well as `animation`.
+Stopping the animation alone would leave the gradient frozen part-way through
+its sweep, which reads as a lopsided highlight rather than a placeholder.
+
+Pass `variant="static"` when a surface should never animate regardless of the
+user's setting.
+
+### `<SkeletonGroup />`
+
+Wraps a set of placeholder shapes in a polite live region, so screen reader
+users are told the surface is loading instead of meeting a run of empty,
+unlabelled boxes.
+
+| Prop | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `label` | `string` | `"Loading"` | Name the surface: `"Loading transaction history"`. Rendered `sr-only`. |
+| `className` | `string` | — | Applied to the group's root, so it can replace an existing layout wrapper without adding a DOM level. |
+| `style` | `CSSProperties` | — | |
+
+```tsx
+<SkeletonGroup className="space-y-8" label="Loading dashboard">
+  <SkeletonCard variant="stat" />
+  <SkeletonCard variant="chart" />
+</SkeletonGroup>
+```
 
 ### Accessibility
 
-- `role="dialog"` with `aria-label` sourced from i18n.
-- Both buttons have unique IDs (`consent-accept-btn`, `consent-decline-btn`)
-  for browser testing.
-- Focus-visible ring using `primary-400` with `ring-offset-slate-900`.
-- Keyboard-navigable: both buttons are tabbable in DOM order.
+- Every `<Skeleton />` is `aria-hidden="true"`. The shapes carry no
+  information, and a screen reader walking forty unlabelled boxes is worse than
+  silence.
+- `<SkeletonGroup />` renders `role="status"` + `aria-busy="true"` with an
+  `sr-only` label. `role="status"` is polite, so it will not interrupt.
+- **Use exactly one group per loading surface.** Nested live regions announce
+  more than once. This is why `SkeletonCard`, `SkeletonList`, `SkeletonChart`
+  and `SkeletonWidget` are plain decorative containers — they are designed to
+  sit *inside* a group.
+- Nothing in a skeleton is focusable, so there is no keyboard surface and no
+  focus order to preserve. Tab order is unchanged when a placeholder is swapped
+  for real content.
+- Contrast: the placeholders are decorative and hidden from assistive
+  technology, so WCAG 1.4.11 does not apply to them (it exempts content that is
+  "purely decorative"). They deliberately keep the existing low-contrast
+  design. `--skeleton-static` is set to the shimmer's *highlight* value rather
+  than its base, so removing the motion does not also make the placeholder
+  fainter than the animated version's average.
 
 ### Styling
 
-- Fixed position: `bottom-0 inset-x-0 z-50`.
-- Glass morphism: `bg-slate-900/95 backdrop-blur-md` with subtle top border.
-- Dark-mode aware via `dark:` variants.
-- Uses the existing `slide-in-bottom` animation from `tailwind.config.js`.
-- Responsive: stacks vertically on mobile, horizontal on tablet+.
-- Uses design tokens only — no hard-coded colours, spacing, or radii.
+Colours come from the `--skeleton-base` / `--skeleton-highlight` /
+`--skeleton-static` custom properties, documented in `docs/THEMING.md`. The
+classes are emitted into Tailwind's `components` layer, so any utility passed
+via `className` overrides them.
 
-### Integration
+### Composite skeletons
 
-Wired in `components/Providers.tsx` so it is available on every route.
+`SkeletonCard`, `SkeletonList`, `SkeletonChart` and `SkeletonWidget` compose
+`<Skeleton />` into common shapes and are unchanged apart from inheriting the
+new variants. The page-level skeletons in `components/ui/LoadingSkeletons.tsx`
+(used by the `app/**/loading.tsx` routes) each wrap their content in a single
+`<SkeletonGroup />`.
 
-### Tests
+### Storybook
 
-- `tests/unit/consent/consent.test.ts` covers the pure consent logic
-  (GPC detection, EU locale heuristic, cookie read/write, consent resolution,
-  and negative tests proving GPC always overrides).
-- `tests/unit/components/ConsentBanner.test.tsx` covers the React component
-  (visibility states, accept/decline interactions, accessibility attributes,
-  and keyboard navigation).
+- `UI/Skeleton` (`Shimmer`, `Static`, `ShimmerVersusStatic`, `Shapes`)
+- `UI/SkeletonGroup` (`Default`, `StaticShapes`)
 
-## Receipt Route
-
-A shareable public URL for viewing transaction receipts with social preview
-cards (Open Graph / Twitter Card meta tags).
-
-**Route:** `/receipt/[txHash]`
-
-**Files:**
-- `app/receipt/[txHash]/page.tsx` — server component that fetches transaction
-  data from Horizon and sets OG meta tags via `generateMetadata`.
-- `components/ReceiptPageContent.tsx` — client component rendering the receipt
-  UI and calling `useSeo` for client-side title/description.
-
-### Behavior
-
-- Validates `txHash` as a 64-character hex string; shows an error state for
-  invalid hashes.
-- Fetches the transaction via `fetchTransactionReceipt` from Horizon.
-- If the transaction is not found, shows a "Transaction Not Found" state.
-- On success, displays the receipt: status badge, amount, transaction hash,
-  recipient, sender, date, network fee, and optional memo.
-- Share button uses the Web Share API when available; falls back to copying
-  the URL.
-- Explorer links point to stellar.expert.
-
-### Meta Tags (Social Preview)
-
-The `generateMetadata` function sets:
-
-| Tag | Value |
-|-----|-------|
-| `og:title` | `Receipt {short_hash}… \| RemitWise` |
-| `og:description` | `View receipt for transaction {short_hash}… on RemitWise.` |
-| `og:type` | `website` |
-| `og:image` | Logo image from `/logo.svg` |
-| `twitter:card` | `summary_large_image` |
-| `twitter:site` | `@RemitWise` |
+> As with the locale stories above, the repository does not yet ship a
+> `.storybook/` config, so these files lint but are not registered in any UI.
 
 ### Tests
 
-- `tests/unit/components/ReceiptPageContent.test.tsx` covers the receipt page
-  content component for valid/invalid hashes and successful/missing transactions.
+`tests/unit/ui/skeleton.test.tsx` covers the variant classes, the decorative
+`aria-hidden`, the live region and its label, the single-live-region guarantee
+under nesting, and a `jest-axe` scan. jsdom does not evaluate media queries, so
+the reduced-motion fallback is covered by asserting against the rule in
+`app/globals.css` directly.
