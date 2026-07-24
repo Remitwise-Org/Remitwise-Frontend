@@ -4,6 +4,8 @@
 
 Issue #428 focuses on the `/transactions` filtering, search, and grouped-list experience. It does not change transaction row density, typography scale, or readability rules covered by UX-013.
 
+See [docs/transactions-user-interaction-filter.md](./transactions-user-interaction-filter.md) for why every type chip below already represents a user-initiated interaction, and what to do if a system-generated entry type is ever added.
+
 ## Filter Behavior
 
 - Search matches transaction ID, counterparty, type, status, amount, and currency.

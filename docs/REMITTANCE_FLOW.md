@@ -63,7 +63,17 @@ sequenceDiagram
 
 ## 3. Quote Phase
 
-### 3a. Route — `app/api/remittance/quote/route.ts`
+### 3a. Client-side behaviour — `app/send/components/AmountCurrencySection.tsx`
+
+The amount input debounces quote fetches to reduce unnecessary API traffic:
+
+- **Debounce delay:** `300 ms` — the fetch fires only after the user stops typing for 300 ms.
+- **Cancel-in-flight:** When a new debounce cycle starts before the previous `GET /api/remittance/quote` has resolved, the outstanding request is **aborted** via `AbortController`. This is a true network-level cancellation, not merely ignoring the stale response.  
+  Sequence: `abortRef.current?.abort()` → new `AbortController` stored in `abortRef` → new fetch with `{ signal: controller.signal }`.
+- **AbortError handling:** `fetch` rejection with `err.name === "AbortError"` is silently swallowed — no error state is shown to the user.
+- **Constant location:** The 300 ms value lives in `AmountCurrencySection.tsx` directly; it matches the project-wide default in `useDebouncedValue` (`lib/hooks/useDebouncedValue.ts`).
+
+### 3b. Route — `app/api/remittance/quote/route.ts`
 
 - **Method:** `GET`
 - **Middleware:** `validatedRoute` with `quoteSchema` (Zod).
@@ -81,7 +91,7 @@ sequenceDiagram
   - Entries are evicted on read-after-expiry.
   - Response headers include `X-Cache: HIT|MISS` and `Cache-Control: max-age=…`.
 
-### 3b. Anchor integration (SEP-38)
+### 3c. Anchor integration (SEP-38)
 
 When `ANCHOR_API_BASE_URL` is set, the quote route delegates to a SEP-38-compatible
 anchor `GET /quote` endpoint:
@@ -96,7 +106,7 @@ The anchor response is remapped to the internal shape. Fields: `price`, `fee.tot
 
 Source: `app/api/remittance/quote/route.ts:100–138`
 
-### 3c. Fallback when anchor is absent
+### 3d. Fallback when anchor is absent
 
 If `ANCHOR_API_BASE_URL` is not set, `resolveQuote()` throws
 `"Unable to resolve quote"` and the route returns a `CONTRACT_ERROR` JSON error

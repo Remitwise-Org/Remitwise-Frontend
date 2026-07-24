@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
 import Providers from "@/components/Providers";
@@ -11,6 +11,12 @@ const inter = typeof Inter !== 'undefined' ? Inter({ subsets: ["latin"] }) : nul
 export const metadata: Metadata = {
   title: DEFAULT_SEO.title,
   description: DEFAULT_SEO.description,
+};
+
+// `viewportFit: "cover"` is required for `env(safe-area-inset-*)` to resolve
+// to real device values on iOS Safari; without it every inset reads as 0.
+export const viewport: Viewport = {
+  viewportFit: "cover",
 };
 
 const themeScript = `(function(){try{var key='theme-preference';var theme=localStorage.getItem(key);if(theme!=='light'&&theme!=='dark'&&theme!=='system'){theme='system';}var root=document.documentElement;if(theme==='dark'){root.classList.add('dark');root.classList.remove('light');}else if(theme==='light'){root.classList.remove('dark');root.classList.add('light');}else{root.classList.remove('light');var mql=window.matchMedia('(prefers-color-scheme: dark)');root.classList.toggle('dark', mql.matches);} }catch(e){}})();`; 

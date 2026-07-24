@@ -2,7 +2,7 @@
 
 Frontend application for the RemitWise remittance and financial planning platform.
 
-> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers.
+> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers, and [docs/CANONICALISATION.md](docs/CANONICALISATION.md) for how the codebase trims whitespace, casefolds, and handles byte-order marks (see also [docs/string-normalisation.md](docs/string-normalisation.md) for the per-field reference table).
 
 ## Overview
 
@@ -22,6 +22,7 @@ The frontend includes placeholder pages and components for:
 ### Shared Components
 
 - **AddressDisplay**: A component for displaying long strings like Stellar addresses, featuring truncation, a copy-to-clipboard button, and a tooltip showing the full address on hover.
+- **useSwrQuery**: A stale-while-revalidate wrapper around `@tanstack/react-query`'s `useQuery`. Returns cached data instantly, refetches in the background, and swaps on success. Configured via `lib/config/swr.ts`.
 
 1. **Dashboard** - Overview of remittances, savings, bills, and insurance
 2. **Send Money** - Remittance sending interface with automatic split preview
@@ -34,6 +35,16 @@ The frontend includes placeholder pages and components for:
 ## Loading States
 
 Dashboard, Bills, Insights, and Transaction History now use route-level skeleton screens built from `components/ui/Skeleton.tsx` and `components/ui/LoadingSkeletons.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
+
+## Stale-Data Warning Banner
+
+When a live fetch fails (network error, non-2xx, or timeout), pages that have previously loaded data show the last-good cached payload together with an amber **StaleBanner** instead of replacing the entire page with an error state. The banner lets users continue working while connectivity recovers and provides a one-click Refresh action.
+
+- **Hook**: `lib/hooks/useStaleFetch.ts` — wraps `apiClient.get()` with a `sessionStorage` fallback.
+- **Component**: `components/ui/StaleBanner.tsx` — dismissible amber banner using `status.warning.*` design tokens.
+- **Wired pages**: Dashboard (`/api/dashboard`) and Bills (`/api/bills` + `/api/bills/total-unpaid`).
+
+See [docs/stale-data-banner.md](docs/stale-data-banner.md) for architecture details, the state machine, and a recipe for adding stale support to new pages.
 
 ## Sentry
 
@@ -52,6 +63,8 @@ PII scrubbing is applied before events leave the app:
 - Edge events stay minimal and do not attach replay or extra scrubbing.
 
 Keep the auth token out of the repo and store it only in CI secrets.
+
+For more details on tracking, cookies, and telemetry configuration, see the [Tracking and Opt-Out Guide](docs/tracking-and-opt-out.md).
 
 ## Getting Started
 
@@ -215,7 +228,8 @@ remitwise-frontend/
 ├── docs/                    # Documentation
 │   ├── API_ROUTES.md        # API routes documentation
 │   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
-│   └── contract-cache.md    # Contract caching architecture and guidelines
+│   ├── contract-cache.md    # Contract caching architecture and guidelines
+│   └── frame-budget-rules.md    # Frame budget performance guidelines
 ├── public/                  # Static assets
 └── package.json
 ```
@@ -224,9 +238,13 @@ remitwise-frontend/
 
 See [API Routes Documentation](./docs/API_ROUTES.md) for details on authentication and available endpoints.
 
+Every route handler under `app/api/` is composed from a small set of reusable decorators (`withAuth`, `validatedRoute`, `withApiErrorHandler`). See [docs/api-route-decorators.md](./docs/api-route-decorators.md) for what each one does and when to use it.
+
 For authenticated browser-side requests, use the shared client API layer documented in [docs/client-api.md](docs/client-api.md). That guide covers when to use `apiClient` instead of raw `fetch`, the `401 -> refresh -> retry once` flow, session-expiry UI surfacing, and logout behavior.
 
 Route-level page titles now use a shared deep-link heading pattern. Use the shared heading primitive with a stable route-specific id whenever you add or update a primary page title. See [docs/page-heading-deeplinks.md](docs/page-heading-deeplinks.md).
+
+The `/transactions` view only ever lists user-initiated interactions (sends, splits, bill payments, etc.) and its type filter is how a reader narrows that list. See [docs/transactions-user-interaction-filter.md](docs/transactions-user-interaction-filter.md) for the model and what to update if a system-generated entry type is ever added.
 
 ## Per-Route SEO Metadata (`useSeo`)
 
@@ -699,6 +717,7 @@ GET  /api/admin/audit         # Admin-only audit events
 - All forms are currently disabled (placeholders)
 - UI uses a blue/indigo color scheme
 - Responsive design with mobile-first approach
+- Motion vocabulary and standard animations are documented in [docs/MOTION.md](docs/MOTION.md).
 - Components are structured for easy integration
 
 ## API Endpoints
@@ -892,6 +911,8 @@ Sentry error monitoring is integrated for client, server, and edge runtimes.
 - Uploaded during build when `SENTRY_AUTH_TOKEN` and CI are present.
 - `hideSourceMaps: true` prevents browser exposure.
 
+For a comprehensive guide on what variables, cookies, and telemetry endpoints are configured—and how to opt out of them—see the [Tracking and Opt-Out Guide](docs/tracking-and-opt-out.md).
+
 ## Developer Mode & Debugging
 
 RemitWise features a built-in Developer Mode designed for team members, QA, and support engineers to easily locate and copy request IDs for API responses without opening browser developer tools.
@@ -915,4 +936,17 @@ To disable Developer Mode and hide the panel, append `?dev=0` to the URL or clea
 1. **Request Tracking**: As you interact with the app, the floating panel automatically updates in real-time to show the `Request ID` of the most recent API response (extracting from `x-request-id`, `x-correlation-id`, etc.).
 2. **Instant Copying**: Click the Copy icon next to the Request ID to instantly copy the ID to your clipboard.
 3. **Log Investigation**: Provide this copied ID to the backend/platform engineering team or search for it directly in your centralized logging system (e.g. Datadog, Kibana, AWS CloudWatch) to find the complete trace of database operations, external Stellar network interactions, and API response logs associated with that specific user transaction or error.
+
+### Diagnostics Page (`/debug?debug=1`)
+
+Operators, support engineers, and developers can access the system diagnostics page at `/debug?debug=1`.
+
+- **Access URL**: `http://localhost:3000/debug?debug=1` (requests without `?debug=1` return `404 Not Found`).
+- **Emitted Information**:
+  - **Build SHA**: Current Git commit SHA / Sentry release identifier (`BUILD_SHA`).
+  - **Feature Flags**: Status of system feature flags (`custodialMode`, `developerMode`, `recurringRemittance`, `emergencyTransfer`, `familyWallet`, etc.).
+  - **Current Wallet Chain**: Active connected Stellar network or default environment network (e.g. `testnet`, `mainnet`).
+  - **Last Request ID**: The most recent API response request ID tracked across client interactions.
+- **Exporting**: Click **Copy Raw JSON** on the page to export the complete diagnostics payload.
+
 

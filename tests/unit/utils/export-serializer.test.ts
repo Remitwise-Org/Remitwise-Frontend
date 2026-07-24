@@ -31,6 +31,11 @@ describe("export-serializer", () => {
       expect(escapeCsvField("Line 1\nLine 2")).toBe('"Line 1\nLine 2"');
       expect(escapeCsvField("Line 1\rLine 2")).toBe('"Line 1\rLine 2"');
     });
+
+    it("preserves Unicode characters when escaping fields", () => {
+      expect(escapeCsvField("José 東京")).toBe("José 東京");
+      expect(escapeCsvField('José, "東京"')).toBe('"José, ""東京"""');
+    });
   });
 
   describe("serializeToCsv", () => {

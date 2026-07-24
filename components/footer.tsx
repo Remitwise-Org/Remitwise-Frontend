@@ -2,8 +2,10 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Facebook, Github, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react';
+import { useShortcutHelp } from '@/lib/context/ShortcutHelpContext';
 
 const Footer: React.FC = () => {
+    const { open: openShortcutHelp } = useShortcutHelp();
 
     const socialLinks = {
         linkedin: {
@@ -109,6 +111,14 @@ const Footer: React.FC = () => {
                                 <Link href="/contact" className="text-white/50 text-sm leading-[21px] tracking-[-0.15px] hover:text-white transition-colors">
                                     Contact
                                 </Link>
+                            </li>
+                            <li>
+                                <button
+                                    onClick={openShortcutHelp}
+                                    className="text-white/50 text-sm leading-[21px] tracking-[-0.15px] hover:text-white transition-colors text-left font-normal bg-transparent border-none p-0 cursor-pointer"
+                                >
+                                    Keyboard Shortcuts
+                                </button>
                             </li>
                         </ul>
                     </div>

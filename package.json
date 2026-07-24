@@ -19,7 +19,11 @@
     "test:property": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/property",
     "test:integration": "node --test tests/integration/auth.test.cjs tests/integration/health.test.cjs tests/integration/validation.test.cjs && node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/integration/api",
     "test:e2e": "playwright test",
-    "test:perf": "npx playwright test tests/e2e/dashboard-performance.spec.ts"
+    "test:perf": "npx playwright test tests/e2e/dashboard-performance.spec.ts",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "test-storybook": "test-storybook --url http://localhost:6006",
+    "test-storybook:ci": "npm run build-storybook -- --quiet && npx http-server storybook-static --port 6006 --silent & npx wait-on http://localhost:6006 && test-storybook --url http://localhost:6006"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -27,6 +31,7 @@
     "@sentry/nextjs": "^10.60.0",
     "@stellar/stellar-sdk": "^11.2.2",
     "@tailwindcss/container-queries": "^0.1.1",
+    "@tanstack/react-query": "^5.101.4",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "clsx": "^2.1.1",
@@ -46,7 +51,6 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "openapi-typescript": "^6.5.0",
     "@playwright/test": "^1.58.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -58,16 +62,27 @@
     "@vitest/ui": "^4.0.18",
     "autoprefixer": "^10.4.0",
     "eslint": "^8.57.1",
-    "lighthouse": "^11.0.0",
     "eslint-config-next": "^14.2.35",
     "jest": "^30.2.0",
     "jest-axe": "^10.0.0",
     "jsdom": "^29.1.1",
+    "lighthouse": "^11.0.0",
+    "openapi-typescript": "^6.5.0",
     "postcss": "^8.4.0",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.3.0",
     "tsx": "^4.21.0",
     "typescript": "^5.0.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
+    "@babel/preset-typescript": "^7.27.1",
+    "@storybook/addon-webpack5-compiler-babel": "^4.0.1",
+    "storybook": "^10.5.3",
+    "@storybook/react-webpack5": "^10.5.3",
+    "@storybook/test-runner": "^0.24.4",
+    "@storybook/test": "^8.6.15",
+    "http-server": "^14.1.1",
+    "wait-on": "^8.0.3"
   }
 }

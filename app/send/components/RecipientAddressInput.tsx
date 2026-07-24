@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { CheckCircle2, Copy, ClipboardPaste, QrCode, AlertCircle } from "lucide-react";
 import { CTA_TEST_IDS } from "@/lib/cta-testids";
+import Tooltip from "@/components/Tooltip";
 import useStellarAddressValidation, {
   normalizeStellarAddress,
 } from "@/lib/hooks/useStellarAddressValidation";
@@ -240,13 +241,19 @@ export default function RecipientAddressInput({
 
         {/* Primary CTA */}
         <div className="pt-6">
-          <button
-            onClick={onContinue}
-            disabled={!isContinueEnabled}
-            className={`w-full min-h-11 px-4 py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-base 375:text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 break-words`}
+          <Tooltip
+            disabledReason="Enter a valid Stellar address to continue"
+            side="top"
           >
-            Continue to Amount
-          </button>
+            <button
+              onClick={onContinue}
+              disabled={!isContinueEnabled}
+              data-testid={CTA_TEST_IDS.flow.sendRecipientPrimary}
+              className={`w-full min-h-11 px-4 py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-base 375:text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 break-words`}
+            >
+              Continue to Amount
+            </button>
+          </Tooltip>
         </div>
       </div>
     </div>

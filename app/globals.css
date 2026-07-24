@@ -18,6 +18,14 @@
   }
 }
 
+/* Mimics prefers-reduced-motion for Storybook preview */
+.preview-reduced-motion .animate-pulse,
+.preview-reduced-motion .animate-spin,
+.preview-reduced-motion .animate-shimmer,
+.preview-reduced-motion .animate-neon-pulse {
+  animation: none !important;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;

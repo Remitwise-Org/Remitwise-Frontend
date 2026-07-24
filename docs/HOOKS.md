@@ -8,6 +8,58 @@ This document catalogs the shared client hooks in the RemitWise frontend. Use th
 
 1. [useFormAction](#useformaction)
 2. [useSessionExpiry](#usesessionexpiry)
+3. [useLocalStorage](#uselocalstorage)
+
+---
+
+## useLocalStorage
+
+**File:** [`lib/hooks/useLocalStorage.ts`](../lib/hooks/useLocalStorage.ts)
+
+A hook that reads and writes to `localStorage` with SSR-safe defaults. Guards against `localStorage` access during server render so hydration never mismatches.
+
+### Signature
+
+```ts
+function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void]
+```
+
+### Return tuple
+
+| Index | Name | Type | Description |
+|-------|------|------|-------------|
+| `[0]` | `storedValue` | `T` | Current value (falls back to `initialValue` when nothing is stored or during SSR) |
+| `[1]` | `setValue` | `(value: T \| ((prev: T) => T)) => void` | Updates the value and persists it to `localStorage`. Supports functional updates like `useState`. |
+
+### Error handling
+
+- Wraps `localStorage` reads/writes in try-catch so a corrupt value, quota error, or private-browsing restriction never crashes the app.
+- Errors are logged via `console.warn` for debugging.
+
+### Usage example
+
+```tsx
+'use client';
+
+import { useLocalStorage } from '@/lib/hooks/useLocalStorage';
+
+export default function ThemeToggle() {
+  const [theme, setTheme] = useLocalStorage('theme', 'light');
+
+  return (
+    <button onClick={() => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))}>
+      Switch to {theme === 'light' ? 'dark' : 'light'} mode
+    </button>
+  );
+}
+```
+
+### Notes
+
+- **SSR-safe**: returns `initialValue` on the server and during the first client render; the stored value is hydrated in `useEffect`.
+- **Cross-tab**: if the same key is written in another tab, this hook does **not** reactively re-render. Listen to the `storage` event separately if cross-tab sync is needed.
+- Supports any JSON-serializable value (string, number, boolean, object, array, `null`).
+- All errors are caught and logged with `console.warn`; they do not propagate.
 
 ---
 

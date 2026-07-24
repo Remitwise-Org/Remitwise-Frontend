@@ -39,6 +39,10 @@ Wired into the density system via `useDensity()` from `@/lib/context/DensityCont
 
 ## BackToTop
 
+- [Layout Patterns](docs/LAYOUT_PATTERNS.md): conventions for page shells, stat rows, and cards used across the app.
+
+See also: [Layout Patterns](./LAYOUT_PATTERNS.md) for how these components compose into full pages.
+
 A floating "back to top" button that appears after the user scrolls past 800px.
 
 **File:** `components/BackToTop.tsx`
