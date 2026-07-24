@@ -2,7 +2,7 @@
 
 Frontend application for the RemitWise remittance and financial planning platform.
 
-> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers, [docs/CANONICALISATION.md](docs/CANONICALISATION.md) for how the codebase trims whitespace, casefolds, and handles byte-order marks (see also [docs/string-normalisation.md](docs/string-normalisation.md) for the per-field reference table), and [docs/DESIGN_TOKEN_MIGRATION.md](docs/DESIGN_TOKEN_MIGRATION.md) for how to rename or deprecate a design token.
+> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations. When building UI, follow the [component lifecycle](docs/COMPONENT_LIFECYCLE.md) from Figma and design tokens through stories, tests, and production. For conventions around route naming, layouts, and nested routes, see [docs/ROUTING_PATTERNS.md](docs/ROUTING_PATTERNS.md). Then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers.
 
 ## Overview
 
