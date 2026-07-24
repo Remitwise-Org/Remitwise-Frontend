@@ -35,6 +35,10 @@ The frontend includes placeholder pages and components for:
 
 Dashboard, Bills, Insights, and Transaction History now use route-level skeleton screens built from `components/ui/Skeleton.tsx` and `components/ui/LoadingSkeletons.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
 
+## Browser Support & Polyfills
+
+To maintain a smooth background task experience across all platforms, this app polyfills missing native APIs (such as `window.requestIdleCallback` and `window.cancelIdleCallback` which are unsupported in Safari) using a standardized `setTimeout` wrapper. This polyfill is injected automatically at the client boundary (via `Providers.tsx`), so frontend engineers and downstream libraries can confidently use `requestIdleCallback` without explicit platform guard checks.
+
 ## Sentry
 
 Sentry is wired through the client, server, and edge config files with separate environment variables for each runtime:

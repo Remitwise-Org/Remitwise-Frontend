@@ -8,6 +8,7 @@ This document catalogs the shared client hooks in the RemitWise frontend. Use th
 
 1. [useFormAction](#useformaction)
 2. [useSessionExpiry](#usesessionexpiry)
+3. [requestIdleCallback Polyfill](#requestidlecallback-polyfill)
 
 ---
 
@@ -175,3 +176,39 @@ export default function SessionExpiryBanner() {
 - Expiry timestamps are persisted in `localStorage` under the key `remitwise_session_expiry` so the warning survives a tab refresh.
 - All timers (`setInterval`, `setTimeout`) are cleared on unmount; it is safe to mount this hook in a single root layout.
 - Do **not** use this hook for business-logic gating (e.g. hiding buttons) — rely on server-side session validation for that.
+
+---
+
+## requestIdleCallback Polyfill
+
+**File:** [`lib/utils/idleCallback.ts`](../lib/utils/idleCallback.ts)
+**Config:** [`lib/config/idle.ts`](../lib/config/idle.ts)
+
+A robust polyfill for `window.requestIdleCallback` and `window.cancelIdleCallback` that falls back to a `setTimeout` wrapper when native support is missing (e.g., in Safari/WebKit engines).
+
+The polyfill is executed automatically at the client boundary via `Providers.tsx`. This ensures that downstream consumers (e.g., analytics, prefetching components) can confidently use `requestIdleCallback` without defensive platform checks.
+
+### Exported Utilities
+
+In addition to the global polyfill, you can import type-safe wrappers if you prefer explicit usage without relying on global mutations in tests or node environments.
+
+```ts
+import { safeRequestIdleCallback, safeCancelIdleCallback } from '@/lib/utils/idleCallback';
+
+// Schedules work using native requestIdleCallback if available,
+// falling back to the 1ms setTimeout wrapper on Safari.
+const id = safeRequestIdleCallback((deadline) => {
+  while (deadline.timeRemaining() > 0 && tasks.length > 0) {
+    doWork(tasks.shift());
+  }
+});
+
+// Cancels the scheduled work using the correct underlying method.
+safeCancelIdleCallback(id);
+```
+
+### Configuration Constants
+
+The fallback behavior is controlled by two constants in `lib/config/idle.ts`:
+- `IDLE_CALLBACK_FALLBACK_DELAY_MS` (default: 1): The timeout delay used in the fallback `setTimeout`.
+- `IDLE_CALLBACK_DEFAULT_TIMEOUT_MS` (default: 50): The mock frame budget provided to the `deadline.timeRemaining()` callback.
