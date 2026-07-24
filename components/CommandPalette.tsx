@@ -183,6 +183,7 @@ export default function CommandPalette() {
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[20vh]">
       {/* Backdrop */}
       <div
+        data-testid="command-palette-backdrop"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={() => setIsOpen(false)}
       />
@@ -226,6 +227,7 @@ export default function CommandPalette() {
                   {recentList.map((command, index) => (
                     <button
                       key={command.id}
+                      data-testid="command-item"
                       onClick={() => handleCommandClick(command)}
                       className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors ${
                         index === selectedIndex
@@ -253,6 +255,7 @@ export default function CommandPalette() {
                   {routeList.map((command, index) => (
                     <button
                       key={command.id}
+                      data-testid="command-item"
                       onClick={() => handleCommandClick(command)}
                       className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors ${
                         recentList.length + index === selectedIndex
