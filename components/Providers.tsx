@@ -7,31 +7,13 @@ import { DensityProvider } from "@/lib/context/DensityContext";
 import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { ToastProvider } from "@/lib/context/ToastContext";
 import { AsyncOperationsProvider } from "@/lib/context/AsyncOperationsContext";
+import { ConfirmProvider } from "@/lib/context/ConfirmContext";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import ToastRegion from "@/components/ToastRegion";
 import SessionExpiryProvider from "@/components/SessionExpiryProvider";
 import CommandPalette from "@/components/CommandPalette";
 import DevRequestIdDisplay from "@/components/DevRequestIdDisplay";
-import ConsentBanner from "@/components/ConsentBanner";
-import { SWR_DEFAULTS } from "@/lib/config/swr";
-import { ShortcutHelpProvider } from "@/lib/context/ShortcutHelpContext";
-import ShortcutHelpModal from "@/components/ShortcutHelpModal";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: SWR_DEFAULTS.staleTime,
-      gcTime: SWR_DEFAULTS.gcTime,
-      refetchOnWindowFocus: SWR_DEFAULTS.refetchOnWindowFocus,
-      refetchOnReconnect: SWR_DEFAULTS.refetchOnReconnect,
-      retry: SWR_DEFAULTS.retry,
-      retryDelay: SWR_DEFAULTS.retryDelay,
-    },
-  },
-});
-
-import { ShortcutHelpProvider } from "@/lib/context/ShortcutHelpContext";
-import ShortcutHelpModal from "@/components/ShortcutHelpModal";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 /**
  * Client-side provider boundary for the app.
@@ -50,13 +32,14 @@ export default function Providers({ children }: { children: ReactNode }) {
           <DensityProvider>
             <AsyncOperationsProvider>
               <SessionExpiryProvider>
-                <ShortcutHelpProvider>
+                <ConfirmProvider>
                   <LayoutWrapper>{children}</LayoutWrapper>
                   <ToastRegion />
                   <CommandPalette />
                   <DevRequestIdDisplay />
-                  <ShortcutHelpModal />
-                </ShortcutHelpProvider>
+                  {/* Singleton confirm dialog – resolves window.confirm replacement */}
+                  <ConfirmDialog />
+                </ConfirmProvider>
               </SessionExpiryProvider>
             </AsyncOperationsProvider>
           </DensityProvider>
