@@ -229,10 +229,12 @@ remitwise-frontend/
 │   ├── API_ROUTES.md        # API routes documentation
 │   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
 │   ├── contract-cache.md    # Contract caching architecture and guidelines
-│   └── RELEASE_NOTES_TEMPLATE.md    # Release notes template for contributors
+│   └── KEYBOARD_SHORTCUTS.md  # Keyboard shortcut reference
 ├── public/                  # Static assets
 └── package.json
 ```
+
+The full keyboard shortcut reference lives at [docs/KEYBOARD_SHORTCUTS.md](docs/KEYBOARD_SHORTCUTS.md) — every registered shortcut, where it's handled, and how to add or change one.
 
 ## API Routes
 
