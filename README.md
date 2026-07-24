@@ -132,6 +132,10 @@ This project uses a multi-tool testing strategy. Note that **Jest is not used** 
   - Used for: Property-based testing
   - Command: `npm run test:property`
 
+- **Image Alt Attribute Accessibility Check**
+  - Used for: Build-time enforcement ensuring no `<img>` or `<Image />` tag lacks an `alt` attribute
+  - Command: `npm run check:img-alt` (wired into `npm run lint` and `npm run prebuild`)
+
 > **Full guide:** see [docs/testing.md](docs/testing.md) for the complete multi-runner
 > reference — when to use Vitest vs. node:test vs. Playwright, a map of every
 > `package.json` test script, the `tests/` layout, coverage and gate expectations, and a
