@@ -30,6 +30,9 @@ const queryClient = new QueryClient({
   },
 });
 
+import { ShortcutHelpProvider } from "@/lib/context/ShortcutHelpContext";
+import ShortcutHelpModal from "@/components/ShortcutHelpModal";
+
 /**
  * Client-side provider boundary for the app.
  *
@@ -41,27 +44,24 @@ const queryClient = new QueryClient({
  */
 export default function Providers({ children }: { children: ReactNode }) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <WalletProvider>
-        <ThemeProvider>
-          <ToastProvider>
-            <DensityProvider>
-              <AsyncOperationsProvider>
-                <SessionExpiryProvider>
-                  <ShortcutHelpProvider>
-                    <LayoutWrapper>{children}</LayoutWrapper>
-                    <ToastRegion />
-                    <CommandPalette />
-                    <DevRequestIdDisplay />
-                    <ShortcutHelpModal />
-                    <ConsentBanner />
-                  </ShortcutHelpProvider>
-                </SessionExpiryProvider>
-              </AsyncOperationsProvider>
-            </DensityProvider>
-          </ToastProvider>
-        </ThemeProvider>
-      </WalletProvider>
-    </QueryClientProvider>
+    <WalletProvider>
+      <ThemeProvider>
+        <ToastProvider>
+          <DensityProvider>
+            <AsyncOperationsProvider>
+              <SessionExpiryProvider>
+                <ShortcutHelpProvider>
+                  <LayoutWrapper>{children}</LayoutWrapper>
+                  <ToastRegion />
+                  <CommandPalette />
+                  <DevRequestIdDisplay />
+                  <ShortcutHelpModal />
+                </ShortcutHelpProvider>
+              </SessionExpiryProvider>
+            </AsyncOperationsProvider>
+          </DensityProvider>
+        </ToastProvider>
+      </ThemeProvider>
+    </WalletProvider>
   );
 }
