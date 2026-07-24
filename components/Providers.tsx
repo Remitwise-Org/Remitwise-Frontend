@@ -14,7 +14,7 @@ import ToastRegion from "@/components/ToastRegion";
 import SessionExpiryProvider from "@/components/SessionExpiryProvider";
 import CommandPalette from "@/components/CommandPalette";
 import DevRequestIdDisplay from "@/components/DevRequestIdDisplay";
-import ConfirmDialog from "@/components/ConfirmDialog";
+import FeatureFlagIndicator from "@/components/FeatureFlagIndicator";
 
 /**
  * Client-side provider boundary for the app.
@@ -34,14 +34,11 @@ export default function Providers({ children }: { children: ReactNode }) {
           <DensityProvider>
             <AsyncOperationsProvider>
               <SessionExpiryProvider>
-                <ConfirmProvider>
-                  <LayoutWrapper>{children}</LayoutWrapper>
-                  <ToastRegion />
-                  <CommandPalette />
-                  <DevRequestIdDisplay />
-                  {/* Singleton confirm dialog – resolves window.confirm replacement */}
-                  <ConfirmDialog />
-                </ConfirmProvider>
+                <LayoutWrapper>{children}</LayoutWrapper>
+                <ToastRegion />
+                <CommandPalette />
+                <DevRequestIdDisplay />
+                <FeatureFlagIndicator />
               </SessionExpiryProvider>
             </AsyncOperationsProvider>
           </DensityProvider>
