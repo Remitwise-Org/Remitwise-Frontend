@@ -12,7 +12,7 @@ import { TransactionItem } from "@/lib/remittance/horizon";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { useSeo } from "@/lib/hooks/useSeo";
-import { useInfiniteScrollObserver } from "@/lib/hooks/useInfiniteScrollObserver";
+import { serializeToCsv } from "@/lib/utils/export-serializer";
 import type {
   Transaction,
   TransactionStatus,
@@ -355,14 +355,7 @@ const TransactionHistoryPage = () => {
 
                 if (rows.length === 0) return;
 
-                const csv = [
-                  Object.keys(rows[0]).join(","),
-                  ...rows.map((row) =>
-                    Object.values(row)
-                      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
-                      .join(","),
-                  ),
-                ].join("\n");
+                const csv = serializeToCsv(rows);
 
                 const blob = new Blob([csv], {
                   type: "text/csv;charset=utf-8",

@@ -4,6 +4,7 @@ import {
   serializeToCsv,
   serializeToJson,
   getExportFilename,
+  UTF8_BOM,
   ExportRow,
 } from "@/lib/utils/export-serializer";
 
@@ -32,9 +33,11 @@ describe("export-serializer", () => {
       expect(escapeCsvField("Line 1\rLine 2")).toBe('"Line 1\rLine 2"');
     });
 
-    it("preserves Unicode characters when escaping fields", () => {
-      expect(escapeCsvField("José 東京")).toBe("José 東京");
-      expect(escapeCsvField('José, "東京"')).toBe('"José, ""東京"""');
+    it("prefixes text starting with =, @, \\t, \\r or non-numeric + / - with single quote to prevent Excel formula injection", () => {
+      expect(escapeCsvField("=SUM(A1:A10)")).toBe("'=SUM(A1:A10)");
+      expect(escapeCsvField("@username")).toBe("'@username");
+      expect(escapeCsvField("-eval()")).toBe("'-eval()");
+      expect(escapeCsvField(-500)).toBe("-500"); // Numeric numbers stay numeric
     });
   });
 
@@ -72,9 +75,15 @@ describe("export-serializer", () => {
       },
     ];
 
+    it("prepends UTF-8 BOM by default for locale-safe Excel import", () => {
+      const csv = serializeToCsv(mockRows);
+      expect(csv.startsWith(UTF8_BOM)).toBe(true);
+    });
+
     it("correctly generates a CSV with header row and properly escaped content", () => {
       const csv = serializeToCsv(mockRows);
-      const lines = csv.split("\n");
+      const cleanCsv = csv.replace(/^\uFEFF/, "");
+      const lines = cleanCsv.split("\n");
 
       // Verify header row
       expect(lines[0]).toBe("id,type,status,amount,currency,counterparty,date,fee");
@@ -89,8 +98,14 @@ describe("export-serializer", () => {
       expect(lines[3]).toBe('TX003,Bill Payment,Failed,-85.5,USDC,"Water & Power, Inc.",2026-05-31 16:45:23,0.1');
     });
 
+    it("allows disabling BOM when includeBom is false", () => {
+      const csv = serializeToCsv(mockRows, false);
+      expect(csv.startsWith(UTF8_BOM)).toBe(false);
+      expect(csv.startsWith("id,type,status")).toBe(true);
+    });
+
     it("handles empty lists gracefully", () => {
-      const csv = serializeToCsv([]);
+      const csv = serializeToCsv([], false);
       expect(csv).toBe("id,type,status,amount,currency,counterparty,date,fee");
     });
   });

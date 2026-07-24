@@ -391,6 +391,19 @@ This makes `apiClient` safe to use with abort-on-unmount patterns such as
 
 Multiple requests can discover an expired session at the same time. They share a single refresh attempt, but each request still replays itself once after that shared refresh succeeds.
 
+## Transaction Export Utilities (`export-serializer.ts`)
+
+Client-side transaction list views (`/transactions` and `/dashboard/transaction-history`) use `serializeToCsv` from `@/lib/utils/export-serializer`:
+
+```ts
+import { serializeToCsv, UTF8_BOM } from '@/lib/utils/export-serializer';
+
+const csvString = serializeToCsv(rows); // Prepends UTF8_BOM (\uFEFF) by default
+```
+
+- **Excel Compatibility**: Includes UTF-8 BOM (`\uFEFF`) by default for locale-safe rendering in Microsoft Excel.
+- **Escaping & Protection**: Enforces RFC 4180 field escaping and protects against Excel formula injection (`=`, `@`, `\t`, `\r`, `+`/`-`).
+
 ## Contributor Checklist
 
 Before opening a PR for client-side API work:
