@@ -6,3 +6,5 @@ export const SWR_DEFAULTS = {
   retry: 2,
   retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30_000),
 } as const;
+
+export const HEALTH_PING_INTERVAL_MS = 60_000;

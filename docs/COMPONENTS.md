@@ -186,10 +186,32 @@ interface WhatsNewContextValue {
 
 ### Tests
 
-- `tests/unit/context/WhatsNewContext.test.tsx` covers:
-  - Auto-open on first visit
-  - No auto-open when localStorage has entry
-  - Mark all as read functionality
-  - Replay clears localStorage and opens panel
-  - Toggle functionality
-  - Error when used outside provider
+- `tests/unit/components/ReceiptPageContent.test.tsx` covers the receipt page
+  content component for valid/invalid hashes and successful/missing transactions.
+
+## ConnectionQualityIndicator
+
+A visual indicator that monitors the `/api/health` endpoint and displays the current connection quality.
+
+**File:** `components/ConnectionQualityIndicator.tsx`
+
+### Behavior
+
+- **Polling:** Automatically pings `/api/health` once per minute using `useSwrQuery` and the centralized `HEALTH_PING_INTERVAL_MS` constant.
+- **States:** 
+  - **Loading:** Yellow pulsing dot (`bg-yellow-400 animate-pulse`).
+  - **Healthy:** Green dot (`bg-green-500`) when the API returns `{ status: 'ok' }`.
+  - **Error/Unhealthy:** Red dot (`bg-red-500`) if the fetch fails or the API returns `{ status: 'unhealthy' }`.
+- **Tooltip:** Uses the `Tooltip` component to display "Checking connection...", "Connection stable", or "Connection error" on hover.
+
+### Integration
+
+Wired into `components/footer.tsx` to appear globally across the application, adjacent to the copyright text.
+
+### Storybook
+
+- `Components/ConnectionQualityIndicator` (`Default`)
+
+### Tests
+
+- `tests/unit/components/ConnectionQualityIndicator.test.tsx` covers rendering states and polling behavior.
