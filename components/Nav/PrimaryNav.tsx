@@ -31,13 +31,13 @@ const PrimaryNav = () => {
 
     return (
         <>
-            <header className="fixed top-0 left-0 right-0 z-[60] overflow-x-hidden border-b border-white/5 bg-brand-dark/50 backdrop-blur-xl">
-                <div className="mx-auto max-w-7xl overflow-x-hidden px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 min-w-0 items-center justify-between gap-2 375:h-20">
-                        {/* Left: Logo */}
-                        <div className="min-w-0 flex-shrink">
-                            <Logo />
-                        </div>
+        <header className="fixed top-0 left-0 right-0 z-[60] overflow-x-hidden border-b border-white/5 bg-brand-dark/50 backdrop-blur-xl">
+            <div className="mx-auto max-w-7xl overflow-x-hidden px-4 sm:px-6 lg:px-8">
+                <div className="flex h-16 min-w-0 items-center justify-between gap-2 375:h-20">
+                    {/* Left: Logo */}
+                    <div className="min-w-0 flex-shrink">
+                        <Logo />
+                    </div>
 
                         {/* Center: Desktop Links */}
                         <nav aria-label="Primary navigation" className="hidden lg:flex items-center">

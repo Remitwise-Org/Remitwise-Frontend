@@ -47,7 +47,14 @@ export default function PageHeader({
               <ArrowLeft className="w-5 h-5 text-white" />
             </button>
             <div className="min-w-0">
-              <h1 className="break-words text-xl font-bold text-white sm:text-2xl">{title}</h1>
+              <PageHeadingLink
+                headingId={headingId}
+                label={title}
+                headingClassName="break-words text-xl font-bold text-white sm:text-2xl"
+                buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101]"
+              >
+                {title}
+              </PageHeadingLink>
               <p className="mt-0.5 break-words text-sm text-gray-400">{subtitle}</p>
             </div>
           </div>
