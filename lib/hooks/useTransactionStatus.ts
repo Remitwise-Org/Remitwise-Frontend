@@ -100,9 +100,6 @@ export function useTransactionStatus(txHash: string | null, options: UseTransact
     }
   }, [txHash, maxAttempts, scheduleNext]);
 
-  // Keep the mutable ref updated with the latest poll definition on every render
-  pollRef.current = poll;
-
   useEffect(() => {
     if (!enabled || !txHash) {
       setStatus("idle");

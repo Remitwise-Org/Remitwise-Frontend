@@ -79,7 +79,7 @@ export default function WalletDropdown({
       (focusTrapRef as React.MutableRefObject<HTMLDivElement | null>).current =
         dropdownRef.current;
     }
-  }, [focusTrapRef]);
+  }, [focusTrapRef, isOpen]);
 
   // ── Close on outside click (via shared useOnClickOutside hook) ────────────
   useOnClickOutside(dropdownRef, onClose, {

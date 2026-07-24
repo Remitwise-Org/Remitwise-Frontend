@@ -28,7 +28,7 @@ export function useWidgetDeepLink(widgetId: WidgetId) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const requested = searchParams.get('widget');
+    const requested = searchParams?.get('widget');
 
     // Bail out early if the param is absent, invalid, or not for this widget.
     if (!requested || !VALID_WIDGET_IDS.has(requested) || requested !== widgetId) {

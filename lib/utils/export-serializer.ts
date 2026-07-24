@@ -55,7 +55,7 @@ export function escapeCsvField(value: any): string {
  * Serializes an array of transaction rows into an Excel-compliant CSV string.
  * Includes a UTF-8 BOM by default for locale-safe import in Microsoft Excel.
  */
-export function serializeToCsv(rows: ExportRow[]): string {
+export function serializeToCsv(rows: ExportRow[], includeBom = true): string {
   const limited = rows.slice(0, EXPORT_MAX_ROWS);
 
   const headers = [

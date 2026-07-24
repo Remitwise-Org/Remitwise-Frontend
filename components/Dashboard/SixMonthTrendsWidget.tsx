@@ -8,6 +8,8 @@ import { SkeletonChart } from '@/components/ui/Skeleton'
 import WidgetEmptyState from '@/components/ui/WidgetEmptyState'
 import WidgetErrorState from '@/components/ui/WidgetErrorState'
 import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart'
+import { useWidgetDeepLink } from '@/lib/hooks/useWidgetDeepLink'
+import { WIDGET_IDS } from '@/lib/config/widgets'
 
 // Sample data for the 6-month chart (Jul-Dec)
 function tooltipFormatter(value: any, name: any, item: any, index: any, payload: any) {
@@ -138,6 +140,7 @@ interface SixMonthTrendsWidgetProps {
 }
 
 export default memo(function SixMonthTrendsWidget({ isLoading = false, hasError = false, isEmpty = false }: SixMonthTrendsWidgetProps) {
+    const widgetRef = useWidgetDeepLink(WIDGET_IDS.SIX_MONTH_TRENDS);
     const [retryKey, setRetryKey] = useState(0)
     const handleRetry = useCallback(() => setRetryKey((k) => k + 1), [])
 

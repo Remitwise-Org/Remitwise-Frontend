@@ -17,14 +17,17 @@ import {
 import { INSIGHTS_PALETTE } from './palette';
 import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y';
 import type { TrendChartDataPoint } from '@/lib/a11y/chartAccessibility';
+import WidgetEmptyState from '@/components/ui/WidgetEmptyState';
+
 const LINE_COLOR = INSIGHTS_PALETTE[0];
-
-
-function useReducedMotion() {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
+const AXIS_COLOR  = '#6b7280'
+const GRID_COLOR  = 'rgba(255,255,255,0.06)'
+const margin = { top: 10, right: 10, left: -20, bottom: 0 };
+const xAxisTick = { fill: AXIS_COLOR, fontSize: 11 };
+const yAxisTick = { fill: AXIS_COLOR, fontSize: 11 };
+const tickFormatter = (v: number) => `$${v}`;
+const tooltipCursor = { stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 };
+const referenceLabel = { value: 'Avg', fill: 'rgba(255,255,255,0.3)', fontSize: 10, position: 'insideTopRight' };
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
 /**
@@ -56,9 +59,6 @@ export const MOCK_TREND_DATA: TrendDataPoint[] = [
   { date: 'Dec 1',  amount: 1650, transactions: 6 },
   { date: 'Dec 8',  amount: 1420, transactions: 5 },
 ]
-
-const AXIS_COLOR  = '#6b7280'
-const GRID_COLOR  = 'rgba(255,255,255,0.06)'
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 interface CustomTooltipProps {

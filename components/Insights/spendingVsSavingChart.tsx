@@ -45,9 +45,14 @@ const SPENDING_COLOR = INSIGHTS_PALETTE[0];
 const SAVINGS_COLOR  = INSIGHTS_PALETTE[1];
 const GRID_COLOR     = 'rgba(255,255,255,0.06)';
 const AXIS_COLOR     = '#6b7280';
+const margin = { top: 10, right: 10, left: -20, bottom: 0 };
+const axisTick = { fill: AXIS_COLOR, fontSize: 11 };
+const tickFormatter = (v: number) => `$${v}`;
+const tooltipCursor = { fill: 'rgba(255,255,255,0.04)' };
+const barRadius: [number, number, number, number] = [4, 4, 0, 0];
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: TooltipContentProps<any, any>) {
+const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: TooltipContentProps<any, any>) {
     if (!active || !payload?.length) return null
 
     return (

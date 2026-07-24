@@ -36,7 +36,7 @@ export function useFocusTrap({
   onOverlayClick,
   restoreFocusOnClose = true,
   initialFocusRef,
-}: UseFocusTrapProps): void {
+}: UseFocusTrapProps): React.RefObject<HTMLDivElement> {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 

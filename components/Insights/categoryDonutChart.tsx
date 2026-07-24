@@ -14,7 +14,6 @@ import { PieChart as PieChartIcon, Info } from 'lucide-react'
 import { INSIGHTS_PALETTE } from './palette'
 import { useClientTranslator } from '@/lib/i18n/client'
 import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart'
-import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
@@ -108,17 +107,15 @@ function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutCha
   const summaryId = useId()
   const { t } = useClientTranslator()
   const summaryItems = useMemo(() =>
-  data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage}%)`),
-  [data]
-);
-const chartSummary = buildChartSummary(summaryItems, t);
+    data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage}%)`),
+    [data]
+  );
+  const chartSummary = buildChartSummary(summaryItems, t);
   const [activeCategory, setActiveCategory] = useState<CategoryDataPoint | null>(null)
-  const reducedMotion = useReducedMotion()
+  const reducedMotion = usePrefersReducedMotion()
 
-  const total  = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
+  const total = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
   const topCat = useMemo(() => data[0], [data])
-
-
 
   const pieStyle = useMemo(() => ({ cursor: 'pointer' as const }), [])
 

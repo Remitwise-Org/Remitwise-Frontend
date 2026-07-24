@@ -7,10 +7,12 @@ import StaleBanner from '@/components/ui/StaleBanner';
 import StatCard from '@/components/Dashboard/StatCard';
 import { DashboardLoadingSkeleton } from '@/components/ui/LoadingSkeletons';
 import WidgetErrorState from '@/components/ui/WidgetErrorState';
+import StaleBanner from '@/components/ui/StaleBanner';
 import { apiClient } from '@/lib/client/apiClient';
 import { runWidgetFetchWithRetry } from '@/lib/client/widgetFetchRetry';
 import { useClientTranslator } from '@/lib/i18n/client';
 import { formatCurrency } from '@/lib/utils/format-currency';
+import { formatLastSynced } from '@/lib/utils/time-ago';
 import type { DashboardResponse } from '@/lib/types/dashboard';
 import { useSeo } from '@/lib/hooks/useSeo';
 import {
@@ -30,6 +32,7 @@ export default function DashboardPage() {
   const [state, setState] = useState<LoadState>('loading');
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   // The /api/dashboard route derives the wallet address from the session, so we
   // never have to pass it from the client. apiClient adds the shared
@@ -144,6 +147,9 @@ export default function DashboardPage() {
     insurance.status === 'ok'
       ? t('dashboard.policies', { count: insurance.insurancePoliciesCount })
       : undefined;
+
+  const isStale = Boolean(data?.meta?.isStale);
+  const staleAt = data?.meta?.cachedAt ?? null;
 
   return (
     <div className="p-6 space-y-6">

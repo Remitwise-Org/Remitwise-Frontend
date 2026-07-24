@@ -190,7 +190,9 @@ export async function middleware(request: NextRequest) {
       ? incomingRequestId
       : generateRequestId();
 
+  const isApiRoute = url.startsWith("/api/");
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set(API_REQUEST_ID_HEADER, requestId);
