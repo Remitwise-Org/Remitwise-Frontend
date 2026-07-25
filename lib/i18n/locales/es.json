@@ -190,5 +190,12 @@
     "submitting": "Enviando…",
     "submit_error": "No se pudo crear la transferencia. Inténtalo de nuevo.",
     "submit_success": "Carga de transferencia lista para firmar."
+  },
+  "consent": {
+    "title": "Valoramos tu privacidad.",
+    "body": "Usamos analíticas para mejorar tu experiencia. Puedes aceptar o rechazar — tu elección se guarda y se respeta.",
+    "accept": "Aceptar Analíticas",
+    "decline": "Rechazar",
+    "ariaLabel": "Consentimiento de analíticas"
   }
 }

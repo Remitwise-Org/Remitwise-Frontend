@@ -131,7 +131,13 @@ interface HeaderProps {
 ### SEO & Metadata
 - Proper page titles and descriptions
 - Structured data for API documentation
-- Open Graph tags for social sharing
+- Open Graph tags for social sharing:
+  - `og:title`, `og:description`, `og:url`, `og:siteName`, `og:locale`, and `og:type` configured globally.
+  - Image size optimized at 1200x630 pixels.
+- Twitter Card integration:
+  - `twitter:card` set to `summary_large_image` for large image card layout.
+  - `twitter:title`, `twitter:description`, and `twitter:image` tags defined.
+- Configurations loaded centrally from `lib/config/seo.ts` with metadata image assets located under `public/og-image.jpg`.
 
 ## Browser Support
 - Modern browsers (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)

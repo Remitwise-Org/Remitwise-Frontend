@@ -1,6 +1,83 @@
 # Components
 
+For the contributor workflow that takes a component from Figma through design
+tokens, Storybook stories, tests, and production integration, see
+[COMPONENT_LIFECYCLE.md](COMPONENT_LIFECYCLE.md).
+
+## AccessibleCalendarGrid
+
+A fully accessible calendar grid date-picker that meets **WCAG 2.1 AA**.
+
+**File:** `components/ui/AccessibleCalendarGrid.tsx`
+
+### Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `CalendarDate \| null` | `null` | Currently selected date |
+| `onChange` | `(date: CalendarDate) => void` | — | Fired when the user selects a date |
+| `minDate` | `CalendarDate` | — | Minimum selectable date (inclusive) |
+| `maxDate` | `CalendarDate` | — | Maximum selectable date (inclusive) |
+| `locale` | `string` | `"en-US"` | Locale for month/weekday names (e.g. `"ar-SA"`, `"fr-FR"`) |
+| `firstDayOfWeek` | `0 \| 1` | `0` | `0` = Sunday, `1` = Monday (ISO 8601) |
+| `className` | `string` | — | Extra classes on the wrapper |
+| `ariaLabel` | `string` | `"Calendar"` | Accessible label for the widget |
+
+### Keyboard navigation
+
+| Key | Action |
+|---|---|
+| Arrow Left / Right | Move focus one day backward / forward |
+| Arrow Up / Down | Move focus one week backward / forward |
+| Home | First day of the current week |
+| End | Last day of the current week |
+| Page Up | Previous month |
+| Page Down | Next month |
+| Enter / Space | Select the focused date |
+| Tab | Move to the prev/next month navigation buttons |
+
+### Accessibility
+
+- Container: `role="application"` with `aria-label`
+- Grid: `role="grid"` labelled by the month/year heading
+- Column headers: `role="columnheader"` (weekday abbreviations)
+- Day cells: `role="gridcell"` with `aria-selected`, `aria-disabled`, `aria-label` (full long-form date string), and `aria-current="date"` for today
+- Month navigation: announced via `aria-live="polite"` region
+- Focus ring: `ring-focus` token (3 px), `ring-offset-focus` token (4 px)
+- Touch targets: `h-11 w-11` (44 × 44 px, WCAG 2.1 minimum)
+- Roving `tabIndex` pattern keeps a single tab stop in the grid
+
+### RTL
+
+Pass an RTL locale (`"ar"`, `"he"`, `"fa"`, `"ur"`, …) and the component automatically sets `dir="rtl"` on its wrapper and flips the prev/next chevrons.
+
+### Usage
+
+```tsx
+import { AccessibleCalendarGrid } from "@/components/ui/AccessibleCalendarGrid";
+
+<AccessibleCalendarGrid
+  value={{ year: 2026, month: 7, day: 15 }}
+  onChange={(date) => console.log(date)}
+  ariaLabel="Remittance date picker"
+/>
+```
+
+### Stories
+
+`Components/UI/AccessibleCalendarGrid` — eight stories covering: `Default`, `WithSelectedDate`, `Controlled`, `WithMinMax`, `RTLArabic`, `RTLHebrew`, `MondayFirstDay`, `FrenchLocale`, `JapaneseLocale`.
+
+### Tests
+
+`components/ui/AccessibleCalendarGrid.test.tsx` — 30 tests covering ARIA roles and structure, keyboard navigation (Arrow keys, Page Up/Down, Enter/Space), mouse interaction, RTL, and four axe audit passes (zero violations).
+
+---
+
 ## BackToTop
+
+- [Layout Patterns](docs/LAYOUT_PATTERNS.md): conventions for page shells, stat rows, and cards used across the app.
+
+See also: [Layout Patterns](./LAYOUT_PATTERNS.md) for how these components compose into full pages.
 
 A floating "back to top" button that appears after the user scrolls past 800px.
 
@@ -33,6 +110,48 @@ A floating "back to top" button that appears after the user scrolls past 800px.
 ### Integration
 
 Wired in `app/layout.tsx` so it is available on every route.
+
+## PageHeader
+
+A reusable page header component used on core pages (like Bills, Family, and Savings Goals) that renders the page title, description, and primary CTA.
+
+**File:** `components/PageHeader.tsx`
+
+### Behavior
+
+- **Sticky on Tall Screens:** On viewports with height >= 800px (configured via `TALL_SCREEN_MIN_HEIGHT` in `lib/config/layout.json` and the `tall` Tailwind theme breakpoint), the header stays sticky (`tall:sticky`) and remains in view during scroll.
+- **Top Offset:** Responsive top offset adjusts to `top-16` / `top-20` based on the fixed primary navigation height to prevent layout overlaps.
+
+### Integration
+
+Used in:
+- `app/bills/page.tsx`
+- `app/family/page.tsx`
+- `app/dashboard/goals/page.tsx`
+
+## Dashboard — Last synced indicator
+
+A subtle timestamp showing when the dashboard data was last fetched.
+
+**File:** `app/dashboard/page.tsx`
+
+### Behavior
+
+- Renders as a right-aligned `text-xs text-gray-500` line below the StatCard grid.
+- Displays relative time: "Updated just now", "Updated 5 min ago", "Updated 1 hour ago".
+- Falls back to a locale-aware absolute date after 24 hours (e.g. "Updated Jan 15, 2:30 PM").
+- Uses the active user locale (plumbed from `useClientTranslator`).
+- Hides entirely when `meta.cachedAt` is missing or invalid (no DOM node emitted).
+
+### Source of truth
+
+- `lib/utils/time-ago.ts` — `formatLastSynced(isoString, locale)` pure function.
+- `lib/types/dashboard.ts` — `DashboardResponse.meta.cachedAt` is the server-provided ISO-8601 string.
+
+### Tests
+
+- `lib/utils/time-ago.test.ts` — unit tests for the formatting utility.
+- `tests/unit/dashboard/dashboard-page.test.tsx` — integration test verifying the rendered text.
 
 ## Locale-aware formatting (issue #732)
 
@@ -111,3 +230,75 @@ component per file):
 - `tests/unit/components/i18n/FormattedCurrency.test.tsx` covers the React
   layer (defaults, locale override, unknown-currency fallback, prop
   forwarding, render-prop children, and the `useFormatter` hook).
+
+## WhatsNewContext
+
+A context provider that manages the "What's New" onboarding tour panel, which shows
+changelog entries to users on first visit and allows them to replay the tour later.
+
+**File:** `lib/context/WhatsNewContext.tsx`
+
+### Behavior
+
+- **Auto-open:** Opens automatically on first visit when no localStorage entry exists
+  (`remitwise_whats_new_last_seen`).
+- **Persistence:** Stores the last seen changelog entry ID in localStorage to prevent
+  re-showing the same entries.
+- **Replay:** Provides a `replay()` function that clears the stored last seen ID and
+  re-opens the panel, allowing users to see all changelog entries again.
+- **Unread count:** Calculates the number of unread entries based on the stored last
+  seen ID.
+
+### API
+
+```ts
+interface WhatsNewContextValue {
+    isOpen: boolean;
+    open: () => void;
+    close: () => void;
+    toggle: () => void;
+    entries: ChangelogEntry[];
+    readIds: Set<string>;
+    unreadCount: number;
+    markAllRead: () => void;
+    replay: () => void;  // Clears localStorage and re-opens the panel
+}
+```
+
+### Integration
+
+- Wrapped in `app/dashboard/layout.tsx` to provide context to dashboard pages.
+- The replay button is exposed in `components/settings/PreferencesSection.tsx` under
+  the Preferences section, allowing users to replay the onboarding tour at any time.
+
+### Tests
+
+- `tests/unit/components/ReceiptPageContent.test.tsx` covers the receipt page
+  content component for valid/invalid hashes and successful/missing transactions.
+
+## ConnectionQualityIndicator
+
+A visual indicator that monitors the `/api/health` endpoint and displays the current connection quality.
+
+**File:** `components/ConnectionQualityIndicator.tsx`
+
+### Behavior
+
+- **Polling:** Automatically pings `/api/health` once per minute using `useSwrQuery` and the centralized `HEALTH_PING_INTERVAL_MS` constant.
+- **States:** 
+  - **Loading:** Yellow pulsing dot (`bg-yellow-400 animate-pulse`).
+  - **Healthy:** Green dot (`bg-green-500`) when the API returns `{ status: 'ok' }`.
+  - **Error/Unhealthy:** Red dot (`bg-red-500`) if the fetch fails or the API returns `{ status: 'unhealthy' }`.
+- **Tooltip:** Uses the `Tooltip` component to display "Checking connection...", "Connection stable", or "Connection error" on hover.
+
+### Integration
+
+Wired into `components/footer.tsx` to appear globally across the application, adjacent to the copyright text.
+
+### Storybook
+
+- `Components/ConnectionQualityIndicator` (`Default`)
+
+### Tests
+
+- `tests/unit/components/ConnectionQualityIndicator.test.tsx` covers rendering states and polling behavior.

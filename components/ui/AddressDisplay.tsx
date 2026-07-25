@@ -8,8 +8,7 @@ import { cn } from '@/lib/utils';
 
 // Assuming Tooltip and Toast components exist, following shadcn/ui patterns.
 // If not, they would need to be created.
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/lib/context/ToastContext';
 
 interface AddressDisplayProps extends React.HTMLAttributes<HTMLDivElement> {
   /** The full address or string to display. */
@@ -38,31 +37,23 @@ export const AddressDisplay = React.forwardRef<HTMLDivElement, AddressDisplayPro
     const Icon = status === 'copied' ? Check : Copy;
 
     return (
-      <TooltipProvider delayDuration={100}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div
-              ref={ref}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-md bg-gray-100 dark:bg-gray-800 px-3 py-1.5 text-sm font-mono text-gray-700 dark:text-gray-300',
-                copyable && 'cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700',
-                className,
-              )}
-              {...props}
-            >
-              <span>{truncateMiddle(address, chars)}</span>
-              {copyable && (
-                <button onClick={handleCopy} aria-label="Copy address" className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">
-                  <Icon className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{address}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <div
+        ref={ref}
+        title={address}
+        className={cn(
+          'inline-flex items-center gap-2 rounded-md bg-gray-100 dark:bg-gray-800 px-3 py-1.5 text-sm font-mono text-gray-700 dark:text-gray-300',
+          copyable && 'cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700',
+          className,
+        )}
+        {...props}
+      >
+        <span>{truncateMiddle(address, chars)}</span>
+        {copyable && (
+          <button onClick={handleCopy} aria-label="Copy address" className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">
+            <Icon className="h-4 w-4" />
+          </button>
+        )}
+      </div>
     );
   },
 );

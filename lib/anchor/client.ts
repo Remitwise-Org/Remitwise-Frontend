@@ -36,7 +36,17 @@ export interface AnchorFlowResponse {
     [key: string]: unknown;
 }
 
-export const DEFAULT_TIMEOUT_MS = 5000;
+import { fetchWithTimeout } from '../fetch-timeout';
+import {
+  ANCHOR_DEFAULT_TIMEOUT_MS,
+} from '../config/fetch-timeouts';
+
+/**
+ * @deprecated Import {@link ANCHOR_DEFAULT_TIMEOUT_MS} from
+ *   `lib/config/fetch-timeouts` instead. This re-export is kept for backwards
+ *   compatibility only and will be removed in a future release.
+ */
+export const DEFAULT_TIMEOUT_MS = ANCHOR_DEFAULT_TIMEOUT_MS;
 export const MAX_RETRY_ATTEMPTS = 3;
 export const RETRY_BASE_DELAY_MS = 200;
 
@@ -66,24 +76,13 @@ export class AnchorClient {
         return Boolean(this.baseUrl);
     }
 
-    private async fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<Response> {
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeoutMs);
-
-        try {
-            const response = await fetch(url, {
-                ...options,
-                signal: controller.signal,
-            });
-            clearTimeout(id);
-            return response;
-        } catch (error: unknown) {
-            clearTimeout(id);
-            if (error instanceof Error && error.name === 'AbortError') {
-                throw new Error(`Request timed out after ${timeoutMs}ms`);
-            }
-            throw error;
-        }
+    /**
+     * Delegates to the shared {@link fetchWithTimeout} wrapper from
+     * `lib/fetch-timeout.ts`, which resolves the timeout from the
+     * per-endpoint policy table when none is supplied explicitly.
+     */
+    private async fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs?: number): Promise<Response> {
+        return fetchWithTimeout(url, options, timeoutMs);
     }
 
     private async sleep(ms: number): Promise<void> {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 import PageHeadingLink from "@/components/PageHeadingLink";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 
 export default function Hero() {
   return (

@@ -1,16 +1,29 @@
 "use client";
 
-import { ReactNode } from "react";
-import { WalletProvider } from "stellar-wallet-kit";
+import { ReactNode, useEffect } from "react";
+import { WalletProvider, useWallet } from "stellar-wallet-kit";
 import { DensityProvider } from "@/lib/context/DensityContext";
 import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { ToastProvider } from "@/lib/context/ToastContext";
+import { NetworkStatusProvider } from "@/lib/context/NetworkStatusContext";
 import { AsyncOperationsProvider } from "@/lib/context/AsyncOperationsContext";
+import { ConfirmProvider } from "@/lib/context/ConfirmContext";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import ToastRegion from "@/components/ToastRegion";
 import SessionExpiryProvider from "@/components/SessionExpiryProvider";
 import CommandPalette from "@/components/CommandPalette";
-import DevRequestIdDisplay from "@/components/DevRequestIdDisplay";
+import { apiClient } from "@/lib/client/apiClient";
+
+/** Keeps the API client's authorization header aligned with wallet state. */
+function ApiClientAuthBridge() {
+  const { account, isConnected } = useWallet();
+
+  useEffect(() => {
+    apiClient.setAuthToken(isConnected ? account?.address : null);
+  }, [account?.address, isConnected]);
+
+  return null;
+}
 
 /**
  * Client-side provider boundary for the app.
@@ -24,20 +37,18 @@ import DevRequestIdDisplay from "@/components/DevRequestIdDisplay";
 export default function Providers({ children }: { children: ReactNode }) {
   return (
     <WalletProvider>
-      <ThemeProvider>
-        <ToastProvider>
-          <DensityProvider>
-            <AsyncOperationsProvider>
-              <SessionExpiryProvider>
-                <LayoutWrapper>{children}</LayoutWrapper>
-                <ToastRegion />
-                <CommandPalette />
-                <DevRequestIdDisplay />
-              </SessionExpiryProvider>
-            </AsyncOperationsProvider>
-          </DensityProvider>
-        </ToastProvider>
-      </ThemeProvider>
+      <ApiClientAuthBridge />
+      <ToastProvider>
+        <DensityProvider>
+          <AsyncOperationsProvider>
+            <SessionExpiryProvider>
+              <LayoutWrapper>{children}</LayoutWrapper>
+              <ToastRegion />
+              <CommandPalette />
+            </SessionExpiryProvider>
+          </AsyncOperationsProvider>
+        </DensityProvider>
+      </ToastProvider>
     </WalletProvider>
   );
 }

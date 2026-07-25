@@ -64,6 +64,151 @@ describe('apiClient timeout + idempotent retry layer', () => {
     expect(fetch).toHaveBeenCalledTimes(1); // never retried
   });
 
+  it('resolves normally when the response arrives before the timeout', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        (_url: string, _opts: RequestInit) =>
+          new Promise((resolve) => {
+            // Resolve after 50 ms — well within the 200 ms timeout.
+            vi.advanceTimersByTimeAsync(50);
+            resolve({ status: 200, headers: noHeaders } as Response);
+          })
+      )
+    );
+
+    const response = await apiClient.get('/api/fast', { timeout: 200, retries: 0 });
+    expect(response?.status).toBe(200);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies a timeout of 0 means no timeout — the request is not aborted', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        (_url: string, opts: RequestInit) =>
+          new Promise((resolve) => {
+            // The fetch mock should NOT receive an abort listener because
+            // timeout: 0 disables the timeout controller entirely.
+            const signal = opts.signal as AbortSignal;
+            const aborted = new Promise<never>((_r, reject) => {
+              signal.addEventListener('abort', () =>
+                reject(new DOMException('aborted', 'AbortError'))
+              );
+            });
+
+            vi.advanceTimersByTimeAsync(500);
+
+            // Race the abort against a successful resolve — the latter should win.
+            Promise.race([
+              aborted,
+              new Promise((r) =>
+                setTimeout(() => r({ status: 200, headers: noHeaders } as Response), 500)
+              ),
+            ]).then(resolve as any);
+          })
+      )
+    );
+
+    const response = await apiClient.get('/api/slow', { timeout: 0, retries: 0 });
+    expect(response?.status).toBe(200);
+  });
+
+  it('applies the default timeout (10 s) when none is specified', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', abortableFetch());
+
+    const promise = apiClient.get('/api/slow', { retries: 0 });
+    const assertion = expect(promise).rejects.toMatchObject({ name: 'TimeoutError' });
+
+    // Default is 10 000 ms; advance just past it.
+    await vi.advanceTimersByTimeAsync(10_001);
+    await assertion;
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('includes the URL and duration in the TimeoutError message', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', abortableFetch());
+
+    const promise = apiClient.get('/api/patience', { timeout: 250, retries: 0 });
+    const assertion = expect(promise).rejects.toThrow(
+      'Request to /api/patience timed out after 250ms'
+    );
+
+    await vi.advanceTimersByTimeAsync(250);
+    await assertion;
+  });
+
+  it('passes the abort signal to fetch so the inflight request is actually cancelled', async () => {
+    vi.useFakeTimers();
+    const signalsReceived: AbortSignal[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((_url: string, opts: RequestInit) => {
+        const signal = opts.signal as AbortSignal;
+        signalsReceived.push(signal);
+        return new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () =>
+            reject(signal.reason ?? new DOMException('aborted', 'AbortError'))
+          );
+        });
+      })
+    );
+
+    const promise = apiClient.get('/api/x', { timeout: 100, retries: 0 });
+    const assertion = expect(promise).rejects.toMatchObject({ name: 'TimeoutError' });
+
+    await vi.advanceTimersByTimeAsync(100);
+    await assertion;
+
+    // The signal passed to fetch should already be aborted.
+    expect(signalsReceived).toHaveLength(1);
+    expect(signalsReceived[0].aborted).toBe(true);
+  });
+
+  it('retries a GET that timed out and succeeds on the next attempt', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((_url: string, opts: RequestInit) =>
+        new Promise((resolve, reject) => {
+          const signal = opts.signal as AbortSignal;
+          signal.addEventListener('abort', () =>
+            reject(signal.reason ?? new DOMException('aborted', 'AbortError'))
+          );
+        })
+      )
+    );
+
+    // First call times out, second call succeeds immediately.
+    (fetch as any)
+      .mockImplementationOnce(
+        (_url: string, opts: RequestInit) =>
+          new Promise((resolve, reject) => {
+            const signal = opts.signal as AbortSignal;
+            signal.addEventListener('abort', () =>
+              reject(signal.reason ?? new DOMException('aborted', 'AbortError'))
+            );
+          })
+      )
+      .mockResolvedValueOnce({ status: 200, headers: noHeaders });
+
+    const promise = apiClient.get('/api/flaky', { timeout: 50, retries: 1, backoff: 5 });
+    const assertion = expect(promise).resolves.toMatchObject({ status: 200 });
+
+    // First attempt times out at 50 ms.
+    await vi.advanceTimersByTimeAsync(50);
+    // Backoff + second attempt.
+    await vi.advanceTimersByTimeAsync(200);
+    await assertion;
+
+    // Initial attempt + 1 retry = 2 calls.
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
   // ── Retry then succeed ─────────────────────────────────────────────────────
   it('retries a GET on 503 then succeeds on 200', async () => {
     (fetch as any)

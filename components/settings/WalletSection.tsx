@@ -4,6 +4,7 @@ import { useState, useCallback, type ChangeEvent } from "react";
 import { Wallet } from "lucide-react";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useAutosave } from "@/lib/hooks/useAutosave";
+import { useSafeReload } from "@/lib/hooks/useSafeReload";
 import {
   SectionCard,
   SectionHeader,
@@ -29,7 +30,8 @@ export function WalletSection() {
     await new Promise((resolve) => setTimeout(resolve, 300));
   }, []);
 
-  const { saveState, triggerSave } = useAutosave(onSave);
+  const { saveState, isDirty, triggerSave } = useAutosave(onSave);
+  useSafeReload(isDirty);
 
   const handleRpcChange = (value: string) => {
     setRpcUrl(value);

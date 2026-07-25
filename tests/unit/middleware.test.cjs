@@ -79,7 +79,7 @@ test("applyCORS: Sets correct CORS headers for same-origin request", (t) => {
     );
     response.set(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, X-Requested-With",
+      "Content-Type, Authorization, X-Request-ID, X-Requested-With",
     );
     response.set("Vary", "Origin");
   };
@@ -132,7 +132,7 @@ test("applyCORS: Sets CORS headers for request from allowed origin", (t) => {
     );
     response.set(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, X-Requested-With",
+      "Content-Type, Authorization, X-Request-ID, X-Requested-With",
     );
     response.set("Vary", "Origin");
   };
@@ -176,7 +176,7 @@ test("applyCORS: Falls back to NEXT_PUBLIC_APP_URL when env var set", (t) => {
     );
     response.set(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, X-Requested-With",
+      "Content-Type, Authorization, X-Request-ID, X-Requested-With",
     );
     response.set("Vary", "Origin");
   };
@@ -479,7 +479,7 @@ test("Middleware: CORS applied before rate limiting", (t) => {
     );
     response.set(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, X-Requested-With",
+      "Content-Type, Authorization, X-Request-ID, X-Requested-With",
     );
     response.set("Vary", "Origin");
   };

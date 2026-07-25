@@ -20,6 +20,36 @@ import { useToast } from "@/lib/context/ToastContext";
 import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import { useClientTranslator } from "@/lib/i18n/client";
 
+const BILLS_CACHE_KEY = "bills-data";
+const BILLS_MAX_STALE_AGE_MS = 5 * 60 * 1000; // 5 minutes
+
+interface BillsCacheEnvelope {
+	bills: Bill[];
+	stats: Record<string, unknown>;
+	cachedAt: number;
+}
+
+function readBillsCache(): BillsCacheEnvelope | null {
+	if (typeof window === "undefined") return null;
+	try {
+		const raw = sessionStorage.getItem(BILLS_CACHE_KEY);
+		if (!raw) return null;
+		return JSON.parse(raw) as BillsCacheEnvelope;
+	} catch {
+		return null;
+	}
+}
+
+function writeBillsCache(bills: Bill[], stats: Record<string, unknown>): void {
+	if (typeof window === "undefined") return;
+	try {
+		const envelope: BillsCacheEnvelope = { bills, stats, cachedAt: Date.now() };
+		sessionStorage.setItem(BILLS_CACHE_KEY, JSON.stringify(envelope));
+	} catch {
+		// Quota exceeded or private browsing — degrade silently.
+	}
+}
+
 type AddBillResponse = ActionState & {
     name?: string;
     amount?: number;
@@ -105,22 +135,18 @@ export default function Bills() {
 	const [reminderLead, setReminderLead] = useState("3");
 	const { toast } = useToast();
 
-	const [bills, setBills] = useState<Bill[]>([]);
-	const [stats, setStats] = useState<any>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<Error | null>(null);
-
 	const recurrencePreview = useMemo(() => {
 		if (!isRecurring) return t("bills.form.oneTimeBill");
 		if (frequency === "weekly") return t("bills.form.weeklyOn", { day: weeklyDay });
 		return t("bills.form.monthlyOn", { day: ordinalDay(monthlyDay) });
 	}, [frequency, isRecurring, monthlyDay, weeklyDay, t]);
 
+	const [reloadKey, setReloadKey] = useState(0);
+
 	const [bills, setBills] = useState<Bill[]>([]);
 	const [stats, setStats] = useState<any>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
-	const [reloadKey, setReloadKey] = useState(0);
 
 	useEffect(() => {
 		const overdueBill = bills.find((b) => b.status === "overdue" || b.status === "urgent");
@@ -140,43 +166,42 @@ export default function Bills() {
 		}
 	}, [toast, bills, t]);
 
-	const fetchBillsData = useCallback((signal?: AbortSignal) => {
-		return runWidgetFetchWithRetry({
-			signal,
-			load: async () => {
-				const [billsRes, statsRes] = await Promise.all([
-					apiClient.get('/api/bills', { signal }),
-					apiClient.get('/api/bills/total-unpaid', { signal })
-				]);
-				
-				if (!billsRes || !statsRes) throw new Error("Session expired");
-				if (!billsRes.ok || !statsRes.ok) throw new Error("Failed to load bills data");
-				
-				const billsJson = await billsRes.json();
-				const statsJson = await statsRes.json();
-				
-				const fetchedBills: Bill[] = billsJson.data?.bills || [];
-				const fetchedStats = statsJson.data;
-				const paidBills = fetchedBills.filter((bill: Bill) => bill.status === 'paid');
-				const paidAmount = paidBills.reduce((acc: number, bill: Bill) => acc + bill.amount, 0);
-				const overdueCount = fetchedBills.filter((bill: Bill) => (bill.status as string) === 'overdue' || (bill.status as string) === 'urgent').length;
+	const fetchBillsData = async (signal?: AbortSignal) => {
+		try {
+			const [billsRes, statsRes] = await Promise.all([
+				apiClient.get('/api/bills', { signal }),
+				apiClient.get('/api/bills/total-unpaid', { signal })
+			]);
+			
+			if (!billsRes || !statsRes) throw new Error("Session expired");
+			if (!billsRes.ok || !statsRes.ok) throw new Error("Failed to load bills data");
+			
+			const billsJson = await billsRes.json();
+			const statsJson = await statsRes.json();
+			
+			const fetchedBills: Bill[] = billsJson.data?.bills || [];
+			const fetchedStats = statsJson.data;
 
-				return {
-					bills: fetchedBills,
-					stats: {
-						totalUnpaid: {
-							amount: fetchedStats?.totalUnpaid?.toLocaleString() || '0',
-							pendingCount: fetchedStats?.count || 0
-						},
-						overdueCount,
-						paidThisMonth: {
-							amount: paidAmount.toLocaleString(),
-							paymentCount: paidBills.length
-						}
-					}
-				};
-			}
-		});
+			const paidBills = fetchedBills.filter((b: Bill) => b.status === 'paid');
+			const paidAmount = paidBills.reduce((acc: number, b: Bill) => acc + b.amount, 0);
+			const overdueCount = fetchedBills.filter((b: Bill) => (b.status as string) === 'overdue' || (b.status as string) === 'urgent').length;
+
+			const statsData = {
+				totalUnpaid: {
+					amount: fetchedStats?.totalUnpaid?.toLocaleString() || '0',
+					pendingCount: fetchedStats?.count || 0
+				},
+				overdueCount,
+				paidThisMonth: {
+					amount: paidAmount.toLocaleString(),
+					paymentCount: paidBills.length
+				}
+			};
+
+			return { bills: fetchedBills, stats: statsData };
+		} catch (err) {
+			throw err instanceof Error ? err : new Error("Unknown error");
+		}
 	}, []);
 
 	const handleRetry = useCallback(() => {
@@ -246,6 +271,8 @@ export default function Bills() {
 					</div>
 				) : (
 					<>
+
+
 						<section className='mb-8'>
 							<BillPaymentsStatsCards stats={stats} />
 						</section>
