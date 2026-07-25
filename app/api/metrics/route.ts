@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { metrics } from '../../../middleware';
-
-// Simple admin check (replace with real auth in production)
-function isAdmin(request: NextRequest) {
-  // Example: check for a header or session
-  return request.headers.get('x-admin') === 'true';
-}
+import { isAdminAuthorized, getAdminIdentity } from '@/lib/admin/auth';
+import { recordAuditEvent } from '@/lib/admin/audit';
 
 export async function GET(request: NextRequest) {
-  if (!isAdmin(request)) {
-    return new NextResponse('Unauthorized', { status: 401 });
+  if (!isAdminAuthorized(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const actor = getAdminIdentity(request);
+  recordAuditEvent({
+    type: 'admin.metrics.read',
+    actor,
+    message: 'Accessed in-memory metrics',
+  });
+
   return NextResponse.json(metrics);
 }

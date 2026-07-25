@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
           ? flowResponse.id
           : undefined;
 
-    const pending = createPendingAnchorFlow({
+    const pending = await createPendingAnchorFlow({
       type: 'withdraw',
       userAddress: auth.address,
       amount: parsedBody.amount,

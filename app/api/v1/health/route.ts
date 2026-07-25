@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import * as StellarSdk from '@stellar/stellar-sdk';
-import prisma from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import {
   getResolvedContractIds,
   getSorobanNetwork,
 } from '@/lib/contracts/network-resolution';
+import { probeAnchor } from '@/lib/health/anchor-probe';
 
 /**
  * Health check endpoint for monitoring system status and connectivity.
@@ -59,27 +60,22 @@ export async function GET() {
   }
 
   // 3. Anchor Platform Check (Optional)
-  const anchorUrl = process.env.ANCHOR_PLATFORM_URL;
-  if (anchorUrl) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-      
-      // Ping the standard Anchor info endpoint
-      const res = await fetch(`${anchorUrl}/info`, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      
-      if (res.ok) {
-        results.anchor = 'ok';
-      } else {
-        console.warn(`[Health Check] Anchor Platform returned status ${res.status}`);
-        results.anchor = 'error';
-      }
-    } catch (error) {
-      console.error('[Health Check] Anchor Platform connectivity error:', error);
-      results.anchor = 'error';
-      // Anchor is optional, so we don't set criticalFailure = true
+  // Shared probe so this route and the legacy /api/health agree by construction.
+  // Mapped onto this route's existing string contract (not_configured ->
+  // 'skipped'), so behavior here is unchanged. Anchor stays non-critical.
+  const anchorProbe = await probeAnchor();
+  if (anchorProbe.status === 'ok') {
+    results.anchor = 'ok';
+  } else if (anchorProbe.status === 'not_configured') {
+    results.anchor = 'skipped';
+  } else {
+    results.anchor = 'error';
+    if (anchorProbe.httpStatus !== undefined) {
+      console.warn(`[Health Check] Anchor Platform returned status ${anchorProbe.httpStatus}`);
+    } else {
+      console.error('[Health Check] Anchor Platform connectivity error:', anchorProbe.error);
     }
+    // Anchor is optional, so we don't set criticalFailure = true
   }
 
   // Determine final status

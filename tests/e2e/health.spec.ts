@@ -17,5 +17,26 @@ test.describe('Health Check API', () => {
         expect(data).toHaveProperty('database');
         expect(data).toHaveProperty('rpc');
         expect(data).toHaveProperty('anchor');
+
+        // Anchor is non-critical but must report a real, typed status:
+        // 'ok' (configured + reachable), 'error' (configured + unreachable),
+        // or 'not_configured' (ANCHOR_PLATFORM_URL unset) — never a fake
+        // reachable: true. This holds regardless of whether the anchor URL is
+        // configured in the current test environment.
+        expect(data.anchor).toHaveProperty('status');
+        expect(['ok', 'error', 'not_configured']).toContain(data.anchor.status);
+        expect(typeof data.anchor.reachable).toBe('boolean');
+
+        // reachable must be consistent with the reported status.
+        if (data.anchor.status === 'ok') {
+            expect(data.anchor.reachable).toBe(true);
+        } else {
+            expect(data.anchor.reachable).toBe(false);
+        }
+
+        // A non-ok anchor must NOT, on its own, fail the whole health check.
+        if (data.database.reachable && data.rpc.reachable) {
+            expect(response.status()).toBe(200);
+        }
     });
 });

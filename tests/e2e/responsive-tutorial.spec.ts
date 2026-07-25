@@ -13,16 +13,17 @@ async function checkNoHorizontalOverflow(page: Page) {
   expect(hasOverflow).toBe(false);
 }
 
+async function waitForTutorialPage(page: Page) {
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('text=Tutorial progress')).toBeVisible();
+}
+
 test.describe('Tutorial Reading Flow - Responsive Tests', () => {
   viewports.forEach(({ name, width, height }) => {
     test(`${name} (${width}×${height}) - Layout and Overflow`, async ({ page }) => {
       await page.setViewportSize({ width, height });
-      // Assuming a tutorial 1, chapter 0 exists
       await page.goto('/tutorial/1/chapter/0');
-      
-      await page.waitForLoadState('networkidle');
-      
-      // Check no horizontal overflow
+      await waitForTutorialPage(page);
       await checkNoHorizontalOverflow(page);
     });
   });

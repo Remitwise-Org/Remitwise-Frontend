@@ -1,10 +1,11 @@
+import { NextRequest } from "next/server";
 import { NextResponse } from 'next/server'
 import { getTranslator } from '../../../../lib/i18n'
 import { buildCreateBillTx } from '../../../../lib/contracts/bill-payments'
 import { StrKey } from '@stellar/stellar-sdk'
 import { ApiRouteError, withApiErrorHandler } from '@/lib/api/error-handler'
 
-export const POST = withApiErrorHandler(async function POST(req: Request) {
+export const POST = withApiErrorHandler(async function POST(req: NextRequest) {
   const t = getTranslator(req);
 
   const caller = req.headers.get('x-user')

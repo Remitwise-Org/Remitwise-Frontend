@@ -1,46 +1,97 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Send, PiggyBank, FileText, Shield } from 'lucide-react';
+import StaleBanner from '@/components/ui/StaleBanner';
 
 import StatCard from '@/components/Dashboard/StatCard';
 import { DashboardLoadingSkeleton } from '@/components/ui/LoadingSkeletons';
 import WidgetErrorState from '@/components/ui/WidgetErrorState';
+import StaleBanner from '@/components/ui/StaleBanner';
 import { apiClient } from '@/lib/client/apiClient';
+import { runWidgetFetchWithRetry } from '@/lib/client/widgetFetchRetry';
 import { useClientTranslator } from '@/lib/i18n/client';
 import { formatCurrency } from '@/lib/utils/format-currency';
+import { formatLastSynced } from '@/lib/utils/time-ago';
 import type { DashboardResponse } from '@/lib/types/dashboard';
+import { useSeo } from '@/lib/hooks/useSeo';
+import { DEV_MODE_STORAGE_KEY, DEV_WIDGET_PAYLOAD_EVENT } from '@/lib/config/developer';
 
 type LoadState = 'loading' | 'error' | 'ready';
 
 export default function DashboardPage() {
+  useSeo({
+    title: 'Dashboard - RemitWise',
+    description: 'Manage your smart remittance and financial planning activities',
+  });
+
   const { t, locale } = useClientTranslator();
   const [state, setState] = useState<LoadState>('loading');
   const [data, setData] = useState<DashboardResponse | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const isStale = data?.meta?.fromCache ?? false;
+  const staleAt = data ? new Date(data.meta.cachedAt).getTime() : 0;
 
   // The /api/dashboard route derives the wallet address from the session, so we
   // never have to pass it from the client. apiClient adds the shared
   // 401 -> refresh -> retry-once behaviour on top of fetch.
-  const load = useCallback(async () => {
-    setState('loading');
-    try {
-      const res = await apiClient.get('/api/dashboard');
-      // `null` means the session-expiry flow already took over (redirecting).
-      if (!res || !res.ok) {
-        setState('error');
-        return;
-      }
-      const json = (await res.json()) as DashboardResponse;
-      setData(json);
-      setState('ready');
-    } catch {
-      setState('error');
-    }
+  const load = useCallback((signal?: AbortSignal) => {
+    return runWidgetFetchWithRetry({
+      signal,
+      load: async () => {
+        const res = await apiClient.get('/api/dashboard', { signal });
+        if (!res || !res.ok) {
+          throw new Error('Unable to load dashboard summary.');
+        }
+
+        return (await res.json()) as DashboardResponse;
+      },
+    });
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    setReloadKey((current) => current + 1);
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    const controller = new AbortController();
+
+    setState('loading');
+    void load(controller.signal)
+      .then((json) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        setData(json);
+
+        // In dev mode, broadcast the raw payload so DevWidgetPayload can
+        // display it. We check sessionStorage rather than URL params here
+        // because the component that owns the query-param logic (DevWidgetPayload)
+        // lives outside this page; reading the persisted flag avoids a second
+        // useSearchParams call and keeps this side-effect lightweight.
+        if (
+          typeof window !== 'undefined' &&
+          sessionStorage.getItem(DEV_MODE_STORAGE_KEY) === 'true'
+        ) {
+          window.dispatchEvent(
+            new CustomEvent(DEV_WIDGET_PAYLOAD_EVENT, { detail: json })
+          );
+        }
+
+        setState('ready');
+      })
+      .catch(() => {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        setState('error');
+      });
+
+    return () => controller.abort();
+  }, [load, reloadKey]);
 
   if (state === 'loading') {
     return <DashboardLoadingSkeleton />;
@@ -55,7 +106,7 @@ export default function DashboardPage() {
               'dashboard.loadError',
               "We couldn't load your dashboard summary."
             )}
-            onRetry={load}
+            onRetry={handleRetry}
           />
         </div>
       </div>
@@ -96,8 +147,22 @@ export default function DashboardPage() {
       ? t('dashboard.policies', { count: insurance.insurancePoliciesCount })
       : undefined;
 
+  const isStale = Boolean(data?.meta?.isStale);
+  const staleAt = data?.meta?.cachedAt ?? null;
+
   return (
     <div className="p-6 space-y-6">
+      {isStale && !bannerDismissed && (
+        <StaleBanner
+          staleAt={staleAt}
+          onRefresh={() => {
+            setBannerDismissed(false);
+            setReloadKey((prev) => prev + 1);
+          }}
+          onDismiss={() => setBannerDismissed(true)}
+        />
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title={t('dashboard.totalSent')}
@@ -124,6 +189,10 @@ export default function DashboardPage() {
           detail2={policiesDetail}
         />
       </div>
+
+      <p className="text-xs text-gray-500 text-right">
+        {formatLastSynced(data.meta.cachedAt, locale)}
+      </p>
     </div>
   );
 }

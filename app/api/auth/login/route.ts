@@ -83,11 +83,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Create encrypted session (production logic from main)
-    const sealed = await createSession(address);
+    const { sealed, session } = await createSession(address);
 
     const response = NextResponse.json({
       success: true,
       address,
+      expiresAt: session.expiresAt,
     });
 
     response.headers.set(

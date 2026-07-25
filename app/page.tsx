@@ -18,7 +18,14 @@ import StatsSection from "@/components/StatsSection";
 
 import PricingSection from "@/components/PricingSection";
 
+import { useSeo } from "@/lib/hooks/useSeo";
+
 export default function Home() {
+  useSeo({
+    title: "RemitWise - Smart Remittance & Financial Planning",
+    description: "A remittance app that helps families save, plan, and protect — not just send money.",
+  });
+
   return (
     <main className="min-h-screen bg-brand-dark from-blue-50 to-indigo-100">
       {/* Hero Section */}

@@ -65,9 +65,9 @@ export interface EmergencyTransferConfig {
   max_amount_per_transfer: string;
   max_daily_amount: string;
   max_monthly_count: number;
-  emergency_fee_percentage: number;  // e.g., 0.5 for 0.5%
-  standard_fee_percentage: number;   // e.g., 1.0 for 1.0%
-  memo_prefix: string;               // e.g., "EMERGENCY:"
+  emergency_fee_percentage: number;  
+  standard_fee_percentage: number;   
+  memo_prefix: string;               
 }
 
 export interface EmergencyLimits {

@@ -1,9 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ChevronDown, RefreshCw } from "lucide-react"
+import { CTA_TEST_IDS } from "@/lib/cta-testids"
+import Tooltip from "@/components/Tooltip"
 import { useExchangeRates } from "@/lib/context/RatesContext"
 import { useClientTranslator } from "@/lib/i18n/client"
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue"
 
 interface AmountCurrencySectionProps {
   onReview?: (amount: number, currency: string) => void
@@ -14,9 +17,56 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
   const [amount, setAmount] = useState<string>("")
   const [currency, setCurrency] = useState<string>("USDC")
   const [error, setError] = useState<string>("")
+  const [quote, setQuote] = useState<number | null>(null)
+  const [quotePending, setQuotePending] = useState(false)
+
+  // Debounce the raw amount so the quote API is only called after the user
+  // pauses typing for 300 ms, preventing one request per keystroke.
+  const debouncedAmount = useDebouncedValue(amount, 300)
 
   const { rates, loading, stale, error: ratesError, refresh } = useExchangeRates()
   const { t } = useClientTranslator()
+
+  // Keep a ref to the current in-flight AbortController so we can cancel it
+  // when the debounced amount or currency changes before the fetch completes.
+  const abortRef = useRef<AbortController | null>(null)
+
+  // Fetch a quote whenever the debounced amount or currency changes.
+  // Any previous in-flight request is aborted before a new one starts (latest wins).
+  useEffect(() => {
+    const numValue = parseFloat(debouncedAmount)
+    if (!debouncedAmount || isNaN(numValue) || numValue < 1 || numValue > 10000) {
+      setQuote(null)
+      return
+    }
+
+    // Cancel the previous in-flight request, if any.
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    setQuotePending(true)
+
+    fetch(
+      `/api/remittance/quote?amount=${encodeURIComponent(debouncedAmount)}&currency=${encodeURIComponent(currency)}`,
+      { signal: controller.signal },
+    )
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { quote?: number } | null) => {
+        setQuote(data?.quote ?? null)
+        setQuotePending(false)
+      })
+      .catch((err: unknown) => {
+        // Ignore errors caused by intentional cancellation.
+        if (err instanceof Error && err.name === "AbortError") return
+        setQuote(null)
+        setQuotePending(false)
+      })
+
+    return () => {
+      controller.abort()
+    }
+  }, [debouncedAmount, currency])
 
   // Build conversion map from live rates (sell USD, buy asset)
   const conversionRates: Record<string, number> = { USDC: 1.0 }
@@ -80,11 +130,11 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
       )}
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
         {/* Amount Card */}
         <div className="relative overflow-hidden rounded-2xl">
           <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-red-900/20 blur-[120px] rounded-full -mr-24 -mt-24 pointer-events-none z-0" />
-          <div className="relative z-10 bg-zinc-900/50 rounded-2xl p-6 border border-zinc-800 ">
+          <div className="relative z-10 bg-zinc-900/50 rounded-2xl p-5 375:p-6 border border-zinc-800 ">
             <label className="text-sm font-medium mb-3 block text-white">
               Amount (USD) <span className="text-red-500">*</span>
             </label>
@@ -101,13 +151,21 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
             </div>
             <p className="text-xs text-zinc-500 mt-2">Min: $1, Max: $10,000</p>
             {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+            {!error && quotePending && (
+              <p className="text-xs text-zinc-400 mt-2">Fetching quote…</p>
+            )}
+            {!error && !quotePending && quote !== null && (
+              <p className="text-xs text-green-400 mt-2">
+                Estimated receive: {quote.toFixed(2)} {currency}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Currency Card */}
         <div className="relative overflow-hidden rounded-2xl">
           <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-red-900/20 blur-[120px] rounded-full -mr-24 -mt-24 pointer-events-none z-0" />
-          <div className="relative z-10 bg-zinc-900/50 rounded-2xl p-6 border border-zinc-800">
+          <div className="relative z-10 bg-zinc-900/50 rounded-2xl p-5 375:p-6 border border-zinc-800">
             <label className="text-sm font-medium mb-3 block text-white">Currency</label>
             <div className="relative">
               <select
@@ -135,17 +193,23 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
 
       {/* Primary CTA */}
       <div className="flex flex-col gap-4 mt-8">
-        <button
-          onClick={handleReview}
-          disabled={!isValid}
-          className="w-full py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 flex items-center justify-center gap-2"
+        <Tooltip
+          disabledReason="Enter an amount between $1 and $10,000 to continue"
+          side="top"
         >
-          Review Transaction
-        </button>
+          <button
+            onClick={handleReview}
+            disabled={!isValid}
+            data-testid={CTA_TEST_IDS.flow.sendAmountPrimary}
+            className="w-full min-h-11 px-4 py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-2xl text-base 375:text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 flex items-center justify-center gap-2 text-center break-words"
+          >
+            Review Transaction
+          </button>
+        </Tooltip>
 
         <button
           onClick={onBack}
-          className="w-full py-4 bg-transparent hover:bg-white/5 rounded-2xl text-sm font-medium text-zinc-400 transition-colors border border-zinc-800/50"
+          className="w-full min-h-11 px-4 py-4 bg-transparent hover:bg-white/5 rounded-2xl text-sm font-medium text-zinc-400 transition-colors border border-zinc-800/50 text-center break-words"
         >
           Back to Recipient
         </button>

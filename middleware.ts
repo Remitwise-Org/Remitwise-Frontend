@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { LRUCache } from "lru-cache";
 import { logRequest, logResponse, logError, normalizeRequestId } from "@/lib/logger";
-import { generateRequestId } from "@/lib/requestId";
+import { generateRequestId, isValidRequestId } from "@/lib/requestId";
+import { API_REQUEST_ID_HEADER } from "@/lib/api/headers";
 
 // In-memory metrics store
 const metrics: Record<string, { count: number; errorCount: number }> = {};
@@ -28,20 +29,24 @@ const CORS_ALLOWED_METHODS = [
 const CORS_ALLOWED_HEADERS = [
   "Content-Type",
   "Authorization",
+  API_REQUEST_ID_HEADER,
   "X-Requested-With",
 ];
 const MAX_BODY_SIZE = parseInt(process.env.API_MAX_BODY_SIZE || "1048576", 10); // Default 1MB
 
-const SECURITY_HEADERS: Record<string, string> = {
-  "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
-  "X-XSS-Protection": "1; mode=block",
-};
-
 // ---------------------------------------------------------------------------
-// Helper functions
+// SECURITY HEADERS CONFIGURATION
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+
+/**
+ * Applies Cross-Origin Resource Sharing (CORS) headers to the response if the request origin matches the configured allowlist.
+ * Ensures the 'Vary' header is set to prevent CDN caching issues across different origins.
+ * 
+ * @param response The NextResponse object to set headers on
+ * @param request The incoming NextRequest
+ */
 function applyCORS(response: NextResponse, request: NextRequest): void {
   const requestOrigin = request.headers.get("origin");
 
@@ -66,12 +71,37 @@ function applyCORS(response: NextResponse, request: NextRequest): void {
   );
 }
 
-function applySecurityHeaders(response: NextResponse): void {
-  Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
-    response.headers.set(key, value);
-  });
+/**
+ * Enforces standard security hardening headers to mitigate common clickjacking, XSS, and MIME-sniffing vulnerabilities.
+ * 
+ * @param response The NextResponse object to set headers on
+ * @param nonce The securely generated random nonce for this request
+ * @param isApiRoute Whether the request is for an API route
+ */
+function applySecurityHeaders(response: NextResponse, nonce: string, isApiRoute: boolean): void {
+  response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+
+  let csp = "";
+  if (isApiRoute) {
+    csp = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'";
+  } else {
+    csp = `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; block-all-mixed-content; upgrade-insecure-requests;`.replace(/\s{2,}/g, " ").trim();
+  }
+
+  response.headers.set("Content-Security-Policy", csp);
 }
 
+/**
+ * Validates that the request payload size is within the allowed bounds.
+ * Reads content-length or parses request body buffer to determine size for POST/PUT/PATCH requests.
+ * 
+ * @param request The incoming NextRequest
+ * @param maxSize The maximum allowed request body size in bytes
+ * @returns An object containing validation status and optional 413 response on error
+ */
 async function validateBodySize(
   request: NextRequest,
   maxSize: number = MAX_BODY_SIZE,
@@ -142,11 +172,27 @@ const rateLimitCache = new LRUCache<
 // Middleware
 // ---------------------------------------------------------------------------
 
+/**
+ * The main gateway middleware intercepting all `/api/:path*` requests.
+ * Orchestrates requestId tracking, structured request logging, CORS, security headers, body size checks, and tiered rate limiting.
+ * 
+ * @param request The incoming NextRequest object
+ * @returns A NextResponse mapping to the next middleware or a specific error response (e.g. 413, 429)
+ */
 export async function middleware(request: NextRequest) {
   const start = Date.now();
   const method = request.method;
   const url = request.nextUrl.pathname;
-  const requestId = generateRequestId();
+  const isApiRoute = url.startsWith("/api");
+  const incomingRequestId = request.headers.get(API_REQUEST_ID_HEADER);
+  const requestId =
+    incomingRequestId && isValidRequestId(incomingRequestId)
+      ? incomingRequestId
+      : generateRequestId();
+
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
 
   // Extract IP or fallback for key
   const forwardedFor = request.headers.get("x-forwarded-for");
@@ -174,108 +220,122 @@ export async function middleware(request: NextRequest) {
   }
 
   // Log incoming request (only for /api/* routes)
-  const headersObj: Record<string, string> = {};
-  request.headers.forEach((value, key) => {
-    headersObj[key] = value;
-  });
-  logRequest(requestId, method, url, headersObj);
+  if (isApiRoute) {
+    const headersObj: Record<string, string> = {};
+    request.headers.forEach((value, key) => {
+      headersObj[key] = value;
+    });
+    logRequest(requestId, method, url, headersObj);
+  }
 
-  // CORS & Security headers early
   let apiResponse: NextResponse;
   let statusCode = 200;
 
-  apiResponse = NextResponse.next();
-  applyCORS(apiResponse, request);
-  applySecurityHeaders(apiResponse);
+  apiResponse = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
-  // Handle CORS OPTIONS preflight requests
-  if (method === "OPTIONS") {
+  // Apply CORS only for API routes, apply security headers for all routes
+  if (isApiRoute) {
+    applyCORS(apiResponse, request);
+  }
+  applySecurityHeaders(apiResponse, nonce, isApiRoute);
+
+  // Handle CORS OPTIONS preflight requests (only relevant for API)
+  if (isApiRoute && method === "OPTIONS") {
     const preflightResponse = new NextResponse(null, { status: 204 });
     applyCORS(preflightResponse, request);
-    applySecurityHeaders(preflightResponse);
+    applySecurityHeaders(preflightResponse, nonce, isApiRoute);
     return preflightResponse;
   }
 
-  // Validate request body size
-  const bodySizeValidation = await validateBodySize(request);
-  if (!bodySizeValidation.valid && bodySizeValidation.error) {
-    applyCORS(bodySizeValidation.error, request);
-    applySecurityHeaders(bodySizeValidation.error);
-    return bodySizeValidation.error;
+  // Validate request body size (only for API)
+  if (isApiRoute) {
+    const bodySizeValidation = await validateBodySize(request);
+    if (!bodySizeValidation.valid && bodySizeValidation.error) {
+      applyCORS(bodySizeValidation.error, request);
+      applySecurityHeaders(bodySizeValidation.error, nonce, isApiRoute);
+      return bodySizeValidation.error;
+    }
   }
 
-  // Rate limiting
-  let limit = RATE_LIMITS.general;
-  let limitType = "general";
-  if (url.startsWith("/api/auth/")) {
-    limit = RATE_LIMITS.auth;
-    limitType = "auth";
-  } else if (["POST", "PUT", "DELETE", "PATCH"].includes(method)) {
-    limit = RATE_LIMITS.write;
-    limitType = "write";
-  }
-  const cacheKey = `${ip}:${limitType}`;
-  const now = Date.now();
-  const tokenRecord = rateLimitCache.get(cacheKey) || {
-    count: 0,
-    expiresAt: now + 60000,
-  };
-  if (now > tokenRecord.expiresAt) {
-    tokenRecord.count = 0;
-    tokenRecord.expiresAt = now + 60000;
-  }
-  tokenRecord.count += 1;
-  rateLimitCache.set(cacheKey, tokenRecord);
-  if (tokenRecord.count > limit) {
-    const retryAfter = Math.ceil(
-      (tokenRecord.expiresAt - now) / 1000,
-    ).toString();
-    const rateLimitError = new NextResponse(
-      JSON.stringify({
-        error: "Too Many Requests",
-        message: "Rate limit exceeded.",
-      }),
-      {
-        status: 429,
-        headers: {
-          "Content-Type": "application/json",
-          "Retry-After": retryAfter,
-          "X-RateLimit-Limit": limit.toString(),
-          "X-RateLimit-Remaining": "0",
-          "X-RateLimit-Reset": tokenRecord.expiresAt.toString(),
+  // Rate limiting (only for API routes)
+  if (isApiRoute) {
+    let limit = RATE_LIMITS.general;
+    let limitType = "general";
+    if (url.startsWith("/api/auth/")) {
+      limit = RATE_LIMITS.auth;
+      limitType = "auth";
+    } else if (["POST", "PUT", "DELETE", "PATCH"].includes(method)) {
+      limit = RATE_LIMITS.write;
+      limitType = "write";
+    }
+    const cacheKey = `${ip}:${limitType}`;
+    const now = Date.now();
+    const tokenRecord = rateLimitCache.get(cacheKey) || {
+      count: 0,
+      expiresAt: now + 60000,
+    };
+    if (now > tokenRecord.expiresAt) {
+      tokenRecord.count = 0;
+      tokenRecord.expiresAt = now + 60000;
+    }
+    tokenRecord.count += 1;
+    rateLimitCache.set(cacheKey, tokenRecord);
+    if (tokenRecord.count > limit) {
+      const retryAfter = Math.ceil(
+        (tokenRecord.expiresAt - now) / 1000,
+      ).toString();
+      const rateLimitError = new NextResponse(
+        JSON.stringify({
+          error: "Too Many Requests",
+          message: "Rate limit exceeded.",
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": retryAfter,
+            "X-RateLimit-Limit": limit.toString(),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": tokenRecord.expiresAt.toString(),
+          },
         },
-      },
+      );
+      applyCORS(rateLimitError, request);
+      applySecurityHeaders(rateLimitError, nonce, isApiRoute);
+      const durationMs = Date.now() - start;
+      const key = `${method} ${url}`;
+      if (!metrics[key]) metrics[key] = { count: 0, errorCount: 0 };
+      metrics[key].count++;
+      metrics[key].errorCount++;
+      logResponse(requestId, method, url, 429, durationMs);
+      rateLimitError.headers.set("X-Request-ID", requestId);
+      return rateLimitError;
+    }
+
+    // Add rate limit headers to response
+    apiResponse.headers.set("X-RateLimit-Limit", limit.toString());
+    apiResponse.headers.set(
+      "X-RateLimit-Remaining",
+      (limit - tokenRecord.count).toString(),
     );
-    applyCORS(rateLimitError, request);
-    applySecurityHeaders(rateLimitError);
+    apiResponse.headers.set(
+      "X-RateLimit-Reset",
+      tokenRecord.expiresAt.toString(),
+    );
+
+    // Log response
     const durationMs = Date.now() - start;
     const key = `${method} ${url}`;
     if (!metrics[key]) metrics[key] = { count: 0, errorCount: 0 };
     metrics[key].count++;
-    metrics[key].errorCount++;
-    logResponse(requestId, method, url, 429, durationMs);
-    rateLimitError.headers.set("X-Request-ID", requestId);
-    return rateLimitError;
+    if (statusCode >= 400) metrics[key].errorCount++;
+    logResponse(requestId, method, url, statusCode, durationMs);
   }
 
-  // Add rate limit headers to response
-  apiResponse.headers.set("X-RateLimit-Limit", limit.toString());
-  apiResponse.headers.set(
-    "X-RateLimit-Remaining",
-    (limit - tokenRecord.count).toString(),
-  );
-  apiResponse.headers.set(
-    "X-RateLimit-Reset",
-    tokenRecord.expiresAt.toString(),
-  );
-
-  // Log response
-  const durationMs = Date.now() - start;
-  const key = `${method} ${url}`;
-  if (!metrics[key]) metrics[key] = { count: 0, errorCount: 0 };
-  metrics[key].count++;
-  if (statusCode >= 400) metrics[key].errorCount++;
-  logResponse(requestId, method, url, statusCode, durationMs);
   apiResponse.headers.set("X-Request-ID", requestId);
 
   return apiResponse;
@@ -284,5 +344,7 @@ export async function middleware(request: NextRequest) {
 export { metrics };
 
 export const config = {
-  matcher: "/api/:path*",
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+  ],
 };

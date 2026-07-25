@@ -2,8 +2,11 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Facebook, Github, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react';
+import { useShortcutHelp } from '@/lib/context/ShortcutHelpContext';
+import ConnectionQualityIndicator from './ConnectionQualityIndicator';
 
 const Footer: React.FC = () => {
+    const { open: openShortcutHelp } = useShortcutHelp();
 
     const socialLinks = {
         linkedin: {
@@ -110,6 +113,14 @@ const Footer: React.FC = () => {
                                     Contact
                                 </Link>
                             </li>
+                            <li>
+                                <button
+                                    onClick={openShortcutHelp}
+                                    className="text-white/50 text-sm leading-[21px] tracking-[-0.15px] hover:text-white transition-colors text-left font-normal bg-transparent border-none p-0 cursor-pointer"
+                                >
+                                    Keyboard Shortcuts
+                                </button>
+                            </li>
                         </ul>
                     </div>
 
@@ -145,10 +156,11 @@ const Footer: React.FC = () => {
                 </div>
 
                 {/* Copyright Section */}
-                <div className="pt-6 border-t border-white/[0.08]">
-                    <p className="text-white/50 text-sm leading-[21px] tracking-[-0.15px] text-center">
+                <div className="pt-6 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-white/50 text-sm leading-[21px] tracking-[-0.15px] text-center sm:text-left">
                         © 2024 RemitWise.com. All rights reserved.
                     </p>
+                    <ConnectionQualityIndicator />
                 </div>
             </div>
         </footer>

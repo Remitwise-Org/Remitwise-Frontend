@@ -7,8 +7,15 @@ import FamilyWalletsStatsCards from "./components/FamilyWalletsStatsCards";
 import UnderstandingRolesSection from "./components/UnderstandingRolesSection";
 import FamilyMemberSection from "./components/FamilyMemberSection";
 import ApprovalsQueue from "./components/ApprovalsQueue";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
+import { useSeo } from "@/lib/hooks/useSeo";
 
 export default function FamilyWallets() {
+	useSeo({
+		title: "Family Wallets - RemitWise",
+		description: "Connect, authorize, and manage wallets for your family members",
+	});
+
 	const { t } = useClientTranslator();
 	const addMemberSectionRef = useRef<HTMLDivElement>(null);
 
@@ -25,7 +32,9 @@ export default function FamilyWallets() {
 				title={t("family_wallets.page_title")}
 				subtitle={t("family_wallets.page_subtitle")}
 				ctaLabel={t("family_wallets.add_member_cta")}
+				headingId='family-wallets-page-heading'
 				onCtaClick={handleAddMember}
+				ctaTestId={CTA_TEST_IDS.page.familyWalletsPrimary}
 				showBottomDivider
 			/>
 

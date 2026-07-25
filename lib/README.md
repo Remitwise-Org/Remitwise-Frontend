@@ -20,9 +20,12 @@ lib/
 
 ## Modules
 
+- [Prisma data model and durability boundary](../docs/data-model.md)
+
 ### Authentication (`auth/`)
 
 **session.ts** - Session management utilities
+
 - `getSessionFromRequest()` - Extract session from Next.js request
 - `validateSession()` - Validate session structure
 - `getPublicKeyFromSession()` - Extract public key from session
@@ -30,6 +33,7 @@ lib/
 ### Contracts (`contracts/`)
 
 **savings-goals.ts** - Transaction builders for savings goals smart contract
+
 - `buildCreateGoalTx()` - Build transaction to create a new goal
 - `buildAddToGoalTx()` - Build transaction to add funds to a goal
 - `buildWithdrawFromGoalTx()` - Build transaction to withdraw from a goal
@@ -39,6 +43,7 @@ lib/
 ### Errors (`errors/`)
 
 **api-errors.ts** - API error response utilities
+
 - `createValidationError()` - Create 400 validation error response
 - `createAuthenticationError()` - Create 401 authentication error response
 - `createServerError()` - Create 500 server error response
@@ -48,6 +53,7 @@ lib/
 ### Types (`types/`)
 
 **savings-goals.ts** - TypeScript interfaces and types
+
 - `CreateGoalParams` - Parameters for creating a goal
 - `GoalOperationParams` - Parameters for goal operations
 - `BuildTxResult` - Transaction builder result
@@ -58,24 +64,35 @@ lib/
 ### Validation (`validation/`)
 
 **savings-goals.ts** - Input validation functions
+
 - `validateAmount()` - Validate positive number amounts
 - `validateFutureDate()` - Validate dates are in the future
 - `validateGoalId()` - Validate goal ID format
 - `validateGoalName()` - Validate goal name format
 - `validatePublicKey()` - Validate Stellar public key format
 
+### Infrastructure (Root level, and `lib/`)
+
+For a detailed walkthrough, see [Request Gateway & Lifecycle Guide](../docs/infrastructure.md).
+
+- **middleware.ts** - Core request gateway (CORS, tiered rate limiting, body-size checks, and security hardening)
+- **lib/requestId.ts** - Traceability/correlation ID generation and management
+- **lib/logger.ts** - Structured logging contract and formatter
+- **lib/sanitize.ts** - PII, secret redaction, and wallet address masking
+- **lib/background/runtime.ts** - Drain-safe background execution and graceful shutdown hooks
+
 ## Usage Examples
 
 ### Building a Transaction
 
 ```typescript
-import { buildCreateGoalTx } from '@/lib/contracts/savings-goals';
+import { buildCreateGoalTx } from "@/lib/contracts/savings-goals";
 
 const result = await buildCreateGoalTx(
-  'GXXXXXXX...', // owner public key
-  'Emergency Fund',
+  "GXXXXXXX...", // owner public key
+  "Emergency Fund",
   5000,
-  '2025-12-31T00:00:00Z'
+  "2025-12-31T00:00:00Z",
 );
 
 console.log(result.xdr); // Transaction XDR string
@@ -84,14 +101,17 @@ console.log(result.xdr); // Transaction XDR string
 ### Validating Input
 
 ```typescript
-import { validateAmount, validateFutureDate } from '@/lib/validation/savings-goals';
+import {
+  validateAmount,
+  validateFutureDate,
+} from "@/lib/validation/savings-goals";
 
 const amountValidation = validateAmount(100);
 if (!amountValidation.isValid) {
   console.error(amountValidation.error);
 }
 
-const dateValidation = validateFutureDate('2025-12-31');
+const dateValidation = validateFutureDate("2025-12-31");
 if (!dateValidation.isValid) {
   console.error(dateValidation.error);
 }
@@ -100,11 +120,14 @@ if (!dateValidation.isValid) {
 ### Handling Errors
 
 ```typescript
-import { createValidationError, handleUnexpectedError } from '@/lib/errors/api-errors';
+import {
+  createValidationError,
+  handleUnexpectedError,
+} from "@/lib/errors/api-errors";
 
 // Return validation error
 if (!isValid) {
-  return createValidationError('Invalid input', 'Amount must be positive');
+  return createValidationError("Invalid input", "Amount must be positive");
 }
 
 // Handle unexpected errors
@@ -118,14 +141,17 @@ try {
 ### Session Management
 
 ```typescript
-import { getSessionFromRequest, getPublicKeyFromSession } from '@/lib/auth/session';
+import {
+  getSessionFromRequest,
+  getPublicKeyFromSession,
+} from "@/lib/auth/session";
 
 export async function POST(request: NextRequest) {
   const session = getSessionFromRequest(request);
   if (!session) {
     return createAuthenticationError();
   }
-  
+
   const publicKey = getPublicKeyFromSession(session);
   // ... use publicKey
 }
@@ -147,7 +173,7 @@ This makes it easy to test validation logic:
 ```typescript
 const result = validateAmount(-5);
 expect(result.isValid).toBe(false);
-expect(result.error).toBe('Amount must be positive');
+expect(result.error).toBe("Amount must be positive");
 ```
 
 ## Adding New Modules

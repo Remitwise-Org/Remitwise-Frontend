@@ -15,7 +15,7 @@ import {
   mapApiStatusToLifecycle,
   nextBackoffDelay,
   useTransactionStatus,
-} from "@/lib/hooks/useTransactionStatus";
+} from "@/useTransactionStatus";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
