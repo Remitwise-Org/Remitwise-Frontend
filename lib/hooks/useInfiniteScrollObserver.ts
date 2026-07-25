@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import type { RefObject } from "react";
 import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
+import { useIntersectionObserver } from "./useIntersectionObserver";
 
 interface UseInfiniteScrollObserverOptions {
   /** Whether there is more data available to load. */
@@ -29,6 +30,10 @@ interface UseInfiniteScrollObserverResult<T extends Element> {
  * cases the caller's manual "load more" trigger (e.g. a button) remains the
  * only way to load more, so it must always be rendered alongside the
  * sentinel rather than only shown when the observer is inactive.
+ *
+ * Internally delegates all observer lifecycle (create, observe, disconnect)
+ * to {@link useIntersectionObserver} so there is a single place that owns
+ * IntersectionObserver cleanup.
  */
 export function useInfiniteScrollObserver<T extends Element = HTMLDivElement>({
   hasMore,
@@ -36,29 +41,25 @@ export function useInfiniteScrollObserver<T extends Element = HTMLDivElement>({
   onLoadMore,
   rootMargin = "200px",
 }: UseInfiniteScrollObserverOptions): UseInfiniteScrollObserverResult<T> {
-  const sentinelRef = useRef<T | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
   const isSupported = typeof IntersectionObserver !== "undefined";
   const isObserverActive = isSupported && !prefersReducedMotion;
 
-  useEffect(() => {
-    if (!hasMore || loading || !isObserverActive) return;
+  // Enabled only when there is more data, no load is in flight, and the
+  // observer is supported + motion preferences allow it.
+  const enabled = hasMore && !loading && isObserverActive;
 
-    const node = sentinelRef.current;
-    if (!node) return;
+  const sentinelRef = useIntersectionObserver<T>(
+    (entries) => {
+      if (entries[0]?.isIntersecting) {
+        onLoadMore();
+      }
+    },
+    { rootMargin, enabled },
+  );
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          onLoadMore();
-        }
-      },
-      { rootMargin },
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [hasMore, loading, isObserverActive, onLoadMore, rootMargin]);
-
-  return { sentinelRef, isObserverActive };
+  return {
+    sentinelRef: sentinelRef as RefObject<T | null>,
+    isObserverActive,
+  };
 }

@@ -24,3 +24,9 @@ export function ActiveDataFetcher() {
 
   return <div>Tab active: {isVisible ? "Yes" : "No"}</div>;
 }
+
+## `useScrollSpy`
+
+Observes multiple section elements and calls a callback with the id of the most-visible section. Backed by a single `IntersectionObserver` instance that is disconnected on unmount.
+
+See [`docs/HOOKS.md`](./HOOKS.md) for full API reference and usage examples.

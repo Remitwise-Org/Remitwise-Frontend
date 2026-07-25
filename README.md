@@ -264,6 +264,35 @@ Route-level page titles now use a shared deep-link heading pattern. Use the shar
 
 The `/transactions` view only ever lists user-initiated interactions (sends, splits, bill payments, etc.) and its type filter is how a reader narrows that list. See [docs/transactions-user-interaction-filter.md](docs/transactions-user-interaction-filter.md) for the model and what to update if a system-generated entry type is ever added.
 
+## Centralized IntersectionObserver (`useIntersectionObserver` / `useScrollSpy`)
+
+All `IntersectionObserver` usage in the codebase is centralized through two hooks in `lib/hooks/useIntersectionObserver.ts`. Calling `new IntersectionObserver(...)` directly is not needed — use the hooks instead.
+
+| Hook | Use-case |
+|---|---|
+| `useIntersectionObserver` | Observe a **single** element. Returns a ref to attach to JSX. |
+| `useScrollSpy` | Observe **multiple** section elements for scroll-spy navigation. |
+
+Both hooks guarantee `observer.disconnect()` is called on unmount and on every dependency change. The callback is kept via a stable ref so it never stales.
+
+```tsx
+// Single element
+import { useIntersectionObserver } from "@/lib/hooks/useIntersectionObserver";
+const ref = useIntersectionObserver(([e]) => e.isIntersecting && loadMore(), { rootMargin: "200px" });
+return <div ref={ref} />;
+
+// Multiple sections (scroll-spy)
+import { useScrollSpy } from "@/lib/hooks/useIntersectionObserver";
+useScrollSpy(["profile", "security", "preferences"], setActiveId, {
+  rootMargin: "-20% 0px -60% 0px",
+  threshold: [0, 0.25, 0.5, 0.75, 1],
+});
+```
+
+`useInfiniteScrollObserver` (`lib/hooks/useInfiniteScrollObserver.ts`) is built on top of `useIntersectionObserver` and provides automatic infinite-scroll pagination with reduced-motion fallback.
+
+Full API reference: [docs/HOOKS.md](docs/HOOKS.md)
+
 ## Per-Route SEO Metadata (`useSeo`)
 
 Each client-side route can define its own `<title>` and `<meta name="description">` using the `useSeo` hook.

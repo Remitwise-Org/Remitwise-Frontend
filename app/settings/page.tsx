@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
+import { useScrollSpy } from "@/lib/hooks/useIntersectionObserver";
 import { User, Bell, Shield, Wallet, Users, Globe } from "lucide-react";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { ProfileSection } from "@/components/settings/ProfileSection";
@@ -23,6 +24,8 @@ const SECTIONS = [
 
 type SectionId = (typeof SECTIONS)[number]["id"];
 
+const SECTION_IDS = SECTIONS.map((s) => s.id);
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -33,30 +36,12 @@ export default function SettingsPage() {
 
   const { t } = useClientTranslator();
   const [active, setActive] = useState<SectionId>("profile");
-  const observerRef = useRef<IntersectionObserver | null>(null);
 
   // ── Scroll-spy: update active nav item based on visible section ────────────
-  useEffect(() => {
-    const ids = SECTIONS.map((s) => s.id);
-    const visible = new Map<string, number>();
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          visible.set(e.target.id, e.intersectionRatio);
-        });
-        const best = [...visible.entries()].sort((a, b) => b[1] - a[1])[0];
-        if (best && best[1] > 0) setActive(best[0] as SectionId);
-      },
-      { rootMargin: "-20% 0px -60% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] },
-    );
-
-    ids.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) observerRef.current!.observe(el);
-    });
-    return () => observerRef.current?.disconnect();
-  }, []);
+  useScrollSpy(SECTION_IDS, (id) => setActive(id as SectionId), {
+    rootMargin: "-20% 0px -60% 0px",
+    threshold: [0, 0.25, 0.5, 0.75, 1],
+  });
 
   // ── Scroll to section on nav click ────────────────────────────────────────
   const scrollTo = (id: SectionId) => {
