@@ -1,0 +1,41 @@
+# Storybook test-runner CI
+# Builds Storybook and runs test-storybook to catch rendering regressions.
+# Runs on push/PR to main and dev, same as the main CI workflow.
+name: Storybook Tests
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+env:
+  NODE_ENV: test
+
+jobs:
+  storybook-tests:
+    name: Storybook tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Build Storybook
+        run: npx storybook build --quiet
+
+      - name: Serve and test Storybook
+        run: |
+          npx http-server storybook-static --port 6006 --silent &
+          npx wait-on http://localhost:6006 --timeout 30000
+          npx test-storybook --url http://localhost:6006 --maxWorkers 2

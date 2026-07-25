@@ -4,11 +4,14 @@ import { IEventStorageService } from './event-storage';
 import { EmergencyTransferEvent, EventFilters } from '@/types/emergency-transfer';
 import { EmergencyTransferEvent as EventModel } from '@/models/emergency-transfer-event';
 
+// Shared in-memory storage for demonstration across requests
+const sharedEventsMap: Map<string, EmergencyTransferEvent> = new Map();
 
 export class EventStorageService implements IEventStorageService {
-  // In-memory storage for demonstration
   // In production, this would use a real database connection
-  private events: Map<string, EmergencyTransferEvent> = new Map();
+  private get events() {
+    return sharedEventsMap;
+  }
 
   /**
    * Stores emergency transfer event

@@ -93,6 +93,8 @@ NOTE: Federation address support, network existence checks, and self-send preven
 Component: `app/send/components/AmountCurrencySection.tsx`  
 Validation: client-side only; min $1, max $10,000
 
+**Quote fetch:** After the user pauses typing for **300 ms** the component fires a `GET /api/remittance/quote` request. If a new debounce cycle begins before the previous fetch settles, the in-flight request is **cancelled via `AbortController`** (latest-wins). The 300 ms constant and the abort strategy are both implemented in this component.
+
 ### Amount Input
 
 | State | Description | UI Behavior | Microcopy / Error Text |

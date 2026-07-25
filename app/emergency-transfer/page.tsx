@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/lib/context/ToastContext";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import useStellarAddressValidation, {
   normalizeStellarAddress,
 } from "@/lib/hooks/useStellarAddressValidation";
@@ -18,10 +19,17 @@ import {
   Shield,
 } from "lucide-react";
 import TransactionSuccessReceipt from "@/components/TransactionSuccessReceipt";
+import PageHeadingLink from "@/components/PageHeadingLink";
+import { useSeo } from "@/lib/hooks/useSeo";
 
 type Step = "recipient" | "amount" | "review" | "confirm";
 
 export default function EmergencyTransferPage() {
+  useSeo({
+    title: "Emergency Transfer - RemitWise",
+    description: "Send instant emergency transfers to your loved ones when they need it most",
+  });
+
   const [step, setStep] = useState<Step>("recipient");
   const [recipientName, setRecipientName] = useState("");
   const [recipientAddress, setRecipientAddress] = useState("");
@@ -106,9 +114,14 @@ export default function EmergencyTransferPage() {
               <div className="p-2 bg-brand-red rounded-full shadow-[0_0_20px_rgba(215,35,35,0.4)]">
                 <Zap className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-(--foreground)">
+              <PageHeadingLink
+                headingId="emergency-transfer-page-heading"
+                label="Emergency Transfer"
+                headingClassName="text-2xl font-bold text-(--foreground)"
+                buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              >
                 Emergency Transfer
-              </h1>
+              </PageHeadingLink>
             </div>
           </div>
         </div>
@@ -247,6 +260,7 @@ export default function EmergencyTransferPage() {
                 <button
                   onClick={handleRecipientContinue}
                   disabled={!recipientName || !validation.isValid}
+                  data-testid={CTA_TEST_IDS.flow.emergencyTransferRecipientPrimary}
                   className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-red-600 to-red-700 px-6 py-3 font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Continue
@@ -426,6 +440,7 @@ export default function EmergencyTransferPage() {
                 </button>
                 <button
                   onClick={handleReviewConfirm}
+                  data-testid={CTA_TEST_IDS.flow.emergencyTransferReviewPrimary}
                   className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-red-600 to-red-700 px-6 py-3 font-semibold text-white transition"
                 >
                   Confirm Details
@@ -499,6 +514,7 @@ export default function EmergencyTransferPage() {
                 <button
                   onClick={handleFinalConfirm}
                   disabled={!confirmedUrgent || !confirmedFee}
+                  data-testid={CTA_TEST_IDS.flow.emergencyTransferConfirmPrimary}
                   className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-red-600 to-red-700 px-6 py-3 font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Submit Transfer

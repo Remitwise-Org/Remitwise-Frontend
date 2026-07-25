@@ -127,13 +127,13 @@ export default function AsyncOperationsPanel({
 		if (active) setLiveText(`${active.title} ${active.status}`);
 	}, [queueItems, activeIndex]);
 	return (
-		<section className='rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-6 sm:p-7'>
+		<section className='min-w-0 max-w-full overflow-hidden rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-6 sm:p-7'>
 			<div className='border-b border-white/[0.08] pb-5'>
-				<p className='text-xs font-semibold uppercase tracking-[0.24em] text-red-300'>
+				<p className='break-words text-xs font-semibold uppercase tracking-[0.24em] text-red-300'>
 					{eyebrow}
 				</p>
-				<h2 className='mt-3 text-2xl font-semibold text-white'>{title}</h2>
-				<p className='mt-2 text-sm leading-6 text-gray-300'>{description}</p>
+				<h2 className='mt-3 break-words text-2xl font-semibold text-white'>{title}</h2>
+				<p className='mt-2 break-words text-sm leading-6 text-gray-300'>{description}</p>
 			</div>
 
 			<div className='mt-6 space-y-3'>
@@ -143,31 +143,31 @@ export default function AsyncOperationsPanel({
 					return (
 						<article
 							key={stage.label}
-							className='rounded-2xl border border-white/[0.08] bg-black/20 p-4'>
-							<div className='flex items-start justify-between gap-4'>
-								<div className='flex items-start gap-3'>
-									<div className='flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-red-300'>
+							className='min-w-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4'>
+							<div className='flex min-w-0 items-start justify-between gap-4'>
+								<div className='flex min-w-0 items-start gap-3'>
+									<div className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-red-300'>
 										<StageIcon className='h-4 w-4' />
 									</div>
-									<div>
+									<div className='min-w-0'>
 										<div className='flex flex-wrap items-center gap-2'>
-											<h3 className='text-sm font-semibold text-white'>
+											<h3 className='break-words text-sm font-semibold text-white'>
 												{index + 1}. {stage.label}
 											</h3>
 											<span className='rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-gray-400'>
 												{stage.duration}
 											</span>
 										</div>
-										<p className='mt-2 text-sm leading-6 text-gray-300'>
+										<p className='mt-2 break-words text-sm leading-6 text-gray-300'>
 											{stage.detail}
 										</p>
 									</div>
 								</div>
-								<span className='hidden rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-[11px] font-medium text-red-100 sm:inline-flex'>
+								<span className='hidden flex-shrink-0 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-[11px] font-medium text-red-100 sm:inline-flex'>
 									{stage.placement}
 								</span>
 							</div>
-							<p className='mt-3 text-xs uppercase tracking-[0.16em] text-gray-500 sm:hidden'>
+							<p className='mt-3 break-words text-xs uppercase tracking-[0.16em] text-gray-500 sm:hidden'>
 								{stage.placement}
 							</p>
 						</article>
@@ -176,11 +176,11 @@ export default function AsyncOperationsPanel({
 			</div>
 
 			{/* Queue: compact rail on desktop, inline on mobile */}
-			<div className='mt-6'>
-				<div className='flex items-start justify-between gap-3'>
-					<div>
-						<h3 className='text-sm font-semibold text-white'>{queueTitle}</h3>
-						<p className='mt-1 text-sm leading-6 text-gray-300'>
+			<div className='mt-6 min-w-0'>
+				<div className='flex min-w-0 items-start justify-between gap-3'>
+					<div className='min-w-0'>
+						<h3 className='break-words text-sm font-semibold text-white'>{queueTitle}</h3>
+						<p className='mt-1 break-words text-sm leading-6 text-gray-300'>
 							{queueDescription}
 						</p>
 					</div>
@@ -261,7 +261,7 @@ export default function AsyncOperationsPanel({
 			</div>
 
 			{footer ? (
-				<p className='mt-4 text-xs leading-5 text-gray-500'>{footer}</p>
+				<p className='mt-4 break-words text-xs leading-5 text-gray-500'>{footer}</p>
 			) : null}
 		</section>
 	);

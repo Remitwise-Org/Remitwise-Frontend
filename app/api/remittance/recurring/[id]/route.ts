@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateRecurringRemittance, deleteRecurringRemittance } from '@/lib/mockdata/recurringRemittances';
+import { recurringStore } from '@/lib/remittance/recurring-store';
 import { requireAuth } from '@/lib/session';
-import { StrKey } from '@stellar/stellar-sdk';
 
 // PATCH /api/remittance/recurring/[id]
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -13,24 +12,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (res instanceof Response) return res;
     throw res;
   }
-  const updates = await req.json();
-  // Validate recipientAddress if present
-  if (updates.recipientAddress && !StrKey.isValidEd25519PublicKey(updates.recipientAddress)) {
-    return NextResponse.json({ error: 'Invalid recipientAddress' }, { status: 400 });
+
+  const existing = await recurringStore.get(id);
+  if (!existing) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
-  if (updates.amount && (typeof updates.amount !== 'number' || updates.amount <= 0)) {
-    return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
+  if (existing.userAddress !== auth.address) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
-  if (updates.currency && typeof updates.currency !== 'string') {
-    return NextResponse.json({ error: 'Invalid currency' }, { status: 400 });
+
+  try {
+    const updates = await req.json();
+    const updated = await recurringStore.update(id, updates);
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Invalid request input' }, { status: 400 });
   }
-  if (updates.frequency && !['weekly','biweekly','monthly'].includes(updates.frequency)) {
-    return NextResponse.json({ error: 'Invalid frequency' }, { status: 400 });
-  }
-  // Only allow update if schedule belongs to user
-  const updated = updateRecurringRemittance(id, updates);
-  if (!updated || updated.userAddress !== auth.address) return NextResponse.json({ error: 'Not found or forbidden' }, { status: 404 });
-  return NextResponse.json(updated);
 }
 
 // DELETE /api/remittance/recurring/[id]
@@ -43,10 +40,18 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (res instanceof Response) return res;
     throw res;
   }
-  // Only allow delete if schedule belongs to user
-  const updated = updateRecurringRemittance(id, {});
-  if (!updated || updated.userAddress !== auth.address) return NextResponse.json({ error: 'Not found or forbidden' }, { status: 404 });
-  const deleted = deleteRecurringRemittance(id);
-  if (!deleted) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const existing = await recurringStore.get(id);
+  if (!existing) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+  if (existing.userAddress !== auth.address) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const deleted = await recurringStore.delete(id);
+  if (!deleted) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
   return NextResponse.json({ success: true });
 }

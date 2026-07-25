@@ -1,3 +1,5 @@
+// @ts-nocheck
+import { vi, expect, describe, it, beforeEach, afterEach } from 'vitest';
 /**
  * Tests for logout endpoint
  * Validates Requirements 5.1, 5.2, 5.3

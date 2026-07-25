@@ -1,0 +1,79 @@
+"use client";
+
+import { useEffect, RefObject } from "react";
+
+interface UseKeyboardNavigationOptions {
+  containerRef: RefObject<HTMLElement>;
+  isActive: boolean;
+  onEscape?: () => void;
+  orientation?: "horizontal" | "vertical";
+  selector?: string;
+}
+
+/**
+ * Handles keyboard navigation for lists, menus, and navigation panels.
+ * Supports: Arrow keys, Home, End, Escape
+ */
+export function useKeyboardNavigation({
+  containerRef,
+  isActive,
+  onEscape,
+  orientation = "vertical",
+  selector = '[tabindex]:not([tabindex="-1"])',
+}: UseKeyboardNavigationOptions): void {
+  useEffect(() => {
+    if (!isActive || !containerRef.current) return;
+
+    const container = containerRef.current;
+
+    const getItems = (): HTMLElement[] => {
+      return Array.from(container.querySelectorAll(selector));
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const items = getItems();
+      if (items.length === 0) return;
+
+      const currentIndex = items.findIndex((item) => item === document.activeElement);
+      if (currentIndex === -1) return;
+
+      const isHorizontal = orientation === "horizontal";
+      const nextKey = isHorizontal ? "ArrowRight" : "ArrowDown";
+      const prevKey = isHorizontal ? "ArrowLeft" : "ArrowUp";
+
+      switch (e.key) {
+        case nextKey:
+          e.preventDefault();
+          const nextIndex = (currentIndex + 1) % items.length;
+          items[nextIndex].focus();
+          break;
+
+        case prevKey:
+          e.preventDefault();
+          const prevIndex = (currentIndex - 1 + items.length) % items.length;
+          items[prevIndex].focus();
+          break;
+
+        case "Home":
+          e.preventDefault();
+          items[0].focus();
+          break;
+
+        case "End":
+          e.preventDefault();
+          items[items.length - 1].focus();
+          break;
+
+        case "Escape":
+          if (onEscape) {
+            e.preventDefault();
+            onEscape();
+          }
+          break;
+      }
+    };
+
+    container.addEventListener("keydown", handleKeyDown);
+    return () => container.removeEventListener("keydown", handleKeyDown);
+  }, [isActive, onEscape, orientation, selector, containerRef]);
+}

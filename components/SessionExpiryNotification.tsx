@@ -32,7 +32,7 @@ export default function SessionExpiryNotification({
   const isExpired = phase === 'expired';
 
   useEffect(() => {
-    if (phase !== 'none') {
+    if (phase === 'warning' || phase === 'expired') {
       primaryActionRef.current?.focus();
     }
   }, [phase]);

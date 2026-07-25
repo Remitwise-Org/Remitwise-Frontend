@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
     Menu, X, Home, 
     Send, LayoutDashboard, FileText, 
@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/lib/client/logout";
+import ShortcutTooltip from "@/components/ui/ShortcutTooltip";
 
 const MobileNav = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -51,6 +52,20 @@ const MobileNav = () => {
         }
     ];
 
+    useEffect(() => {
+  const handleEsc = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') setIsOpen(false);
+  };
+  if (isOpen) {
+    document.addEventListener('keydown', handleEsc);
+    document.body.style.overflow = 'hidden'; // Prevent background scroll
+  }
+  return () => {
+    document.removeEventListener('keydown', handleEsc);
+    document.body.style.overflow = '';
+  };
+}, [isOpen]);
+
     const isActive = (href: string) => {
         if (href === "/" || href === "/dashboard") return pathname === href;
         return pathname.startsWith(href);
@@ -63,13 +78,15 @@ const MobileNav = () => {
 
     return (
         <div className="lg:hidden">
-            <button
-                onClick={() => setIsOpen(true)}
-                className="p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
-                aria-label="Open Mobile Menu"
-            >
-                <Menu className="w-5 h-5 text-white/80" />
-            </button>
+            <ShortcutTooltip label="Open Mobile Menu" shortcut="Esc" side="left">
+              <button
+                  onClick={() => setIsOpen(true)}
+                  className="p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
+                  aria-label="Open Mobile Menu"
+              >
+                  <Menu className="w-5 h-5 text-white/80" />
+              </button>
+            </ShortcutTooltip>
 
             {/* Menu Overlay */}
             {isOpen && (
@@ -88,51 +105,53 @@ const MobileNav = () => {
                     </div>
 
                     {/* Links */}
-                    <nav className="flex-1 p-4 sm:p-6 space-y-8 pb-24">
+                    <nav aria-label="Mobile navigation" className="flex-1 p-4 sm:p-6 space-y-8 pb-24">
                         {sections.map((section, idx) => (
                             <div key={idx} className="space-y-4">
-                                <h3 className="text-xs font-bold text-white/30 uppercase tracking-[0.2rem] px-2">
+                                <h3 className="text-xs font-bold text-white/70 uppercase tracking-[0.2rem] px-2">
                                     {section.title}
                                 </h3>
-                                <div className="space-y-1">
+                                <ul className="space-y-1">
                                     {section.links.map((link) => (
-                                        <Link
-                                            key={link.name}
-                                            href={link.href}
-                                            onClick={() => setIsOpen(false)}
-                                            className={`flex items-center justify-between p-4 rounded-2xl transition-all group overflow-hidden relative
-                                                ${isActive(link.href)
-                                                    ? "bg-brand-red/10 border border-brand-red/20 shadow-[0_0_20px_rgba(215,35,35,0.1)]"
-                                                    : "hover:bg-white/5 border border-transparent"
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-4 relative z-10">
-                                                <div className={`p-2 rounded-xl transition-colors
-                                                    ${isActive(link.href) ? "bg-brand-red text-white" : "bg-white/5 text-white/40 group-hover:text-white/60"}
-                                                `}>
-                                                    {link.icon}
+                                        <li key={link.name}>
+                                            <Link
+                                                href={link.href}
+                                                aria-current={isActive(link.href) ? "page" : undefined}
+                                                onClick={() => setIsOpen(false)}
+                                                className={`flex items-center justify-between p-4 rounded-2xl transition-all group overflow-hidden relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/50
+                                                    ${isActive(link.href)
+                                                        ? "bg-brand-red/10 border border-brand-red/20 shadow-[0_0_20px_rgba(215,35,35,0.1)]"
+                                                        : "hover:bg-white/5 border border-transparent"
+                                                    }`}
+                                            >
+                                                <div className="flex items-center gap-4 relative z-10">
+                                                    <div className={`p-2 rounded-xl transition-colors
+                                                        ${isActive(link.href) ? "bg-brand-red text-white" : "bg-white/5 text-white/70 group-hover:text-white/90"}
+                                                    `}>
+                                                        {link.icon}
+                                                    </div>
+                                                    <span className={`font-semibold transition-colors
+                                                        ${isActive(link.href) ? "text-white" : "text-white/70 group-hover:text-white"}
+                                                    `}>
+                                                        {link.name}
+                                                    </span>
                                                 </div>
-                                                <span className={`font-semibold transition-colors
-                                                    ${isActive(link.href) ? "text-white" : "text-white/70 group-hover:text-white"}
-                                                `}>
-                                                    {link.name}
-                                                </span>
-                                            </div>
-                                            <ChevronRight className={`w-5 h-5 transition-transform group-hover:translate-x-1
-                                                ${isActive(link.href) ? "text-brand-red" : "text-white/20 group-hover:text-white/40"}
-                                            `} />
-                                            {isActive(link.href) && (
-                                                <span className="absolute inset-0 bg-brand-red/5 blur-xl -z-10" />
-                                            )}
-                                        </Link>
+                                                <ChevronRight className={`w-5 h-5 transition-transform group-hover:translate-x-1
+                                                    ${isActive(link.href) ? "text-brand-red" : "text-white/60 group-hover:text-white/80"}
+                                                `} />
+                                                {isActive(link.href) && (
+                                                    <span className="absolute inset-0 bg-brand-red/5 blur-xl -z-10" />
+                                                )}
+                                            </Link>
+                                        </li>
                                     ))}
-                                </div>
+                                </ul>
                             </div>
                         ))}
                     </nav>
 
                     {/* Footer / Account */}
-                    <div className="p-4 sm:p-6 border-t border-white/5 bg-brand-dark/50 backdrop-blur-xl mt-auto sticky bottom-0">
+                    <div className="p-4 sm:p-6 pb-[calc(theme(spacing.4)+env(safe-area-inset-bottom))] sm:pb-[calc(theme(spacing.6)+env(safe-area-inset-bottom))] border-t border-white/5 bg-brand-dark/50 backdrop-blur-xl mt-auto sticky bottom-0">
                         <button
                             onClick={handleLogout}
                             className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-red-600/10 to-transparent border border-red-600/20 text-red-500 font-bold tracking-wide hover:from-red-600 hover:to-red-700 hover:text-white transition-all shadow-xl shadow-red-600/5 group"

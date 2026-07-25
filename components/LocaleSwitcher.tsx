@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useClientTranslator, useClientLocale } from "@/lib/i18n/client";
+import { setLocaleCookie, type SupportedLocale } from "@/lib/i18n/cookie";
 import { Globe } from "lucide-react";
-
-type SupportedLocale = "en" | "es";
 
 export default function LocaleSwitcher() {
   const { t } = useClientTranslator();
@@ -18,8 +17,20 @@ export default function LocaleSwitcher() {
 
   const currentLocale = locales.find((l) => l.code === locale) || locales[0];
 
-  const handleLocaleChange = (newLocale: SupportedLocale) => {
-    localStorage.setItem("locale", newLocale);
+  const handleLocaleChange = async (newLocale: SupportedLocale) => {
+    // Set cookie immediately (readable by both server and client)
+    setLocaleCookie(newLocale);
+    // Persist to server-side user preferences so it survives across devices
+    try {
+      await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language: newLocale }),
+      });
+    } catch {
+      // Best-effort: cookie is already set, so locale persists locally even
+      // if the preferences API call fails.
+    }
     window.location.reload();
   };
 

@@ -55,17 +55,129 @@ All pages live under `app/` and use the Next.js App Router convention (`page.tsx
 /family                  app/family/page.tsx         — Family wallets
 /insurance               app/insurance/page.tsx      — Micro-insurance
 /transactions            app/transactions/page.tsx
-/insights                app/insights/page.tsx
-/financial-insight       app/financial-insight/page.tsx
-/financial-insights      app/financial-insights/page.tsx
+/financial-insights      app/financial-insights/page.tsx  — Canonical insights page
+/insights                → 308 redirect to /financial-insights (next.config.js)
+/financial-insight       → 308 redirect to /financial-insights (next.config.js)
+/dashboard/insight       app/dashboard/insight/page.tsx   — Dashboard mini-view (6-month trends), links out to /financial-insights
 /emergency-transfer      app/emergency-transfer/page.tsx
 /settings                app/settings/page.tsx
 /tutorial                app/tutorial/page.tsx
 /tutorial/[tutorialId]   app/tutorial/[tutorialId]/page.tsx
 /tutorial/[tutorialId]/chapter/[chapterId]  app/tutorial/[tutorialId]/chapter/[chapterId]/page.tsx
+/* (no match)           app/not-found.tsx          — 404 page with primary navigation links
 ```
 
+**404 handling:** `app/not-found.tsx` is the Next.js App Router [not-found convention](https://nextjs.org/docs/app/api-reference/file-conventions/not-found).
+It is rendered automatically whenever `notFound()` is called inside a Server Component
+or when no route matches the incoming URL.  The page renders the six primary navigation
+links (Send, Dashboard, Bills, Insurance, Family, Settings) plus a "Go to Home" call-to-
+action so users can self-recover without using the browser back button.  It uses only
+design tokens from `tailwind.config.js` — no hardcoded colours, spacing, or radii.
+
 The shared layout (`app/layout.tsx`) wraps every page with providers, fonts, and the global nav.
+
+## Deep-link support for dashboard widgets
+ 
+Each dashboard widget accepts a `?widget=<id>` query parameter so support
+teams can share a URL that lands directly on the relevant panel.
+ 
+### How it works
+ 
+1. The canonical widget IDs live in `lib/config/widgets.ts` as the
+   `WIDGET_IDS` constant. **Do not rename these values** — they are part of
+   the public URL surface and breaking changes require a migration notice.
+2. Every widget passes its ID to `useWidgetDeepLink(id)` (from
+   `lib/hooks/useWidgetDeepLink.ts`) and attaches the returned `ref` to its
+   root element. The hook also sets `id={widgetId}` on that element so native
+   fragment navigation (`#six-month-trends`) works as a fallback.
+3. On mount the hook reads `useSearchParams().get('widget')`. If the value
+   matches this widget's ID it smooth-scrolls the element into view and
+   briefly pulses a brand-red outline (`widget-highlight` CSS class defined
+   in `app/globals.css`). The pulse is suppressed for
+   `prefers-reduced-motion: reduce` users.
+### Supported widget IDs
+ 
+| `?widget=` value       | Widget                     |
+|------------------------|----------------------------|
+| `six-month-trends`     | SixMonthTrendsWidget       |
+| `money-distribution`   | MoneyDistributionWidget    |
+| `recent-transactions`  | RecentTransactionsWidget   |
+| `savings-by-goal`      | SavingsByGoalWidget        |
+ 
+### Example URLs
+ 
+```
+/dashboard?widget=six-month-trends
+/dashboard?widget=money-distribution
+/dashboard?widget=recent-transactions
+/dashboard?widget=savings-by-goal
+```
+ 
+### Adding a new widget
+ 
+1. Add a new entry to `WIDGET_IDS` in `lib/config/widgets.ts`.
+2. Call `useWidgetDeepLink(WIDGET_IDS.YOUR_WIDGET)` inside the component and
+   attach the returned `ref` + `id` prop to the root element.
+3. Add the widget to the table above and to the test in
+   `components/Dashboard/dashboard-widget-deeplink.test.tsx`.
+
+## Developer Mode
+
+Appending `?dev=1` to any URL activates Developer Mode for the current browser
+session. Two floating panels become visible:
+
+| Panel | Position | Component |
+|-------|----------|-----------|
+| Request ID | bottom-left | `components/DevRequestIdDisplay.tsx` |
+| Widget Payloads | bottom-right | `components/DevWidgetPayload.tsx` |
+
+### Widget Payload panel
+
+After every successful `GET /api/dashboard` fetch the dashboard page dispatches
+a `dev-widget-payload-updated` `CustomEvent` on `window`. The **Widget Payloads**
+panel listens for this event and renders the raw `DashboardResponse` broken down
+into five collapsible sections: `remittance`, `savings`, `bills`, `insurance`,
+and `meta`.
+
+#### Constants (all in `lib/config/developer.ts`)
+
+| Constant | Value | Purpose |
+|----------|-------|---------|
+| `DEV_MODE_QUERY_PARAM` | `"dev"` | Query param name |
+| `DEV_MODE_ENABLED_VALUE` | `"1"` | Value that activates dev mode |
+| `DEV_MODE_STORAGE_KEY` | `"dev-mode-enabled"` | sessionStorage persistence flag |
+| `DEV_MODE_WIDGET_PAYLOAD_KEY` | `"dev-widget-payload"` | sessionStorage key for last payload |
+| `DEV_WIDGET_PAYLOAD_EVENT` | `"dev-widget-payload-updated"` | CustomEvent name |
+
+#### Lifecycle
+
+1. `app/dashboard/page.tsx` — after a successful fetch, checks
+   `sessionStorage.getItem(DEV_MODE_STORAGE_KEY) === 'true'` and, if so,
+   dispatches `new CustomEvent(DEV_WIDGET_PAYLOAD_EVENT, { detail: json })`.
+2. `components/DevWidgetPayload.tsx` — listens for the event, stores the
+   serialised payload in `sessionStorage` under `DEV_MODE_WIDGET_PAYLOAD_KEY`,
+   and renders it. On mount it restores any previously stored payload so the
+   panel is useful after client-side navigation.
+
+#### Enabling / disabling
+
+```
+# Enable
+http://localhost:3000/dashboard?dev=1
+
+# Disable
+http://localhost:3000/dashboard?dev=0
+```
+
+The state is persisted in `sessionStorage` so it survives client-side route
+transitions within the same tab but is cleared when the tab is closed.
+
+**Insights consolidation:** The previously duplicated `/insights` and `/financial-insight`
+routes were merged into the single canonical `/financial-insights` page (header + summary
+overview + spending/savings, remittance trend, category donut, and top-categories widgets).
+The duplicates now issue permanent (308) redirects defined in `next.config.js`, so old
+bookmarks keep working. `/dashboard/insight` is retained as an intentional dashboard
+mini-view and links out to the canonical page rather than duplicating its charts.
 
 **Adding a new page:** create `app/<route-name>/page.tsx`. If it needs server-side auth, call `requireAuth()` from `lib/session.ts` at the top of the async server component.
 

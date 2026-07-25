@@ -24,6 +24,7 @@ import TransactionHistoryItem, {
 import { useDensity } from "@/lib/context/DensityContext";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useDebounce } from "@/lib/hooks/useDebounce";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
 import {
   serializeToCsv,
@@ -273,7 +274,15 @@ function normalizeQuery(value: string) {
   return value.trim().toLowerCase();
 }
 
+import { useSeo } from "@/lib/hooks/useSeo";
+import { useOnClickOutside } from "@/lib/hooks/useOnClickOutside";
+
 export default function TransactionsPage() {
+  useSeo({
+    title: "Transactions - RemitWise",
+    description: "Manage all your transactions and transfers",
+  });
+
   const { t } = useClientTranslator();
   const { density } = useDensity();
   const [searchQuery, setSearchQuery] = useState("");
@@ -461,14 +470,20 @@ export default function TransactionsPage() {
     <main className="min-h-screen bg-[#010101]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <div className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-4 sm:p-6 lg:p-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between tall:sticky tall:top-16 375:tall:top-20 tall:z-40 bg-[#121212] py-4 border-b border-white/[0.04]">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-red-300">
                 {t("transactionHistory.titleStandalone")}
               </p>
-              <h1 className="mt-3 text-2xl font-semibold text-white sm:text-3xl">
+              <PageHeadingLink
+                headingId="transactions-page-heading"
+                label="USDC activity"
+                wrapperClassName="mt-3 flex min-w-0 items-center gap-2"
+                headingClassName="text-2xl font-semibold text-white sm:text-3xl"
+                buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101]"
+              >
                 USDC activity
-              </h1>
+              </PageHeadingLink>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
                 {t("transactionHistory.subtitleStandalone")}
               </p>

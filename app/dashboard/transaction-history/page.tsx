@@ -1,16 +1,27 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { Download, FilterIcon, Loader2, SearchX, Inbox, X } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { Download, FilterIcon, Loader2, SearchX, Inbox, X, ChevronDown, FileText, CircleDollarSign } from "lucide-react";
 import TransactionHistoryItem from "@/components/Dashboard/TransactionHistoryItem";
 import TransactionHistoryHeader from "./components/transaction-history-header";
 import TransactionHistorySearchInput from "./components/transaction-history-search-input";
 import Button from "./components/transaction-history-button";
+import TransactionHistoryLoadMore from "./components/transaction-history-load-more";
 import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
 import { TransactionItem } from "@/lib/remittance/horizon";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useDebounce } from "@/lib/hooks/useDebounce";
-import type { Transaction, TransactionStatus } from "@/components/Dashboard/TransactionHistoryItem";
+import { useSeo } from "@/lib/hooks/useSeo";
+import { useInfiniteScrollObserver } from "@/lib/hooks/useInfiniteScrollObserver";
+import {
+  serializeToCsv,
+  serializeToJson,
+  getExportFilename,
+} from "@/lib/utils/export-serializer";
+import type {
+  Transaction,
+  TransactionStatus,
+} from "@/components/Dashboard/TransactionHistoryItem";
 
 type Direction = "all" | "sent" | "received";
 
@@ -20,7 +31,11 @@ function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-function getGroupKey(date: Date, todayStart: Date, yesterdayStart: Date): GroupKey {
+function getGroupKey(
+  date: Date,
+  todayStart: Date,
+  yesterdayStart: Date,
+): GroupKey {
   const d = startOfDay(date);
   if (d.getTime() === todayStart.getTime()) return "today";
   if (d.getTime() === yesterdayStart.getTime()) return "yesterday";
@@ -28,6 +43,11 @@ function getGroupKey(date: Date, todayStart: Date, yesterdayStart: Date): GroupK
 }
 
 const TransactionHistoryPage = () => {
+  useSeo({
+    title: "Transaction History - RemitWise",
+    description: "View all your past transaction records and details",
+  });
+
   const { t } = useClientTranslator();
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const [userAddress, setUserAddress] = useState<string | null>(null);
@@ -36,13 +56,18 @@ const TransactionHistoryPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 300);
-  const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "failed" | "pending">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "completed" | "failed" | "pending"
+  >("all");
   const [directionFilter, setDirectionFilter] = useState<Direction>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [cursor, setCursor] = useState<string | undefined>();
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const exportButtonRef = useRef<HTMLButtonElement>(null);
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
 
   const todayStart = useMemo(() => startOfDay(new Date()), []);
   const yesterdayStart = useMemo(() => {
@@ -51,23 +76,24 @@ const TransactionHistoryPage = () => {
     return startOfDay(d);
   }, []);
 
-  const groupLabels: Record<GroupKey, { label: string; helper: string }> = useMemo(
-    () => ({
-      today: {
-        label: t("transactionHistory.dateGroups.today"),
-        helper: t("transactionHistory.dateGroups.todayHelper"),
-      },
-      yesterday: {
-        label: t("transactionHistory.dateGroups.yesterday"),
-        helper: t("transactionHistory.dateGroups.yesterdayHelper"),
-      },
-      earlier: {
-        label: t("transactionHistory.dateGroups.earlier"),
-        helper: t("transactionHistory.dateGroups.earlierHelper"),
-      },
-    }),
-    [t]
-  );
+  const groupLabels: Record<GroupKey, { label: string; helper: string }> =
+    useMemo(
+      () => ({
+        today: {
+          label: t("transactionHistory.dateGroups.today"),
+          helper: t("transactionHistory.dateGroups.todayHelper"),
+        },
+        yesterday: {
+          label: t("transactionHistory.dateGroups.yesterday"),
+          helper: t("transactionHistory.dateGroups.yesterdayHelper"),
+        },
+        earlier: {
+          label: t("transactionHistory.dateGroups.earlier"),
+          helper: t("transactionHistory.dateGroups.earlierHelper"),
+        },
+      }),
+      [t],
+    );
 
   const fetchTransactions = useCallback(
     async (currentCursor?: string, reset = false) => {
@@ -111,7 +137,7 @@ const TransactionHistoryPage = () => {
         setError(
           err instanceof Error
             ? err.message
-            : t("transactionHistory.alerts.genericError")
+            : t("transactionHistory.alerts.genericError"),
         );
       } finally {
         setLoading(false);
@@ -119,18 +145,55 @@ const TransactionHistoryPage = () => {
         setLoadingMore(false);
       }
     },
-    [statusFilter, t]
+    [statusFilter, t],
   );
 
   useEffect(() => {
     fetchTransactions(undefined, true);
   }, [fetchTransactions]);
 
+  // Close export dropdown on click outside or escape key
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (exportButtonRef.current?.contains(target)) return;
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(target)) {
+        setIsExportDropdownOpen(false);
+      }
+    };
+    if (isExportDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isExportDropdownOpen]);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsExportDropdownOpen(false);
+      }
+    };
+    if (isExportDropdownOpen) {
+      document.addEventListener("keydown", handleEscape);
+    }
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isExportDropdownOpen]);
+
   const handleLoadMore = useCallback(() => {
     if (hasMore && !loadingMore) {
       fetchTransactions(cursor, false);
     }
   }, [hasMore, loadingMore, cursor, fetchTransactions]);
+
+  const { sentinelRef } = useInfiniteScrollObserver({
+    hasMore,
+    loading: loadingMore,
+    onLoadMore: handleLoadMore,
+  });
 
   const handleClearFilters = useCallback(() => {
     setSearchTerm("");
@@ -193,7 +256,15 @@ const TransactionHistoryPage = () => {
 
       return true;
     });
-  }, [transactions, debouncedSearch, statusFilter, directionFilter, dateFrom, dateTo, userAddress]);
+  }, [
+    transactions,
+    debouncedSearch,
+    statusFilter,
+    directionFilter,
+    dateFrom,
+    dateTo,
+    userAddress,
+  ]);
 
   const groupedTransactions = useMemo(() => {
     const groups: Record<GroupKey, Transaction[]> = {
@@ -205,7 +276,9 @@ const TransactionHistoryPage = () => {
     filteredTransactions.forEach((tx) => {
       const txDate = new Date(tx.date);
       const groupKey = getGroupKey(txDate, todayStart, yesterdayStart);
-      const isSent = userAddress ? tx.sender === userAddress : tx.sender !== tx.recipient;
+      const isSent = userAddress
+        ? tx.sender === userAddress
+        : tx.sender !== tx.recipient;
 
       const componentTx: Transaction = {
         id: tx.hash.slice(0, 8),
@@ -232,16 +305,63 @@ const TransactionHistoryPage = () => {
 
   const totalCount = transactions.length;
   const filteredCount = filteredTransactions.length;
+
+  const handleExport = useCallback(
+    (format: "csv" | "json") => {
+      if (filteredCount === 0) return;
+
+      const rows = Object.values(groupedTransactions)
+        .flat()
+        .map((tx) => ({
+          id: tx.id,
+          type: tx.type,
+          status: tx.status,
+          amount: tx.amount,
+          currency: tx.currency,
+          counterparty: tx.counterpartyName,
+          date: tx.date,
+          fee: tx.fee,
+        }));
+
+      let dataString = "";
+      let mimeType = "";
+      if (format === "csv") {
+        dataString = serializeToCsv(rows);
+        mimeType = "text/csv;charset=utf-8;";
+      } else {
+        dataString = serializeToJson(rows);
+        mimeType = "application/json;charset=utf-8;";
+      }
+
+      const filename = getExportFilename(format, dateFrom, dateTo);
+      const blob = new Blob([dataString], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    },
+    [groupedTransactions, dateFrom, dateTo, filteredCount],
+  );
   const isLoading = initialLoading && loading;
   const noTransactions = !isLoading && !error && totalCount === 0;
-  const noResults = !isLoading && !error && totalCount > 0 && filteredCount === 0 && hasActiveFilters;
+  const noResults =
+    !isLoading &&
+    !error &&
+    totalCount > 0 &&
+    filteredCount === 0 &&
+    hasActiveFilters;
 
   const resultsAriaLive = useMemo(() => {
-    if (filteredCount === 0) return t("transactionHistory.resultsAriaLive.none");
+    if (filteredCount === 0)
+      return t("transactionHistory.resultsAriaLive.none");
     if (filteredCount === 1) return t("transactionHistory.resultsAriaLive.one");
     return t("transactionHistory.resultsAriaLive.many").replace(
       "{{count}}",
-      String(filteredCount)
+      String(filteredCount),
     );
   }, [filteredCount, t]);
 
@@ -253,7 +373,7 @@ const TransactionHistoryPage = () => {
           totalCount > 0
             ? t("transactionHistory.resultsCount").replace(
                 "{{count}}",
-                String(totalCount)
+                String(totalCount),
               )
             : t("transactionHistory.resultsCountZero")
         }
@@ -277,46 +397,63 @@ const TransactionHistoryPage = () => {
                 el?.scrollIntoView({ behavior: "smooth" });
               }}
             />
-            <Button
-              icon={<Download size={17} className="text-white" />}
-              text={t("transactionHistory.export")}
-              onclick={() => {
-                const rows = Object.values(groupedTransactions)
-                  .flat()
-                  .map((tx) => ({
-                    id: tx.id,
-                    hash: tx.hash || "",
-                    type: tx.type,
-                    status: tx.status,
-                    amount: tx.amount,
-                    currency: tx.currency,
-                    counterparty: tx.counterpartyName,
-                    date: tx.date,
-                    fee: tx.fee,
-                  }));
-
-                if (rows.length === 0) return;
-
-                const csv = [
-                  Object.keys(rows[0]).join(","),
-                  ...rows.map((row) =>
-                    Object.values(row)
-                      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
-                      .join(",")
-                  ),
-                ].join("\n");
-
-                const blob = new Blob([csv], {
-                  type: "text/csv;charset=utf-8",
-                });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.href = url;
-                link.download = "remitwise-transactions.csv";
-                link.click();
-                URL.revokeObjectURL(url);
-              }}
-            />
+            <div className="relative">
+              <button
+                ref={exportButtonRef}
+                type="button"
+                onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+                disabled={filteredCount === 0}
+                aria-expanded={isExportDropdownOpen}
+                aria-haspopup="true"
+                aria-label={t("transactionHistory.export")}
+                className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[14px] border border-[#FFFFFF14] bg-white/5 px-4 py-3 text-center transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101] disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:min-w-[148px]"
+              >
+                <Download size={17} className="text-white" />
+                <span className="whitespace-normal break-words text-center text-sm font-semibold leading-5 tracking-[-0.2px] text-white sm:text-base sm:leading-6">
+                  {t("transactionHistory.export")}
+                </span>
+                <ChevronDown className={`h-4 w-4 text-white transition-transform duration-200 ${isExportDropdownOpen ? "rotate-180" : ""}`} />
+              </button>
+              {isExportDropdownOpen && filteredCount > 0 && (
+                <div
+                  ref={exportDropdownRef}
+                  className="absolute right-0 mt-2 w-64 rounded-xl border border-[#FFFFFF14] bg-[#121212] p-2 shadow-xl z-50"
+                  role="menu"
+                  aria-label={t("transactionHistory.exportFormats", "Export formats")}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleExport("csv");
+                      setIsExportDropdownOpen(false);
+                    }}
+                    className="flex w-full items-start gap-3 rounded-lg p-2 text-left transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                    role="menuitem"
+                  >
+                    <FileText className="mt-0.5 h-4 w-4 text-red-400 shrink-0" />
+                    <div>
+                      <div className="text-sm font-medium text-white">Export as CSV</div>
+                      <div className="text-xs text-gray-500">For spreadsheets and reports</div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleExport("json");
+                      setIsExportDropdownOpen(false);
+                    }}
+                    className="flex w-full items-start gap-3 rounded-lg p-2 text-left transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                    role="menuitem"
+                  >
+                    <CircleDollarSign className="mt-0.5 h-4 w-4 text-red-400 shrink-0" />
+                    <div>
+                      <div className="text-sm font-medium text-white">Export as JSON</div>
+                      <div className="text-xs text-gray-500">For developers and raw data</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -356,7 +493,7 @@ const TransactionHistoryPage = () => {
                   >
                     {t(`transactionHistory.tabs.${status}`)}
                   </button>
-                )
+                ),
               )}
             </div>
           </fieldset>
@@ -396,10 +533,7 @@ const TransactionHistoryPage = () => {
             </legend>
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="date-from"
-                  className="text-xs text-gray-400"
-                >
+                <label htmlFor="date-from" className="text-xs text-gray-400">
                   {t("transactionHistory.dateRange.from")}
                 </label>
                 <input
@@ -411,10 +545,7 @@ const TransactionHistoryPage = () => {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="date-to"
-                  className="text-xs text-gray-400"
-                >
+                <label htmlFor="date-to" className="text-xs text-gray-400">
                   {t("transactionHistory.dateRange.to")}
                 </label>
                 <input
@@ -452,7 +583,7 @@ const TransactionHistoryPage = () => {
                 <ActivePill
                   label={t("transactionHistory.activeFilters.status").replace(
                     "{{status}}",
-                    t(`transactionHistory.tabs.${statusFilter}`)
+                    t(`transactionHistory.tabs.${statusFilter}`),
                   )}
                   onRemove={() => setStatusFilter("all")}
                 />
@@ -463,7 +594,7 @@ const TransactionHistoryPage = () => {
                     "{{type}}",
                     directionFilter === "sent"
                       ? t("transactionHistory.typeFilter.send")
-                      : t("transactionHistory.typeFilter.received")
+                      : t("transactionHistory.typeFilter.received"),
                   )}
                   onRemove={() => setDirectionFilter("all")}
                 />
@@ -472,7 +603,7 @@ const TransactionHistoryPage = () => {
                 <ActivePill
                   label={t("transactionHistory.activeFilters.search").replace(
                     "{{query}}",
-                    debouncedSearch
+                    debouncedSearch,
                   )}
                   onRemove={() => setSearchTerm("")}
                 />
@@ -498,11 +629,7 @@ const TransactionHistoryPage = () => {
         </div>
 
         {/* Results Count (aria-live) */}
-        <div
-          aria-live="polite"
-          aria-atomic="true"
-          className="sr-only"
-        >
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
           {resultsAriaLive}
         </div>
 
@@ -524,8 +651,48 @@ const TransactionHistoryPage = () => {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="mt-8 flex justify-center">
-            <Loader2 className="w-8 h-8 text-[#FF4B26] animate-spin" />
+          <div className="mt-8 space-y-8">
+            {["today", "yesterday", "earlier"].map((group) => (
+              <div key={group}>
+                <div className="mb-3 flex items-center justify-between border-b border-[#FFFFFF14] pb-3">
+                  <div className="h-6 w-24 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                  <div className="h-4 w-12 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                </div>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((row) => (
+                    <div
+                      key={row}
+                      className="border border-[#FFFFFF14] bg-gradient-to-t from-[#0A0A0A] to-[#0F0F0F] rounded-2xl p-6"
+                    >
+                      <div className="flex gap-4">
+                        <div className="w-12 h-12 rounded-xl shrink-0 bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <div className="h-5 w-28 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                              <div className="h-4 w-12 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                            </div>
+                            <div className="h-6 w-[90px] rounded-full bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            {[1, 2, 3, 4].map((col) => (
+                              <div key={col} className="space-y-1.5">
+                                <div className="h-3 w-14 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                                <div className="h-5 w-24 rounded bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex flex-wrap gap-3">
+                            <div className="h-[38px] w-[120px] rounded-lg bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                            <div className="h-[38px] w-[140px] rounded-lg bg-gradient-to-r from-white/5 via-white/10 to-white/5 bg-[length:200%_100%] animate-shimmer" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -564,7 +731,10 @@ const TransactionHistoryPage = () => {
                 if (txs.length === 0) return null;
 
                 return (
-                  <section key={groupKey} aria-labelledby={`group-${groupKey}-heading`}>
+                  <section
+                    key={groupKey}
+                    aria-labelledby={`group-${groupKey}-heading`}
+                  >
                     <div className="mb-3 flex items-center justify-between border-b border-[#FFFFFF14] pb-3">
                       <h2
                         id={`group-${groupKey}-heading`}
@@ -577,50 +747,36 @@ const TransactionHistoryPage = () => {
                         {txs.length === 1
                           ? t("transactionHistory.results_one").replace(
                               "{{count}}",
-                              "1"
+                              "1",
                             )
                           : t("transactionHistory.results_many").replace(
                               "{{count}}",
-                              String(txs.length)
+                              String(txs.length),
                             )}
                       </span>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {txs.map((tx) => (
-                        <TransactionHistoryItem
-                          key={tx.hash || tx.id}
-                          transaction={tx}
-                        />
+                        <TransactionHistoryItem key={tx.id} transaction={tx} />
                       ))}
                     </div>
                   </section>
                 );
-              }
+              },
             )}
           </div>
         )}
 
-        {/* Load More Button */}
+        {/* Load More: sentinel-driven auto-load with an always-present
+            manual button fallback (see TransactionHistoryLoadMore) */}
         {hasMore && !loading && filteredCount > 0 && (
-          <div className="mt-8 text-center">
-            <button
-              type="button"
-              onClick={handleLoadMore}
-              disabled={loadingMore}
-              className="min-h-[48px] rounded-xl bg-[#FF4B26] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#FF4B26]/80 disabled:opacity-50 disabled:cursor-not-allowed sm:text-base"
-            >
-              {loadingMore
-                ? "Loading..."
-                : t("transactionHistory.loadMore")}
-            </button>
-          </div>
-        )}
-
-        {/* Loading More Indicator */}
-        {loadingMore && filteredCount > 0 && (
-          <div className="mt-4 flex justify-center">
-            <Loader2 className="w-6 h-6 text-[#FF4B26] animate-spin" />
-          </div>
+          <TransactionHistoryLoadMore
+            loading={loadingMore}
+            onLoadMore={handleLoadMore}
+            sentinelRef={sentinelRef}
+            label={t("transactionHistory.loadMore")}
+            loadingLabel="Loading..."
+          />
         )}
       </div>
     </main>

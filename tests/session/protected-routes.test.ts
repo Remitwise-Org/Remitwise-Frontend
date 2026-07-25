@@ -1,3 +1,5 @@
+// @ts-nocheck
+import { vi, expect, describe, it, beforeEach, afterEach } from 'vitest';
 /**
  * Tests for example protected routes demonstrating auth middleware patterns
  */

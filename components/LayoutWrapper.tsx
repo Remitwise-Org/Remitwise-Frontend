@@ -24,11 +24,11 @@ export default function LayoutWrapper({
   return (
     <RootErrorBoundary>
       <Header />
-      <div className="pt-20">
+      <main className="overflow-x-hidden pt-16 375:pt-20">
         {children}
         <FinalCallToAction />
         <Footer />
-      </div>
+      </main>
     </RootErrorBoundary>
   );
 }

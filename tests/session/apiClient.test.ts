@@ -2,26 +2,19 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { apiClient } from '../../lib/client/apiClient';
 import { sessionHandler } from '../../lib/client/sessionHandler';
 
-// Mock the global fetch
-const originalFetch = global.fetch;
-
-// Mock window object
-const originalWindow = global.window;
-
 describe('apiClient', () => {
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks();
-    
+
     // Create a mock fetch that we can track
-    global.fetch = vi.fn();
-    
-    // Mock window
-    global.window = {
-      location: { pathname: '/current-path' },
-      dispatchEvent: vi.fn(),
-    } as any;
-    
+    vi.stubGlobal('fetch', vi.fn());
+
+    // Note: the jsdom test environment already provides a real `window` (with
+    // `location` and `dispatchEvent`), so we don't stub it. The session-expiry
+    // path that reads `window.location.pathname` runs through the mocked
+    // `handleSessionExpiry` below, so the concrete pathname value is irrelevant.
+
     // Mock the sessionHandler methods
     vi.spyOn(sessionHandler, 'isSessionExpired').mockResolvedValue(false);
     vi.spyOn(sessionHandler, 'refreshSession').mockResolvedValue(true);
@@ -29,8 +22,8 @@ describe('apiClient', () => {
   });
 
   afterEach(() => {
-    global.fetch = originalFetch;
-    global.window = originalWindow;
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('should return response normally on 200 OK', async () => {
@@ -40,7 +33,12 @@ describe('apiClient', () => {
     const response = await apiClient.get('/api/test');
     
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(global.fetch).toHaveBeenCalledWith('/api/test', { method: 'GET' });
+    // apiClient now injects a timeout AbortSignal on every request, so assert on
+    // the method rather than exact-matching the options object.
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/test',
+      expect.objectContaining({ method: 'GET', signal: expect.anything() })
+    );
     expect(response).toBe(mockResponse);
     expect(sessionHandler.isSessionExpired).toHaveBeenCalledWith(mockResponse);
     expect(sessionHandler.refreshSession).not.toHaveBeenCalled();

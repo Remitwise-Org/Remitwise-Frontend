@@ -17,7 +17,7 @@ export interface PaginatedResult<T> {
  * Validates pagination parameters
  */
 export function validatePaginationParams(params: PaginationParams): { limit: number; cursor?: string } {
-  let limit = params.limit ? Math.min(Math.max(1, params.limit), 100) : 20;
+  let limit = params.limit !== undefined ? Math.min(Math.max(1, params.limit), 100) : 20;
   const cursor = params.cursor;
 
   return { limit, cursor };

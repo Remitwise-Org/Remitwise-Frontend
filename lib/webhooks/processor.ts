@@ -1,4 +1,4 @@
-import prisma from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { recordAuditEvent } from '@/lib/admin/audit';
 
 export interface WebhookEventPayload {

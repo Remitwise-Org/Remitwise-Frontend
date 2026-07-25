@@ -49,6 +49,9 @@ type ActionState = {
 };
 ```
 
+These fields drive standard form error states, success states, and disabled states. For more details on implementing these visual treatments, see the [Frontend Component States Guide](COMPONENT_STATES.md).
+
+
 ## Abort / cancel behaviour
 
 - **Re-submit**: calling the action while a request is already in-flight aborts
@@ -89,3 +92,9 @@ npx vitest run lib/hooks/useFormAction.test.ts --coverage
 ```
 
 Coverage target: ≥ 90 % branches.
+
+## Related Documentation
+
+- [Form Patterns](FORM_PATTERNS.md) — Comprehensive guide on inline vs blocking validation, autosave, and submit affordances.
+- [Component States](COMPONENT_STATES.md) — Visual design specifications for loading, error, and disabled states.
+

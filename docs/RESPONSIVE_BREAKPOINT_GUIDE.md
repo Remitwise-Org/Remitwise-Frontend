@@ -144,6 +144,21 @@ For each page/component:
   - [ ] Max content width
   - [ ] Sidebar layouts work
 
+## Critical Screen Audit
+
+The automated responsive audit covers these operator-facing routes at 320px,
+375px, and 1440px:
+
+- `/send`
+- `/dashboard`
+- `/transactions`
+- `/bills`
+- `/settings`
+
+Each route must keep `documentElement.scrollWidth` within the viewport and keep
+visible links/buttons fully inside the viewport. CTA text should wrap or use the
+available grid space instead of truncating at a fixed width.
+
 ## Common Mistakes to Avoid
 
 ❌ **Don't:**
@@ -213,7 +228,9 @@ className="text-sm 375:text-base"
 - [Global CSS Utilities](../app/globals.css)
 - [Full Documentation](./tailwind-extensions.md)
 - [Implementation Summary](./RESPONSIVE_AUDIT_IMPLEMENTATION.md)
+- [Responsive Testing Guide](./RESPONSIVE_TESTING.md)
 - [Automated Tests](../tests/e2e/responsive-split-savings.spec.ts)
+
 
 ---
 

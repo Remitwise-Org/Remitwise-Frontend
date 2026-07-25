@@ -1,3 +1,5 @@
+// @ts-nocheck
+import { vi, expect, describe, it, beforeEach, afterEach } from 'vitest';
 /**
  * Unit tests for session configuration handling
  * Tests Requirements 6.1, 6.2, 6.3, 6.4, 6.5

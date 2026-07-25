@@ -1,11 +1,12 @@
+import { NextRequest } from "next/server";
 import { NextResponse } from 'next/server'
 import { getTranslator } from '../../../../../../lib/i18n'
 import { buildCancelBillTx } from '../../../../../../lib/contracts/bill-payments'
 import { StrKey } from '@stellar/stellar-sdk'
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const t = getTranslator(req.headers.get('accept-language'));
+    const t = getTranslator(req);
 
     const caller = req.headers.get('x-user')
     if (!caller || !StrKey.isValidEd25519PublicKey(caller)) {
@@ -28,7 +29,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const xdr = await buildCancelBillTx(caller, billId)
     return NextResponse.json({ xdr })
   } catch (err: any) {
-    const t = getTranslator(req.headers.get('accept-language'));
+    const t = getTranslator(req);
     return NextResponse.json({ error: err?.message || t('errors.internal_server_error') }, { status: 500 })
   }
 }

@@ -23,7 +23,7 @@ export function initializeWebhookHandlers() {
       switch (event_type) {
         case 'deposit_completed':
           if (txId) {
-            updateAnchorFlowStatusByTransactionId(txId, 'completed');
+            await updateAnchorFlowStatusByTransactionId(txId, 'completed');
           }
           recordAuditEvent({
             type: 'anchor.webhook.deposit_completed',
@@ -36,7 +36,7 @@ export function initializeWebhookHandlers() {
 
         case 'withdrawal_failed':
           if (txId) {
-            updateAnchorFlowStatusByTransactionId(txId, 'failed');
+            await updateAnchorFlowStatusByTransactionId(txId, 'failed');
           }
           recordAuditEvent({
             type: 'anchor.webhook.withdrawal_failed',

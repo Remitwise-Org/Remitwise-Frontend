@@ -2,20 +2,30 @@
 
 Frontend application for the RemitWise remittance and financial planning platform.
 
-> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map.
+> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers. For data fetching and caching patterns, see [docs/CACHE_STRATEGY.md](docs/CACHE_STRATEGY.md).
 
 ## Overview
 
 This is a Next.js-based frontend skeleton that provides the UI structure for all RemitWise features. The application is built with:
 
+- [Prisma data model and durability boundary](./docs/data-model.md)
+- [Elevation and shadow guidance](./docs/ELEVATION.md)
+- [Period lifecycle and state machine](./docs/PERIOD_LIFECYCLE.md)
+- [Internal jargon glossary (contributors)](./docs/GLOSSARY.md)
+
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Utility-first styling
-- **Lucide React** - Icon library
+- **Lucide React** - Icon library — see [docs/ICON_SYSTEM.md](docs/ICON_SYSTEM.md) for usage, sizing, and adding custom icons
 
 ## Features (Placeholders)
 
 The frontend includes placeholder pages and components for:
+
+### Shared Components
+
+- **AddressDisplay**: A component for displaying long strings like Stellar addresses, featuring truncation, a copy-to-clipboard button, and a tooltip showing the full address on hover.
+- **Global Search**: The `/search?q=...` route surfaces matching invoice, address, and settings results from the same search vocabulary used in the command palette.
 
 1. **Dashboard** - Overview of remittances, savings, bills, and insurance
 2. **Send Money** - Remittance sending interface with automatic split preview
@@ -27,7 +37,11 @@ The frontend includes placeholder pages and components for:
 
 ## Loading States
 
-Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners.
+Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners. For detailed guidelines and implementation patterns on all UI states (Default, Error, Disabled, and Loading), see [docs/component-states.md](docs/component-states.md).
+
+## Performance Budgets
+
+Every page route has a per-route load-time budget based on its user impact tier. These budgets are enforced in CI via Lighthouse E2E tests and monitored in production through structured request logs. For the full route-to-budget map, measurement approach, and how to add budgets for new routes, see [docs/LOAD_TIME_BUDGETS.md](docs/LOAD_TIME_BUDGETS.md).
 
 ## Sentry
 
@@ -46,6 +60,8 @@ PII scrubbing is applied before events leave the app:
 - Edge events stay minimal and do not attach replay or extra scrubbing.
 
 Keep the auth token out of the repo and store it only in CI secrets.
+
+For more details on tracking, cookies, and telemetry configuration, see the [Tracking and Opt-Out Guide](docs/tracking-and-opt-out.md).
 
 ## Getting Started
 
@@ -69,7 +85,7 @@ npm install
 
 # Setup Database
 # 1. Ensure you have `.env` file with `DATABASE_URL="file:./dev.db"`
-# Note: For serverless environments (like Vercel), connection pooling limits (default min 1, max 10) 
+# Note: For serverless environments (like Vercel), connection pooling limits (default min 1, max 10)
 # and timeouts (5s) are automatically configured on the Prisma DB client.
 # 2. Run initial Prisma migration
 npx prisma migrate dev
@@ -85,14 +101,37 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ```bash
 # Build for production
 npm run build
+npm run generate:types # Generate TypeScript types from OpenAPI spec
 
 # Start production server
 npm start
 ```
 
-### Testing
+### Testing Toolchain
 
-The project includes unit tests and integration tests for API routes.
+This project uses a multi-tool testing strategy. Note that **Jest is not used** in this repository.
+
+#### Testing Frameworks Mapping
+
+- **Node.js Native Test Runner (`node:test`)**
+  - Used for: `.cjs` files
+  - Commands: `npm run test:unit:node`, `npm run test:integration`
+
+- **Vitest**
+  - Used for: `.ts` / `.tsx` files (Unit & component testing)
+  - Commands: `npm run test:unit:vitest`, `npm run test:coverage`
+
+- **Playwright**
+  - Used for: End-to-End (E2E) testing
+  - Command: `npm run test:e2e`
+
+- **Property Tests**
+  - Used for: Property-based testing
+  - Command: `npm run test:property`
+
+- **Image Alt Attribute Accessibility Check**
+  - Used for: Build-time enforcement ensuring no `<img>` or `<Image />` tag lacks an `alt` attribute
+  - Command: `npm run check:img-alt` (wired into `npm run lint` and `npm run prebuild`)
 
 > **Full guide:** see [docs/testing.md](docs/testing.md) for the complete multi-runner
 > reference — when to use Vitest vs. node:test vs. Playwright, a map of every
@@ -101,31 +140,32 @@ The project includes unit tests and integration tests for API routes.
 
 #### Running Tests
 
+It is important to understand the difference between `npm run test` and `npm run test:coverage`:
+
+- `npm run test` (Limited): Runs a standard fast suite of tests (typically limited to unit tests).
+- `npm run test:coverage` (Broad): Uses Vitest to run the broader test suite (including all `.test.ts` files) and generates a comprehensive code coverage report. Contributors should generally use this to ensure full coverage.
+
 ```bash
-# Run all tests (unit + integration)
+# Run standard unit tests
 npm test
 
-# Run unit tests only
-npm run test:unit
+# Run full Vitest suite with coverage
+npm run test:coverage
 
-# Run integration tests only
+# Run integration tests
 npm run test:integration
-
-# Run integration tests in watch mode
-npm run test:integration:watch
 ```
 
 #### Unit Tests
 
-- **Location**: `tests/unit/`
-- **Command**: `npm run test:unit`
-- **Framework**: Node.js built-in `test` module
+- **Location**: `tests/unit/` and `tests/session/`
+- **Command**: `npm run test:unit` (runs both Node and Vitest)
 
 #### Integration Tests
 
 - **Location**: `tests/integration/`
 - **Command**: `npm run test:integration`
-- **Framework**: Node.js `node:test` + direct route handler calls
+- **Framework**: `node:test` + direct route handler calls
 - **Database**: In-memory SQLite (fast, isolated)
 - **Speed**: Sub-10 second execution
 
@@ -167,6 +207,9 @@ To run the Playwright end-to-end tests for authentication and protected routes:
 npm run test:e2e
 ```
 
+For validating responsive breakpoints and layouts across different viewports, see the [Responsive Testing Guide](docs/RESPONSIVE_TESTING.md).
+
+
 ## Project Structure
 
 ```
@@ -188,16 +231,107 @@ remitwise-frontend/
 │   └── auth.ts              # Auth middleware
 ├── docs/                    # Documentation
 │   ├── API_ROUTES.md        # API routes documentation
-│   └── contract-cache.md    # Contract caching architecture and guidelines
+│   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
+│   ├── contract-cache.md    # Contract caching architecture and guidelines
+│   ├── frame-budget-rules.md    # Frame budget performance guidelines
+│   └── RESPONSIVE_TESTING.md # Guide to verifying responsive breakpoints and layout behavior
 ├── public/                  # Static assets
 └── package.json
 ```
+
+The full keyboard shortcut reference lives at [docs/KEYBOARD_SHORTCUTS.md](docs/KEYBOARD_SHORTCUTS.md) — every registered shortcut, where it's handled, and how to add or change one.
 
 ## API Routes
 
 See [API Routes Documentation](./docs/API_ROUTES.md) for details on authentication and available endpoints.
 
+Every route handler under `app/api/` is composed from a small set of reusable decorators (`withAuth`, `validatedRoute`, `withApiErrorHandler`). See [docs/api-route-decorators.md](./docs/api-route-decorators.md) for what each one does and when to use it.
+
 For authenticated browser-side requests, use the shared client API layer documented in [docs/client-api.md](docs/client-api.md). That guide covers when to use `apiClient` instead of raw `fetch`, the `401 -> refresh -> retry once` flow, session-expiry UI surfacing, and logout behavior.
+
+For server-side and third-party requests that need automatic abort on deadline, use the `fetchWithTimeout` wrapper documented in [docs/fetch-timeout.md](docs/fetch-timeout.md). Each endpoint declares its timeout in `lib/config/fetch-timeouts.ts`; the wrapper aborts and throws a `TimeoutError` if the deadline is exceeded. `apiClient` uses the same design for browser requests.
+
+### Transaction Export
+
+Both the standalone **Transactions** page (`/transactions`) and the dashboard
+**Transaction History** page (`/dashboard/transaction-history`) support
+exporting the currently filtered transaction list as **CSV** or **JSON**.
+Click the Export button to open a format picker (CSV for spreadsheets, JSON
+for programmatic consumption). Exports are capped at **10,000 rows** and
+include the filter context (date range) in the download filename.
+
+Route-level page titles now use a shared deep-link heading pattern. Use the shared heading primitive with a stable route-specific id whenever you add or update a primary page title. See [docs/page-heading-deeplinks.md](docs/page-heading-deeplinks.md).
+
+The `/transactions` view only ever lists user-initiated interactions (sends, splits, bill payments, etc.) and its type filter is how a reader narrows that list. See [docs/transactions-user-interaction-filter.md](docs/transactions-user-interaction-filter.md) for the model and what to update if a system-generated entry type is ever added.
+
+## Per-Route SEO Metadata (`useSeo`)
+
+Each client-side route can define its own `<title>` and `<meta name="description">` using the `useSeo` hook.
+
+### Quick Start
+
+```tsx
+"use client";
+
+import { useSeo } from "@/lib/hooks/useSeo";
+
+export default function MyPage() {
+  useSeo({
+    title: "My Page | RemitWise",
+    description: "A short description of what this page does.",
+  });
+
+  return <main>{/* page content */}</main>;
+}
+```
+
+### Default Metadata
+
+Defaults are defined in [`lib/config/seo.ts`](./lib/config/seo.ts):
+
+```ts
+export const DEFAULT_SEO = {
+  title: "RemitWise - Smart Remittance & Financial Planning",
+  description:
+    "A remittance app that helps families save, plan, and protect — not just send money.",
+};
+```
+
+If `title` or `description` is omitted from `useSeo(...)`, the corresponding default is used automatically.
+
+### Behaviour
+
+| Scenario                                         | Result                                        |
+| ------------------------------------------------ | --------------------------------------------- |
+| `useSeo({ title, description })`                 | Sets both title and description               |
+| `useSeo({ title })`                              | Sets title; uses `DEFAULT_SEO.description`    |
+| `useSeo()`                                       | Uses both defaults                            |
+| Component unmounts                               | Reverts to previous route's SEO (stack-based) |
+| Layout already has a `<meta name="description">` | Reuses it — no duplicates created             |
+
+### Server Components
+
+Async Server Components (e.g. dynamic `[tutorialId]` routes) use Next.js's built-in [`generateMetadata`](https://nextjs.org/docs/app/api-reference/functions/generate-metadata) export instead:
+
+```ts
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const { id } = await params;
+  return { title: `${id} | RemitWise`, description: "..." };
+}
+```
+
+The `api/docs/page.tsx` route uses a static `export const metadata` export for the same reason.
+
+### Tests
+
+Unit tests live in [`tests/unit/hooks/useSeo.test.tsx`](./tests/unit/hooks/useSeo.test.tsx) and cover:
+
+- Title updates correctly
+- Description updates correctly
+- Navigation updates metadata
+- Default metadata is used when values are omitted
+- No duplicate `<meta>` tags are created
+- Stack-based cleanup on unmount
 
 **Quick Reference:**
 
@@ -319,7 +453,7 @@ Cross-Origin Resource Sharing (CORS) is configured to allow requests from the fr
 
 - **Allowed Origins**: Requests from `NEXT_PUBLIC_APP_URL` are allowed (or same-origin)
 - **Allowed Methods**: GET, POST, PUT, DELETE, PATCH, OPTIONS
-- **Allowed Headers**: Content-Type, Authorization, X-Requested-With
+- **Allowed Headers**: Content-Type, Authorization, X-Request-ID, X-Requested-With
 - **Credentials**: Allowed for same-origin requests
 - **Preflight Handling**: OPTIONS requests return 204 No Content with appropriate CORS headers
 
@@ -343,7 +477,7 @@ curl -i -X OPTIONS http://localhost:3000/api/health \
 # Response includes:
 # Access-Control-Allow-Origin: http://localhost:3000
 # Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
-# Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With
+# Access-Control-Allow-Headers: Content-Type, Authorization, X-Request-ID, X-Requested-With
 ```
 
 #### Security Headers
@@ -451,8 +585,8 @@ RemitWise uses wallet-based authentication with the following flow:
 
 The application interacts with the following Soroban smart contracts on Stellar:
 
-| Contract         | Purpose                       | Preferred Environment Variable                    |
-| ---------------- | ----------------------------- | ------------------------------------------------- |
+| Contract         | Purpose                       | Preferred Environment Variable                  |
+| ---------------- | ----------------------------- | ----------------------------------------------- |
 | Remittance Split | Automatic money allocation    | `REMITTANCE_SPLIT_CONTRACT_ID_TESTNET/_MAINNET` |
 | Savings Goals    | Goal-based savings management | `SAVINGS_GOALS_CONTRACT_ID_TESTNET/_MAINNET`    |
 | Bill Payments    | Bill tracking and payments    | `BILL_PAYMENTS_CONTRACT_ID_TESTNET/_MAINNET`    |
@@ -601,7 +735,13 @@ GET  /api/admin/audit         # Admin-only audit events
 - All forms are currently disabled (placeholders)
 - UI uses a blue/indigo color scheme
 - Responsive design with mobile-first approach
+- Motion vocabulary and standard animations are documented in [docs/MOTION.md](docs/MOTION.md).
 - Components are structured for easy integration
+
+Design token reference and migration guides:
+
+- [docs/THEMING.md](docs/THEMING.md) — full catalogue of CSS custom properties, Tailwind color, spacing, focus-ring, and animation tokens with semantic roles and usage examples.
+- [docs/DESIGN_TOKEN_MIGRATION.md](docs/DESIGN_TOKEN_MIGRATION.md) — step-by-step guide for safely renaming or deprecating a token, including a PR checklist.
 
 ## API Endpoints
 
@@ -726,18 +866,16 @@ Notes:
 
 ## Stellar TOML discovery
 
-RemitWise exposes wallet and anchor discovery support through the Stellar TOML standard.
+RemitWise exposes wallet and anchor discovery support through the Stellar TOML standard (SEP-1).
 
 - `GET /.well-known/stellar.toml`
-- optional redirect via `STELLAR_TOML_REDIRECT`
+- Optional redirect via `STELLAR_TOML_REDIRECT`
 
-The endpoint returns a valid Stellar TOML file with discovery fields such as:
+The endpoint returns a valid Stellar TOML file (complying with SEP-1 standards) with the required `Access-Control-Allow-Origin: *` CORS header and structured tables:
 
-- `DOCUMENTATION`
-- `SIGNING_KEY`
-- `TRANSFER_SERVER`
-- `WEB_AUTH_ENDPOINT`
-- `KYC_SERVER`
+- **Global Fields**: `VERSION`, `NETWORK_PASSPHRASE` (resolved dynamically to match active environment from `lib/contracts/network-resolution.ts`), and `SIGNING_KEY`.
+- **Anchor & Server Endpoints**: `TRANSFER_SERVER`, `WEB_AUTH_ENDPOINT`, and `KYC_SERVER`.
+- **`[DOCUMENTATION]` Table**: Legal/org identification fields including `ORG_NAME`, `ORG_URL`, `ORG_DESCRIPTION`, and `DOCUMENTATION` (direct URL of the TOML).
 
 To configure a custom domain, set environment variables in production or host a static TOML at the domain root. If the domain is not ready yet, use `STELLAR_TOML_REDIRECT` to point wallets to a hosted TOML.
 
@@ -749,12 +887,16 @@ Example environment variables:
 - `STELLAR_TRANSFER_SERVER`
 - `STELLAR_WEB_AUTH_ENDPOINT`
 - `STELLAR_KYC_SERVER`
+- `STELLAR_ORG_NAME`
+- `STELLAR_ORG_URL`
+- `STELLAR_ORG_DESCRIPTION`
+- `STELLAR_NETWORK_PASSPHRASE` (optional override)
 
 ## API Discovery
 
 RemitWise exposes an OpenAPI discovery endpoint:
 
- /api/.well-known/openapi
+/api/.well-known/openapi
 
 This allows integrators and wallets to automatically discover
 the RemitWise API specification.
@@ -764,6 +906,7 @@ the RemitWise API specification.
 Sentry error monitoring is integrated for client, server, and edge runtimes.
 
 **Required environment variables** (see `.env.example`):
+
 - `NEXT_PUBLIC_SENTRY_DSN` — public DSN for browser and client
 - `SENTRY_DSN` — server/edge DSN (same value)
 - `SENTRY_ORG`, `SENTRY_PROJECT` — project identifiers for source map uploads
@@ -772,17 +915,47 @@ Sentry error monitoring is integrated for client, server, and edge runtimes.
 - `NEXT_PUBLIC_APP_ENV` — `development` | `staging` | `production`
 
 **Sample rates**:
+
 - `NEXT_PUBLIC_APP_ENV=production` sets lower rates: `tracesSampleRate: 0.1`, `replaysSessionSampleRate: 0.05`
 - Non-production uses higher rates for visibility
 
 **Tunnel route**:
+
 - All Sentry requests are proxied through `/monitoring` (configured in `next.config.js`) to avoid ad blockers.
 
 **PII scrubbing**:
+
 - Client (`scrubStellarPII`): Stellar addresses (`G[A-Z2-7]{55}`) and amounts (`\d+ XLM|USDC|USD`) are replaced before send.
 - Server (`scrubServerPII`): same + `iron-session` tokens are redacted.
 - Scrubbers live inside each config file for edge compatibility.
 
 **Source maps**:
+
 - Uploaded during build when `SENTRY_AUTH_TOKEN` and CI are present.
 - `hideSourceMaps: true` prevents browser exposure.
+
+## Consistent Loading State Theme Customization
+
+To enable downstream operators, contracts, and frontend engineers to style the loading state consistently, all skeletons expose custom CSS properties and semantic hooks:
+
+- **CSS Variables**: Exposes `--skeleton-bg-start`, `--skeleton-bg-via`, and `--skeleton-bg-end` to customize the shimmer gradient colors.
+- **Classes & Attributes**: Every skeleton renders with specific selector hooks (e.g. `.loading-skeleton` / `data-loading-state="skeleton"`).
+
+For full details, selectors list, and examples, see the [Frontend Component States Guide](docs/component-states.md).
+
+## SEO & Social Sharing Preview
+
+RemitWise includes pre-configured Open Graph and Twitter Card metadata so that sharing the app link on platforms like Slack, Twitter, and Facebook renders a rich media preview.
+
+**Configuration File**:
+- Constants are maintained centrally in `lib/config/metadata.ts`.
+- Edit `METADATA_CONFIG` to customize default title, description, application URL, and image specs.
+
+**Metadata Fields**:
+- `metadataBase` resolves relative image/page URLs to absolute paths.
+- `openGraph` properties (`og:title`, `og:description`, `og:url`, `og:image`, `og:type`) are automatically rendered.
+- `twitter` properties (`twitter:card` set to `summary_large_image`, `twitter:title`, `twitter:description`, `twitter:image`) are included.
+
+**Assets**:
+- The default preview image is served from `public/og-image.jpg`.
+

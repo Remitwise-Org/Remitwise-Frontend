@@ -1,3 +1,5 @@
+// @ts-nocheck
+import { vi, expect, describe, it, beforeEach, afterEach } from 'vitest';
 /**
  * Tests for session expiry and refresh logging
  * Validates Requirements 9.1, 9.2, 9.3, 9.4

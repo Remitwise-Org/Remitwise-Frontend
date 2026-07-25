@@ -1,32 +1,24 @@
-import * as StellarSdk from '@stellar/stellar-sdk';
-import type { SorobanRpc } from '@stellar/stellar-sdk';
+/**
+ * @deprecated Use `lib/soroban/client.ts` instead.
+ *
+ * This module used `NEXT_PUBLIC_SOROBAN_RPC_URL` (browser-exposed) and hardcoded
+ * `Networks.TESTNET`, causing savings-goal transactions to build against the wrong
+ * network in production.
+ *
+ * All callers have been migrated to the canonical server-only client at
+ * `lib/soroban/client.ts`, which:
+ *  - reads `SOROBAN_RPC_URL` (server-only, never bundled into the browser)
+ *  - resolves the network passphrase via `getSorobanNetworkPassphrase()`
+ *  - wraps every RPC call with retry + per-attempt timeout logic
+ *
+ * This file is kept temporarily so any external tooling that imports it
+ * continues to compile. It will be removed in a future cleanup commit.
+ */
 
-const SOROBAN_RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
-
-let server: SorobanRpc.Server | null = null;
-
-export function getSorobanClient(): SorobanRpc.Server {
-  if (!server) {
-    server = new StellarSdk.SorobanRpc.Server(SOROBAN_RPC_URL, {
-      allowHttp: SOROBAN_RPC_URL.startsWith('http://'),
-    });
-  }
-  return server;
-}
-
-export async function createTransaction(publicKey: string) {
-  const server = getSorobanClient();
-
-
-  const accountData = await server.getAccount(publicKey);
-  const account = new StellarSdk.Account(publicKey,  String(accountData.sequenceNumber) );
-
-  const transaction = new StellarSdk.TransactionBuilder(account, {
-    fee: StellarSdk.BASE_FEE,
-    networkPassphrase: StellarSdk.Networks.TESTNET,
-  })
-    .setTimeout(30)
-    .build();
-
-  return transaction;
-}
+export {
+  getServer as getSorobanClient,
+  getNetworkPassphrase,
+  getLatestLedger,
+  getLedgerSequence,
+  SorobanClientError,
+} from "./soroban/client";

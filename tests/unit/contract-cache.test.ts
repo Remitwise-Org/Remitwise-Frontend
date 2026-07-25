@@ -18,6 +18,7 @@ import {
   CacheErrorCode,
   CONTRACT_IDS,
   CACHE_TTL,
+  generateCacheKey,
 } from '@/lib/cache/contract-cache';
 
 describe('Contract Cache - Core Functionality', () => {
@@ -364,6 +365,192 @@ describe('Contract Cache - Core Functionality', () => {
     });
   });
 
+  describe('generateCacheKey', () => {
+    it('returns_same_key_for_identical_inputs', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX', limit: 10 }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX', limit: 10 }
+      );
+
+      expect(key1).toBe(key2);
+    });
+
+    it('returns_same_key_regardless_of_arg_key_order', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX', limit: 10, status: 'active' }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { status: 'active', limit: 10, owner: 'GXXX' }
+      );
+
+      expect(key1).toBe(key2);
+    });
+
+    it('returns_different_keys_for_different_contract_ids', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.REMITTANCE_SPLIT,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+
+      expect(key1).not.toBe(key2);
+    });
+
+    it('returns_different_keys_for_different_methods', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getPolicy',
+        { owner: 'GXXX' }
+      );
+
+      expect(key1).not.toBe(key2);
+    });
+
+    it('returns_different_keys_for_different_arg_values', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX1' }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX2' }
+      );
+
+      expect(key1).not.toBe(key2);
+    });
+
+    it('returns_different_keys_for_different_arg_structures', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX', limit: 10 }
+      );
+
+      expect(key1).not.toBe(key2);
+    });
+
+    it('returns_different_keys_for_nested_objects_with_different_values', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { filter: { status: 'active', type: 'life' } }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { filter: { status: 'active', type: 'health' } }
+      );
+
+      expect(key1).not.toBe(key2);
+    });
+
+    it('returns_different_keys_for_arrays_with_different_order', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { ids: [1, 2, 3] }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { ids: [3, 2, 1] }
+      );
+
+      expect(key1).not.toBe(key2);
+    });
+
+    it('throws_cache_error_for_invalid_contract_id', () => {
+      expect(() =>
+        generateCacheKey('INVALID_CONTRACT', 'method', {})
+      ).toThrow(CacheError);
+    });
+
+    it('throws_cache_error_for_invalid_method_name', () => {
+      expect(() =>
+        generateCacheKey(CONTRACT_IDS.INSURANCE, 'invalid-method!', {})
+      ).toThrow(CacheError);
+    });
+
+    it('throws_cache_error_for_non_object_args', () => {
+      expect(() =>
+        generateCacheKey(CONTRACT_IDS.INSURANCE, 'method', null as any)
+      ).toThrow(CacheError);
+    });
+
+    it('throws_cache_error_for_array_args', () => {
+      expect(() =>
+        generateCacheKey(CONTRACT_IDS.INSURANCE, 'method', [] as any)
+      ).toThrow(CacheError);
+    });
+
+    it('throws_cache_error_for_circular_reference_args', () => {
+      const circular: any = {};
+      circular.self = circular;
+
+      expect(() =>
+        generateCacheKey(CONTRACT_IDS.INSURANCE, 'method', circular)
+      ).toThrow(CacheError);
+    });
+
+    it('includes_contract_id_in_generated_key', () => {
+      const key = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+
+      expect(key).toContain(CONTRACT_IDS.INSURANCE);
+    });
+
+    it('includes_method_name_in_generated_key', () => {
+      const key = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+
+      expect(key).toContain('getActivePolicies');
+    });
+
+    it('serializes_args_in_key', () => {
+      const key = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+
+      expect(key).toContain('owner');
+      expect(key).toContain('GXXX');
+    });
+  });
+
   describe('invalidate', () => {
     it('should invalidate specific cache entry', async () => {
       const fetchFn = vi.fn(async () => ({ data: 'test' }));
@@ -545,6 +732,145 @@ describe('Contract Cache - Core Functionality', () => {
       expect(CACHE_TTL.getSplit).toBe(60);
       expect(CACHE_TTL.getActivePolicies).toBe(45);
       expect(CACHE_TTL.getGoals).toBe(30);
+    });
+  });
+
+  describe('In-Flight Request Coalescing', () => {
+    // Small deferred helper so tests control exactly when a fetch settles,
+    // letting us hold several callers "in flight" simultaneously.
+    function deferred<T>() {
+      let resolve!: (value: T) => void;
+      let reject!: (reason?: unknown) => void;
+      const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    }
+
+    it('coalesces concurrent misses for the same key into a single fetch', async () => {
+      const d = deferred<{ data: string }>();
+      let callCount = 0;
+      const fetchFn = vi.fn(() => {
+        callCount++;
+        return d.promise;
+      });
+
+      // Three concurrent callers miss the cold cache for the same key.
+      const p1 = cachedContractCall(CONTRACT_IDS.INSURANCE, 'getActivePolicies', { owner: 'GXXX' }, 30, fetchFn);
+      const p2 = cachedContractCall(CONTRACT_IDS.INSURANCE, 'getActivePolicies', { owner: 'GXXX' }, 30, fetchFn);
+      const p3 = cachedContractCall(CONTRACT_IDS.INSURANCE, 'getActivePolicies', { owner: 'GXXX' }, 30, fetchFn);
+
+      // Only the leader has touched the network so far.
+      expect(callCount).toBe(1);
+
+      d.resolve({ data: 'shared' });
+      const [r1, r2, r3] = await Promise.all([p1, p2, p3]);
+
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+      expect(callCount).toBe(1);
+      // All waiters receive the identical resolved value from the single fetch.
+      expect(r1).toEqual({ data: 'shared' });
+      expect(r2).toBe(r1);
+      expect(r3).toBe(r1);
+    });
+
+    it('does not coalesce concurrent misses for different keys', async () => {
+      const d = deferred<{ data: string }>();
+      const fetchFn = vi.fn(() => d.promise);
+
+      const p1 = cachedContractCall(CONTRACT_IDS.INSURANCE, 'm', { owner: 'A' }, 30, fetchFn);
+      const p2 = cachedContractCall(CONTRACT_IDS.INSURANCE, 'm', { owner: 'B' }, 30, fetchFn);
+
+      // Distinct keys → distinct flights → two network calls.
+      expect(fetchFn).toHaveBeenCalledTimes(2);
+
+      d.resolve({ data: 'ok' });
+      await Promise.all([p1, p2]);
+    });
+
+    it('clears the in-flight entry on resolve so later misses re-fetch', async () => {
+      const fetchFn = vi.fn(async () => ({ data: 'v1' }));
+
+      await Promise.all([
+        cachedContractCall(CONTRACT_IDS.INSURANCE, 'm', { o: 'G' }, 30, fetchFn),
+        cachedContractCall(CONTRACT_IDS.INSURANCE, 'm', { o: 'G' }, 30, fetchFn),
+      ]);
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+
+      // Invalidate to force a fresh miss. If the resolved flight were left
+      // dangling, this re-fetch would never fire — it does, proving cleanup.
+      invalidate(CONTRACT_IDS.INSURANCE, 'm', { o: 'G' });
+      const r = await cachedContractCall(CONTRACT_IDS.INSURANCE, 'm', { o: 'G' }, 30, fetchFn);
+
+      expect(r).toEqual({ data: 'v1' });
+      expect(fetchFn).toHaveBeenCalledTimes(2);
+    });
+
+    it('rejects all coalesced waiters and clears in-flight on failure (no poisoning)', async () => {
+      let callCount = 0;
+      const fetchFn = vi.fn(async () => {
+        callCount++;
+        if (callCount === 1) {
+          throw new Error('RPC down');
+        }
+        return { data: 'recovered' };
+      });
+
+      const p1 = cachedContractCall(CONTRACT_IDS.INSURANCE, 'm', { o: 'G' }, 30, fetchFn);
+      const p2 = cachedContractCall(CONTRACT_IDS.INSURANCE, 'm', { o: 'G' }, 30, fetchFn);
+
+      // Both concurrent callers share the single failing flight.
+      await expect(p1).rejects.toThrow('RPC down');
+      await expect(p2).rejects.toThrow('RPC down');
+      expect(callCount).toBe(1);
+
+      // Failure must not poison the cache nor leave a stuck pending entry.
+      expect(getCacheKeys()).toHaveLength(0);
+
+      // The next call retries from scratch and succeeds.
+      const r = await cachedContractCall(CONTRACT_IDS.INSURANCE, 'm', { o: 'G' }, 30, fetchFn);
+      expect(r).toEqual({ data: 'recovered' });
+      expect(callCount).toBe(2);
+    });
+
+    it('serves a fresh cache hit after a coalesced batch resolves (no extra fetch)', async () => {
+      const fetchFn = vi.fn(async () => ({ data: 'cached' }));
+
+      await Promise.all([
+        cachedContractCall(CONTRACT_IDS.INSURANCE, 'm', { o: 'G' }, 30, fetchFn),
+        cachedContractCall(CONTRACT_IDS.INSURANCE, 'm', { o: 'G' }, 30, fetchFn),
+      ]);
+
+      // A later sequential call is a plain cache hit — the flight populated it.
+      const r = await cachedContractCall(CONTRACT_IDS.INSURANCE, 'm', { o: 'G' }, 30, fetchFn);
+      expect(r).toEqual({ data: 'cached' });
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+    });
+
+    it('clearCache mid-flight resets coalescing so a new caller starts its own fetch', async () => {
+      const d1 = deferred<{ data: string }>();
+      const d2 = deferred<{ data: string }>();
+      const fetchFn = vi
+        .fn()
+        .mockImplementationOnce(() => d1.promise)
+        .mockImplementationOnce(() => d2.promise);
+
+      const p1 = cachedContractCall(CONTRACT_IDS.INSURANCE, 'm', { o: 'G' }, 30, fetchFn);
+
+      // Registry-driven clear lands while the leader's fetch is still pending.
+      clearCache();
+
+      // A new caller for the same key must NOT join the cleared flight.
+      const p2 = cachedContractCall(CONTRACT_IDS.INSURANCE, 'm', { o: 'G' }, 30, fetchFn);
+
+      d1.resolve({ data: 'first' });
+      d2.resolve({ data: 'second' });
+      const [r1, r2] = await Promise.all([p1, p2]);
+
+      expect(fetchFn).toHaveBeenCalledTimes(2);
+      expect(r1).toEqual({ data: 'first' });
+      expect(r2).toEqual({ data: 'second' });
     });
   });
 });

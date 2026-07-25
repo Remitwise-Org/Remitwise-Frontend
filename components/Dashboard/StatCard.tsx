@@ -1,32 +1,61 @@
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+
+export type TrendDirection = "up" | "down" | "none";
 
 interface StatCardProps {
   title: string;
   value: string;
   icon: React.ReactNode;
-  // For trend-based cards (Total Sent, Savings)
+  /** Primary change/highlight text, e.g. "+$240" or "+18%". */
   detail1?: string;
   detail1Color?: string;
+  /** Secondary contextual text, e.g. "12 transfers". */
   detail2?: string;
+  /**
+   * Whether to render the trend indicator (icon + primary text).
+   * Defaults to `true` whenever a trend value is present.
+   */
   showTrend?: boolean;
-  // Legacy props for backward compatibility
+  /** Trend direction. Drives the icon + accessible label — never color alone. */
+  trend?: TrendDirection;
+  /** @deprecated Legacy alias for {@link detail1}. Kept for backward compatibility. */
   percentage?: string;
-  trend?: "up" | "none";
 }
+
+const TREND_META: Record<
+  TrendDirection,
+  { Icon: typeof TrendingUp; label: string }
+> = {
+  up: { Icon: TrendingUp, label: "Trending up" },
+  down: { Icon: TrendingDown, label: "Trending down" },
+  none: { Icon: Minus, label: "No change" },
+};
 
 export default function StatCard({
   title,
   value,
   icon,
   detail1,
-  detail1Color = "text-red-500",
+  detail1Color = "text-[#DC2626]",
   detail2,
-  showTrend = false,
+  showTrend,
+  trend,
   percentage,
-  trend = "up",
 }: StatCardProps) {
-  const isTrendCard = showTrend && detail1 && detail2;
-  const isNeutral = trend === "none" || percentage === "0%";
+  // ── Reconcile the dual prop API into one consistent shape ────────────────
+  // `detail1` is canonical; `percentage` is the legacy alias.
+  const trendText = detail1 ?? percentage;
+  const hasTrendText = typeof trendText === "string" && trendText.length > 0;
+
+  const isNeutral = trend === "none" || trendText === "0%";
+  const direction: TrendDirection = isNeutral ? "none" : trend ?? "up";
+
+  // Show the trend indicator when explicitly requested, or by default whenever
+  // a trend value exists. A card with only `detail2` is not a trend card.
+  const showTrendIndicator = (showTrend ?? hasTrendText) && hasTrendText;
+  const hasDetailRow = showTrendIndicator || Boolean(detail2);
+
+  const { Icon: TrendIcon, label: trendLabel } = TREND_META[direction];
 
   return (
     <div
@@ -39,31 +68,40 @@ export default function StatCard({
           {icon}
         </div>
 
-        {/* Top-Right Detail: Red trend icon */}
-        {isTrendCard ? (
-          <TrendingUp className="w-4 h-4 text-[#DC2626]" />
+        {/* Top-right trend indicator — directional icon conveys trend without color */}
+        {showTrendIndicator ? (
+          <TrendIcon
+            className={`w-4 h-4 ${detail1Color}`}
+            role="img"
+            aria-label={trendLabel}
+          />
         ) : null}
       </div>
 
       <div className="space-y-2">
         <div className="text-gray-400 text-sm font-medium">{title}</div>
-        
-        <div className="text-[32px] font-bold text-white tracking-tight">
+
+        {/* tabular-nums keeps numeric columns aligned across cards */}
+        <div className="text-[32px] font-bold text-white tracking-tight tabular-nums">
           {value}
         </div>
 
-        {/* Detail: Change amount and percentage on same line, or contextual info */}
-        {isTrendCard ? (
+        {hasDetailRow ? (
           <div className="flex items-center justify-between pt-2">
-            <span className={`text-sm font-semibold ${detail1Color}`}>
-              {detail1}
-            </span>
-            <span className="text-sm font-semibold text-gray-400">{detail2}</span>
-          </div>
-        ) : detail1 && detail2 ? (
-          <div className="flex items-center justify-between pt-2">
-            <div className="text-gray-300 text-sm font-medium">{detail1}</div>
-            <div className="text-gray-500 text-xs">{detail2}</div>
+            {showTrendIndicator ? (
+              <span className={`text-sm font-semibold ${detail1Color}`}>
+                {/* Visible label restates the direction so it is not color-only */}
+                <span className="sr-only">{trendLabel}: </span>
+                {trendText}
+              </span>
+            ) : (
+              <span aria-hidden="true" />
+            )}
+            {detail2 ? (
+              <span className="text-sm font-semibold text-gray-400 tabular-nums">
+                {detail2}
+              </span>
+            ) : null}
           </div>
         ) : null}
       </div>

@@ -14,18 +14,21 @@
  * that prefix so it stays server-only.
  */
 
-import { SorobanRpc, Networks } from "@stellar/stellar-sdk";
+import { SorobanRpc } from "@stellar/stellar-sdk";
+import { getSorobanNetworkPassphrase } from "@/lib/contracts/network-resolution";
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 
-const RPC_URL =
-  process.env.SOROBAN_RPC_URL ?? "https://soroban-testnet.stellar.org";
-
-const NETWORK_PASSPHRASE =
-  process.env.SOROBAN_NETWORK_PASSPHRASE ??
-  (process.env.SOROBAN_NETWORK === "mainnet"
-    ? Networks.PUBLIC
-    : Networks.TESTNET);
+function getRpcUrl(): string {
+  const url = process.env.SOROBAN_RPC_URL;
+  if (!url) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn("SOROBAN_RPC_URL is not set; falling back to testnet URL.");
+    }
+    return "https://soroban-testnet.stellar.org";
+  }
+  return url;
+}
 
 /** How long (ms) to wait for a single RPC call before aborting. */
 const TIMEOUT_MS = 10_000;
@@ -44,8 +47,9 @@ let _server: SorobanRpc.Server | null = null;
  */
 export function getServer(): SorobanRpc.Server {
   if (!_server) {
-    _server = new SorobanRpc.Server(RPC_URL, {
-      allowHttp: RPC_URL.startsWith("http://"), // only allow plain HTTP for local dev
+    const rpcUrl = getRpcUrl();
+    _server = new SorobanRpc.Server(rpcUrl, {
+      allowHttp: rpcUrl.startsWith("http://"), // only allow plain HTTP for local dev
     });
   }
   return _server;
@@ -53,10 +57,12 @@ export function getServer(): SorobanRpc.Server {
 
 /**
  * Returns the Stellar network passphrase configured for this deployment.
+ * Delegates to `getSorobanNetworkPassphrase()` so this module and
+ * `network-resolution.ts` always agree on the active network.
  * Use this when building or verifying transactions server-side.
  */
 export function getNetworkPassphrase(): string {
-  return NETWORK_PASSPHRASE;
+  return getSorobanNetworkPassphrase();
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────

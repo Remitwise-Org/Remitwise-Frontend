@@ -3,6 +3,7 @@
 import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import PageHeadingLink from "@/components/PageHeadingLink";
 
 interface ITransactionHistoryHeaderProps {
   title: string;
@@ -28,9 +29,14 @@ const TransactionHistoryHeader: React.FC<ITransactionHistoryHeaderProps> = ({
             <ArrowLeft size={17} className="text-white" />
           </button>
           <div className="min-w-0">
-            <h5 className="text-xl font-bold leading-7 tracking-[0.07px] text-white sm:text-2xl sm:leading-8">
+            <PageHeadingLink
+              headingId="transaction-history-page-heading"
+              label={title}
+              headingClassName="text-xl font-bold leading-7 tracking-[0.07px] text-white sm:text-2xl sm:leading-8"
+              buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101]"
+            >
               {title}
-            </h5>
+            </PageHeadingLink>
             <p className="mt-1 max-w-2xl text-xs font-normal leading-5 tracking-[-0.15px] text-white/60 sm:text-sm">
               {subtitle}
             </p>

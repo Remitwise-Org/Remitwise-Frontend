@@ -10,10 +10,16 @@ export interface Bill {
   id: string;
   owner: string;
   name: string;
+  // UI helpers used across components (optional to avoid breaking contract usage)
+  title?: string;
+  category?: string;
+  daysInfo?: string;
   amount: number;
   dueDate: string;
   recurring: boolean;
-  status: "paid" | "unpaid" | "cancelled";
+  isRecurring?: boolean;
+  // include presentation statuses used by the UI
+  status: "paid" | "unpaid" | "cancelled" | "overdue" | "urgent" | "upcoming";
 }
 
 // ─────────────────────────────────────────────

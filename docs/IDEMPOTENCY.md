@@ -1,416 +1,147 @@
-# Idempotency Keys
+# Idempotency Contract & Documentation
 
-## Overview
+This document describes the idempotency subsystem that guards money-moving POST routes from duplicate execution.
 
-Idempotency keys prevent duplicate operations from being executed when a client retries a request (e.g., due to network issues, double-clicks, or timeouts). This is critical for write operations like creating remittances or allocating funds.
+---
 
-**Status**: Implemented and ready for production use (with Redis migration recommended for multi-instance deployments).
+## Why idempotency matters
 
-## How It Works
+A remittance POST can be replayed by:
+- A network retry after a timeout.
+- The user double-clicking "Send".
+- A client crash and reconnect that re-submits a form.
 
-1. Client generates a unique idempotency key (e.g., UUID)
-2. Client sends the key in the `Idempotency-Key` header with the request
-3. Server checks if the key has been seen before:
-   - **First time**: Process the request normally and cache the response
-   - **Duplicate (same body)**: Return the cached response immediately
-   - **Conflict (different body)**: Return 409 Conflict error
-4. Cached responses expire after 24 hours (configurable)
+Without a guard, each replay executes a separate transfer. The idempotency layer detects duplicates and replays the original cached response instead of re-executing the handler — preventing double-spends.
 
-## Supported Endpoints
+---
 
-The following endpoints support idempotency keys:
+## Files
 
-- `POST /api/remittance/build` - Build a remittance transaction
-- `POST /api/remittance/allocate` - Allocate funds for a transaction
+| File | Purpose |
+|------|---------|
+| [`lib/idempotency/middleware.ts`](../lib/idempotency/middleware.ts) | HTTP layer: extracts the key, checks the store, stores responses |
+| [`lib/idempotency/store.ts`](../lib/idempotency/store.ts) | In-memory TTL cache with periodic cleanup |
+| [`lib/idempotency/config.ts`](../lib/idempotency/config.ts) | Centralised constants (TTL, header names, key limits) |
+| [`lib/idempotency/types.ts`](../lib/idempotency/types.ts) | `IdempotencyRecord` and `IdempotencyCheckResult` types |
+| [`lib/idempotency/index.ts`](../lib/idempotency/index.ts) | Re-exports everything for a single import path |
 
-## Usage
+---
 
-### Client-Side Example
+## Key header contract
 
-```typescript
-import { v4 as uuidv4 } from 'uuid';
-
-async function createRemittance(data: RemittanceData) {
-  const idempotencyKey = uuidv4();
-  
-  const response = await fetch('/api/remittance/build', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Idempotency-Key': idempotencyKey,
-    },
-    body: JSON.stringify(data),
-  });
-  
-  return response.json();
-}
-```
-
-### Retry Logic Example
-
-```typescript
-async function createRemittanceWithRetry(data: RemittanceData) {
-  const idempotencyKey = uuidv4();
-  const maxRetries = 3;
-  
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      const response = await fetch('/api/remittance/build', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Idempotency-Key': idempotencyKey, // Same key for all retries
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (response.ok) {
-        return response.json();
-      }
-      
-      if (response.status === 409) {
-        throw new Error('Idempotency key conflict - request body changed');
-      }
-      
-      // Retry on 5xx errors
-      if (response.status >= 500 && attempt < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-        continue;
-      }
-      
-      throw new Error(`Request failed: ${response.status}`);
-    } catch (error) {
-      if (attempt === maxRetries - 1) throw error;
-    }
-  }
-}
-```
-
-## API Specification
-
-### Request Header
+Clients MUST send a unique, opaque string in the `idempotency-key` request header for every money-moving POST:
 
 ```
-Idempotency-Key: <unique-string>
+POST /api/remittance/send HTTP/1.1
+idempotency-key: 550e8400-e29b-41d4-a716-446655440000
+Content-Type: application/json
 ```
 
-- **Format**: Any string (recommended: UUID v4)
-- **Length**: 1-255 characters
-- **Required**: No (but recommended for write operations)
+- **Format:** any non-empty string up to 255 characters; UUID v4 is recommended.
+- **Scope:** one key per logical operation, generated client-side before the first attempt.
+- **Reuse:** retrying the exact same operation reuses the same key; a new operation MUST use a new key.
 
-### Response Headers
+When a key is absent the middleware skips the idempotency check and the request is processed normally (no caching).
 
-When a cached response is returned, the server includes:
+### Replay response
+
+When the server replays a cached response it adds:
 
 ```
 X-Idempotent-Replay: true
 ```
 
-This indicates the response was served from cache, not freshly processed.
+Clients can use this header to distinguish a fresh result from a replayed one (e.g. for analytics).
 
-### Response Codes
+---
 
-| Status | Description |
-|--------|-------------|
-| 200 | Success (new or cached response) |
-| 400 | Bad Request (invalid body) |
-| 409 | Conflict (same key, different body) |
-| 500 | Internal Server Error |
+## `IdempotencyCheckResult` semantics
 
-### Error Response (409 Conflict)
-
-```json
-{
-  "error": "Idempotency Key Conflict",
-  "message": "The provided idempotency key was already used with a different request body."
+```ts
+interface IdempotencyCheckResult {
+  exists: boolean;   // true if the key is in the store and not expired
+  record?: IdempotencyRecord; // present when exists === true
+  conflict: boolean; // true when key exists but request body hash differs
 }
 ```
 
-## Implementation Details
+| `exists` | `conflict` | Meaning |
+|----------|-----------|---------|
+| `false` | `false` | First time we see this key — execute the handler |
+| `true` | `false` | Duplicate with matching body — replay cached response |
+| `true` | `true` | Same key, different body — return `409 Conflict` |
 
-### Storage
+---
 
-Currently uses in-memory storage with automatic cleanup. For production:
+## TTL and store behaviour
 
-- **Recommended**: Redis with TTL support
-- **Alternative**: Database table with indexed key column and expiration timestamp
+- **Default TTL:** 24 hours (`DEFAULT_TTL_MS = 24 * 60 * 60 * 1000` in `store.ts`).
+- **Cleanup interval:** expired records are swept every 1 hour via `setInterval`.
+- **Lazy expiry:** records are also checked and deleted on read, so a cleanup cycle is never required for correctness.
+- **Shutdown hook:** the cleanup timer is registered with `registerShutdownHook('idempotency_cleanup', …)` so it is cleared on graceful server shutdown, preventing resource leaks.
 
-### TTL (Time To Live)
+### In-memory limitation
 
-- **Default**: 24 hours
-- **Configurable**: Modify `DEFAULT_TTL_MS` in `lib/idempotency/store.ts`
+The current store is a `Map` held in the Node.js process. This means:
 
-### Request Hashing
+- **No persistence across restarts** — a server restart clears all records. Clients whose retry window overlaps a restart will re-execute their operation.
+- **No cross-process sharing** — in a multi-replica deployment, two replicas may each receive one copy of a duplicate request and both execute it.
 
-Request bodies are hashed using SHA-256 to detect changes. The hash includes:
-- All request body fields
-- Field order (JSON stringified)
+**For production** replace `store.ts` with a Redis or database backend that is shared across replicas and survives restarts.
 
-### Cleanup
+---
 
-Expired records are automatically cleaned up every hour to prevent memory leaks.
+## How to protect a new POST route
 
-## Best Practices
+Use the `withIdempotency` wrapper from `lib/idempotency/middleware.ts`. The wrapper:
 
-### Client-Side
+1. Parses the JSON body once.
+2. Checks the store (returns `409` on conflict, replays on hit).
+3. Calls your handler.
+4. Caches the response body if the handler returns `2xx`.
 
-1. **Generate unique keys**: Use UUID v4 or similar
-2. **Reuse keys on retry**: Use the same key for all retry attempts of the same operation
-3. **Don't reuse keys**: Never reuse a key for different operations
-4. **Store keys**: Consider storing keys locally to handle page refreshes
-
-### Server-Side
-
-1. **Only cache successful responses**: 2xx status codes only
-2. **Set appropriate TTL**: Balance between safety and storage
-3. **Monitor cache size**: Track metrics for capacity planning
-4. **Use distributed cache**: Redis for multi-instance deployments
-
-## Adding Idempotency to New Endpoints
-
-### Using the Middleware Wrapper
-
-```typescript
+```ts
+// app/api/remittance/send/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { withIdempotency } from '@/lib/idempotency';
+import { withIdempotency } from '@/lib/idempotency/middleware';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   return withIdempotency(request, async (body) => {
-    // Your endpoint logic here
-    const result = await processOperation(body);
-    return NextResponse.json(result);
+    // `body` is the already-parsed JSON object.
+    const { recipientId, amount, currency } = body as {
+      recipientId: string;
+      amount: number;
+      currency: string;
+    };
+
+    // Execute the transfer exactly once.
+    const result = await processRemittance({ recipientId, amount, currency });
+
+    return NextResponse.json({ success: true, transferId: result.id }, { status: 201 });
   });
 }
 ```
 
-### Manual Implementation
+The client sends the key header:
 
-```typescript
-import { NextRequest, NextResponse } from 'next/server';
-import { checkIdempotency, storeIdempotentResponse } from '@/lib/idempotency';
-
-export async function POST(request: NextRequest) {
-  const body = await request.json();
-  
-  // Check for cached response
-  const cachedResponse = await checkIdempotency(request, body);
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-  
-  // Process request
-  const result = await processOperation(body);
-  const response = NextResponse.json(result);
-  
-  // Store for future requests
-  storeIdempotentResponse(request, body, {
-    status: 200,
-    body: result,
-  });
-  
-  return response;
-}
-```
-
-## Testing
-
-### Test Scenarios
-
-1. **First request**: Should process normally
-2. **Duplicate request**: Should return cached response with `X-Idempotent-Replay: true`
-3. **Conflict**: Same key, different body should return 409
-4. **Expiration**: Expired keys should be treated as new requests
-5. **No key**: Requests without idempotency key should process normally
-
-### Example Test
-
-```typescript
-describe('Idempotency', () => {
-  it('should return cached response for duplicate requests', async () => {
-    const key = 'test-key-123';
-    const body = { amount: 100, recipient: 'test' };
-    
-    // First request
-    const response1 = await fetch('/api/remittance/build', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Idempotency-Key': key,
-      },
-      body: JSON.stringify(body),
-    });
-    
-    const data1 = await response1.json();
-    
-    // Duplicate request
-    const response2 = await fetch('/api/remittance/build', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Idempotency-Key': key,
-      },
-      body: JSON.stringify(body),
-    });
-    
-    const data2 = await response2.json();
-    
-    // Should return same response
-    expect(data1).toEqual(data2);
-    expect(response2.headers.get('X-Idempotent-Replay')).toBe('true');
-  });
-  
-  it('should return 409 for conflicting requests', async () => {
-    const key = 'test-key-456';
-    
-    // First request
-    await fetch('/api/remittance/build', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Idempotency-Key': key,
-      },
-      body: JSON.stringify({ amount: 100 }),
-    });
-    
-    // Conflicting request (different body)
-    const response = await fetch('/api/remittance/build', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Idempotency-Key': key,
-      },
-      body: JSON.stringify({ amount: 200 }), // Different amount
-    });
-    
-    expect(response.status).toBe(409);
-  });
+```ts
+await fetch('/api/remittance/send', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'idempotency-key': crypto.randomUUID(), // generate once, reuse on retry
+  },
+  body: JSON.stringify({ recipientId, amount, currency }),
 });
 ```
 
-## OpenAPI Specification
+---
 
-```yaml
-paths:
-  /api/remittance/build:
-    post:
-      summary: Build a remittance transaction
-      parameters:
-        - in: header
-          name: Idempotency-Key
-          schema:
-            type: string
-            format: uuid
-          required: false
-          description: Unique key to ensure idempotent request processing
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - amount
-                - recipient
-                - currency
-              properties:
-                amount:
-                  type: number
-                recipient:
-                  type: string
-                currency:
-                  type: string
-      responses:
-        '200':
-          description: Success (new or cached response)
-          headers:
-            X-Idempotent-Replay:
-              schema:
-                type: boolean
-              description: True if response was served from cache
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  transactionId:
-                    type: string
-                  status:
-                    type: string
-        '409':
-          description: Idempotency key conflict
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                  message:
-                    type: string
-```
+## Known limitations
 
-## Migration to Production Storage
-
-### Redis Implementation
-
-```typescript
-import { createClient } from 'redis';
-
-const redis = createClient({
-  url: process.env.REDIS_URL,
-});
-
-export async function storeIdempotencyRecord(
-  key: string,
-  requestHash: string,
-  response: any,
-  ttlMs: number = 24 * 60 * 60 * 1000
-) {
-  const record = {
-    requestHash,
-    response,
-    createdAt: Date.now(),
-  };
-  
-  await redis.setEx(
-    `idempotency:${key}`,
-    Math.floor(ttlMs / 1000),
-    JSON.stringify(record)
-  );
-}
-
-export async function checkIdempotencyKey(
-  key: string,
-  requestHash: string
-) {
-  const data = await redis.get(`idempotency:${key}`);
-  
-  if (!data) {
-    return { exists: false, conflict: false };
-  }
-  
-  const record = JSON.parse(data);
-  
-  if (record.requestHash !== requestHash) {
-    return { exists: true, record, conflict: true };
-  }
-  
-  return { exists: true, record, conflict: false };
-}
-```
-
-## Monitoring
-
-Track these metrics:
-
-- **Cache hit rate**: Percentage of requests served from cache
-- **Conflict rate**: Percentage of 409 responses
-- **Cache size**: Number of stored keys
-- **Average TTL**: Time until expiration
-
-## Security Considerations
-
-1. **Key validation**: Validate idempotency key format and length
-2. **Rate limiting**: Prevent abuse by limiting requests per key
-3. **Authentication**: Always verify user identity before processing
-4. **Data isolation**: Ensure keys are scoped to authenticated users
+| Issue | Detail | Recommendation |
+|-------|--------|----------------|
+| **Concurrent race condition** | Two identical requests arriving simultaneously before the first completes both bypass the cache check, risking double-execution. | Store a `pending` sentinel immediately on receipt and block or queue concurrent duplicates. |
+| **Config not imported** | `store.ts` and `middleware.ts` hardcode their TTL and header constants instead of importing from `config.ts`, making `config.ts` a no-op. | Refactor both files to import `IDEMPOTENCY_CONFIG`. |
+| **No key-length enforcement** | `MAX_KEY_LENGTH = 255` is defined in `config.ts` but never enforced. | Add a length check in `getIdempotencyKey()`. |
+| **In-memory store** | See [In-memory limitation](#in-memory-limitation) above. | Replace with Redis or a DB-backed store for multi-replica deployments. |

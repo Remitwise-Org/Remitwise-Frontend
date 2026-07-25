@@ -29,6 +29,18 @@ export interface SendTransactionErrorResponse {
  */
 export type SendTransactionResult = SendTransactionResponse | SendTransactionErrorResponse;
 
+export interface RecurringSchedule {
+  id: string;
+  userAddress: string;
+  recipientAddress: string;
+  amount: number;
+  currency: string;
+  frequency: 'weekly' | 'biweekly' | 'monthly';
+  nextRunAt: string; // ISO date
+  lastRunAt?: string;
+  createdAt: string;
+}
+
 export interface APIResponse {
   success: boolean;
   xdr?: string;
@@ -55,31 +67,3 @@ export interface SuccessResponse {
   message: string;
 }
 
-// Error types
-export class AuthenticationError extends Error {
-  constructor(message: string = 'Unauthorized') {
-    super(message);
-    this.name = 'AuthenticationError';
-  }
-}
-
-export class ContractError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ContractError';
-  }
-}
-
-export class NetworkError extends Error {
-  constructor(message: string = 'Network connection failed') {
-    super(message);
-    this.name = 'NetworkError';
-  }
-}
-
-export class SimulationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'SimulationError';
-  }
-}

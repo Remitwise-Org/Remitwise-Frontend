@@ -1,35 +1,31 @@
-# TODO - Settings preferences persistence
+# Task progress tracker
 
-## Step 1: Wire UI to existing hook
+## Dashboard widget render smoke tests (Vitest + RTL)
 
-- [ ] Update `app/settings/page.tsx` to use `useUserPreferences()`
-- [ ] Hydrate Notifications toggles, Wallet currency select, Preferences timezone select, and Preferences density UI from persisted values
-- [ ] Ensure optimistic UI for toggles/selects reconciles with server response
+### Step 0: Repo analysis
 
-## Step 2: Toast + status feedback (i18n)
+- [x] Identified target widgets/charts in `components/Dashboard/*` and `components/Insights/*`
+- [x] Checked widget empty/error state components (`components/ui/WidgetEmptyState.tsx`, `WidgetErrorState.tsx`)
+- [x] Checked provider dependency (`lib/context/DensityContext.tsx` throws if missing)
 
-- [ ] Use `useToast()` to show success/error based on `saveState` from `useUserPreferences`
-- [ ] Replace hardcoded copy with i18n via `useClientTranslator()` using en/es locale keys
-- [ ] Add reduced-motion safe behavior for “smooth” scroll if applicable
+### Step 1: Test infra
 
-## Step 3: Persist density (server + validation)
+- [ ] Extend Vitest config for jsdom+RTL tests (new test include glob)
+- [ ] Add global RTL setup with jsdom + @testing-library/jest-dom
+- [ ] Add small `renderWithProviders` helper (DensityProvider, etc.)
 
-- [ ] Extend `app/api/user/preferences/route.ts` to accept/return `density`
-- [ ] Extend `utils/validation/preferences-validation.ts` to validate `density`
-- [ ] Update types (`utils/types/user.types` if needed) to include `density`
-- [ ] Ensure `DensityContext` uses persisted density (if present) instead of only localStorage
+### Step 2: Smoke tests
 
-## Step 4: Tests (≥85% lines/branches for new/modified hook)
+- [ ] MoneyDistributionWidget: mounts + empty/error state
+- [ ] SixMonthTrendsWidget: mounts + empty/error state (if supported; otherwise mount only)
+- [ ] RecentTransactionsWidget: mounts + empty/error state (DensityProvider required)
+- [ ] SavingsByGoalWidget: mounts + empty/error state
+- [ ] QuickActions: mounts only (no widget empty/error)
+- [ ] Insights charts: include RemittanceTrendChart, CategoryDonutChart, SpendingVsSavingChart + mount assertions
+- [ ] Use `assert.doesNotThrow` pattern per requirement
 
-- [ ] Add unit tests for `lib/hooks/useUserPreferences.ts`
-  - [ ] optimistic update
-  - [ ] PATCH failure rollback
-  - [ ] debounce/rapid toggling last-write-wins
-- [ ] Run coverage and ensure thresholds
+### Step 3: Quality gates
 
-## Step 5: Quality gates
-
-- [ ] `npm run lint`
-- [ ] `npx tsc --noEmit`
-- [ ] `npm run test:coverage`
-- [ ] `npm run build`
+- [x] Run `npm run test:coverage`
+- [ ] Run `npx tsc --noEmit`
+- [ ] Run `npm run lint`

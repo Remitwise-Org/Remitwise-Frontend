@@ -14,6 +14,23 @@ const rewrites = async () => {
   ];
 };
 
+// Insights routes consolidated into the canonical /financial-insights page.
+// Permanent (308) redirects keep existing bookmarks/links alive.
+const redirects = async () => {
+  return [
+    {
+      source: "/insights",
+      destination: "/financial-insights",
+      permanent: true,
+    },
+    {
+      source: "/financial-insight",
+      destination: "/financial-insights",
+      permanent: true,
+    },
+  ];
+};
+
 const sentryWebpackPluginOptions = {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
@@ -29,6 +46,6 @@ const sentryWebpackPluginOptions = {
 };
 
 module.exports = withSentryConfig(
-  { ...nextConfig, rewrites },
+  { ...nextConfig, rewrites, redirects },
   sentryWebpackPluginOptions
 );
