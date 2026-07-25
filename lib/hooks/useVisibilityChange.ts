@@ -25,6 +25,7 @@ export function useVisibilityChange(options: UseVisibilityChangeOptions = {}): b
     if (typeof document === "undefined") return;
 
     const handleVisibilityChange = () => {
+
       const visible = !document.hidden;
       setIsVisible(visible);
 
@@ -39,6 +40,10 @@ export function useVisibilityChange(options: UseVisibilityChangeOptions = {}): b
       }
     };
 
+    // Fire onChange initially with the current visibility state
+    if (onChange) {
+      onChange(!document.hidden);
+    }
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
