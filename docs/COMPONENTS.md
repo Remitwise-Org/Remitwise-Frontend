@@ -1,5 +1,7 @@
 # Components
 
+> For icon usage, sizing conventions, and how to add a custom icon, see [ICON_SYSTEM.md](ICON_SYSTEM.md).
+
 ## BackToTop
 
 A floating "back to top" button that appears after the user scrolls past 800px.

@@ -13,7 +13,7 @@ This is a Next.js-based frontend skeleton that provides the UI structure for all
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Utility-first styling
-- **Lucide React** - Icon library
+- **Lucide React** - Icon library — see [docs/ICON_SYSTEM.md](docs/ICON_SYSTEM.md) for usage, sizing, and adding custom icons
 
 ## Features (Placeholders)
 
