@@ -13,7 +13,8 @@
   .animate-pulse,
   .animate-spin,
   .animate-shimmer,
-  .animate-neon-pulse {
+  .animate-neon-pulse,
+  .animate-in {
     animation: none !important;
   }
 }
@@ -78,6 +79,13 @@
   --skeleton-bg-start: rgba(0, 0, 0, 0.06);
   --skeleton-bg-via: rgba(0, 0, 0, 0.12);
   --skeleton-bg-end: rgba(0, 0, 0, 0.06);
+
+  /* Shortcut tooltip design tokens */
+  --tooltip-bg: rgb(17, 24, 39); /* gray-900 */
+  --tooltip-fg: rgb(249, 250, 251); /* gray-50 */
+  --tooltip-kbd-bg: rgb(55, 65, 81); /* gray-700 */
+  --tooltip-kbd-fg: rgb(229, 231, 235); /* gray-200 */
+  --tooltip-kbd-border: rgb(75, 85, 99); /* gray-600 */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -95,6 +103,13 @@
     --skeleton-bg-start: rgba(255, 255, 255, 0.05);
     --skeleton-bg-via: rgba(255, 255, 255, 0.1);
     --skeleton-bg-end: rgba(255, 255, 255, 0.05);
+
+    /* Shortcut tooltip dark mode tokens */
+    --tooltip-bg: rgb(31, 41, 55); /* gray-800 */
+    --tooltip-fg: rgb(243, 244, 246); /* gray-100 */
+    --tooltip-kbd-bg: rgb(75, 85, 99); /* gray-600 */
+    --tooltip-kbd-fg: rgb(243, 244, 246); /* gray-100 */
+    --tooltip-kbd-border: rgb(107, 114, 128); /* gray-500 */
   }
 }
 

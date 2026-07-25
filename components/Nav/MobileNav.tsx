@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/lib/client/logout";
+import ShortcutTooltip from "@/components/ui/ShortcutTooltip";
 
 const MobileNav = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -77,13 +78,15 @@ const MobileNav = () => {
 
     return (
         <div className="lg:hidden">
-            <button
-                onClick={() => setIsOpen(true)}
-                className="p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
-                aria-label="Open Mobile Menu"
-            >
-                <Menu className="w-5 h-5 text-white/80" />
-            </button>
+            <ShortcutTooltip label="Open Mobile Menu" shortcut="Esc" side="left">
+              <button
+                  onClick={() => setIsOpen(true)}
+                  className="p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
+                  aria-label="Open Mobile Menu"
+              >
+                  <Menu className="w-5 h-5 text-white/80" />
+              </button>
+            </ShortcutTooltip>
 
             {/* Menu Overlay */}
             {isOpen && (
@@ -105,7 +108,7 @@ const MobileNav = () => {
                     <nav aria-label="Mobile navigation" className="flex-1 p-4 sm:p-6 space-y-8 pb-24">
                         {sections.map((section, idx) => (
                             <div key={idx} className="space-y-4">
-                                <h3 className="text-xs font-bold text-white/30 uppercase tracking-[0.2rem] px-2">
+                                <h3 className="text-xs font-bold text-white/70 uppercase tracking-[0.2rem] px-2">
                                     {section.title}
                                 </h3>
                                 <ul className="space-y-1">
@@ -123,7 +126,7 @@ const MobileNav = () => {
                                             >
                                                 <div className="flex items-center gap-4 relative z-10">
                                                     <div className={`p-2 rounded-xl transition-colors
-                                                        ${isActive(link.href) ? "bg-brand-red text-white" : "bg-white/5 text-white/40 group-hover:text-white/60"}
+                                                        ${isActive(link.href) ? "bg-brand-red text-white" : "bg-white/5 text-white/70 group-hover:text-white/90"}
                                                     `}>
                                                         {link.icon}
                                                     </div>
@@ -134,7 +137,7 @@ const MobileNav = () => {
                                                     </span>
                                                 </div>
                                                 <ChevronRight className={`w-5 h-5 transition-transform group-hover:translate-x-1
-                                                    ${isActive(link.href) ? "text-brand-red" : "text-white/20 group-hover:text-white/40"}
+                                                    ${isActive(link.href) ? "text-brand-red" : "text-white/60 group-hover:text-white/80"}
                                                 `} />
                                                 {isActive(link.href) && (
                                                     <span className="absolute inset-0 bg-brand-red/5 blur-xl -z-10" />
