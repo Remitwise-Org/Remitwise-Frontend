@@ -13,7 +13,8 @@
   .animate-pulse,
   .animate-spin,
   .animate-shimmer,
-  .animate-neon-pulse {
+  .animate-neon-pulse,
+  .animate-in {
     animation: none !important;
   }
 }
