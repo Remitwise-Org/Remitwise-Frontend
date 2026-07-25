@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { Skeleton, SkeletonCard } from "@/components/ui/Skeleton";
+import { Skeleton, SkeletonCard, SkeletonGroup } from "@/components/ui/Skeleton";
 
 function SectionShell({
   children,
@@ -11,7 +11,8 @@ function SectionShell({
 }) {
   return (
     <div
-      className={`rounded-3xl border border-white/10 bg-black/40 p-5 sm:p-6 backdrop-blur-sm ${className}`}
+      className={`loading-skeleton-shell rounded-3xl border border-white/10 bg-black/40 p-5 sm:p-6 backdrop-blur-sm ${className}`}
+      data-loading-state="shell"
     >
       {children}
     </div>
@@ -93,7 +94,7 @@ function SummaryKpiSkeleton() {
 
 export function DashboardLoadingSkeleton() {
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="loading-skeleton-dashboard mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" data-loading-state="dashboard">
       <div className="space-y-8">
         <StatGridSkeleton />
 
@@ -184,9 +185,9 @@ export function DashboardLoadingSkeleton() {
 
 export function BillsLoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-[#010101]">
+    <div className="loading-skeleton-bills min-h-screen bg-[#010101]" data-loading-state="bills">
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <div className="space-y-8">
+        <SkeletonGroup className="space-y-8" label="Loading bills">
           <SummaryKpiSkeleton />
 
           <SectionShell>
@@ -235,7 +236,7 @@ export function BillsLoadingSkeleton() {
               </div>
             </SectionShell>
           </div>
-        </div>
+        </SkeletonGroup>
       </main>
     </div>
   );
@@ -359,9 +360,9 @@ export function TransactionHistoryLoadingSkeleton() {
 
 export function InsightsLoadingSkeleton() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#010101]">
+    <div className="loading-skeleton-insights flex min-h-screen flex-col bg-[#010101]" data-loading-state="insights">
       <main className="flex-grow px-4 pb-20 pt-32 md:px-8">
-        <div className="mx-auto max-w-7xl">
+        <SkeletonGroup className="mx-auto max-w-7xl" label="Loading insights">
           <div className="flex justify-center">
             <div className="w-full max-w-md rounded-3xl border border-white/10 bg-black/40 p-6 backdrop-blur-sm">
               <div className="mb-8 flex items-start gap-3">
@@ -398,7 +399,7 @@ export function InsightsLoadingSkeleton() {
               </div>
             </div>
           </div>
-        </div>
+        </SkeletonGroup>
       </main>
     </div>
   );
@@ -406,7 +407,10 @@ export function InsightsLoadingSkeleton() {
 
 export function GoalsLoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-[#010101] safari-safe-bottom">
+    <SkeletonGroup
+      className="min-h-screen bg-[#010101] safari-safe-bottom"
+      label="Loading savings goals"
+    >
       {/* Page header */}
       <div className="border-b border-white/10 px-5 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
@@ -454,65 +458,7 @@ export function GoalsLoadingSkeleton() {
           ))}
         </div>
       </main>
-    </div>
-  );
-}
-
-export function TransactionHistoryLoadingSkeleton() {
-  return (
-    <main className="w-full min-h-screen bg-[#010101]">
-      {/* Header */}
-      <div className="border-b border-white/10 px-4 py-6 md:px-20">
-        <Skeleton className="mb-2 h-7 w-48 rounded" />
-        <Skeleton className="h-4 w-32 rounded" />
-      </div>
-
-      <div className="mx-4 mt-8 space-y-6 md:mx-20">
-        {/* Search + action bar */}
-        <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] px-4 py-6">
-          <Skeleton className="mb-4 h-10 w-full rounded-xl" />
-          <div className="flex justify-end gap-3">
-            <Skeleton className="h-9 w-24 rounded-xl" />
-            <Skeleton className="h-9 w-24 rounded-xl" />
-          </div>
-        </div>
-
-        {/* Filters panel */}
-        <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0F0F0F] to-[#0A0A0A] px-4 py-5">
-          <div className="mb-4 flex items-center gap-2">
-            <Skeleton className="h-4 w-4 rounded" />
-            <Skeleton className="h-4 w-20 rounded" />
-          </div>
-          <div className="mb-4 flex flex-wrap gap-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-24 rounded-xl" />
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-20 rounded-xl" />
-            ))}
-          </div>
-        </div>
-
-        {/* Transaction rows */}
-        <div className="space-y-4">
-          {["today", "yesterday", "earlier"].map((group) => (
-            <section key={group}>
-              <div className="mb-3 flex items-center justify-between border-b border-white/[0.08] pb-3">
-                <Skeleton className="h-5 w-24 rounded" />
-                <Skeleton className="h-4 w-16 rounded" />
-              </div>
-              <div className="space-y-3">
-                {Array.from({ length: group === "today" ? 2 : 3 }).map((_, i) => (
-                  <ListRowSkeleton key={i} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      </div>
-    </main>
+    </SkeletonGroup>
   );
 }
 
@@ -522,7 +468,7 @@ export function InsightLoadingSkeleton() {
       className="min-h-screen p-4 sm:p-6 lg:p-8"
       style={{ background: "linear-gradient(180deg, #0F0F0F 0%, #0A0A0A 100%)" }}
     >
-      <div className="mx-auto max-w-[928px] space-y-6">
+      <SkeletonGroup className="mx-auto max-w-[928px] space-y-6" label="Loading insight">
         {/* Title + period selector row */}
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <Skeleton className="h-8 w-44 rounded" />
@@ -547,7 +493,7 @@ export function InsightLoadingSkeleton() {
           <SkeletonCard variant="chart" />
           <SkeletonCard variant="chart" />
         </div>
-      </div>
+      </SkeletonGroup>
     </div>
   );
 }

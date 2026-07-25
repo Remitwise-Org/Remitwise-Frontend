@@ -7,6 +7,8 @@ import { useDensity } from '@/lib/context/DensityContext';
 import WidgetEmptyState from '@/components/ui/WidgetEmptyState';
 import WidgetErrorState from '@/components/ui/WidgetErrorState';
 import { SkeletonList } from '@/components/ui/Skeleton';
+import { useWidgetDeepLink } from '@/lib/hooks/useWidgetDeepLink';
+import { WIDGET_IDS } from '@/lib/config/widgets';
 
 type TransactionStatus = 'Completed' | 'Pending' | 'Failed';
 
@@ -20,72 +22,20 @@ interface Transaction {
 }
 
 const mockTransactions: Transaction[] = [
-    {
-        id: '1',
-        date: 'Jan 28, 2026',
-        description: 'Remittance to Philippines',
-        category: 'Transfer',
-        amount: '$300.00',
-        status: 'Completed',
-    },
-    {
-        id: '2',
-        date: 'Jan 25, 2026',
-        description: 'Electricity Bill Payment',
-        category: 'Bill',
-        amount: '$60.00',
-        status: 'Completed',
-    },
-    {
-        id: '3',
-        date: 'Jan 22, 2026',
-        description: 'Insurance Premium',
-        category: 'Insurance',
-        amount: '$30.00',
-        status: 'Pending',
-    },
-    {
-        id: '4',
-        date: 'Jan 20, 2026',
-        description: 'School Fees Payment',
-        category: 'Bill',
-        amount: '$120.00',
-        status: 'Completed',
-    },
-    {
-        id: '5',
-        date: 'Jan 18, 2026',
-        description: 'Remittance to India',
-        category: 'Transfer',
-        amount: '$250.00',
-        status: 'Failed',
-    }
+    { id: '1', date: 'Jan 28, 2026', description: 'Remittance to Philippines', category: 'Transfer',  amount: '$300.00', status: 'Completed' },
+    { id: '2', date: 'Jan 25, 2026', description: 'Electricity Bill Payment',  category: 'Bill',      amount: '$60.00',  status: 'Completed' },
+    { id: '3', date: 'Jan 22, 2026', description: 'Insurance Premium',         category: 'Insurance', amount: '$30.00',  status: 'Pending'   },
+    { id: '4', date: 'Jan 20, 2026', description: 'School Fees Payment',       category: 'Bill',      amount: '$120.00', status: 'Completed' },
+    { id: '5', date: 'Jan 18, 2026', description: 'Remittance to India',       category: 'Transfer',  amount: '$250.00', status: 'Failed'    },
 ];
 
 const StatusBadge = memo(function StatusBadge({ status }: { status: TransactionStatus }) {
     const configs = {
-        Completed: {
-            icon: Check,
-            color: 'text-[#DC2626]',
-            bgColor: 'bg-[#DC2626]/10',
-            borderColor: 'border-[#DC2626]/20',
-        },
-        Pending: {
-            icon: Clock,
-            color: 'text-gray-400',
-            bgColor: 'bg-gray-400/10',
-            borderColor: 'border-gray-400/20',
-        },
-        Failed: {
-            icon: X,
-            color: 'text-[#DC2626]',
-            bgColor: 'bg-[#DC2626]/10',
-            borderColor: 'border-[#DC2626]/20',
-        },
+        Completed: { icon: Check, color: 'text-[#DC2626]',  bgColor: 'bg-[#DC2626]/10',  borderColor: 'border-[#DC2626]/20' },
+        Pending:   { icon: Clock, color: 'text-gray-400',   bgColor: 'bg-gray-400/10',   borderColor: 'border-gray-400/20'  },
+        Failed:    { icon: X,     color: 'text-[#DC2626]',  bgColor: 'bg-[#DC2626]/10',  borderColor: 'border-[#DC2626]/20' },
     };
-
     const { icon: Icon, color, bgColor, borderColor } = configs[status];
-
     return (
         <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border ${bgColor} ${borderColor} ${color}`}>
             <Icon className="w-3.5 h-3.5" aria-hidden="true" />
@@ -113,10 +63,18 @@ const RecentTransactionsWidget = ({
     const [retryKey, setRetryKey] = useState(0);
     const handleRetry = useCallback(() => setRetryKey((k) => k + 1), []);
 
+    // Deep-link: scrolls & highlights this widget when ?widget=recent-transactions
+    const widgetRef = useWidgetDeepLink(WIDGET_IDS.RECENT_TRANSACTIONS);
+
     const isEmpty = !hasError && !isLoading && transactions.length === 0;
 
     return (
-        <div key={retryKey} className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 w-full">
+        <div
+            key={retryKey}
+            ref={widgetRef}
+            id={WIDGET_IDS.RECENT_TRANSACTIONS}
+            className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 w-full"
+        >
             <div className={`flex justify-between items-start ${isCompact ? 'mb-4' : 'mb-8'}`}>
                 <div>
                     <h2 className="text-xl font-bold text-white mb-1">Recent Transactions</h2>
@@ -125,10 +83,7 @@ const RecentTransactionsWidget = ({
                     </p>
                 </div>
                 {!isEmpty && !hasError && !isLoading && (
-                    <Link
-                        href="/transactions"
-                        className="text-[#DC2626] text-sm font-medium flex items-center gap-1 hover:opacity-80 transition-opacity"
-                    >
+                    <Link href="/transactions" className="text-[#DC2626] text-sm font-medium flex items-center gap-1 hover:opacity-80 transition-opacity">
                         View All <ChevronRight className="w-4 h-4" aria-hidden="true" />
                     </Link>
                 )}
@@ -139,18 +94,9 @@ const RecentTransactionsWidget = ({
                     <SkeletonList variant="table" rows={5} />
                 </div>
             ) : hasError ? (
-                <WidgetErrorState
-                    message="We couldn't load your transactions. Please try again."
-                    onRetry={handleRetry}
-                />
+                <WidgetErrorState message="We couldn't load your transactions. Please try again." onRetry={handleRetry} />
             ) : isEmpty ? (
-                <WidgetEmptyState
-                    icon={ArrowLeftRight}
-                    title="No transactions yet"
-                    description="Send money to a recipient and your activity will appear here."
-                    ctaLabel="Send money"
-                    ctaHref="/send"
-                />
+                <WidgetEmptyState icon={ArrowLeftRight} title="No transactions yet" description="Send money to a recipient and your activity will appear here." ctaLabel="Send money" ctaHref="/send" />
             ) : (
                 <>
                     {/* Desktop Table View */}
@@ -171,9 +117,7 @@ const RecentTransactionsWidget = ({
                                         <td className={`${isCompact ? 'py-2' : 'py-4'} text-sm text-gray-400`}>{tx.date}</td>
                                         <td className={`${isCompact ? 'py-2' : 'py-4'} text-sm font-bold text-white`}>{tx.description}</td>
                                         <td className={`${isCompact ? 'py-2' : 'py-4'} text-center`}>
-                                            <span className="inline-block px-3 py-1 rounded-full bg-white/5 text-gray-400 text-xs">
-                                                {tx.category}
-                                            </span>
+                                            <span className="inline-block px-3 py-1 rounded-full bg-white/5 text-gray-400 text-xs">{tx.category}</span>
                                         </td>
                                         <td className={`${isCompact ? 'py-2' : 'py-4'} text-sm font-bold text-white text-right`}>{tx.amount}</td>
                                         <td className={`${isCompact ? 'py-2' : 'py-4'} text-right flex justify-end`}>
@@ -191,20 +135,14 @@ const RecentTransactionsWidget = ({
                             <div key={tx.id} className={`bg-white/[0.03] rounded-xl border border-white/5 ${isCompact ? 'p-3' : 'p-5'}`}>
                                 <div className="flex justify-between items-start mb-2">
                                     <h3 className="text-base font-bold text-white leading-tight pr-4">{tx.description}</h3>
-                                    <div className="flex-shrink-0">
-                                        <StatusBadge status={tx.status} />
-                                    </div>
+                                    <div className="flex-shrink-0"><StatusBadge status={tx.status} /></div>
                                 </div>
-
                                 <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
                                     <span>{tx.date}</span>
                                     <span className="w-1 h-1 rounded-full bg-gray-600" aria-hidden="true" />
                                     <span>{tx.category}</span>
                                 </div>
-
-                                <div className="text-xl font-bold text-white">
-                                    {tx.amount}
-                                </div>
+                                <div className="text-xl font-bold text-white">{tx.amount}</div>
                             </div>
                         ))}
                     </div>

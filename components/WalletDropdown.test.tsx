@@ -6,6 +6,7 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 // Mock the useFocusTrap hook
 vi.mock('../src/lib/hooks/useFocusTrap', () => ({
@@ -149,6 +150,56 @@ describe('WalletDropdown', () => {
       menuItems[0].focus();
       fireEvent.keyDown(document, { key: 'End' });
       expect(document.activeElement).toBe(menuItems[menuItems.length - 1]);
+    });
+  });
+
+  describe('keyboard activation', () => {
+    it('activates the focused menuitem on Enter', async () => {
+      const user = userEvent.setup();
+      render(<WalletDropdown {...defaultProps} />);
+      const disconnectBtn = screen.getByText('Disconnect').closest('button')!;
+
+      disconnectBtn.focus();
+      await user.keyboard('{Enter}');
+
+      expect(defaultProps.onDisconnect).toHaveBeenCalledTimes(1);
+    });
+
+    it('activates the focused menuitem on Space', async () => {
+      const user = userEvent.setup();
+      render(<WalletDropdown {...defaultProps} />);
+      const disconnectBtn = screen.getByText('Disconnect').closest('button')!;
+
+      disconnectBtn.focus();
+      await user.keyboard(' ');
+
+      expect(defaultProps.onDisconnect).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not activate a disabled menuitem on Enter or Space', async () => {
+      const user = userEvent.setup();
+      render(
+        <WalletDropdown {...defaultProps} isConnected={false} isConnecting />,
+      );
+      const connectBtn = screen.getByText('Connecting...').closest('button')!;
+      expect(connectBtn).toBeDisabled();
+
+      connectBtn.focus();
+      await user.keyboard('{Enter}');
+      await user.keyboard(' ');
+
+      expect(defaultProps.onConnect).not.toHaveBeenCalled();
+    });
+
+    it('does not activate a menuitem on unrelated keys', async () => {
+      const user = userEvent.setup();
+      render(<WalletDropdown {...defaultProps} />);
+      const disconnectBtn = screen.getByText('Disconnect').closest('button')!;
+
+      disconnectBtn.focus();
+      await user.keyboard('a');
+
+      expect(defaultProps.onDisconnect).not.toHaveBeenCalled();
     });
   });
 

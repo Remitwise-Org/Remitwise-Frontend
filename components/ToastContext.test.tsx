@@ -315,5 +315,39 @@ describe('ToastContext', () => {
 
       expect(screen.getByTestId('toast-description')).toHaveTextContent('Description');
     });
+
+    it('should dismiss FIFO and cap overlap at 3', () => {
+      const TestComponent = () => {
+        const { toast, toasts } = useToast();
+        return (
+          <div>
+            <button onClick={() => toast({ variant: 'info', title: 'Toast 1' })}>Add 1</button>
+            <button onClick={() => toast({ variant: 'info', title: 'Toast 2' })}>Add 2</button>
+            <button onClick={() => toast({ variant: 'info', title: 'Toast 3' })}>Add 3</button>
+            <button onClick={() => toast({ variant: 'info', title: 'Toast 4' })}>Add 4</button>
+            <button onClick={() => toast({ variant: 'info', title: 'Toast 5' })}>Add 5</button>
+            <div data-testid="toast-ids">{toasts.map(t => t.title).join(',')}</div>
+          </div>
+        );
+      };
+
+      render(
+        <ToastProvider>
+          <TestComponent />
+        </ToastProvider>
+      );
+
+      act(() => {
+        screen.getByText('Add 1').click();
+        screen.getByText('Add 2').click();
+        screen.getByText('Add 3').click();
+        screen.getByText('Add 4').click();
+        screen.getByText('Add 5').click();
+      });
+
+      const titles = screen.getByTestId('toast-ids').textContent?.split(',');
+      expect(titles).toHaveLength(3);
+      expect(titles).toEqual(['Toast 3', 'Toast 4', 'Toast 5']);
+    });
   });
 });

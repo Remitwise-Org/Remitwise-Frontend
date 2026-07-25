@@ -1,6 +1,7 @@
 'use client'
 
-import { useId, useState, useMemo, memo } from 'react'
+import { useId, useState, useMemo, useCallback, memo } from 'react'
+import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import {
   PieChart,
   Pie,
@@ -22,11 +23,6 @@ export interface CategoryDataPoint {
   percentage: number
 }
 
-interface CustomTooltipProps {
-  active?: boolean
-  payload?: Array<{ color?: string; payload: CategoryDataPoint }>
-}
-
 export const MOCK_CATEGORY_DATA: CategoryDataPoint[] = [
   { name: 'Family Support', amount: 1800, percentage: 56 },
   { name: 'Education',      amount: 850,  percentage: 26 },
@@ -34,12 +30,12 @@ export const MOCK_CATEGORY_DATA: CategoryDataPoint[] = [
   { name: 'Emergency',      amount: 200,  percentage: 6  },
 ]
 
-const SLICE_COLORS = INSIGHTS_PALETTE.slice(0, 8); // use first 8 colors
+const SLICE_COLORS = INSIGHTS_PALETTE.slice(0, 8);
 
 const AXIS_COLOR = '#6b7280'
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
+const CustomTooltip = memo(function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null
   const entry = payload[0]
   const data  = entry.payload as CategoryDataPoint
@@ -65,7 +61,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
       </div>
     </div>
   )
-}
+})
 
 // ── Custom label inside donut center ─────────────────────────────────────────
 interface CenterLabelProps {
@@ -75,7 +71,7 @@ interface CenterLabelProps {
   total: number
 }
 
-function CenterLabel({ cx, cy, active, total }: CenterLabelProps) {
+const CenterLabel = memo(function CenterLabel({ cx, cy, active, total }: CenterLabelProps) {
   return (
     <g>
       {active ? (
@@ -99,7 +95,7 @@ function CenterLabel({ cx, cy, active, total }: CenterLabelProps) {
       )}
     </g>
   )
-}
+})
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -107,36 +103,51 @@ interface CategoryDonutChartProps {
   data?: CategoryDataPoint[]
 }
 
-function useReducedMotion() {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
 function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutChartProps) {
   const summaryId = useId()
   const { t } = useClientTranslator()
   const summaryItems = useMemo(() =>
-  data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage}%)`),
-  [data]
-);
-const chartSummary = buildChartSummary(summaryItems, t);
+    data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage}%)`),
+    [data]
+  );
+  const chartSummary = buildChartSummary(summaryItems, t);
   const [activeCategory, setActiveCategory] = useState<CategoryDataPoint | null>(null)
-  const reducedMotion = useReducedMotion()
+  const reducedMotion = usePrefersReducedMotion()
 
-  const total  = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
+  const total = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
   const topCat = useMemo(() => data[0], [data])
 
+  const pieStyle = useMemo(() => ({ cursor: 'pointer' as const }), [])
 
+  const handleMouseEnter = useCallback((_: unknown, index: number) => {
+    setActiveCategory(data[index])
+  }, [data])
 
-  const ariaLabel = useMemo(
-    () => buildChartImageLabel('Top categories', summaryItems, t),
-    [summaryItems, t],
-  )
+  const handleMouseLeave = useCallback(() => {
+    setActiveCategory(null)
+  }, [])
 
-  const summaryText = useMemo(
-    () => buildChartSummary(summaryItems, t),
-    [summaryItems, t],
-  )
+  const handleClick = useCallback((_: unknown, index: number) => {
+    setActiveCategory(prev =>
+      prev?.name === data[index].name ? null : data[index]
+    )
+  }, [data])
+
+  const cells = useMemo(() => data.map((entry, index) => (
+    <Cell
+      key={entry.name}
+      fill={SLICE_COLORS[index % SLICE_COLORS.length]}
+      opacity={
+        activeCategory === null || activeCategory.name === entry.name
+          ? 1
+          : 0.35
+      }
+      style={reducedMotion ? undefined : { transition: 'opacity 0.2s ease' }}
+    />
+  )), [data, activeCategory, reducedMotion])
+
+  const ariaLabel = useMemo(() => buildChartImageLabel('Top categories', summaryItems, t), [summaryItems, t])
+  const summaryText = useMemo(() => buildChartSummary(summaryItems, t), [summaryItems, t])
 
   return (
     <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
@@ -167,27 +178,13 @@ const chartSummary = buildChartSummary(summaryItems, t);
                 paddingAngle={3}
                 dataKey="amount"
                 stroke="none"
-                onMouseEnter={(_, index) => setActiveCategory(data[index])}
-                onMouseLeave={() => setActiveCategory(null)}
-                onClick={(_, index) =>
-                  setActiveCategory(prev =>
-                    prev?.name === data[index].name ? null : data[index]
-                  )
-                }
-                style={{ cursor: 'pointer' }}
+                isAnimationActive={!reducedMotion}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                onClick={handleClick}
+                style={pieStyle}
               >
-                {data.map((entry, index) => (
-                  <Cell
-                    key={entry.name}
-                    fill={SLICE_COLORS[index % SLICE_COLORS.length]}
-                    opacity={
-                      activeCategory === null || activeCategory.name === entry.name
-                        ? 1
-                        : 0.35
-                    }
-                    style={reducedMotion ? undefined : { transition: 'opacity 0.2s ease' }}
-                  />
-                ))}
+                {cells}
               </Pie>
 
               {/* Center label rendered as custom content */}
@@ -195,7 +192,7 @@ const chartSummary = buildChartSummary(summaryItems, t);
                 <CenterLabel cx={0} cy={0} active={activeCategory} total={total} />
               </text>
 
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={CustomTooltip} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -261,6 +258,7 @@ const chartSummary = buildChartSummary(summaryItems, t);
           </p>
         </div>
       )}
+
       {/* Screen‑reader summary for the chart */}
       <p id={summaryId} className="sr-only" aria-live="polite">
         {summaryText}

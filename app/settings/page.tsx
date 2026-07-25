@@ -10,6 +10,7 @@ import { WalletSection } from "@/components/settings/WalletSection";
 import { FamilySection } from "@/components/settings/FamilySection";
 import { PreferencesSection } from "@/components/settings/PreferencesSection";
 import PageHeadingLink from "@/components/PageHeadingLink";
+import { useSeo } from "@/lib/hooks/useSeo";
 
 const SECTIONS = [
   { id: "profile",        labelKey: "settings.sections.profile",         icon: User    },
@@ -25,6 +26,11 @@ type SectionId = (typeof SECTIONS)[number]["id"];
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
+  useSeo({
+    title: "Settings - RemitWise",
+    description: "Update your profile, theme, and language preferences",
+  });
+
   const { t } = useClientTranslator();
   const [active, setActive] = useState<SectionId>("profile");
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -66,7 +72,11 @@ export default function SettingsPage() {
       {/* ── Sticky top bar (mobile breadcrumb / desktop title) ── */}
       <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-100 dark:border-gray-800">
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 overflow-hidden px-4 sm:px-6">
-          <h1 className="shrink-0 text-base font-semibold text-gray-900 dark:text-white">
+          <PageHeadingLink
+            headingId="settings-page-heading"
+            label={t("settings.page_title")}
+            headingClassName="shrink-0 text-base font-semibold text-gray-900 dark:text-white"
+          >
             {t("settings.page_title")}
           </PageHeadingLink>
           {/* Mobile: horizontal scrollable nav pills */}

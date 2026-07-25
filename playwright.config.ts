@@ -27,7 +27,7 @@ export default defineConfig({
     extraHTTPHeaders: {
       'x-playwright-test': 'true',
     },
-    // Force reduced-motion so CSS transitions don't pollute snapshots.
+    // @ts-expect-error reducedMotion is a valid Playwright context option
     reducedMotion: 'reduce',
     // Consistent colour scheme for snapshot stability.
     colorScheme: 'dark',
@@ -92,7 +92,7 @@ export default defineConfig({
 
     // 🔥 Critical: Inject required environment variables for CI
     env: {
-      DATABASE_URL: 'file:./ci.db', // Required for Prisma in CI
+      DATABASE_URL: `file:${path.resolve(__dirname, 'prisma/ci.db')}`, // Required for Prisma in CI
       SESSION_PASSWORD:
         'supersecurelongsessionpasswordatleast32characters!!',
       AUTH_SECRET: 'ci-test-secret',

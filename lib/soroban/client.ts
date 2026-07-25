@@ -28,7 +28,7 @@ function getRpcUrl(): string {
     return "https://soroban-testnet.stellar.org";
   }
   return url;
-})();
+}
 
 /** How long (ms) to wait for a single RPC call before aborting. */
 const TIMEOUT_MS = 10_000;

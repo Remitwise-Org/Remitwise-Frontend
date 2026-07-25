@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
     ArrowLeft,
@@ -8,8 +10,14 @@ import {
 } from "lucide-react";
 import StatCard from "@/components/Dashboard/StatCard";
 import PageHeadingLink from "@/components/PageHeadingLink";
+import { useSeo } from "@/lib/hooks/useSeo";
 
 export default function FinancialInsight() {
+    useSeo({
+        title: "Financial Insight | RemitWise",
+        description: "View your financial summary including total remittances, savings, bills paid, and insurance premiums.",
+    });
+
     return (
         <div className="min-h-screen bg-[#0A0A0A]">
             {/* Header */}

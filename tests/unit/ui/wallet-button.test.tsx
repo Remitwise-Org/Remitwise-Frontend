@@ -54,9 +54,7 @@ describe('WalletButton', () => {
     await user.click(triggerButton);
 
     // Find the connect button inside the dropdown
-    // Note: The WalletDropdown has a button with text "Connect Wallet"
-    const dropdownButtons = screen.getAllByRole('button', { name: /Connect Wallet/i });
-    const connectBtn = dropdownButtons[dropdownButtons.length - 1]; // The one in dropdown
+    const connectBtn = screen.getByRole('menuitem', { name: /Connect Wallet/i });
 
     expect(connectBtn).not.toBeDisabled();
 

@@ -4,6 +4,8 @@
 
 Issue #428 focuses on the `/transactions` filtering, search, and grouped-list experience. It does not change transaction row density, typography scale, or readability rules covered by UX-013.
 
+See [docs/transactions-user-interaction-filter.md](./transactions-user-interaction-filter.md) for why every type chip below already represents a user-initiated interaction, and what to do if a system-generated entry type is ever added.
+
 ## Filter Behavior
 
 - Search matches transaction ID, counterparty, type, status, amount, and currency.
@@ -47,6 +49,14 @@ The mock `/transactions` data is dated around June 2, 2026 so desktop and mobile
 - Empty: shown only when there is no transaction history at all.
 - No results: shown when transactions exist but search/filter combinations remove every result.
 - Loading: intentionally not rendered on this static mock page; the dashboard transaction-history route still owns API loading/error states.
+
+## CSV Export & Excel Escaping Rules
+
+Transaction lists on `/transactions` and `/dashboard/transaction-history` support CSV export via `serializeToCsv`:
+
+- **UTF-8 BOM**: Includes a UTF-8 Byte Order Mark (`\uFEFF`) by default so Microsoft Excel opens the file with UTF-8 encoding for locale-safe character display.
+- **RFC 4180 Escaping**: Fields containing commas, double quotes, or newlines are wrapped in double quotes `"..."`, and internal quotes are doubled `""`.
+- **Excel Formula Injection Protection**: Text fields starting with formula characters (`=`, `@`, `\t`, `\r` or non-numeric `+` / `-`) are prefixed with `'` to prevent unintended formula execution in Excel.
 
 ## QA Targets
 

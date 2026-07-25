@@ -2,6 +2,7 @@
 
 import React from "react";
 import { CircleCheckBig } from 'lucide-react';
+import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion';
 
 interface AllocationStatusProps {
   percentage: number;
@@ -10,15 +11,15 @@ interface AllocationStatusProps {
 export default function AllocationStatusCard({
   percentage = 100,
 }: AllocationStatusProps) {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const isComplete = percentage === 100;
 
-  // Visual logic based on completion
   const cardShadow = isComplete
     ? "shadow-[0_0_25px_rgba(215,35,35,0.2)] border-brand-red/20"
     : "border-white/5";
   const textColor = isComplete ? "text-brand-red" : "text-zinc-400";
   const barColor = isComplete
-    ? "bg-brand-red shadow-[0_0_12px_rgba(215,35,35,0.6)] animate-neon-pulse"
+    ? `bg-brand-red shadow-[0_0_12px_rgba(215,35,35,0.6)] ${prefersReducedMotion ? '' : 'animate-neon-pulse'}`
     : "bg-zinc-700";
 
   return (
@@ -41,16 +42,18 @@ export default function AllocationStatusCard({
           <div className="flex flex-col items-end">
             <div className="flex items-center gap-3">
               <span
-                className={`text-4xl font-black  tracking-tighter transition-colors tabular-nums ${textColor}`}
+                className={`text-4xl font-black tracking-tighter transition-colors tabular-nums ${textColor}`}
               >
                 {percentage}%
               </span>
 
               {isComplete && (
                 <div className="relative flex items-center justify-center">
-                  <div className="absolute inset-0  blur-xl opacity-20 animate-neon-pulse" />
-                  <div className="relative bg-[#5c2828]   p-2 rounded-full">
-                    <CircleCheckBig 
+                  <div
+                    className={`absolute inset-0 blur-xl opacity-20 ${prefersReducedMotion ? '' : 'animate-neon-pulse'}`}
+                  />
+                  <div className="relative bg-[#5c2828] p-2 rounded-full">
+                    <CircleCheckBig
                       className="w-6 h-6 text-brand-red"
                       strokeWidth={3}
                     />
@@ -58,7 +61,7 @@ export default function AllocationStatusCard({
                 </div>
               )}
             </div>
-            <span className="text-[12px]   text-zinc-600 font-bold mt-1 mr-1">
+            <span className="text-[12px] text-zinc-600 font-bold mt-1 mr-1">
               of 100%
             </span>
           </div>

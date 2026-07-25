@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { User } from "lucide-react";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useAutosave } from "@/lib/hooks/useAutosave";
+import { useSafeReload } from "@/lib/hooks/useSafeReload";
 import {
   SectionCard,
   SectionHeader,
@@ -22,7 +23,8 @@ export function ProfileSection() {
     await new Promise((resolve) => setTimeout(resolve, 300));
   }, []);
 
-  const { saveState, triggerSave } = useAutosave(onSave);
+  const { saveState, isDirty, triggerSave } = useAutosave(onSave);
+  useSafeReload(isDirty);
 
   const handleNameChange = (value: string) => {
     setName(value);

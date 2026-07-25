@@ -128,9 +128,9 @@ describe('dashboard widget render smoke tests', () => {
   it('mounts QuickActions and renders its primary actions', () => {
     expect(() => renderWithProviders(<QuickActions />)).not.toThrow()
 
-    expect(screen.getByRole('button', { name: /emergency transfer/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /send/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /goals/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /emergency transfer/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /send/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /goals/i })).toBeInTheDocument()
   })
 })
 
