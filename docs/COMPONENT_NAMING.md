@@ -483,4 +483,4 @@ Before opening a PR, confirm:
 - [HOOKS.md](HOOKS.md) — catalogue of shared hooks in `lib/hooks/`
 - [ROUTING_PATTERNS.md](ROUTING_PATTERNS.md) — route directory naming and nested-route conventions
 - [THEMING.md](THEMING.md) — CSS custom properties and Tailwind tokens; use these instead of hard-coded values
-- [component-states.md](component-states.md) — default, error, disabled, and loading state patterns
+- [COMPONENT_STATES.md](COMPONENT_STATES.md) — default, hover, focus, disabled, error, and loading state patterns

@@ -212,7 +212,7 @@ When you create a new page route:
 
 4. **Add a performance budget helper** (optional) in `lib/performance/` if the route has specific constraints beyond the generic tier budgets.
 
-5. **Verify** that the route's `loading.tsx` skeleton provides stable layout blocks (see [component-states.md](./component-states.md)).
+5. **Verify** that the route's `loading.tsx` skeleton provides stable layout blocks (see [COMPONENT_STATES.md](./COMPONENT_STATES.md)).
 
 ---
 
@@ -274,7 +274,7 @@ Register the new test in the `test:perf` script in `package.json`:
 | [metrics-logging.md](./metrics-logging.md) | Structured JSON log format and `durationMs` field |
 | [infrastructure.md](./infrastructure.md) | Request gateway, rate limiting, and middleware flow |
 | [architecture.md](./architecture.md) | Full route map and library layers |
-| [component-states.md](./component-states.md) | Loading skeleton patterns for stable layout |
+| [COMPONENT_STATES.md](./COMPONENT_STATES.md) | Loading skeleton patterns for stable layout |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Test commands and PR expectations |
 
 ---

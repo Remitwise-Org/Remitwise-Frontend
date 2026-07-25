@@ -240,7 +240,7 @@ export function SubmitAffordanceButton({
 
 ## Related Documentation
 
-- [Frontend Component States Guide](component-states.md) — Visual treatments for loading, disabled, error, and idle component states.
+- [Frontend Component States Guide](COMPONENT_STATES.md) — Visual treatments for default, hover, focus, disabled, error, and loading component states.
 - [Form Action Hook Guide](use-form-action.md) — In-depth reference for `useFormAction`.
 - [Settings Page Architecture](settings-page-structure.md) — Full layout and section breakdown for autosaving settings.
 - [Hooks Reference](HOOKS.md) — Comprehensive documentation of custom React hooks.
