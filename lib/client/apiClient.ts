@@ -17,6 +17,8 @@
  * - The existing `401 -> refresh -> retry once` session-expiry flow and the
  *   `Response | null` contract, unchanged.
  * - An optional typed `getJson<T>()` helper that parses and validates the body.
+ * - A "session expired" interceptor that redirects to the sign-in page with the
+ *   current route preserved in `?next=` when refresh cannot recover the request.
  *
  * Aborts are first-class: a caller-supplied `signal` (e.g. from `useFormAction`
  * or a component unmount) cancels immediately and is never retried.
@@ -44,6 +46,13 @@
  */
 
 import { sessionHandler } from './sessionHandler';
+import { createApiRequestHeaders, setApiClientAuthToken } from './apiHeaders';
+
+export {
+  API_AUTHORIZATION_HEADER,
+  API_REQUEST_ID_HEADER,
+  setApiClientAuthToken,
+} from './apiHeaders';
 
 export interface ApiClientOptions extends RequestInit {
   /** Max retry attempts for idempotent (GET/HEAD) requests. Ignored for writes. Default 3. */
@@ -253,14 +262,32 @@ async function fetchWithRetry(url: string, options: ApiClientOptions): Promise<R
  *   contains `{ message: 'Session expired' }`.
  * - Attempts `POST /api/auth/refresh` once, then replays the original request once.
  * - Falls back to the terminal session-expiry flow and returns `null` if refresh
- *   cannot recover the request.
+ *   cannot recover the request. When that happens the caller is redirected to
+ *   the sign-in page with the current route preserved in `?next=` so the user
+ *   is sent back to where they were after re-authentication.
  *
  * @param url - API endpoint URL.
  * @param options - Standard `fetch` options plus optional `retries`, `backoff`, and `timeout`.
  * @returns The raw `Response`, or `null` when the session-expiry flow has already been triggered.
  */
 async function request(url: string, options?: ApiClientOptions): Promise<Response | null> {
-  const response = await fetchWithRetry(url, options || {});
+  // Create these once per logical request. Retries and the one-time session
+  // refresh replay therefore carry the same correlation ID.
+  const requestOptions: ApiClientOptions = {
+    ...(options ?? {}),
+    headers: createApiRequestHeaders(options?.headers),
+  };
+  const response = await fetchWithRetry(url, requestOptions);
+
+  if (response && response.headers && typeof window !== 'undefined') {
+    const requestId = response.headers.get('x-request-id') ||
+                      response.headers.get('x-correlation-id') ||
+                      response.headers.get('request-id') ||
+                      response.headers.get('correlation-id');
+    if (requestId) {
+      window.dispatchEvent(new CustomEvent('dev-request-id-updated', { detail: requestId }));
+    }
+  }
 
   // Check if session expired
   if (await sessionHandler.isSessionExpired(response)) {
@@ -269,7 +296,7 @@ async function request(url: string, options?: ApiClientOptions): Promise<Respons
       const refreshed = await sessionHandler.refreshSession();
       if (refreshed) {
         // Retry original request once
-        return request(url, { ...options, _isRetry: true });
+        return request(url, { ...requestOptions, _isRetry: true });
       }
     }
 
@@ -425,4 +452,5 @@ export const apiClient = {
   patch,
   delete: del,
   getJson,
+  setAuthToken: setApiClientAuthToken,
 };

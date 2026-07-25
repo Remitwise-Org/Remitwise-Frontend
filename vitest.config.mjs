@@ -20,6 +20,8 @@ export default defineConfig({
       'tests/property/**/*.test.cjs',
       'tests/session/**/*.test.ts',
       'tests/session/**/*.test.cjs',
+      'tests/react/**/*.test.ts',
+      'tests/react/**/*.test.tsx',
       'components/**/*.test.tsx',
     ],
     environment: 'jsdom',
@@ -48,6 +50,9 @@ export default defineConfig({
     },
     alias: {
       '@': rootDir,
+    },
+    typecheck: {
+      tsconfig: './tsconfig.test.json',
     },
   },
 });

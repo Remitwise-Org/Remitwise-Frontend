@@ -47,6 +47,43 @@ toast({
 | `description` | `string` | — | Supporting detail (keep ≤120 chars) |
 | `action` | `{ label, onClick }` | — | Optional inline CTA |
 | `duration` | `number` (ms) | `5000` | Pass `0` to require manual dismissal |
+| `diagnostics` | `DiagnosticDetails` | — | Error diagnostic info (error variant only) |
+
+### `DiagnosticDetails` (optional, error variant only)
+
+Error toasts can include optional diagnostic details accessible via a collapsed "What failed" disclosure:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `requestId` | `string` | Request ID for support tracking (displayed in monospace for easy copying) |
+| `errorCode` | `string` | Error code for categorization (e.g., `ERR_500`, `AUTH_FAILED`) |
+| `timestamp` | `string` | ISO 8601 timestamp when the error occurred |
+
+The `description` field is automatically included in the disclosure as "Error Message".
+
+**Example:**
+
+```tsx
+toast({
+  variant: "error",
+  title: "Transfer failed",
+  description: "Your account balance is too low.",
+  duration: 0,
+  diagnostics: {
+    requestId: "9d0f8c5d-1c7a-4d53-a74c-xxxxxxxx4",
+    errorCode: "INSUFFICIENT_BALANCE",
+    timestamp: new Date().toISOString(),
+  },
+});
+```
+
+### Disclosure Behavior
+
+- The "What failed" disclosure appears **only on error toasts** with at least one diagnostic field.
+- It is **collapsed by default** to keep the toast clean and uncluttered.
+- Clicking the button expands it to reveal diagnostic details.
+- The disclosure is fully keyboard accessible (Enter/Space to toggle).
+- Request IDs are displayed in monospace and have `select-all` styling for easy copying.
 
 ### `dismiss(id)`
 

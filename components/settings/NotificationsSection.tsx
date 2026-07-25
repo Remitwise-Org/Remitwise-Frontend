@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { Bell } from "lucide-react";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useAutosave } from "@/lib/hooks/useAutosave";
+import { useSafeReload } from "@/lib/hooks/useSafeReload";
 import {
   SectionCard,
   SectionHeader,
@@ -54,7 +55,8 @@ export function NotificationsSection() {
     await new Promise((resolve) => setTimeout(resolve, 300));
   }, []);
 
-  const { saveState, triggerSave } = useAutosave(onSave);
+  const { saveState, isDirty, triggerSave } = useAutosave(onSave);
+  useSafeReload(isDirty);
 
   const handleToggle = (key: keyof NotificationsState) => {
     toggle(key);

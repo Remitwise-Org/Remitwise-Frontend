@@ -1,9 +1,19 @@
 /**
  * Accessibility utilities for Recharts visualizations.
- * 
+ *
  * Generates accessible names and summaries for charts using aria-label and sr-only patterns.
  * All functions are locale-aware and format numbers/percentages according to the user's locale.
  */
+
+import {
+  formatNumericValue,
+  type NumericFormatOptions,
+} from "../i18n/formatters";
+
+// Local type referenced by the chart helpers below. It mirrors the public
+// `TrendChartDataPoint` shape exposed by this module so the file remains
+// self-contained for tests that import only a subset.
+type TrendChartValue = string | number | null | undefined;
 
 /**
  * Represents a data point with name and amount for pie/donut charts.
@@ -71,7 +81,7 @@ export function generatePieChartSummary(data: PieChartDataPoint[]): string {
   }
 
   const items = data.map((item) => {
-    const amount = item.amount ? `$${formatCurrency(item.amount)}` : "—";
+    const amount = item.amount ? `$${formatCurrency(item.amount)}` : "\u2014";
     const percent = item.displayPercent || item.percentage || 0;
     const percentStr = String(percent).replace('%', '').trim();
     return `${item.name}: ${amount}, ${percentStr} percent`;
@@ -245,18 +255,19 @@ export function generateBarChartSummary<T extends TrendChartDataPoint>(
  * @param locale - Locale string (e.g. "en-US", "es-ES"). Defaults to "en-US".
  * @returns Formatted currency string without $ symbol
  */
-export function formatCurrency(value: number, locale = "en-US"): string {
+export function formatCurrency(value: number, locale: string = "en-US"): string {
+  // Routed through the shared formatter so chart accessibility strings follow
+  // the same rounding rules as the visible UI (issue #732).
+  const options: NumericFormatOptions = {
+    locale,
+    style: "decimal",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  };
   try {
-    return new Intl.NumberFormat(locale, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(value);
+    return formatNumericValue(value, options);
   } catch {
-    // Fallback for invalid locale
-    return new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(value);
+    return formatNumericValue(value, { ...options, locale: "en-US" });
   }
 }
 

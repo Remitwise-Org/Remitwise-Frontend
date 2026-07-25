@@ -8,8 +8,14 @@ import UnderstandingRolesSection from "./components/UnderstandingRolesSection";
 import FamilyMemberSection from "./components/FamilyMemberSection";
 import ApprovalsQueue from "./components/ApprovalsQueue";
 import { CTA_TEST_IDS } from "@/lib/cta-testids";
+import { useSeo } from "@/lib/hooks/useSeo";
 
 export default function FamilyWallets() {
+	useSeo({
+		title: "Family Wallets - RemitWise",
+		description: "Connect, authorize, and manage wallets for your family members",
+	});
+
 	const { t } = useClientTranslator();
 	const addMemberSectionRef = useRef<HTMLDivElement>(null);
 

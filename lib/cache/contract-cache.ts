@@ -244,8 +244,9 @@ function validateArgs(args: Record<string, unknown>): void {
 /**
  * Generates a deterministic cache key with validation
  * @security Validates all inputs, limits key length
+ * @internal Exported for testing only
  */
-function generateCacheKey(
+export function generateCacheKey(
   contractId: string,
   method: string,
   args: Record<string, unknown>

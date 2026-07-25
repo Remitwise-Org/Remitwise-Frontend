@@ -5,6 +5,8 @@ import { PiggyBank } from 'lucide-react'
 import WidgetEmptyState from '@/components/ui/WidgetEmptyState'
 import WidgetErrorState from '@/components/ui/WidgetErrorState'
 import { SkeletonCard } from '@/components/ui/Skeleton'
+import { useWidgetDeepLink } from '@/lib/hooks/useWidgetDeepLink'
+import { WIDGET_IDS } from '@/lib/config/widgets'
 
 interface SavingsGoal {
   name: string
@@ -25,7 +27,7 @@ export default function SavingsByGoalWidget({
   goals = [
     { name: 'Emergency Fund', amount: 720, percentage: 46 },
     { name: 'Education Fund', amount: 550, percentage: 35 },
-    { name: 'Medical Fund', amount: 310, percentage: 19 },
+    { name: 'Medical Fund',   amount: 310, percentage: 19 },
   ],
   hasError = false,
   isLoading = false,
@@ -33,10 +35,18 @@ export default function SavingsByGoalWidget({
   const [retryKey, setRetryKey] = useState(0)
   const handleRetry = useCallback(() => setRetryKey((k) => k + 1), [])
 
+  // Deep-link: scrolls & highlights this widget when ?widget=savings-by-goal
+  const widgetRef = useWidgetDeepLink(WIDGET_IDS.SAVINGS_BY_GOAL)
+
   const isEmpty = !hasError && !isLoading && goals.length === 0
 
   return (
-    <div key={retryKey} className="bg-[#0f0f0f] rounded-2xl p-6 border border-gray-800 w-full">
+    <div
+      key={retryKey}
+      ref={widgetRef}
+      id={WIDGET_IDS.SAVINGS_BY_GOAL}
+      className="bg-[#0f0f0f] rounded-2xl p-6 border border-gray-800 w-full"
+    >
       {/* Header */}
       <div className="flex items-center gap-3 mb-2">
         <PiggyBank className="w-6 h-6 text-red-500" aria-hidden="true" />

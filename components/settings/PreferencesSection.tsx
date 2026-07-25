@@ -1,25 +1,33 @@
 "use client";
 
 import { useState, useCallback, type ChangeEvent } from "react";
-import { Globe, Moon, Sun, Smartphone } from "lucide-react";
+import { Globe, Moon, Sun, Smartphone, Sparkles } from "lucide-react";
 import { useDensity } from "@/lib/context/DensityContext";
 import { useTheme } from "@/lib/context/ThemeContext";
+import { useWhatsNew } from "@/lib/context/WhatsNewContext";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useAutosave } from "@/lib/hooks/useAutosave";
+import { useSafeReload } from "@/lib/hooks/useSafeReload";
 import {
   SectionCard,
   SectionHeader,
   FieldRow,
   SaveButton,
 } from "./SettingsPrimitives";
+import {
+  getStoredMotionPreference,
+  setStoredMotionPreference,
+} from "@/lib/hooks/usePrefersReducedMotion";
 
 export function PreferencesSection() {
   const { t } = useClientTranslator();
   const { density, setDensity } = useDensity();
+  const { replay } = useWhatsNew();
   const [theme, setTheme] = useState<"system" | "light" | "dark">("system");
   const [language, setLanguage] = useState("en-US");
   const [timezone, setTimezone] = useState("Africa/Lagos");
   const [dateFormat, setDateFormat] = useState("DD/MM/YYYY");
+  const [motionPref, setMotionPref] = useState<"system" | "reduced" | "no-preference">("system");
 
   const themes = [
     { id: "system" as const, labelKey: "settings.preferences.theme_system", Icon: Smartphone },
@@ -35,7 +43,8 @@ export function PreferencesSection() {
     await new Promise((resolve) => setTimeout(resolve, 300));
   }, []);
 
-  const { saveState, triggerSave } = useAutosave(onSave);
+  const { saveState, isDirty, triggerSave } = useAutosave(onSave);
+  useSafeReload(isDirty);
 
   const handleThemeChange = (id: "system" | "light" | "dark") => {
     setTheme(id);
@@ -152,6 +161,49 @@ export function PreferencesSection() {
             ))}
           </div>
         </FieldRow>
+        <FieldRow labelKey="settings.preferences.motion_label">
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setMotionPref("system");
+                setStoredMotionPreference("system");
+              }}
+              aria-pressed={motionPref === "system"}
+              className={`flex-1 rounded-lg border py-2 px-3 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                motionPref === "system" ? "border-indigo-500 bg-indigo-50" : "border-gray-200"
+              }`}
+            >
+              Use system preference
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMotionPref("reduced");
+                setStoredMotionPreference("reduced");
+              }}
+              aria-pressed={motionPref === "reduced"}
+              className={`flex-1 rounded-lg border py-2 px-3 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                motionPref === "reduced" ? "border-indigo-500 bg-indigo-50" : "border-gray-200"
+              }`}
+            >
+              Prefer reduced motion
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMotionPref("no-preference");
+                setStoredMotionPreference("no-preference");
+              }}
+              aria-pressed={motionPref === "no-preference"}
+              className={`flex-1 rounded-lg border py-2 px-3 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                motionPref === "no-preference" ? "border-indigo-500 bg-indigo-50" : "border-gray-200"
+              }`}
+            >
+              Always enable animations
+            </button>
+          </div>
+        </FieldRow>
         <FieldRow labelKey="settings.preferences.display_density_label">
           <select
             value={density}
@@ -163,6 +215,15 @@ export function PreferencesSection() {
             <option value="comfortable">{t("settings.preferences.density_comfortable")}</option>
             <option value="compact">{t("settings.preferences.density_compact")}</option>
           </select>
+        </FieldRow>
+        <FieldRow labelKey="settings.preferences.onboarding_tour_label" hintKey="settings.preferences.onboarding_tour_hint">
+          <button
+            onClick={replay}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            {t("settings.preferences.replay_tour_button")}
+          </button>
         </FieldRow>
       </div>
       <SaveButton labelKey="settings.save_changes" saveState={saveState} />

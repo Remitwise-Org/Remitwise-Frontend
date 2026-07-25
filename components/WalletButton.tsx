@@ -5,6 +5,7 @@ import { Wallet, ChevronDown } from 'lucide-react';
 import WalletDropdown from './WalletDropdown';
 import { logout } from '@/lib/client/logout';
 import { useWallet } from 'stellar-wallet-kit';
+import { useToast } from '@/lib/context/ToastContext';
 
 const truncateAddress = (address: string) => {
   if (!address) return '';
@@ -17,6 +18,7 @@ const WalletButton = () => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { account, isConnected: connected, connect, disconnect, network } = useWallet();
   const address = account?.address ?? '';
+  const { toast } = useToast();
 
   const closeDropdown = () => {
     setIsOpen(false);

@@ -17,7 +17,10 @@ import {
 
 function expectStablePresentationShape(
   presentation: SemanticStatusPresentation,
-  expected: Pick<SemanticStatusPresentation, "tone" | "label" | "emphasis" | "icon">
+  expected: Pick<
+    SemanticStatusPresentation,
+    "tone" | "label" | "emphasis" | "icon"
+  >,
 ) {
   expect(presentation).toMatchObject(expected);
   expect(presentation.badgeClassName).toEqual(expect.any(String));
@@ -72,13 +75,25 @@ describe("status-semantics presentation engine", () => {
     ];
 
     it.each(toneCases)(
-      "returns a stable presentation shape for $tone",
+      "returns a complete presentation for $tone",
       ({ tone, label, emphasis, icon }) => {
-        expectStablePresentationShape(
-          getSemanticTonePresentation(tone, { label, emphasis, icon }),
-          { tone, label, emphasis, icon }
-        );
-      }
+        const presentation = getSemanticTonePresentation(tone, {
+          label,
+          emphasis,
+          icon,
+        });
+
+        expectStablePresentationShape(presentation, {
+          tone,
+          label,
+          emphasis,
+          icon,
+        });
+
+        expect(presentation.badgeClassName.trim()).not.toBe("");
+        expect(presentation.panelClassName.trim()).not.toBe("");
+        expect(presentation.metaClassName.trim()).not.toBe("");
+      },
     );
   });
 
@@ -97,7 +112,7 @@ describe("status-semantics presentation engine", () => {
           emphasis,
           icon,
         });
-      }
+      },
     );
   });
 
@@ -110,7 +125,7 @@ describe("status-semantics presentation engine", () => {
           label: "Inactive",
           emphasis: "Policy paused",
           icon: Info,
-        }
+        },
       );
     });
 
@@ -122,7 +137,7 @@ describe("status-semantics presentation engine", () => {
           label: "Overdue",
           emphasis: "2 days overdue",
           icon: AlertCircle,
-        }
+        },
       );
     });
 
@@ -134,7 +149,7 @@ describe("status-semantics presentation engine", () => {
           label: "Due soon",
           emphasis: "Due today",
           icon: Clock3,
-        }
+        },
       );
     });
 
@@ -149,7 +164,7 @@ describe("status-semantics presentation engine", () => {
           label: "Due soon",
           emphasis,
           icon: Clock3,
-        }
+        },
       );
     });
 
@@ -161,7 +176,7 @@ describe("status-semantics presentation engine", () => {
           label: "Active",
           emphasis: "Premium on schedule",
           icon: ShieldCheck,
-        }
+        },
       );
     });
   });

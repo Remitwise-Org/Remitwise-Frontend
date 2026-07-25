@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { isAnalyticsAllowed } from "@/lib/consent/consent";
 
 const STELLAR_ADDRESS_REGEX = /G[A-Z2-7]{55}/g;
 const AMOUNT_REGEX = /\b\d+(\.\d+)?\s*(XLM|USDC|USD)\b/gi;
@@ -11,18 +12,29 @@ function scrubStellarPII<T extends Sentry.Event>(event: T): T {
   return JSON.parse(scrubbed);
 }
 
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: process.env.NEXT_PUBLIC_APP_ENV ?? "development",
-  release: process.env.NEXT_PUBLIC_SENTRY_RELEASE,
+/**
+ * Only initialise Sentry when analytics consent has been granted.
+ *
+ * Defence-in-depth: if the user has not consented (EU default-off) or if the
+ * Global Privacy Control signal is active, no Sentry data is collected at all —
+ * not even error reports that might include session replays or PII.
+ *
+ * @see lib/consent/consent.ts for the consent resolution logic
+ */
+if (isAnalyticsAllowed()) {
+  Sentry.init({
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    environment: process.env.NEXT_PUBLIC_APP_ENV ?? "development",
+    release: process.env.NEXT_PUBLIC_SENTRY_RELEASE,
 
-  tracesSampleRate: process.env.NEXT_PUBLIC_APP_ENV === "production" ? 0.1 : 1.0,
-  replaysSessionSampleRate: process.env.NEXT_PUBLIC_APP_ENV === "production" ? 0.05 : 0.5,
-  replaysOnErrorSampleRate: 1.0,
+    tracesSampleRate: process.env.NEXT_PUBLIC_APP_ENV === "production" ? 0.1 : 1.0,
+    replaysSessionSampleRate: process.env.NEXT_PUBLIC_APP_ENV === "production" ? 0.05 : 0.5,
+    replaysOnErrorSampleRate: 1.0,
 
-  integrations: [Sentry.replayIntegration()],
+    integrations: [Sentry.replayIntegration()],
 
-  beforeSend(event) {
-    return scrubStellarPII(event);
-  },
-});
+    beforeSend(event) {
+      return scrubStellarPII(event);
+    },
+  });
+}

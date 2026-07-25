@@ -39,8 +39,17 @@ function okResponse(data: DashboardResponse) {
   return { ok: true, json: async () => data } as unknown as Response;
 }
 
+/** Write a fake sessionStorage cache entry as useStaleFetch would. */
+function primeCache(data: DashboardResponse, cachedAt = Date.now()) {
+  sessionStorage.setItem(
+    'dashboard-data',
+    JSON.stringify({ data, cachedAt })
+  );
+}
+
 beforeEach(() => {
   get.mockReset();
+  sessionStorage.clear();
   // Deterministic locale for currency formatting.
   Object.defineProperty(navigator, 'language', { value: 'en-US', configurable: true });
 });
@@ -52,7 +61,7 @@ describe('DashboardPage — StatCard summary row', () => {
     get.mockReturnValue(new Promise(() => {})); // never resolves
     const { container } = render(<DashboardPage />);
 
-    expect(container.querySelector('.animate-shimmer')).toBeTruthy();
+    expect(container.querySelector('.rw-skeleton--shimmer')).toBeTruthy();
     expect(screen.queryByText('$1,240.50')).not.toBeInTheDocument();
   });
 
@@ -99,6 +108,22 @@ describe('DashboardPage — StatCard summary row', () => {
     expect(await screen.findByText('$1,240.50')).toBeInTheDocument();
     // Insurance card falls back to the unavailable dash, others still render.
     expect(screen.getByText('—')).toBeInTheDocument();
+  });
+
+  it('shows the last synced indicator with a relative timestamp', async () => {
+    get.mockResolvedValue(
+      okResponse(
+        makeResponse({
+          meta: { cachedAt: '2026-07-24T11:55:00Z', ttlSeconds: 30, fromCache: false },
+        })
+      )
+    );
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-24T12:00:00Z'));
+    render(<DashboardPage />);
+
+    expect(await screen.findByText('Updated 5 min ago')).toBeInTheDocument();
+    vi.useRealTimers();
   });
 
   it('formats amounts for the es locale', async () => {
@@ -150,6 +175,87 @@ describe('DashboardPage — StatCard summary row', () => {
     });
     vi.useRealTimers();
     expect(await screen.findByText(/unable to load data/i)).toBeInTheDocument();
+    // No stale banner for session expiry.
+    expect(screen.queryByText(/showing cached data/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('DashboardPage — stale-data banner', () => {
+  it('shows the stale banner and cached data when the fetch fails after a prior load', async () => {
+    const cachedData = makeResponse();
+    primeCache(cachedData);
+
+    // Live fetch fails.
+    get.mockRejectedValue(new Error('Network failure'));
+    render(<DashboardPage />);
+
+    // The stale banner should appear.
+    expect(await screen.findByRole('status')).toBeInTheDocument();
+    expect(screen.getByText(/showing cached data/i)).toBeInTheDocument();
+
+    // Cached data values are still rendered.
+    expect(screen.getByText('$1,240.50')).toBeInTheDocument();
+  });
+
+  it('shows the stale banner when the response is not ok but cache exists', async () => {
+    const cachedData = makeResponse();
+    primeCache(cachedData);
+
+    get.mockResolvedValue({ ok: false, status: 503 } as unknown as Response);
+    render(<DashboardPage />);
+
+    expect(await screen.findByText(/showing cached data/i)).toBeInTheDocument();
+    expect(screen.getByText('$1,240.50')).toBeInTheDocument();
+    // No full-page error state.
+    expect(screen.queryByText(/unable to load data/i)).not.toBeInTheDocument();
+  });
+
+  it('hides the stale banner after the user dismisses it', async () => {
+    primeCache(makeResponse());
+    get.mockRejectedValue(new Error('Network failure'));
+    render(<DashboardPage />);
+
+    expect(await screen.findByText(/showing cached data/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /dismiss stale data warning/i }));
+
+    expect(screen.queryByText(/showing cached data/i)).not.toBeInTheDocument();
+    // Data is still shown.
+    expect(screen.getByText('$1,240.50')).toBeInTheDocument();
+  });
+
+  it('clears the stale banner and shows live data after a successful refresh', async () => {
+    const cachedData = makeResponse();
+    primeCache(cachedData);
+
+    // First call fails.
+    get.mockRejectedValueOnce(new Error('Network failure'));
+    render(<DashboardPage />);
+
+    expect(await screen.findByText(/showing cached data/i)).toBeInTheDocument();
+
+    // Second call (via Refresh button) succeeds with updated data.
+    const freshData = makeResponse({
+      savings: { status: 'ok', savingsTotal: 999, recentGoals: [] },
+    });
+    get.mockResolvedValueOnce(okResponse(freshData));
+    fireEvent.click(screen.getByRole('button', { name: /refresh data/i }));
+
+    await waitFor(() =>
+      expect(screen.queryByText(/showing cached data/i)).not.toBeInTheDocument()
+    );
+    expect(screen.getByText('$999.00')).toBeInTheDocument();
+  });
+
+  it('does NOT show the stale banner when the session-expiry flow returns null even with a cache entry', async () => {
+    primeCache(makeResponse());
+    get.mockResolvedValue(null); // session-expiry flow
+
+    render(<DashboardPage />);
+
+    // Should show error state, not stale banner.
+    expect(await screen.findByText(/unable to load data/i)).toBeInTheDocument();
+    expect(screen.queryByText(/showing cached data/i)).not.toBeInTheDocument();
   });
 
   it('keeps showing the loading skeleton while automatic retries are in progress', async () => {
@@ -162,7 +268,7 @@ describe('DashboardPage — StatCard summary row', () => {
 
     const { container } = render(<DashboardPage />);
 
-    expect(container.querySelector('.animate-shimmer')).toBeTruthy();
+    expect(container.querySelector('.rw-skeleton--shimmer')).toBeTruthy();
     expect(screen.queryByText(/unable to load data/i)).not.toBeInTheDocument();
 
     await act(async () => {

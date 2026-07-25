@@ -10,6 +10,7 @@ vi.mock('@/lib/logger', () => ({
 
 vi.mock('@/lib/requestId', () => ({
   generateRequestId: vi.fn(() => 'test-request-id'),
+  isValidRequestId: vi.fn((id: string) => id === 'client-request-id'),
 }));
 
 const ALLOWED_ORIGIN = 'https://app.example.com';
@@ -78,7 +79,7 @@ describe('global middleware gateway', () => {
       'GET, POST, PUT, DELETE, PATCH, OPTIONS',
     );
     expect(response.headers.get('Access-Control-Allow-Headers')).toBe(
-      'Content-Type, Authorization, X-Requested-With',
+      'Content-Type, Authorization, X-Request-ID, X-Requested-With',
     );
     expect(response.headers.get('Vary')).toBe('Origin');
   });
@@ -97,6 +98,16 @@ describe('global middleware gateway', () => {
     expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull();
     expect(response.headers.get('Access-Control-Allow-Credentials')).toBeNull();
     expect(response.headers.get('Vary')).toBe('Origin');
+  });
+
+  it('returns a valid client-provided request ID for request correlation', async () => {
+    const { middleware } = await loadMiddleware();
+
+    const response = await middleware(
+      buildRequest({ headers: { 'x-request-id': 'client-request-id' } }),
+    );
+
+    expect(response.headers.get('X-Request-ID')).toBe('client-request-id');
   });
 
   it.each([
@@ -183,7 +194,7 @@ describe('global middleware gateway', () => {
     expect(response.headers.get('X-RateLimit-Remaining')).toBe('9');
   });
 
-  it('adds security headers to normal and preflight responses', async () => {
+  it('adds security headers to normal and preflight responses for API routes', async () => {
     const { middleware } = await loadMiddleware();
 
     const normalResponse = await middleware(buildRequest());
@@ -205,6 +216,25 @@ describe('global middleware gateway', () => {
       expect(response.headers.get('X-Frame-Options')).toBe('DENY');
       expect(response.headers.get('X-XSS-Protection')).toBe('1; mode=block');
     }
+  });
+
+  it('adds nonce-based security headers to page responses', async () => {
+    const { middleware } = await loadMiddleware();
+
+    const response = await middleware(
+      buildRequest({
+        path: '/dashboard',
+      }),
+    );
+
+    const csp = response.headers.get('Content-Security-Policy');
+    expect(csp).toContain("script-src 'self' 'nonce-");
+    expect(csp).toContain("'strict-dynamic'");
+    expect(csp).not.toMatch(/script-src[^;]*'unsafe-inline'/); // No unsafe-inline in script-src
+    expect(csp).toMatch(/script-src 'self' 'nonce-[a-zA-Z0-9+/=]+' 'strict-dynamic'/);
+    
+    // API headers should not be applied to pages
+    expect(response.headers.get('X-RateLimit-Limit')).toBeNull();
   });
 
   it('rejects requests exceeding the default 1MB content-length limit', async () => {

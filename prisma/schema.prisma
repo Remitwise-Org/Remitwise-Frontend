@@ -57,16 +57,16 @@ model WebhookEvent {
 }
 
 model RecurringRemittance {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   userAddress      String
   recipientAddress String
   amount           Float
   currency         String
-  frequency        String // weekly | biweekly | monthly
+  frequency        String    // weekly | biweekly | monthly
   nextRunAt        DateTime
   lastRunAt        DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@index([userAddress])
 }
