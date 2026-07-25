@@ -51,6 +51,7 @@ export function useTransactionStatus(txHash: string | null, options: UseTransact
   const scheduleNext = useCallback((nextAttempt: number) => {
     if (unmountedRef.current) return;
     const delay = nextBackoffDelay(nextAttempt, baseDelayMs, maxDelayMs);
+    if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       if (pollRef.current) pollRef.current(nextAttempt);
     }, delay);
@@ -99,14 +100,7 @@ export function useTransactionStatus(txHash: string | null, options: UseTransact
     }
   }, [txHash, maxAttempts]);
 
-  // Helper to schedule the next poll with exponential backoff
-  const scheduleNext = (nextAttempt: number) => {
-    const delay = nextBackoffDelay(nextAttempt, baseDelayMs, maxDelayMs);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      poll(nextAttempt);
-    }, delay);
-  };
+  pollRef.current = poll;
 
   useEffect(() => {
     if (!enabled || !txHash) {

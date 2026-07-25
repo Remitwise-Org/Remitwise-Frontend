@@ -149,6 +149,78 @@ export async function fetchTransactionHistory(
 }
 
 /**
+ * Detailed receipt data for a single transaction, assembled from Horizon.
+ */
+export interface ReceiptData {
+  hash: string;
+  amount: string;
+  currency: string;
+  recipient: string;
+  sender: string;
+  date: string;
+  fee: string;
+  status: TxStatus | "not_found" | "pending";
+  memo?: string;
+}
+
+/**
+ * Fetches detailed receipt data for a single transaction hash.
+ * Returns null if the hash is invalid or the transaction is not found.
+ */
+export async function fetchTransactionReceipt(
+  hash: string
+): Promise<ReceiptData | null> {
+  if (!isValidTxHash(hash)) return null;
+
+  const server = getHorizonServer();
+  try {
+    const tx = await server.transactions().transaction(hash).call();
+    const feeInXlm = tx.fee_charged
+      ? (Number(tx.fee_charged) / 1e7).toFixed(7)
+      : "0";
+
+    // Fetch payment operations for this transaction
+    const opsResult = await server
+      .operations()
+      .forTransaction(hash)
+      .call();
+    const paymentOp = opsResult.records.find(
+      (op): op is Horizon.ServerApi.PaymentOperationRecord =>
+        op.type === "payment"
+    );
+
+    const currency =
+      paymentOp && paymentOp.asset_type !== "native"
+        ? (paymentOp as Horizon.ServerApi.PaymentOperationRecord & { asset_code?: string }).asset_code ?? "UNKNOWN"
+        : "XLM";
+
+    const amount = paymentOp ? paymentOp.amount : "0";
+
+    const recipient = paymentOp ? paymentOp.to : "";
+
+    const memo =
+      tx.memo_type === "text" && tx.memo ? tx.memo : undefined;
+
+    return {
+      hash,
+      amount,
+      currency,
+      recipient,
+      sender: tx.source_account,
+      date: tx.created_at,
+      fee: feeInXlm,
+      status: tx.successful ? "completed" : "failed",
+      memo,
+    };
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
  * Fetches current status for a single transaction hash.
  */
 export async function fetchTransactionStatus(

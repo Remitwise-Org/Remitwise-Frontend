@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/nextjs";
-import { initializeWebhookHandlers } from "./lib/webhooks/init";
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
@@ -32,6 +31,7 @@ export async function register() {
     });
 
     // Initialize webhook handlers
+    const { initializeWebhookHandlers } = await import("./lib/webhooks/init");
     initializeWebhookHandlers();
 
     console.log('Instrumentation: Sentry (Server), Session Config, and Webhooks initialized');

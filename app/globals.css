@@ -18,41 +18,96 @@
   }
 }
 
+/*
+ * Skeleton placeholder surfaces.
+ *
+ * `.rw-skeleton` on its own *is* the static variant: a flat fill with no
+ * animation. `.rw-skeleton--shimmer` layers the travelling highlight on top.
+ * Under `prefers-reduced-motion: reduce` the shimmer modifier is neutralised so
+ * the shimmer variant renders identically to the static one (WCAG 2.1 AA,
+ * SC 2.2.2 Pause, Stop, Hide). This is done in CSS rather than JavaScript so it
+ * is correct during server rendering and before hydration, and so it cannot
+ * produce a hydration mismatch.
+ *
+ * Note the shimmer is switched off by removing `background-image` as well as
+ * `animation` — killing the animation alone would leave the gradient frozen
+ * mid-sweep, which reads as a lopsided highlight rather than a placeholder.
+ */
+@layer components {
+  .rw-skeleton {
+    background-color: var(--skeleton-static);
+    background-repeat: no-repeat;
+  }
+
+  .rw-skeleton--shimmer {
+    background-color: var(--skeleton-base);
+    background-image: linear-gradient(
+      90deg,
+      var(--skeleton-base) 0%,
+      var(--skeleton-highlight) 50%,
+      var(--skeleton-base) 100%
+    );
+    background-size: 200% 100%;
+    animation: rw-skeleton-shimmer 2s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rw-skeleton--shimmer {
+      background-color: var(--skeleton-static);
+      background-image: none;
+      animation: none;
+    }
+  }
+}
+
+@keyframes rw-skeleton-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
-  --background: #ffffff;
-  --color-bg2: #f8fafc;
-  --color-bg3: #f1f5f9;
-  --card: linear-gradient(var(--color-bg2), var(--color-bg3));
-  --accent: #dc2626;
-  color-scheme: light;
+
+  /* Theme-styleable loading state custom properties */
+  --skeleton-bg-start: rgba(0, 0, 0, 0.06);
+  --skeleton-bg-via: rgba(0, 0, 0, 0.12);
+  --skeleton-bg-end: rgba(0, 0, 0, 0.06);
 }
 
-html.dark {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 0, 0, 0;
-  --background-end-rgb: 0, 0, 0;
-  --background: #010101;
-  --color-bg2: #0f0f0f;
-  --color-bg3: #0a0a0a;
-  --card: linear-gradient(var(--color-bg2), var(--color-bg3));
-  --accent: #dc2626;
-  color-scheme: dark;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+    --background: #010101;
+    --color-bg2: #0f0f0f;
+    --color-bg3: #0a0a0a;
+    --card: linear-gradient(var(--color-bg2), var(--color-bg3));
+    --accent: #dc2626;
+
+    /* Theme-styleable loading state custom properties */
+    --skeleton-bg-start: rgba(255, 255, 255, 0.05);
+    --skeleton-bg-via: rgba(255, 255, 255, 0.1);
+    --skeleton-bg-end: rgba(255, 255, 255, 0.05);
+  }
 }
 
-html.light {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-  --background: #ffffff;
-  --color-bg2: #f8fafc;
-  --color-bg3: #f1f5f9;
-  --card: linear-gradient(var(--color-bg2), var(--color-bg3));
-  --accent: #dc2626;
-  color-scheme: light;
+.loading-skeleton {
+  background-image: linear-gradient(
+    to right,
+    var(--skeleton-bg-start),
+    var(--skeleton-bg-via),
+    var(--skeleton-bg-end)
+  );
+  background-size: 200% 100%;
 }
+
 
 body {
   color: rgb(var(--foreground-rgb));

@@ -79,7 +79,7 @@ fixed `id` matching `SECTIONS`:
   group and the mirrored `<select>` reflect the same context value.
 - **Autosave** — Profile, Notifications, Wallet, and Preferences sections use
   the `useAutosave` hook (`lib/hooks/useAutosave.ts`) which debounces saves by
-  500ms after the last change and fires a success toast. `TextInput` and
+  500ms after the last change and fires a success toast (see [FORM_PATTERNS.md](FORM_PATTERNS.md) for full autosave pattern details). `TextInput` and
   `Toggle` primitives support `value`/`checked` + `onChange` for controlled
   usage. `SaveButton` accepts an optional `saveState` prop to reflect the
   autosave state (idle → saving → saved → idle). The hook uses a ref to always

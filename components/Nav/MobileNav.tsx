@@ -148,7 +148,7 @@ const MobileNav = () => {
                     </nav>
 
                     {/* Footer / Account */}
-                    <div className="p-4 sm:p-6 border-t border-white/5 bg-brand-dark/50 backdrop-blur-xl mt-auto sticky bottom-0">
+                    <div className="p-4 sm:p-6 pb-[calc(theme(spacing.4)+env(safe-area-inset-bottom))] sm:pb-[calc(theme(spacing.6)+env(safe-area-inset-bottom))] border-t border-white/5 bg-brand-dark/50 backdrop-blur-xl mt-auto sticky bottom-0">
                         <button
                             onClick={handleLogout}
                             className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-red-600/10 to-transparent border border-red-600/20 text-red-500 font-bold tracking-wide hover:from-red-600 hover:to-red-700 hover:text-white transition-all shadow-xl shadow-red-600/5 group"

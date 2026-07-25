@@ -73,6 +73,11 @@ spacing: {
 
 ## iOS Safari Safe Areas
 
+`env(safe-area-inset-*)` only resolves to a real device value when the page
+opts in to `viewport-fit=cover`; otherwise every inset reads as `0px`. This is
+set once, globally, via the `viewport` export in `app/layout.tsx` — no
+per-page setup needed.
+
 ### Safe Area Utilities
 ```css
 .safari-safe-top { padding-top: env(safe-area-inset-top); }
@@ -86,6 +91,17 @@ spacing: {
 // Respect iPhone notch/Dynamic Island
 <div className="min-h-screen safari-safe-bottom">
 <header className="safari-safe-top">
+```
+
+**Elements that already have base padding** (e.g. a sticky bottom nav/footer
+with `p-4 sm:p-6`): don't append `.safari-safe-bottom` directly — it *replaces*
+`padding-bottom` rather than adding to it, so the base padding collapses to
+`0px` on devices without a safe area. Instead extend the existing padding with
+`calc()`, referencing the same spacing token so the base spacing stays a
+single source of truth:
+```tsx
+// Preserves p-4/sm:p-6 on all devices, adds the inset only where it exists
+<div className="p-4 sm:p-6 pb-[calc(theme(spacing.4)+env(safe-area-inset-bottom))] sm:pb-[calc(theme(spacing.6)+env(safe-area-inset-bottom))] sticky bottom-0">
 ```
 
 ## Responsive Design Patterns

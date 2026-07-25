@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { userEvent, within, expect } from "@storybook/test";
 import Toast from "./Toast";
 import type { Toast as ToastType } from "@/lib/context/ToastContext";
 
@@ -100,6 +101,12 @@ export const Success: Story = {
     toast: successToast,
     onDismiss: () => console.log("dismissed"),
   },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const dismissButton = canvas.getByLabelText("Dismiss notification");
+    await userEvent.click(dismissButton);
+    await expect(dismissButton).toBeVisible();
+  },
 };
 
 /**
@@ -120,6 +127,15 @@ export const ErrorWithDiagnostics: Story = {
   args: {
     toast: errorToastWithDiagnostics,
     onDismiss: () => console.log("dismissed"),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const whatFailed = canvas.getByText("What failed");
+    await userEvent.click(whatFailed);
+    const diagnosticRegion = canvas.getByRole("region", { name: "Diagnostic details" });
+    await expect(diagnosticRegion).toBeVisible();
+    await expect(canvas.getByText(/INSUFFICIENT_BALANCE/)).toBeVisible();
+    await userEvent.click(whatFailed);
   },
 };
 
@@ -161,6 +177,11 @@ export const WithAction: Story = {
   args: {
     toast: toastWithAction,
     onDismiss: () => console.log("dismissed"),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const addFunds = canvas.getByText("Add funds");
+    await expect(addFunds).toBeVisible();
   },
 };
 

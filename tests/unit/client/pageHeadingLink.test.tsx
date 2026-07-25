@@ -10,7 +10,7 @@ import {
 describe("PageHeadingLink", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    window.history.replaceState({}, "", "/insights?tab=latest#current");
+    window.history.replaceState({}, "", "/financial-insights?tab=latest#current");
   });
 
   afterEach(() => {
@@ -60,7 +60,7 @@ describe("PageHeadingLink", () => {
       fireEvent.click(button);
     });
 
-    expect(writeText).toHaveBeenCalledWith("http://localhost:3000/insights#insights-page-heading");
+    expect(writeText).toHaveBeenCalledWith("http://localhost:3000/financial-insights#insights-page-heading");
     expect(
       screen.getByRole("button", { name: /copied link to insights/i }),
     ).toBeInTheDocument();
@@ -113,5 +113,74 @@ describe("PageHeadingLink", () => {
     expect(
       screen.getByRole("button", { name: /copy link to insights/i }),
     ).toBeInTheDocument();
+  });
+
+  it("resolves the legacy '/insights' path and its heading ID to the canonical '/financial-insights' path and canonical heading ID", async () => {
+    window.history.replaceState({}, "", "/insights?tab=latest#current");
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", {
+      clipboard: { writeText },
+    });
+
+    render(
+      <PageHeadingLink headingId="insights-page-heading" label="Insights">
+        Insights
+      </PageHeadingLink>,
+    );
+
+    const button = screen.getByRole("button", { name: /copy link to insights/i });
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    expect(writeText).toHaveBeenCalledWith(
+      "http://localhost:3000/financial-insights#financial-insights-page-heading"
+    );
+  });
+
+  it("resolves the legacy '/financial-insight' path and its heading ID to the canonical '/financial-insights' path and canonical heading ID", async () => {
+    window.history.replaceState({}, "", "/financial-insight?tab=latest#current");
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", {
+      clipboard: { writeText },
+    });
+
+    render(
+      <PageHeadingLink headingId="financial-insight-page-heading" label="Insights">
+        Insights
+      </PageHeadingLink>,
+    );
+
+    const button = screen.getByRole("button", { name: /copy link to insights/i });
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    expect(writeText).toHaveBeenCalledWith(
+      "http://localhost:3000/financial-insights#financial-insights-page-heading"
+    );
+  });
+
+  it("strips trailing slashes from the pathname when copying the canonical URL", async () => {
+    window.history.replaceState({}, "", "/send/?draft=1");
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", {
+      clipboard: { writeText },
+    });
+
+    render(
+      <PageHeadingLink headingId="send-page-heading" label="Send Remittance">
+        Send
+      </PageHeadingLink>,
+    );
+
+    const button = screen.getByRole("button", { name: /copy link to send remittance/i });
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    expect(writeText).toHaveBeenCalledWith(
+      "http://localhost:3000/send#send-page-heading"
+    );
   });
 });

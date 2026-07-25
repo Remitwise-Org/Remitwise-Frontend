@@ -17,7 +17,7 @@ export default function DashboardLayout({
                     pt-20 for PrimaryNav (80px) 
                     + pt-16 for SubNav (64px) = 144px 
                 */}
-        <div className="pt-32 375:pt-36">{children}</div>
+        <main className="pt-32 375:pt-36">{children}</main>
         <WhatsNewPanel />
       </div>
     </WhatsNewProvider>
