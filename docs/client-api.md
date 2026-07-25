@@ -53,6 +53,36 @@ For widget-style read surfaces that should stay inline while transient failures 
 - `retries?: number` — max retry attempts for idempotent (`GET`/`HEAD`) requests. Default `3`. Ignored for writes.
 - `backoff?: number` — base backoff in ms; doubles each attempt and is jittered. Default `1000`.
 - `timeout?: number` — per-request timeout in ms before the request is aborted. Default `10000`. Pass `0` to disable.
+- `requestTimeout?: number` — hard wall-clock budget in ms for the **entire** logical request, including all per-attempt timeouts, retry backoffs, and the session-refresh replay. Default `30000` (`CLIENT_REQUEST_TIMEOUT_MS`). Pass `0` to disable the outer guard entirely.
+
+### Network-error soft toast (#924)
+
+When a request fails at the transport level (network unreachable, per-attempt
+timeout exhausted after all retries, or the 30 s outer budget fires) `apiClient`
+automatically dispatches a `network-error` window event.
+
+The global `useNetworkErrorToast` hook (mounted once in `Providers.tsx` via
+`NetworkErrorToastProvider`) picks up that event and renders a soft-error toast:
+
+> **"Something went wrong. Retry?"**  [Retry]
+
+- The toast requires manual dismissal (`duration: 0`) so the user can still
+  click **Retry** after acknowledging it.
+- Clicking **Retry** re-issues the exact same request transparently.
+- When the failure was a timeout `isTimeout: true` is set and the description
+  reads "The request timed out."
+- The toast does **not** fire for successful responses, `4xx`/`5xx` HTTP errors
+  returned from the server (those are caller-handled), or session-expiry `401`
+  flows (which use their own notification).
+
+The event bridge lives at `lib/client/networkErrorEvent.ts`.  The hook lives at
+`lib/hooks/useNetworkErrorToast.ts`.  Neither creates a circular import with
+`apiClient`.
+
+Related modules:
+- [`lib/client/networkErrorEvent.ts`](../lib/client/networkErrorEvent.ts): `dispatchNetworkError()`, `NETWORK_ERROR_EVENT`, `NetworkErrorDetail`
+- [`lib/hooks/useNetworkErrorToast.ts`](../lib/hooks/useNetworkErrorToast.ts): `useNetworkErrorToast()`, `NetworkErrorToastProvider`
+- [`lib/config/fetch-timeouts.ts`](../lib/config/fetch-timeouts.ts): `CLIENT_REQUEST_TIMEOUT_MS = 30_000`
 
 ### Shared authentication and request IDs
 
@@ -90,16 +120,27 @@ Interpret the result like this:
 
 ### Timeout
 
-Every request (regardless of method) runs under a per-request timeout enforced
-with an `AbortController`. The default is `10000` ms and is configurable via the
-`timeout` option (`0` disables it). When the timeout fires, the in-flight fetch
-is aborted. For idempotent requests this counts as a retryable failure; once
-retries are exhausted (or for writes) the call rejects with a `TimeoutError`
-`DOMException`.
+Two independent timeout guards operate on every `apiClient` request:
 
-The timeout is composed with any caller-supplied `signal`, so a component
-unmount or `useFormAction`'s latest-wins abort still cancels the request
-immediately (see [Aborting requests](#aborting-requests)).
+**Per-attempt timeout (`timeout`, default 10 s)**
+Enforced with an `AbortController` on each individual fetch attempt. When the
+timeout fires, the in-flight fetch is aborted. For idempotent requests this
+counts as a retryable failure; once retries are exhausted (or for writes) the
+call rejects with a `TimeoutError` `DOMException`. Configurable via `timeout`;
+pass `0` to disable.
+
+**Outer request budget (`requestTimeout`, default 30 s — `CLIENT_REQUEST_TIMEOUT_MS`)**
+A hard wall-clock budget covering the **entire** logical request — per-attempt
+timeouts, retry backoffs, and the session-refresh replay all count against it.
+When the budget fires the request is aborted and a `network-error` event is
+dispatched so the global toast shows "Something went wrong. Retry?". Configurable
+via `requestTimeout`; pass `0` to disable. The constant is defined in
+`lib/config/fetch-timeouts.ts` so it stays auditable alongside the per-endpoint
+policy.
+
+Both timeout guards are composed with any caller-supplied `signal`, so a
+component unmount or `useFormAction`'s latest-wins abort still cancels the
+request immediately (see [Aborting requests](#aborting-requests)).
 
 ### Retry Behavior
 

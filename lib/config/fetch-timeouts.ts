@@ -26,6 +26,29 @@
  */
 export const DEFAULT_FETCH_TIMEOUT_MS = 10_000;
 
+/**
+ * Hard upper bound on the total wall-clock time for a single logical
+ * `apiClient` request, **including** all per-attempt timeouts, retry backoffs,
+ * and the one-time session-refresh replay.
+ *
+ * Any request that has not resolved within this budget is aborted with a typed
+ * `TimeoutError`, regardless of where it is in the retry/refresh cycle.
+ *
+ * Design rationale
+ * ----------------
+ * - `DEFAULT_FETCH_TIMEOUT_MS` (10 s) is the per-attempt budget.  A `GET` with
+ *   `retries: 3` and `backoff: 1000` can therefore block for up to ~43 s in the
+ *   worst case (3 attempts × 10 s + ~13 s jittered backoff) before this guard
+ *   fires — keeping the UX snappy in the common "stuck request" scenario.
+ * - 30 s was chosen to align with the server-side `API_TIMEOUT` in `.env` and
+ *   the Soroban RPC's own timeout window.
+ * - Land this value here (never inline at call sites) so every consumer can
+ *   reference the same constant and the policy stays auditable.
+ *
+ * See: {@link DEFAULT_FETCH_TIMEOUT_MS}, `lib/client/apiClient.ts`
+ */
+export const CLIENT_REQUEST_TIMEOUT_MS = 30_000;
+
 // ── Anchor platform routes ────────────────────────────────────────────────────
 
 /**

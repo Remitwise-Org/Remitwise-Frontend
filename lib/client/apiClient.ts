@@ -47,6 +47,8 @@
 
 import { sessionHandler } from './sessionHandler';
 import { createApiRequestHeaders, setApiClientAuthToken } from './apiHeaders';
+import { dispatchNetworkError } from './networkErrorEvent';
+import { CLIENT_REQUEST_TIMEOUT_MS } from '@/lib/config/fetch-timeouts';
 
 export {
   API_AUTHORIZATION_HEADER,
@@ -61,8 +63,25 @@ export interface ApiClientOptions extends RequestInit {
   backoff?: number;
   /** Per-request timeout in ms before the request is aborted. `0` disables it. Default 10000. */
   timeout?: number;
+  /**
+   * Hard wall-clock budget in ms for the **entire** logical request, including
+   * all per-attempt timeouts, retry backoffs, and the session-refresh replay.
+   * When the budget fires the in-flight work is aborted and a `network-error`
+   * event is dispatched so the toast layer can show "Something went wrong. Retry?".
+   *
+   * Default: {@link CLIENT_REQUEST_TIMEOUT_MS} (30 000 ms).
+   * Pass `0` to disable the outer guard entirely.
+   */
+  requestTimeout?: number;
   /** Internal flag used to ensure the 401 -> refresh -> retry happens only once. */
   _isRetry?: boolean;
+  /**
+   * Internal: the `AbortController` managing the outer 30 s request-level
+   * timeout.  Propagated through the session-refresh replay so the guard
+   * remains active across the retry.
+   * @internal
+   */
+  _outerController?: AbortController;
 }
 
 export interface GetJsonOptions<T> extends Omit<ApiClientOptions, 'method' | 'body'> {
@@ -258,6 +277,10 @@ async function fetchWithRetry(url: string, options: ApiClientOptions): Promise<R
  * - Applies a per-request timeout and retries transport failures, timeouts,
  *   `429`, and `5xx` responses with exponential backoff + jitter — but only for
  *   idempotent `GET`/`HEAD` requests.
+ * - Wraps the entire logical request (including retries and session-refresh
+ *   replay) in a hard outer budget of {@link CLIENT_REQUEST_TIMEOUT_MS} (30 s).
+ *   If the budget expires the request is aborted and a `network-error` window
+ *   event is dispatched so the toast layer can show "Something went wrong. Retry?".
  * - Detects expired sessions only when the response is a `401` whose JSON body
  *   contains `{ message: 'Session expired' }`.
  * - Attempts `POST /api/auth/refresh` once, then replays the original request once.
@@ -266,47 +289,127 @@ async function fetchWithRetry(url: string, options: ApiClientOptions): Promise<R
  *   the sign-in page with the current route preserved in `?next=` so the user
  *   is sent back to where they were after re-authentication.
  *
+ * Network-error toast (#924)
+ * --------------------------
+ * When the request fails at the transport level (network down, per-attempt
+ * timeout exhausted after all retries, or the 30 s outer budget fires) a
+ * `network-error` window event is dispatched with a `retry` callback so the
+ * global `useNetworkErrorToast` hook can show a soft-error toast:
+ *
+ * > "Something went wrong. Retry?" [Retry]
+ *
+ * Callers may suppress the automatic toast by passing `suppressNetworkToast: true`
+ * in options when they handle the error themselves.
+ *
  * @param url - API endpoint URL.
- * @param options - Standard `fetch` options plus optional `retries`, `backoff`, and `timeout`.
+ * @param options - Standard `fetch` options plus optional `retries`, `backoff`, `timeout`,
+ *   and `requestTimeout`.
  * @returns The raw `Response`, or `null` when the session-expiry flow has already been triggered.
  */
 async function request(url: string, options?: ApiClientOptions): Promise<Response | null> {
-  // Create these once per logical request. Retries and the one-time session
-  // refresh replay therefore carry the same correlation ID.
+  // ── Outer 30 s request budget (issue #978) ──────────────────────────────
+  // This guard is set up once per logical request (not per retry attempt or
+  // session-refresh replay).  We reuse the same controller across the replay
+  // so the clock continues running even during the refresh detour.
+  const outerBudgetMs = options?.requestTimeout ?? CLIENT_REQUEST_TIMEOUT_MS;
+  const outerController: AbortController =
+    options?._outerController ?? new AbortController();
+
+  let outerTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Only arm the timer on the first call (not on the session-refresh replay).
+  if (!options?._outerController && outerBudgetMs > 0) {
+    outerTimer = setTimeout(() => {
+      outerController.abort(
+        new DOMException(
+          `Request to ${url} exceeded the ${outerBudgetMs}ms client budget`,
+          'TimeoutError'
+        )
+      );
+    }, outerBudgetMs);
+  }
+
+  // Merge the outer controller signal with any caller-supplied signal so both
+  // can abort the in-flight fetch.
+  const callerSignal = options?.signal as AbortSignal | undefined;
+  const { signal: mergedSignal, cleanup: cleanupMerge } = combineSignals([
+    callerSignal ?? null,
+    outerController.signal,
+  ]);
+
+  // Build per-request options, injecting the merged signal.
   const requestOptions: ApiClientOptions = {
     ...(options ?? {}),
     headers: createApiRequestHeaders(options?.headers),
+    signal: mergedSignal,
+    // Propagate the outer controller so a session-refresh replay shares it.
+    _outerController: outerController,
   };
-  const response = await fetchWithRetry(url, requestOptions);
 
-  if (response && response.headers && typeof window !== 'undefined') {
-    const requestId = response.headers.get('x-request-id') ||
-                      response.headers.get('x-correlation-id') ||
-                      response.headers.get('request-id') ||
-                      response.headers.get('correlation-id');
-    if (requestId) {
-      window.dispatchEvent(new CustomEvent('dev-request-id-updated', { detail: requestId }));
+  // Helper: clean up the outer timer + signal listeners regardless of outcome.
+  function cleanupOuter(): void {
+    if (outerTimer !== null) {
+      clearTimeout(outerTimer);
+      outerTimer = null;
     }
+    cleanupMerge();
   }
 
-  // Check if session expired
-  if (await sessionHandler.isSessionExpired(response)) {
-    if (!options?._isRetry) {
-      // Attempt to refresh session
-      const refreshed = await sessionHandler.refreshSession();
-      if (refreshed) {
-        // Retry original request once
-        return request(url, { ...requestOptions, _isRetry: true });
+  // Helper: build a retry callback to pass to the network-error toast.
+  function buildRetry(): () => void {
+    const savedOptions = options;
+    return () => {
+      void request(url, savedOptions);
+    };
+  }
+
+  try {
+    const response = await fetchWithRetry(url, requestOptions);
+
+    if (response && response.headers && typeof window !== 'undefined') {
+      const requestId = response.headers.get('x-request-id') ||
+                        response.headers.get('x-correlation-id') ||
+                        response.headers.get('request-id') ||
+                        response.headers.get('correlation-id');
+      if (requestId) {
+        window.dispatchEvent(new CustomEvent('dev-request-id-updated', { detail: requestId }));
       }
     }
 
-    // If refresh failed or already retried, trigger session expiry flow
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : undefined;
-    sessionHandler.handleSessionExpiry(currentPath);
-    return null;
-  }
+    // Check if session expired
+    if (await sessionHandler.isSessionExpired(response)) {
+      if (!options?._isRetry) {
+        // Attempt to refresh session
+        const refreshed = await sessionHandler.refreshSession();
+        if (refreshed) {
+          // Retry original request once, sharing the outer timeout controller.
+          return request(url, { ...requestOptions, _isRetry: true, _outerController: outerController });
+        }
+      }
 
-  return response;
+      // If refresh failed or already retried, trigger session expiry flow
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : undefined;
+      sessionHandler.handleSessionExpiry(currentPath);
+      return null;
+    }
+
+    return response;
+  } catch (error: unknown) {
+    // ── Network / timeout failure: dispatch soft-error toast event (#924) ──
+    const isTimeout =
+      error instanceof DOMException &&
+      (error.name === 'TimeoutError' || error.name === 'AbortError');
+
+    dispatchNetworkError({
+      url,
+      retry: buildRetry(),
+      isTimeout,
+    });
+
+    throw error;
+  } finally {
+    cleanupOuter();
+  }
 }
 
 /**

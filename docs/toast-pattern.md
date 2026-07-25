@@ -143,6 +143,7 @@ Programmatically remove a toast before its timer expires.
 | Bills | Bill overdue reminder | `warning` + action → `/bills` |
 | Settings | Preferences saved | `success` (short duration) |
 | Session | Session expired | `error` (duration: 0) — replaces `SessionExpiryNotification` |
+| Network | Any `apiClient` transport failure (#924) | `error` (duration: 0) — "Something went wrong. Retry?" with Retry button |
 | Approvals queue | Signature collected (approval threshold not yet met) | `success` |
 | Approvals queue | Approval threshold reached (item approved) | `success` |
 | Approvals queue | Signing failed | `error` (duration: 0) |
@@ -150,3 +151,34 @@ Programmatically remove a toast before its timer expires.
 | Policy (pay) | Payment request failed | `error` (duration: 0) |
 | Policy (deactivate) | Policy deactivated | `success` |
 | Policy (deactivate) | Deactivation request failed | `error` (duration: 0) |
+
+## Network-error soft toast (#924)
+
+`apiClient` automatically shows a "Something went wrong. Retry?" toast whenever a
+request fails at the transport level (network unreachable, per-attempt timeout
+exhausted, or the 30 s outer budget fires).  No call-site code is required.
+
+**How it works:**
+
+1. `apiClient.request()` catches transport errors and calls `dispatchNetworkError()`
+   from `lib/client/networkErrorEvent.ts`.
+2. `useNetworkErrorToast` (mounted globally via `NetworkErrorToastProvider` in
+   `Providers.tsx`) listens for the `network-error` window event.
+3. It calls `useToast()` to show an `error` toast with `duration: 0` and an
+   inline **Retry** button that re-issues the failed request.
+
+**When does it NOT fire:**
+
+- Successful responses (any status).
+- `4xx`/`5xx` HTTP responses returned by the server (caller handles those).
+- Session-expiry `401` flows (handled by `SessionExpiryProvider`).
+
+**Relevant files:**
+
+| File | Role |
+|------|------|
+| `lib/client/networkErrorEvent.ts` | Event constants, types, `dispatchNetworkError()` |
+| `lib/hooks/useNetworkErrorToast.ts` | `useNetworkErrorToast` hook + `NetworkErrorToastProvider` |
+| `lib/config/fetch-timeouts.ts` | `CLIENT_REQUEST_TIMEOUT_MS = 30_000` outer budget |
+| `lib/client/apiClient.ts` | Dispatches the event on transport failure |
+| `components/Providers.tsx` | Mounts `NetworkErrorToastProvider` globally |

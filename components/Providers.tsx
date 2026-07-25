@@ -15,6 +15,7 @@ import SessionExpiryProvider from "@/components/SessionExpiryProvider";
 import CommandPalette from "@/components/CommandPalette";
 import ShortcutHelpModal from "@/components/ShortcutHelpModal";
 import { apiClient } from "@/lib/client/apiClient";
+import NetworkErrorToastProvider from "@/lib/hooks/useNetworkErrorToast";
 
 /** Keeps the API client's authorization header aligned with wallet state. */
 function ApiClientAuthBridge() {
@@ -41,6 +42,8 @@ export default function Providers({ children }: { children: ReactNode }) {
     <WalletProvider>
       <ApiClientAuthBridge />
       <ToastProvider>
+        {/* Soft-error toast for network failures (#924) */}
+        <NetworkErrorToastProvider />
         <DensityProvider>
           <AsyncOperationsProvider>
             <SessionExpiryProvider>

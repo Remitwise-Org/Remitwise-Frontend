@@ -65,6 +65,7 @@ policy stays auditable and consistent.
 
 | Pattern                   | Constant                       | Value  | Rationale                                                  |
 | ------------------------- | ------------------------------ | ------ | ---------------------------------------------------------- |
+| _(client request budget)_ | `CLIENT_REQUEST_TIMEOUT_MS`    | 30 s   | Hard outer budget for the entire `apiClient` request cycle (retries + session-refresh replay). See [below](#client-request-budget). |
 | `/api/auth/nonce`         | `AUTH_NONCE_TIMEOUT_MS`        | 5 s    | Lightweight; fail fast.                                    |
 | `/api/auth/login`         | `AUTH_LOGIN_TIMEOUT_MS`        | 8 s    | Crypto verification on the server.                         |
 | `/api/auth/refresh`       | `AUTH_REFRESH_TIMEOUT_MS`      | 5 s    | Token refresh must be fast so it doesn't block requests.   |
@@ -82,6 +83,31 @@ policy stays auditable and consistent.
 | `/api/split`              | `CONTRACT_READ_TIMEOUT_MS`     | 12 s   | Soroban RPC round-trip.                                    |
 | `/api/family`             | `CONTRACT_READ_TIMEOUT_MS`     | 12 s   | Soroban RPC round-trip.                                    |
 | _(anything else)_         | `DEFAULT_FETCH_TIMEOUT_MS`     | 10 s   | Safe default for unknown routes.                           |
+
+### Client request budget
+
+`CLIENT_REQUEST_TIMEOUT_MS = 30_000` is a hard wall-clock budget that
+`apiClient` applies to the **entire** lifecycle of a logical request —
+per-attempt timeouts, retry backoffs, and the one-time session-refresh replay
+all count against it.
+
+When the budget fires the in-flight request is aborted and a `network-error`
+window event is dispatched, which causes the global toast to show:
+
+> "Something went wrong. Retry?" [Retry]
+
+The constant lives in `lib/config/fetch-timeouts.ts` (not inline in
+`apiClient`) so it remains auditable alongside the per-endpoint policy.
+
+Override per call via `ApiClientOptions.requestTimeout` or pass `0` to disable:
+
+```ts
+// Custom 10 s budget for a lightweight call
+apiClient.get('/api/status', { requestTimeout: 10_000 });
+
+// Disable the outer guard entirely (use with care)
+apiClient.get('/api/patient', { requestTimeout: 0 });
+```
 
 ### Matching algorithm
 

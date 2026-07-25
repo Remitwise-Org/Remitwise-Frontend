@@ -251,6 +251,8 @@ For authenticated browser-side requests, use the shared client API layer documen
 
 For server-side and third-party requests that need automatic abort on deadline, use the `fetchWithTimeout` wrapper documented in [docs/fetch-timeout.md](docs/fetch-timeout.md). Each endpoint declares its timeout in `lib/config/fetch-timeouts.ts`; the wrapper aborts and throws a `TimeoutError` if the deadline is exceeded. `apiClient` uses the same design for browser requests.
 
+`apiClient` also applies a **30 s outer request budget** (`CLIENT_REQUEST_TIMEOUT_MS` in `lib/config/fetch-timeouts.ts`) that covers the entire lifecycle of a browser request — per-attempt timeouts, retry backoffs, and the session-refresh replay. When the budget fires the global `useNetworkErrorToast` hook shows a soft-error toast: **"Something went wrong. Retry?"** with an inline Retry button. This behavior is automatic; no call-site code is required. See [docs/toast-pattern.md](docs/toast-pattern.md) for the full toast system documentation.
+
 ### Transaction Export
 
 Both the standalone **Transactions** page (`/transactions`) and the dashboard
