@@ -7,7 +7,8 @@ This document catalogs the shared client hooks in the RemitWise frontend. Use th
 ## Table of Contents
 
 1. [useFormAction](#useformaction)
-2. [useSessionExpiry](#usesessionexpiry)
+2. [useRouteTransition](#useroutetransition)
+3. [useSessionExpiry](#usesessionexpiry)
 
 ---
 
@@ -74,6 +75,84 @@ export default function SendMoneyForm() {
 - `formAction` is memoized with `useCallback`; it is stable across re-renders unless `url` or `method` changes.
 - The hook cancels in-flight requests on unmount, preventing React "state update on unmounted component" warnings.
 - For `PUT`, `PATCH`, or `DELETE` flows, pass the method as the second argument: `useFormAction('/api/goals/123', 'PUT')`.
+
+---
+
+## useRouteTransition
+
+**File:** [`lib/hooks/useRouteTransition.ts`](../lib/hooks/useRouteTransition.ts)
+
+Central place for page-transition animation logic. Returns CSS class names suitable for a page container element and automatically disables animations when the user prefers reduced motion (WCAG 2.1 AA – Success Criterion 2.3.3).
+
+### Signature
+
+```ts
+function useRouteTransition(options?: {
+  direction?: 'left' | 'right' | 'top' | 'bottom';
+  duration?: 75 | 100 | 150 | 200 | 300 | 500 | 700 | 1000;
+  animateOnMount?: boolean;
+  className?: string;
+}): {
+  animationClasses: string;
+  prefersReducedMotion: boolean;
+}
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `direction` | `'left' \| 'right' \| 'top' \| 'bottom'` | `'left'` | Slide direction for the entering page. |
+| `duration` | `75 \| 100 \| 150 \| 200 \| 300 \| 500 \| 700 \| 1000` | `300` | Animation duration in ms. Must be one of the supported Tailwind duration values. |
+| `animateOnMount` | `boolean` | `true` | Set to `false` to avoid re-animating when the same route re-mounts. |
+| `className` | `string` | `''` | Additional CSS class names appended to the result. |
+
+### Return
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `animationClasses` | `string` | CSS class string for the page container. Returns empty string when reduced motion is active or `animateOnMount` is `false`. |
+| `prefersReducedMotion` | `boolean` | The resolved OS reduced-motion preference. Use to gate any other JS-driven animations in the component. |
+
+### Accessibility
+
+- Animations are suppressed when `prefers-reduced-motion: reduce` is active, satisfying WCAG 2.1 AA Success Criterion 2.3.3 (Animation from Interactions).
+- The hook internally delegates to `usePrefersReducedMotion` which reactively updates when the OS preference changes at runtime.
+
+### Usage example
+
+```tsx
+'use client';
+
+import { useRouteTransition } from '@/lib/hooks/useRouteTransition';
+
+export default function Page() {
+  const { animationClasses } = useRouteTransition({
+    duration: 500,
+    direction: 'right',
+  });
+
+  return (
+    <main className={animationClasses}>
+      <h1>Page content</h1>
+    </main>
+  );
+}
+```
+
+### Notes
+
+- The hook is a thin wrapper over `usePrefersReducedMotion` that maps the boolean to Tailwind animation classes.
+- All animation class strings are literal values in the source file so Tailwind's JIT compiler can detect them at build time.
+- For class-based animation gating in child elements use the exposed `prefersReducedMotion` boolean instead of calling `usePrefersReducedMotion` separately.
+
+### Storybook
+
+- `Hooks/useRouteTransition` (`Default`, `SlideFromRight`, `SlideFromTop`, `SlideFromBottom`, `Slow`, `Fast`, `ReducedMotion`)
+
+### Tests
+
+- `lib/hooks/useRouteTransition.test.ts` covers default output, direction/duration options, reduced-motion suppression, `animateOnMount`, custom className appending, and all supported direction/duration combinations.
 
 ---
 
