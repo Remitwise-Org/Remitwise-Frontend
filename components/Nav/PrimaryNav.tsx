@@ -2,18 +2,21 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Send, LayoutDashboard, FileText, Shield, Users, Settings, Bell } from "lucide-react";
+import { Send, LayoutDashboard, FileText, Shield, Users, Settings, Bell, Search, HelpCircle } from "lucide-react";
 import Logo from "./Logo";
 import WalletButton from "../WalletButton";
 import MobileNav from "./MobileNav";
 import { useWhatsNewOptional } from "@/lib/context/WhatsNewContext";
+import { useShortcutHelp } from "@/lib/context/ShortcutHelpContext";
 import WhatsNewBadge from "@/components/Dashboard/WhatsNewBadge";
 import WrongNetworkBanner from "@/components/WrongNetworkBanner";
 import NetworkStatusIndicator from "@/components/NetworkStatusIndicator";
+import ShortcutTooltip from "@/components/ui/ShortcutTooltip";
 
 const PrimaryNav = () => {
     const pathname = usePathname();
     const whatsNew = useWhatsNewOptional();
+    const { open: openShortcutHelp } = useShortcutHelp();
 
     const links = [
         { name: "Send", href: "/send", icon: <Send className="w-4 h-4" /> },
@@ -68,6 +71,37 @@ const PrimaryNav = () => {
 
                         {/* Right: Wallet & Mobile Menu Toggle */}
                       <div className="flex min-w-0 flex-shrink-0 items-center gap-2 375:gap-3">
+                            {/* Command Palette Button */}
+                            <ShortcutTooltip label="Command Palette" shortcut="⌘K">
+                              <button
+                                onClick={() => {
+                                  // Trigger Cmd+K keyboard event
+                                  document.dispatchEvent(
+                                    new KeyboardEvent("keydown", {
+                                      key: "k",
+                                      metaKey: true,
+                                      bubbles: true,
+                                    })
+                                  );
+                                }}
+                                aria-label="Command Palette"
+                                className="flex items-center justify-center w-10 h-10 rounded-full text-white/60 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
+                              >
+                                <Search className="w-5 h-5" aria-hidden="true" />
+                              </button>
+                            </ShortcutTooltip>
+
+                            {/* Help / Keyboard Shortcuts Button */}
+                            <ShortcutTooltip label="Keyboard Shortcuts" shortcut="?">
+                              <button
+                                onClick={openShortcutHelp}
+                                aria-label="Keyboard Shortcuts Help"
+                                className="flex items-center justify-center w-10 h-10 rounded-full text-white/60 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
+                              >
+                                <HelpCircle className="w-5 h-5" aria-hidden="true" />
+                              </button>
+                            </ShortcutTooltip>
+
                             {whatsNew && (
                                 <button
                                     onClick={whatsNew.toggle}

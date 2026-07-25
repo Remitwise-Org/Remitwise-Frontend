@@ -8,10 +8,12 @@ import { ToastProvider } from "@/lib/context/ToastContext";
 import { NetworkStatusProvider } from "@/lib/context/NetworkStatusContext";
 import { AsyncOperationsProvider } from "@/lib/context/AsyncOperationsContext";
 import { ConfirmProvider } from "@/lib/context/ConfirmContext";
+import { ShortcutHelpProvider } from "@/lib/context/ShortcutHelpContext";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import ToastRegion from "@/components/ToastRegion";
 import SessionExpiryProvider from "@/components/SessionExpiryProvider";
 import CommandPalette from "@/components/CommandPalette";
+import ShortcutHelpModal from "@/components/ShortcutHelpModal";
 import { apiClient } from "@/lib/client/apiClient";
 
 /** Keeps the API client's authorization header aligned with wallet state. */
@@ -42,9 +44,12 @@ export default function Providers({ children }: { children: ReactNode }) {
         <DensityProvider>
           <AsyncOperationsProvider>
             <SessionExpiryProvider>
-              <LayoutWrapper>{children}</LayoutWrapper>
-              <ToastRegion />
-              <CommandPalette />
+              <ShortcutHelpProvider>
+                <LayoutWrapper>{children}</LayoutWrapper>
+                <ToastRegion />
+                <CommandPalette />
+                <ShortcutHelpModal />
+              </ShortcutHelpProvider>
             </SessionExpiryProvider>
           </AsyncOperationsProvider>
         </DensityProvider>

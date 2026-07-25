@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/lib/client/logout";
+import ShortcutTooltip from "@/components/ui/ShortcutTooltip";
 
 const MobileNav = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -77,13 +78,15 @@ const MobileNav = () => {
 
     return (
         <div className="lg:hidden">
-            <button
-                onClick={() => setIsOpen(true)}
-                className="p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
-                aria-label="Open Mobile Menu"
-            >
-                <Menu className="w-5 h-5 text-white/80" />
-            </button>
+            <ShortcutTooltip label="Open Mobile Menu" shortcut="Esc" side="left">
+              <button
+                  onClick={() => setIsOpen(true)}
+                  className="p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
+                  aria-label="Open Mobile Menu"
+              >
+                  <Menu className="w-5 h-5 text-white/80" />
+              </button>
+            </ShortcutTooltip>
 
             {/* Menu Overlay */}
             {isOpen && (
