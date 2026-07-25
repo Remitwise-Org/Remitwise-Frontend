@@ -1,10 +1,18 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs";
 import { within, expect } from "@storybook/test";
 import { Nav } from "./Nav";
 
 const meta: Meta<typeof Nav> = {
   title: "Components/Nav",
   component: Nav,
+  parameters: {
+    nextjs: {
+      appDirectory: true,
+      navigation: {
+        pathname: "/dashboard",
+      },
+    },
+  },
 };
 
 export default meta;
