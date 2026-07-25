@@ -3,6 +3,7 @@
 import { useMemo, useCallback, memo } from 'react'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import { Activity } from 'lucide-react';
+import WidgetEmptyState from '@/components/ui/WidgetEmptyState';
 import {
   ResponsiveContainer,
   AreaChart,

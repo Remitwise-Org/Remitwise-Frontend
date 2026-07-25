@@ -64,7 +64,6 @@ describe('apiClient shared headers', () => {
       .mockResolvedValueOnce({ status: 401, headers: { get: () => null } })
       .mockResolvedValueOnce({ status: 200, headers: { get: () => null } });
     (sessionHandler.isSessionExpired as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce(false)
       .mockResolvedValueOnce(true)
       .mockResolvedValueOnce(false);
     (sessionHandler.refreshSession as ReturnType<typeof vi.fn>).mockResolvedValue(true);

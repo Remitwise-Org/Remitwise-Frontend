@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Send, PiggyBank, FileText, Shield } from 'lucide-react';
+import StaleBanner from '@/components/ui/StaleBanner';
 
 import StatCard from '@/components/Dashboard/StatCard';
 import { DashboardLoadingSkeleton } from '@/components/ui/LoadingSkeletons';

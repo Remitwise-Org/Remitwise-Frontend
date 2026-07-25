@@ -149,8 +149,6 @@ const chartSummary = buildChartSummary(summaryItems, t);
     />
   )), [data, activeCategory, reducedMotion])
 
-  const total = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
-  const topCat = useMemo(() => data[0], [data])
   const ariaLabel = useMemo(() => buildChartImageLabel('Top categories', summaryItems, t), [summaryItems, t])
   const summaryText = useMemo(() => buildChartSummary(summaryItems, t), [summaryItems, t])
 

@@ -178,7 +178,7 @@ export function DashboardLoadingSkeleton() {
             </div>
           </SectionShell>
         </div>
-      </SkeletonGroup>
+      </div>
     </main>
   );
 }

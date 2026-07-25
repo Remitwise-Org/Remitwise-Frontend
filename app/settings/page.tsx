@@ -78,7 +78,7 @@ export default function SettingsPage() {
             headingClassName="shrink-0 text-base font-semibold text-gray-900 dark:text-white"
           >
             {t("settings.page_title")}
-          </h1>
+          </PageHeadingLink>
           {/* Mobile: horizontal scrollable nav pills */}
           <nav
             className="ml-auto flex min-w-0 flex-1 gap-1 overflow-x-auto sm:hidden scrollbar-none"

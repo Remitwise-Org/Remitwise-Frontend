@@ -81,7 +81,7 @@ function CustomTooltip({ active, payload, label }: TooltipContentProps<any, any>
             )}
         </div>
     )
-})
+}
 
 type SpendingTooltipProps = TooltipContentProps<number | string | readonly (number | string)[], string | number>
 

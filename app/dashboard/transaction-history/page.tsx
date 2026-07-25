@@ -240,7 +240,7 @@ const TransactionHistoryPage = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     },
-    [groupedTransactions, dateFrom, dateTo],
+    [groupedTransactions, dateFrom, dateTo, filteredCount],
   );
 
   const hasActiveFilters =

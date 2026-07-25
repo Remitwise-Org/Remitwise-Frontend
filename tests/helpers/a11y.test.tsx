@@ -11,6 +11,7 @@ describe('expectNoAxeViolations', () => {
 
   it('rejects_with_error_when_component_has_violations', async () => {
     // Missing alt text on img causes an axe violation
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
     const { container } = render(<img src="test.png" />);
     await expect(expectNoAxeViolations(container)).rejects.toThrow();
   });

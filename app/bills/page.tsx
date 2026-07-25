@@ -167,13 +167,13 @@ export default function Bills() {
 		}
 	}, [toast, bills, t]);
 
-	const fetchBillsData = async () => {
+	const fetchBillsData = useCallback(async (signal?: AbortSignal) => {
 		setIsLoading(true);
 		setError(null);
 		try {
 			const [billsRes, statsRes] = await Promise.all([
-				apiClient.get('/api/bills'),
-				apiClient.get('/api/bills/total-unpaid')
+				apiClient.get('/api/bills', { signal }),
+				apiClient.get('/api/bills/total-unpaid', { signal })
 			]);
 			
 			if (!billsRes || !statsRes) throw new Error("Session expired");
@@ -191,7 +191,7 @@ export default function Bills() {
 			const paidAmount = paidBills.reduce((acc: number, b: Bill) => acc + b.amount, 0);
 			const overdueCount = fetchedBills.filter((b: Bill) => (b.status as string) === 'overdue' || (b.status as string) === 'urgent').length;
 
-			setStats({
+			const statsObj = {
 				totalUnpaid: {
 					amount: fetchedStats?.totalUnpaid?.toLocaleString() || '0',
 					pendingCount: fetchedStats?.count || 0
@@ -201,17 +201,21 @@ export default function Bills() {
 					amount: paidAmount.toLocaleString(),
 					paymentCount: paidBills.length
 				}
-			});
+			};
+
+			setStats(statsObj);
+			return { bills: fetchedBills, stats: statsObj };
 		} catch (err) {
 			setError(err instanceof Error ? err : new Error("Unknown error"));
+			throw err;
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		fetchBillsData();
-	}, []);
+	}, [fetchBillsData]);
 
 	const handleRetry = useCallback(() => {
 		setReloadKey((current) => current + 1);

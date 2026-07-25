@@ -81,7 +81,7 @@ export default function InsurancePage() {
 
     fetchPolicies();
     return () => { cancelled = true; };
-  }, []);
+  }, [t]);
 
   const handleOpenDetail = useCallback((policy: Policy) => {
     setSelectedPolicy(policy);
