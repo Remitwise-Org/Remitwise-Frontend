@@ -27,7 +27,7 @@ export default defineConfig({
     extraHTTPHeaders: {
       'x-playwright-test': 'true',
     },
-    // Force reduced-motion so CSS transitions don't pollute snapshots.
+    // @ts-expect-error reducedMotion is a valid Playwright context option
     reducedMotion: 'reduce',
     // Consistent colour scheme for snapshot stability.
     colorScheme: 'dark',

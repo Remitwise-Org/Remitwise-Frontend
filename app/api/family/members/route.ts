@@ -12,11 +12,11 @@ const AddMemberSchema = z.object({
     address: z
         .string()
         .regex(/^G[A-Z0-9]{55}$/, 'Invalid Stellar address format'),
-    role: z.enum(['admin', 'sender', 'recipient'], {
-        errorMap: () => ({ message: 'Role must be admin, sender, or recipient' }),
+    role: z.enum(['admin', 'sender', 'recipient'] as const, {
+        message: 'Role must be admin, sender, or recipient',
     }),
     spendingLimit: z
-        .number({ invalid_type_error: 'spendingLimit must be a number' })
+        .number({ message: 'spendingLimit must be a number' })
         .nonnegative('spendingLimit must be non-negative'),
 });
 

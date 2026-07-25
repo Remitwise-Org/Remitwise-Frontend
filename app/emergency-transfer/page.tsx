@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/lib/context/ToastContext";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import useStellarAddressValidation, {
   normalizeStellarAddress,
 } from "@/lib/hooks/useStellarAddressValidation";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   Check,
   ChevronDown,
@@ -276,6 +276,7 @@ function normalizeQuery(value: string) {
 }
 
 import { useSeo } from "@/lib/hooks/useSeo";
+import { useOnClickOutside } from "@/lib/hooks/useOnClickOutside";
 
 export default function TransactionsPage() {
   useSeo({
@@ -399,22 +400,12 @@ export default function TransactionsPage() {
   const exportButtonRef = useRef<HTMLButtonElement>(null);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on click outside or escape key
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (exportButtonRef.current?.contains(target)) return;
-      if (exportDropdownRef.current && !exportDropdownRef.current.contains(target)) {
-        setIsExportDropdownOpen(false);
-      }
-    };
-    if (isExportDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isExportDropdownOpen]);
+  // Close dropdown on click outside (via shared useOnClickOutside hook)
+  const closeExportDropdown = useCallback(() => setIsExportDropdownOpen(false), []);
+  useOnClickOutside(exportDropdownRef, closeExportDropdown, {
+    enabled: isExportDropdownOpen,
+    ignoreRef: exportButtonRef,
+  });
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -470,7 +461,7 @@ export default function TransactionsPage() {
     <main className="min-h-screen bg-[#010101]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <div className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-4 sm:p-6 lg:p-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between tall:sticky tall:top-16 375:tall:top-20 tall:z-40 bg-[#121212] py-4 border-b border-white/[0.04]">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-red-300">
                 {t("transactionHistory.titleStandalone")}

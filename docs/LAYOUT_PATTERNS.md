@@ -34,3 +34,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                                                                       </RootErrorBoundary>
                                                                         );
                                                                         }
+
+## Sticky Headers and CTAs
+
+To maintain scroll landmark visibility and keep the primary Call to Action (CTA) in view during long scrolling lists on tall viewports (height >= 800px), headers containing primary page CTAs are styled to remain sticky:
+- Standard pages use the reusable `PageHeader` which stays sticky via `tall:sticky`.
+- The top-offset must correspond to the height of the fixed navigation header (`tall:top-16 375:tall:top-20`) to clear the logo/menu area.
+- Solid background fills matching the page color (e.g. `bg-[#010101]`, `bg-[#0a0b0f]`) and subtle borders should be applied to prevent content bleed during scrolling.

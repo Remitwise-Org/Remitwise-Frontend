@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Send, LayoutDashboard, FileText, Shield, Users, Settings, Wallet, X, Command, Clock } from "lucide-react";
+import { Search, Send, LayoutDashboard, FileText, Shield, Users, Settings, Wallet, X, Command, SearchCheck, Clock } from "lucide-react";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useRecentItems } from "@/lib/hooks/useRecentItems";
 import { RECENT_COMMANDS_STORAGE_KEY } from "@/lib/config/recent";
@@ -30,7 +30,7 @@ export default function CommandPalette() {
     5
   );
 
-  const commands: CommandItem[] = [
+  const commands: CommandItem[] = useMemo(() => [
     // Routes
     {
       id: "send",
@@ -80,6 +80,14 @@ export default function CommandPalette() {
       action: () => router.push("/settings"),
       category: "routes",
     },
+    {
+      id: "search-results",
+      label: "Global Search",
+      description: "Search invoices, addresses, and settings",
+      icon: <SearchCheck className="w-4 h-4" />,
+      action: () => router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`),
+      category: "routes",
+    },
     // Quick Actions
     {
       id: "connect-wallet",
@@ -92,28 +100,38 @@ export default function CommandPalette() {
       },
       category: "actions",
     },
-  ];
+  ], [router, searchQuery]);
 
-  const filteredCommands = commands.filter((command) =>
+  const filteredCommands = useMemo(() => commands.filter((command) =>
     command.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    command.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    command.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (command.id === "search-results" && searchQuery.trim().length > 0)
+  ), [commands, searchQuery]);
 
-  let recentList: CommandItem[] = [];
-  let routeList = filteredCommands.filter((c) => c.category === "routes");
-  let actionList = filteredCommands.filter((c) => c.category === "actions");
+  const displayedCommands = useMemo(() => {
+    let recentList: CommandItem[] = [];
+    let routeList = filteredCommands.filter((c) => c.category === "routes");
+    let actionList = filteredCommands.filter((c) => c.category === "actions");
 
-  if (searchQuery === "") {
-    recentList = recentCommandIds
-      .map((id) => commands.find((c) => c.id === id))
-      .filter((c): c is CommandItem => c !== undefined);
+    if (searchQuery === "") {
+      recentList = recentCommandIds
+        .map((id) => commands.find((c) => c.id === id))
+        .filter((c): c is CommandItem => c !== undefined);
 
-    const recentIds = new Set(recentList.map((c) => c.id));
-    routeList = routeList.filter((c) => !recentIds.has(c.id));
-    actionList = actionList.filter((c) => !recentIds.has(c.id));
-  }
+      const recentIds = new Set(recentList.map((c) => c.id));
+      routeList = routeList.filter((c) => !recentIds.has(c.id));
+      actionList = actionList.filter((c) => !recentIds.has(c.id));
+    }
 
-  const displayedCommands = [...recentList, ...routeList, ...actionList];
+    return [...recentList, ...routeList, ...actionList];
+  }, [filteredCommands, searchQuery, recentCommandIds, commands]);
+
+  const handleCommandClick = useCallback((command: CommandItem) => {
+    addRecentCommandId(command.id);
+    command.action();
+    setIsOpen(false);
+    setSearchQuery("");
+  }, [addRecentCommandId]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -146,7 +164,7 @@ export default function CommandPalette() {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, displayedCommands, selectedIndex]);
+  }, [isOpen, displayedCommands, selectedIndex, handleCommandClick]);
 
   useEffect(() => {
     if (isOpen) {
@@ -159,19 +177,13 @@ export default function CommandPalette() {
     setSelectedIndex(0);
   }, [searchQuery]);
 
-  const handleCommandClick = (command: CommandItem) => {
-    addRecentCommandId(command.id);
-    command.action();
-    setIsOpen(false);
-    setSearchQuery("");
-  };
-
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[20vh]">
       {/* Backdrop */}
       <div
+        data-testid="command-palette-backdrop"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={() => setIsOpen(false)}
       />
@@ -215,6 +227,7 @@ export default function CommandPalette() {
                   {recentList.map((command, index) => (
                     <button
                       key={command.id}
+                      data-testid="command-item"
                       onClick={() => handleCommandClick(command)}
                       className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors ${
                         index === selectedIndex
@@ -242,6 +255,7 @@ export default function CommandPalette() {
                   {routeList.map((command, index) => (
                     <button
                       key={command.id}
+                      data-testid="command-item"
                       onClick={() => handleCommandClick(command)}
                       className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors ${
                         recentList.length + index === selectedIndex

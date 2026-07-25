@@ -110,3 +110,4 @@ async function fetchRemittance(id: string) {
 
 - For architecture details, see [architecture.md](./architecture.md).
 - For branching and general PR expectations, see [CONTRIBUTING.md](../CONTRIBUTING.md).
+- For operational and support procedures, see [OPERATIONS.md](./OPERATIONS.md).

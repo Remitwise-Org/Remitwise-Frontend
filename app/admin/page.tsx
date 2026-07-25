@@ -201,7 +201,7 @@ export default function AdminPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-white">Access Denied</h2>
-                  <p className="mt-1 text-sm text-white/50">You don't have permission to access the admin panel.</p>
+                  <p className="mt-1 text-sm text-white/50">You don&apos;t have permission to access the admin panel.</p>
                 </div>
               </div>
             </div>

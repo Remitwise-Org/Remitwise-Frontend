@@ -39,56 +39,55 @@ const PrimaryNav = () => {
                         <Logo />
                     </div>
 
-                    {/* Center: Desktop Links */}
-                    <nav aria-label="Primary navigation" className="hidden lg:flex items-center">
-                        <ul className="flex items-center gap-1">
-                            {links.map((link) => (
-                                <li key={link.name}>
-                                    <Link
-                                        href={link.href}
-                                        aria-current={isActive(link.href) ? "page" : undefined}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/50
-                                            ${isActive(link.href)
-                                                ? "text-white bg-brand-red/10 border border-brand-red/20 shadow-[0_0_15px_rgba(215,35,35,0.2)]"
-                                                : "text-white/70 hover:text-white hover:bg-white/5 border border-transparent"
-                                            }`}
-                                    >
-                                        <span className={isActive(link.href) ? "text-brand-red" : "text-white/70 group-hover:text-white/90"}>
-                                            {link.icon}
-                                        </span>
-                                        {link.name}
-                                        {isActive(link.href) && (
-                                            <span className="absolute inset-0 rounded-full bg-brand-red/10 blur-[2px] -z-10 animate-neon-pulse" />
-                                        )}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </nav>
+                        {/* Center: Desktop Links */}
+                        <nav aria-label="Primary navigation" className="hidden lg:flex items-center">
+                            <ul className="flex items-center gap-1">
+                                {links.map((link) => (
+                                    <li key={link.name}>
+                                        <Link
+                                            href={link.href}
+                                            aria-current={isActive(link.href) ? "page" : undefined}
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/50
+                                                ${isActive(link.href)
+                                                    ? "text-white bg-brand-red/10 border border-brand-red/20 shadow-[0_0_15px_rgba(215,35,35,0.2)]"
+                                                    : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
+                                                }`}
+                                        >
+                                            <span className={isActive(link.href) ? "text-brand-red" : "text-white/40 group-hover:text-white/60"}>
+                                                {link.icon}
+                                            </span>
+                                            {link.name}
+                                            {isActive(link.href) && (
+                                                <span className="absolute inset-0 rounded-full bg-brand-red/10 blur-[2px] -z-10 animate-neon-pulse" />
+                                            )}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
 
-                    {/* Right: Wallet & Mobile Menu Toggle */}
-                  <div className="flex min-w-0 flex-shrink-0 items-center gap-2 375:gap-3">
-                        {whatsNew && (
-                            <button
-                                onClick={whatsNew.toggle}
-                                aria-label="What's New"
-                                aria-expanded={whatsNew.isOpen}
-                                className="relative hidden 450:flex items-center justify-center w-10 h-10 rounded-full text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
-                            >
-                                <Bell className="w-5 h-5" />
-                                <WhatsNewBadge className="top-1.5 right-1.5 w-5 h-5" />
-                            </button>
-                        )}
-                        <NetworkStatusIndicator />
-                        <WalletButton />
-                        <div className="lg:hidden">
-                            <MobileNav />
+                        {/* Right: Wallet & Mobile Menu Toggle */}
+                      <div className="flex min-w-0 flex-shrink-0 items-center gap-2 375:gap-3">
+                            {whatsNew && (
+                                <button
+                                    onClick={whatsNew.toggle}
+                                    aria-label="What's New"
+                                    aria-expanded={whatsNew.isOpen}
+                                    className="relative hidden 450:flex items-center justify-center w-10 h-10 rounded-full text-white/60 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
+                                >
+                                    <Bell className="w-5 h-5" />
+                                    <WhatsNewBadge className="top-1.5 right-1.5 w-5 h-5" />
+                                </button>
+                            )}
+                            <WalletButton />
+                            <div className="lg:hidden">
+                                <MobileNav />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </header>
-        <WrongNetworkBanner />
+            </header>
+            <WrongNetworkBanner />
         </>
     );
 };

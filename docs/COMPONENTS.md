@@ -1,18 +1,77 @@
 # Components
 
-## Image Alt Attribute Accessibility Check
+For the contributor workflow that takes a component from Figma through design
+tokens, Storybook stories, tests, and production integration, see
+[COMPONENT_LIFECYCLE.md](COMPONENT_LIFECYCLE.md).
 
-Build-time enforcement ensuring that no `<img>` or `<Image />` component lacks an `alt` attribute (WCAG 2.1 AA requirement).
+## AccessibleCalendarGrid
 
-**Script:** `scripts/check-img-alt.js`  
-**Command:** `npm run check:img-alt`
+A fully accessible calendar grid date-picker that meets **WCAG 2.1 AA**.
 
-### Behavior
+**File:** `components/ui/AccessibleCalendarGrid.tsx`
 
-- Automatically runs during `npm run lint` and `npm run prebuild` / `npm run build`.
-- Scans source files in `app/`, `components/`, `src/`, `lib/`, `pages/`, and `public/`.
-- Fails the build with exit code 1 if any `<img>` or `<Image />` element lacks an `alt` attribute.
-- Unit tested in `tests/unit/check-img-alt.test.ts`.
+### Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `CalendarDate \| null` | `null` | Currently selected date |
+| `onChange` | `(date: CalendarDate) => void` | — | Fired when the user selects a date |
+| `minDate` | `CalendarDate` | — | Minimum selectable date (inclusive) |
+| `maxDate` | `CalendarDate` | — | Maximum selectable date (inclusive) |
+| `locale` | `string` | `"en-US"` | Locale for month/weekday names (e.g. `"ar-SA"`, `"fr-FR"`) |
+| `firstDayOfWeek` | `0 \| 1` | `0` | `0` = Sunday, `1` = Monday (ISO 8601) |
+| `className` | `string` | — | Extra classes on the wrapper |
+| `ariaLabel` | `string` | `"Calendar"` | Accessible label for the widget |
+
+### Keyboard navigation
+
+| Key | Action |
+|---|---|
+| Arrow Left / Right | Move focus one day backward / forward |
+| Arrow Up / Down | Move focus one week backward / forward |
+| Home | First day of the current week |
+| End | Last day of the current week |
+| Page Up | Previous month |
+| Page Down | Next month |
+| Enter / Space | Select the focused date |
+| Tab | Move to the prev/next month navigation buttons |
+
+### Accessibility
+
+- Container: `role="application"` with `aria-label`
+- Grid: `role="grid"` labelled by the month/year heading
+- Column headers: `role="columnheader"` (weekday abbreviations)
+- Day cells: `role="gridcell"` with `aria-selected`, `aria-disabled`, `aria-label` (full long-form date string), and `aria-current="date"` for today
+- Month navigation: announced via `aria-live="polite"` region
+- Focus ring: `ring-focus` token (3 px), `ring-offset-focus` token (4 px)
+- Touch targets: `h-11 w-11` (44 × 44 px, WCAG 2.1 minimum)
+- Roving `tabIndex` pattern keeps a single tab stop in the grid
+
+### RTL
+
+Pass an RTL locale (`"ar"`, `"he"`, `"fa"`, `"ur"`, …) and the component automatically sets `dir="rtl"` on its wrapper and flips the prev/next chevrons.
+
+### Usage
+
+```tsx
+import { AccessibleCalendarGrid } from "@/components/ui/AccessibleCalendarGrid";
+
+<AccessibleCalendarGrid
+  value={{ year: 2026, month: 7, day: 15 }}
+  onChange={(date) => console.log(date)}
+  ariaLabel="Remittance date picker"
+/>
+```
+
+### Stories
+
+`Components/UI/AccessibleCalendarGrid` — eight stories covering: `Default`, `WithSelectedDate`, `Controlled`, `WithMinMax`, `RTLArabic`, `RTLHebrew`, `MondayFirstDay`, `FrenchLocale`, `JapaneseLocale`.
+
+### Tests
+
+`components/ui/AccessibleCalendarGrid.test.tsx` — 30 tests covering ARIA roles and structure, keyboard navigation (Arrow keys, Page Up/Down, Enter/Space), mouse interaction, RTL, and four axe audit passes (zero violations).
+
+---
 
 ## BackToTop
 
@@ -51,6 +110,24 @@ A floating "back to top" button that appears after the user scrolls past 800px.
 ### Integration
 
 Wired in `app/layout.tsx` so it is available on every route.
+
+## PageHeader
+
+A reusable page header component used on core pages (like Bills, Family, and Savings Goals) that renders the page title, description, and primary CTA.
+
+**File:** `components/PageHeader.tsx`
+
+### Behavior
+
+- **Sticky on Tall Screens:** On viewports with height >= 800px (configured via `TALL_SCREEN_MIN_HEIGHT` in `lib/config/layout.json` and the `tall` Tailwind theme breakpoint), the header stays sticky (`tall:sticky`) and remains in view during scroll.
+- **Top Offset:** Responsive top offset adjusts to `top-16` / `top-20` based on the fixed primary navigation height to prevent layout overlaps.
+
+### Integration
+
+Used in:
+- `app/bills/page.tsx`
+- `app/family/page.tsx`
+- `app/dashboard/goals/page.tsx`
 
 ## Dashboard — Last synced indicator
 
@@ -154,139 +231,74 @@ component per file):
   layer (defaults, locale override, unknown-currency fallback, prop
   forwarding, render-prop children, and the `useFormatter` hook).
 
----
+## WhatsNewContext
 
-## ConfirmDialog / useConfirm (issue #999)
+A context provider that manages the "What's New" onboarding tour panel, which shows
+changelog entries to users on first visit and allows them to replay the tour later.
 
-A non-blocking, Promise-based replacement for `window.confirm` that integrates
-with the app's design system.
+**File:** `lib/context/WhatsNewContext.tsx`
 
-**Files:**
+### Behavior
 
-- `lib/context/ConfirmContext.tsx` — React context, `ConfirmProvider`,
-  `useConfirm` hook, and the internal `useConfirmInternal` hook.
-- `components/ConfirmDialog.tsx` — The rendered dialog UI.
-
-### Quick start
-
-```tsx
-"use client";
-
-import { useConfirm } from "@/lib/context/ConfirmContext";
-
-export default function DeleteButton({ id }: { id: string }) {
-  const { confirm } = useConfirm();
-
-  const handleDelete = async () => {
-    const ok = await confirm({
-      title: "Delete record",
-      description: "This action cannot be undone.",
-      intent: "danger",
-      confirmLabel: "Delete",
-      cancelLabel: "Keep it",
-    });
-    if (ok) {
-      // … proceed with deletion
-    }
-  };
-
-  return (
-    <button onClick={handleDelete} className="…">
-      Delete
-    </button>
-  );
-}
-```
+- **Auto-open:** Opens automatically on first visit when no localStorage entry exists
+  (`remitwise_whats_new_last_seen`).
+- **Persistence:** Stores the last seen changelog entry ID in localStorage to prevent
+  re-showing the same entries.
+- **Replay:** Provides a `replay()` function that clears the stored last seen ID and
+  re-opens the panel, allowing users to see all changelog entries again.
+- **Unread count:** Calculates the number of unread entries based on the stored last
+  seen ID.
 
 ### API
 
-#### `useConfirm()`
-
 ```ts
-const { confirm } = useConfirm();
-const result: boolean = await confirm(options?);
+interface WhatsNewContextValue {
+    isOpen: boolean;
+    open: () => void;
+    close: () => void;
+    toggle: () => void;
+    entries: ChangelogEntry[];
+    readIds: Set<string>;
+    unreadCount: number;
+    markAllRead: () => void;
+    replay: () => void;  // Clears localStorage and re-opens the panel
+}
 ```
-
-Must be called inside a `ConfirmProvider` (already provided globally via
-`components/Providers.tsx`).
-
-`confirm()` opens the dialog and returns a `Promise<boolean>` that resolves:
-
-| User action            | Resolved value |
-|------------------------|---------------|
-| Clicks **Confirm**     | `true`        |
-| Clicks **Cancel**      | `false`       |
-| Clicks the **×** button | `false`      |
-| Presses **Escape**     | `false`       |
-| Clicks the **backdrop** | `false`      |
-
-#### `ConfirmOptions`
-
-| Prop             | Type                   | Default            | Description                              |
-|------------------|------------------------|--------------------|------------------------------------------|
-| `title`          | `string`               | `"Are you sure?"`  | Dialog heading                           |
-| `description`    | `string`               | `""`               | Descriptive body copy (optional)         |
-| `confirmLabel`   | `string`               | `"Confirm"`        | Label for the positive action button     |
-| `cancelLabel`    | `string`               | `"Cancel"`         | Label for the negative action button     |
-| `intent`         | `"primary" \| "danger"` | `"primary"`       | Visual style of the confirm button       |
-
-### `ConfirmProvider`
-
-Wraps the subtree that needs access to `useConfirm`. It is already mounted at
-the top of the app inside `components/Providers.tsx`, so application code does
-not need to add it.
-
-### `ConfirmDialog`
-
-Renders the actual dialog UI. Mount it once near the root; currently placed
-inside `components/Providers.tsx` alongside other singleton UI (toasts, command
-palette, dev panel).
-
-The dialog is:
-
-- **ARIA-accessible** — `role="dialog"`, `aria-modal="true"`,
-  `aria-labelledby`, `aria-describedby` (when description is present).
-- **Focus-managed** — focuses the Confirm button on open; restores the
-  previously focused element on close.
-- **Keyboard navigable** — Tab/Shift+Tab cycle within the dialog; Escape
-  cancels.
-- **Backdrop-dismissible** — clicking the overlay resolves `false`.
-- **Design-token compliant** — uses `primary-600`, `rounded-2xl`, and
-  `bg-black/60` from the Tailwind config; no hard-coded colour values.
-
-### Styling
-
-| Prop value | Confirm button style        |
-|------------|-----------------------------|
-| `"primary"` | `bg-primary-600` (blue)   |
-| `"danger"`  | `bg-red-600` (red)        |
-
-### Accessibility
-
-- Title is linked via `aria-labelledby="confirm-dialog-title"`.
-- Description (when provided) is linked via
-  `aria-describedby="confirm-dialog-description"`.
-- Close button carries `aria-label="Cancel"`.
-- All interactive elements have `focus-visible` outlines using
-  `outline-primary-600`.
 
 ### Integration
 
-`ConfirmProvider` and `ConfirmDialog` are already registered in
-`components/Providers.tsx`. No additional wiring is required.
+- Wrapped in `app/dashboard/layout.tsx` to provide context to dashboard pages.
+- The replay button is exposed in `components/settings/PreferencesSection.tsx` under
+  the Preferences section, allowing users to replay the onboarding tour at any time.
 
 ### Tests
 
-`tests/unit/useConfirm.test.tsx` covers:
+- `tests/unit/components/ReceiptPageContent.test.tsx` covers the receipt page
+  content component for valid/invalid hashes and successful/missing transactions.
 
-- Dialog hidden before `confirm()` is called
-- Dialog shown after `confirm()` is called
-- Resolves `true` on Confirm click
-- Resolves `false` on Cancel, close, Escape, and backdrop clicks
-- Dialog closes after resolution
-- Multiple sequential calls
-- Custom `title`, `description`, `confirmLabel`, `cancelLabel`
-- `intent: "danger"` vs `intent: "primary"` button styling
-- ARIA attributes (`role`, `aria-modal`, `aria-labelledby`,
-  `aria-describedby`, `aria-label`)
-- Throws when `useConfirm` is called outside `ConfirmProvider`
+## ConnectionQualityIndicator
+
+A visual indicator that monitors the `/api/health` endpoint and displays the current connection quality.
+
+**File:** `components/ConnectionQualityIndicator.tsx`
+
+### Behavior
+
+- **Polling:** Automatically pings `/api/health` once per minute using `useSwrQuery` and the centralized `HEALTH_PING_INTERVAL_MS` constant.
+- **States:** 
+  - **Loading:** Yellow pulsing dot (`bg-yellow-400 animate-pulse`).
+  - **Healthy:** Green dot (`bg-green-500`) when the API returns `{ status: 'ok' }`.
+  - **Error/Unhealthy:** Red dot (`bg-red-500`) if the fetch fails or the API returns `{ status: 'unhealthy' }`.
+- **Tooltip:** Uses the `Tooltip` component to display "Checking connection...", "Connection stable", or "Connection error" on hover.
+
+### Integration
+
+Wired into `components/footer.tsx` to appear globally across the application, adjacent to the copyright text.
+
+### Storybook
+
+- `Components/ConnectionQualityIndicator` (`Default`)
+
+### Tests
+
+- `tests/unit/components/ConnectionQualityIndicator.test.tsx` covers rendering states and polling behavior.

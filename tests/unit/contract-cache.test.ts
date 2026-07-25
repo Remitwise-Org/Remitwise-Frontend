@@ -18,6 +18,7 @@ import {
   CacheErrorCode,
   CONTRACT_IDS,
   CACHE_TTL,
+  generateCacheKey,
 } from '@/lib/cache/contract-cache';
 
 describe('Contract Cache - Core Functionality', () => {
@@ -361,6 +362,192 @@ describe('Contract Cache - Core Functionality', () => {
       );
 
       expect(fetchFn).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('generateCacheKey', () => {
+    it('returns_same_key_for_identical_inputs', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX', limit: 10 }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX', limit: 10 }
+      );
+
+      expect(key1).toBe(key2);
+    });
+
+    it('returns_same_key_regardless_of_arg_key_order', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX', limit: 10, status: 'active' }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { status: 'active', limit: 10, owner: 'GXXX' }
+      );
+
+      expect(key1).toBe(key2);
+    });
+
+    it('returns_different_keys_for_different_contract_ids', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.REMITTANCE_SPLIT,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+
+      expect(key1).not.toBe(key2);
+    });
+
+    it('returns_different_keys_for_different_methods', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getPolicy',
+        { owner: 'GXXX' }
+      );
+
+      expect(key1).not.toBe(key2);
+    });
+
+    it('returns_different_keys_for_different_arg_values', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX1' }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX2' }
+      );
+
+      expect(key1).not.toBe(key2);
+    });
+
+    it('returns_different_keys_for_different_arg_structures', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX', limit: 10 }
+      );
+
+      expect(key1).not.toBe(key2);
+    });
+
+    it('returns_different_keys_for_nested_objects_with_different_values', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { filter: { status: 'active', type: 'life' } }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { filter: { status: 'active', type: 'health' } }
+      );
+
+      expect(key1).not.toBe(key2);
+    });
+
+    it('returns_different_keys_for_arrays_with_different_order', () => {
+      const key1 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { ids: [1, 2, 3] }
+      );
+      const key2 = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { ids: [3, 2, 1] }
+      );
+
+      expect(key1).not.toBe(key2);
+    });
+
+    it('throws_cache_error_for_invalid_contract_id', () => {
+      expect(() =>
+        generateCacheKey('INVALID_CONTRACT', 'method', {})
+      ).toThrow(CacheError);
+    });
+
+    it('throws_cache_error_for_invalid_method_name', () => {
+      expect(() =>
+        generateCacheKey(CONTRACT_IDS.INSURANCE, 'invalid-method!', {})
+      ).toThrow(CacheError);
+    });
+
+    it('throws_cache_error_for_non_object_args', () => {
+      expect(() =>
+        generateCacheKey(CONTRACT_IDS.INSURANCE, 'method', null as any)
+      ).toThrow(CacheError);
+    });
+
+    it('throws_cache_error_for_array_args', () => {
+      expect(() =>
+        generateCacheKey(CONTRACT_IDS.INSURANCE, 'method', [] as any)
+      ).toThrow(CacheError);
+    });
+
+    it('throws_cache_error_for_circular_reference_args', () => {
+      const circular: any = {};
+      circular.self = circular;
+
+      expect(() =>
+        generateCacheKey(CONTRACT_IDS.INSURANCE, 'method', circular)
+      ).toThrow(CacheError);
+    });
+
+    it('includes_contract_id_in_generated_key', () => {
+      const key = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+
+      expect(key).toContain(CONTRACT_IDS.INSURANCE);
+    });
+
+    it('includes_method_name_in_generated_key', () => {
+      const key = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+
+      expect(key).toContain('getActivePolicies');
+    });
+
+    it('serializes_args_in_key', () => {
+      const key = generateCacheKey(
+        CONTRACT_IDS.INSURANCE,
+        'getActivePolicies',
+        { owner: 'GXXX' }
+      );
+
+      expect(key).toContain('owner');
+      expect(key).toContain('GXXX');
     });
   });
 

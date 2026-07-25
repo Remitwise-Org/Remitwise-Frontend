@@ -34,7 +34,7 @@ export default function PageHeader({
       : 'flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 bg-gradient-to-b from-red-600 to-red-700 text-white font-medium transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101]'
 
   return (
-    <header className="overflow-x-hidden bg-[#010101] text-white">
+    <header className="overflow-x-hidden bg-[#010101] text-white tall:sticky tall:top-16 375:tall:top-20 tall:z-40">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
         <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:items-center sm:gap-4">
@@ -47,7 +47,14 @@ export default function PageHeader({
               <ArrowLeft className="w-5 h-5 text-white" />
             </button>
             <div className="min-w-0">
-              <h1 className="break-words text-xl font-bold text-white sm:text-2xl">{title}</h1>
+              <PageHeadingLink
+                headingId={headingId}
+                label={title}
+                headingClassName="break-words text-xl font-bold text-white sm:text-2xl"
+                buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101]"
+              >
+                {title}
+              </PageHeadingLink>
               <p className="mt-0.5 break-words text-sm text-gray-400">{subtitle}</p>
             </div>
           </div>

@@ -191,11 +191,49 @@
     "submit_error": "Failed to build the transfer. Please try again.",
     "submit_success": "Transfer payload ready for signing."
   },
-  "consent": {
-    "title": "We value your privacy.",
-    "body": "We use analytics to improve your experience. You can accept or decline — your choice is saved and respected.",
-    "accept": "Accept Analytics",
-    "decline": "Decline",
-    "ariaLabel": "Analytics consent"
+  "settings": {
+    "page_title": "Settings",
+    "nav_aria_label": "Settings navigation",
+    "content_aria_label": "Settings content",
+    "sections": {
+      "profile": "Profile",
+      "notifications": "Notifications",
+      "security": "Security",
+      "wallet": "Wallet",
+      "family": "Family",
+      "preferences": "Preferences"
+    },
+    "save_changes": "Save Changes",
+    "preferences": {
+      "title": "Preferences",
+      "description": "Customize your app experience",
+      "appearance_label": "Appearance",
+      "theme_system": "System",
+      "theme_light": "Light",
+      "theme_dark": "Dark",
+      "display_density_label": "Display Density",
+      "display_density_hint": "Choose how compact or spacious the interface appears",
+      "density_comfortable": "Comfortable",
+      "density_compact": "Compact",
+      "language_label": "Language",
+      "language_english_us": "English (US)",
+      "language_english_uk": "English (UK)",
+      "language_french": "French",
+      "language_spanish": "Spanish",
+      "language_portuguese": "Portuguese",
+      "timezone_label": "Timezone",
+      "timezone_lagos": "Africa/Lagos",
+      "timezone_accra": "Africa/Accra",
+      "timezone_nairobi": "Africa/Nairobi",
+      "timezone_newyork": "America/New_York",
+      "timezone_london": "Europe/London",
+      "date_format_label": "Date Format",
+      "motion_label": "Motion",
+      "onboarding_tour_label": "Onboarding Tour",
+      "onboarding_tour_hint": "Replay the welcome tour to see new features",
+      "replay_tour_button": "Replay Tour",
+      "preferences_saved_title": "Preferences Saved",
+      "preferences_saved_description": "Your settings have been updated successfully."
+    }
   }
 }

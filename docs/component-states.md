@@ -83,7 +83,37 @@ export function WidgetLoading() {
 }
 ```
 
-### 2.2 Button Loading Spinner
+### 2.2 Theme Styling Hooks & CSS Custom Properties
+To allow downstream operators, contracts, and custom themes to style loading states consistently, all skeleton and loader components expose custom CSS properties (variables) and semantic class/attribute hooks.
+
+#### CSS Custom Properties
+Themes can override the following CSS variables globally (e.g. in `globals.css`) or scope them to specific theme selectors:
+- `--skeleton-bg-start`: Base/start background color of the shimmer gradient.
+- `--skeleton-bg-via`: Middle highlight color of the shimmer gradient.
+- `--skeleton-bg-end`: Base/end background color of the shimmer gradient.
+
+*Example customization:*
+```css
+.theme-custom {
+  --skeleton-bg-start: rgba(59, 130, 246, 0.1);
+  --skeleton-bg-via: rgba(59, 130, 246, 0.2);
+  --skeleton-bg-end: rgba(59, 130, 246, 0.1);
+}
+```
+
+#### Selector Hooks
+All loading elements render with specific CSS classes and `data-loading-state` attributes:
+- **Base Skeleton block**: `.loading-skeleton` / `data-loading-state="skeleton"`
+- **Skeleton Card**: `.loading-skeleton-card` / `data-loading-state="card"`
+- **Skeleton List**: `.loading-skeleton-list` / `data-loading-state="list"`
+- **Skeleton Chart**: `.loading-skeleton-chart` / `data-loading-state="chart"`
+- **Skeleton Widget**: `.loading-skeleton-widget` / `data-loading-state="widget"`
+- **Layout Shell Wrapper**: `.loading-skeleton-shell` / `data-loading-state="shell"`
+- **Dashboard Skeleton Page**: `.loading-skeleton-dashboard` / `data-loading-state="dashboard"`
+- **Bills Skeleton Page**: `.loading-skeleton-bills` / `data-loading-state="bills"`
+- **Insights Skeleton Page**: `.loading-skeleton-insights` / `data-loading-state="insights"`
+
+### 2.3 Button Loading Spinner
 When submitting forms, the action button should display a loading spinner and transition text while disabling interactions.
 
 #### Usage Example:
@@ -211,7 +241,6 @@ export function DashboardLayout() {
 ## Related Documentation
 For deep dives into related patterns, see:
 - [Error Handling Strategy](file:///c:/Users/HP/Remitwise-Frontend/docs/error-handling.md) — Covers global error boundaries and logger configurations.
-- [Form Design & Validation Patterns](FORM_PATTERNS.md) — Covers inline vs blocking validation, autosave, and submit affordance.
-- [Form Action Hook Guide](use-form-action.md) — Explains state transitions during AJAX form requests.
+- [Form Action Hook Guide](file:///c:/Users/HP/Remitwise-Frontend/docs/use-form-action.md) — Explains state transitions during AJAX form requests.
 - [Client API Guide](file:///c:/Users/HP/Remitwise-Frontend/docs/client-api.md) — Explains `apiClient` requests, retry delays, and session expiry flows.
 - [Status Semantics Handoff](file:///c:/Users/HP/Remitwise-Frontend/docs/color-contrast-status-semantics-handoff.md) — Visual design specifications for semantic statuses.

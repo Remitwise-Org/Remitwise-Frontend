@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const layoutConfig = require('./lib/config/layout.json');
+
 module.exports = {
   darkMode: ['class'],
   content: [
@@ -16,6 +18,7 @@ module.exports = {
         'tablet': '768px',   // iPad portrait
         'laptop': '1024px',  // iPad landscape
         'desktop': '1440px', // Desktop standard
+        'tall': { 'raw': `(min-height: ${layoutConfig.TALL_SCREEN_MIN_HEIGHT}px)` },
       },
       
       // Semantic spacing tokens for design system

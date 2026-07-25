@@ -9,8 +9,31 @@ import { DEFAULT_SEO } from "@/lib/config/seo";
 const inter = typeof Inter !== 'undefined' ? Inter({ subsets: ["latin"] }) : null;
 
 export const metadata: Metadata = {
+  metadataBase: new URL(DEFAULT_SEO.appUrl),
   title: DEFAULT_SEO.title,
   description: DEFAULT_SEO.description,
+  openGraph: {
+    title: DEFAULT_SEO.title,
+    description: DEFAULT_SEO.description,
+    url: DEFAULT_SEO.appUrl,
+    siteName: "RemitWise",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: DEFAULT_SEO.ogImage,
+        width: DEFAULT_SEO.imageWidth,
+        height: DEFAULT_SEO.imageHeight,
+        alt: DEFAULT_SEO.title,
+      },
+    ],
+  },
+  twitter: {
+    card: DEFAULT_SEO.twitterCard,
+    title: DEFAULT_SEO.title,
+    description: DEFAULT_SEO.description,
+    images: [DEFAULT_SEO.ogImage],
+  },
 };
 
 // `viewportFit: "cover"` is required for `env(safe-area-inset-*)` to resolve

@@ -70,4 +70,5 @@ const handleClick = (e: React.MouseEvent) => {
 
 - [Web Vitals – Largest Contentful Paint (LCP)](https://web.dev/lcp/)
 - [Chrome DevTools Performance Guide](https://developer.chrome.com/docs/devtools/performance/)
+- [Per-Route Load-Time Budgets](./LOAD_TIME_BUDGETS.md) — Lighthouse score floors, LCP ceilings, and server-side handler duration budgets for every page route.
 - Internal performance budget ticket: `REM-1234` (private).

@@ -1,18 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Send, PiggyBank, FileText, Shield } from 'lucide-react';
+import StaleBanner from '@/components/ui/StaleBanner';
 
 import StatCard from '@/components/Dashboard/StatCard';
 import { DashboardLoadingSkeleton } from '@/components/ui/LoadingSkeletons';
 import WidgetErrorState from '@/components/ui/WidgetErrorState';
+import StaleBanner from '@/components/ui/StaleBanner';
 import { apiClient } from '@/lib/client/apiClient';
 import { runWidgetFetchWithRetry } from '@/lib/client/widgetFetchRetry';
 import { useClientTranslator } from '@/lib/i18n/client';
 import { formatCurrency } from '@/lib/utils/format-currency';
+import { formatLastSynced } from '@/lib/utils/time-ago';
 import type { DashboardResponse } from '@/lib/types/dashboard';
 import { useSeo } from '@/lib/hooks/useSeo';
-import { formatLastSynced } from '@/lib/utils/time-ago';
+import { DEV_MODE_STORAGE_KEY, DEV_WIDGET_PAYLOAD_EVENT } from '@/lib/config/developer';
+
+type LoadState = 'loading' | 'error' | 'ready';
 
 export default function DashboardPage() {
   useSeo({
@@ -24,6 +29,9 @@ export default function DashboardPage() {
   const [state, setState] = useState<LoadState>('loading');
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const isStale = data?.meta?.fromCache ?? false;
+  const staleAt = data ? new Date(data.meta.cachedAt).getTime() : 0;
 
   // The /api/dashboard route derives the wallet address from the session, so we
   // never have to pass it from the client. apiClient adds the shared
@@ -57,6 +65,21 @@ export default function DashboardPage() {
         }
 
         setData(json);
+
+        // In dev mode, broadcast the raw payload so DevWidgetPayload can
+        // display it. We check sessionStorage rather than URL params here
+        // because the component that owns the query-param logic (DevWidgetPayload)
+        // lives outside this page; reading the persisted flag avoids a second
+        // useSearchParams call and keeps this side-effect lightweight.
+        if (
+          typeof window !== 'undefined' &&
+          sessionStorage.getItem(DEV_MODE_STORAGE_KEY) === 'true'
+        ) {
+          window.dispatchEvent(
+            new CustomEvent(DEV_WIDGET_PAYLOAD_EVENT, { detail: json })
+          );
+        }
+
         setState('ready');
       })
       .catch(() => {
@@ -124,6 +147,9 @@ export default function DashboardPage() {
       ? t('dashboard.policies', { count: insurance.insurancePoliciesCount })
       : undefined;
 
+  const isStale = Boolean(data?.meta?.isStale);
+  const staleAt = data?.meta?.cachedAt ?? null;
+
   return (
     <div className="p-6 space-y-6">
       {isStale && !bannerDismissed && (
@@ -131,7 +157,7 @@ export default function DashboardPage() {
           staleAt={staleAt}
           onRefresh={() => {
             setBannerDismissed(false);
-            load();
+            setReloadKey((prev) => prev + 1);
           }}
           onDismiss={() => setBannerDismissed(true)}
         />

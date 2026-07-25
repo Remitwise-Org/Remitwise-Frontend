@@ -191,7 +191,7 @@ export async function fetchTransactionReceipt(
 
     const currency =
       paymentOp && paymentOp.asset_type !== "native"
-        ? paymentOp.asset_code
+        ? (paymentOp as Horizon.ServerApi.PaymentOperationRecord & { asset_code?: string }).asset_code ?? "UNKNOWN"
         : "XLM";
 
     const amount = paymentOp ? paymentOp.amount : "0";

@@ -1,1 +1,1 @@
-﻿export { usePrefersReducedMotion, getStoredMotionPreference, setStoredMotionPreference } from "./lib/hooks/usePrefersReducedMotion";
+export { usePrefersReducedMotion } from "./lib/hooks/usePrefersReducedMotion";

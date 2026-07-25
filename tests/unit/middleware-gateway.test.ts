@@ -10,6 +10,7 @@ vi.mock('@/lib/logger', () => ({
 
 vi.mock('@/lib/requestId', () => ({
   generateRequestId: vi.fn(() => 'test-request-id'),
+  isValidRequestId: vi.fn((id: string) => id === 'client-request-id'),
 }));
 
 const ALLOWED_ORIGIN = 'https://app.example.com';
@@ -78,7 +79,7 @@ describe('global middleware gateway', () => {
       'GET, POST, PUT, DELETE, PATCH, OPTIONS',
     );
     expect(response.headers.get('Access-Control-Allow-Headers')).toBe(
-      'Content-Type, Authorization, X-Requested-With',
+      'Content-Type, Authorization, X-Request-ID, X-Requested-With',
     );
     expect(response.headers.get('Vary')).toBe('Origin');
   });
@@ -97,6 +98,16 @@ describe('global middleware gateway', () => {
     expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull();
     expect(response.headers.get('Access-Control-Allow-Credentials')).toBeNull();
     expect(response.headers.get('Vary')).toBe('Origin');
+  });
+
+  it('returns a valid client-provided request ID for request correlation', async () => {
+    const { middleware } = await loadMiddleware();
+
+    const response = await middleware(
+      buildRequest({ headers: { 'x-request-id': 'client-request-id' } }),
+    );
+
+    expect(response.headers.get('X-Request-ID')).toBe('client-request-id');
   });
 
   it.each([

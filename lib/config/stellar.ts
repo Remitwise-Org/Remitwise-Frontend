@@ -6,6 +6,7 @@ export const STELLAR_CONFIG = {
   contractId: process.env.REMITTANCE_SPLIT_CONTRACT_ID || '',
   custodialMode: process.env.CUSTODIAL_MODE === 'true',
   serverSecretKey: process.env.SERVER_SECRET_KEY || '',
+  explorerTxUrl: process.env.STELLAR_EXPLORER_TX_URL || 'https://stellar.expert/explorer/public/tx/',
 };
 
 export const CONTRACTS = {

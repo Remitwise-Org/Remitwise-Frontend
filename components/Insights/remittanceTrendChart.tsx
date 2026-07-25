@@ -3,6 +3,7 @@
 import { useMemo, useCallback, memo } from 'react'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import { Activity } from 'lucide-react';
+import WidgetEmptyState from '@/components/ui/WidgetEmptyState';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -15,15 +16,18 @@ import {
 } from 'recharts';
 import { INSIGHTS_PALETTE } from './palette';
 import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y';
+import type { TrendChartDataPoint } from '@/lib/a11y/chartAccessibility';
 import WidgetEmptyState from '@/components/ui/WidgetEmptyState';
+
 const LINE_COLOR = INSIGHTS_PALETTE[0];
-
-
-function useReducedMotion() {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
+const AXIS_COLOR  = '#6b7280'
+const GRID_COLOR  = 'rgba(255,255,255,0.06)'
+const margin = { top: 10, right: 10, left: -20, bottom: 0 };
+const xAxisTick = { fill: AXIS_COLOR, fontSize: 11 };
+const yAxisTick = { fill: AXIS_COLOR, fontSize: 11 };
+const tickFormatter = (v: number) => `$${v}`;
+const tooltipCursor = { stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 };
+const referenceLabel = { value: 'Avg', fill: 'rgba(255,255,255,0.3)', fontSize: 10, position: 'insideTopRight' };
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
 /**
@@ -55,9 +59,6 @@ export const MOCK_TREND_DATA: TrendDataPoint[] = [
   { date: 'Dec 1',  amount: 1650, transactions: 6 },
   { date: 'Dec 8',  amount: 1420, transactions: 5 },
 ]
-
-const AXIS_COLOR  = '#6b7280'
-const GRID_COLOR  = 'rgba(255,255,255,0.06)'
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 interface CustomTooltipProps {
@@ -109,35 +110,15 @@ function RemittanceTrendChartInner({
   const trend   = latest >= prev ? 'up' : 'down'
 
   // Generate accessible label and summary
-  const summaryItems = useMemo(
-    () =>
-      data.map(
-        (point) =>
-          `${point.date}: $${point.amount.toLocaleString()} (${point.transactions} tx)`,
-      ),
-    [data],
+  const chartLabel = useMemo(
+    () => generateTrendChartLabel("Remittance Trend", data as unknown as TrendChartDataPoint[], ["amount"]),
+    [data]
   )
 
-  const t = useMemo(() => {
-    return (_path: string, options?: string | Record<string, unknown>) =>
-      typeof options === 'string' ? options : _path
-  }, [])
-
-  const chartLabel = useMemo(() => buildChartImageLabel('Remittance Trend', summaryItems, t), [summaryItems, t])
-  const chartSummary = useMemo(() => buildChartSummary(summaryItems, t), [summaryItems, t])
-
-  const margin = useMemo(() => ({ top: 8, right: 4, bottom: 0, left: -16 }), [])
-  const xAxisTick = useMemo(() => ({ fill: AXIS_COLOR, fontSize: 10 }), [])
-  const yAxisTick = useMemo(() => ({ fill: AXIS_COLOR, fontSize: 11 }), [])
-  const tooltipCursor = useMemo(() => ({ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }), [])
-  const referenceLabel = useMemo(() => ({
-    value: `Avg $${average.toLocaleString()}`,
-    position: 'insideTopRight' as const,
-    fontSize: 10,
-    fill: '#6b7280',
-  }), [average])
-  const activeDot = useMemo(() => ({ r: 5, fill: LINE_COLOR, stroke: '#0A0A0A', strokeWidth: 2 }), [])
-  const tickFormatter = useCallback((v: number) => `$${v >= 1000 ? `${v / 1000}k` : v}`, [])
+  const chartSummary = useMemo(
+    () => generateTrendChartSummary(data as unknown as TrendChartDataPoint[], ["amount"]),
+    [data]
+  )
 
   if (isEmpty) {
     return (

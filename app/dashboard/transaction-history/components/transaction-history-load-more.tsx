@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 interface ITransactionHistoryLoadMoreProps {
   loading: boolean;
   onLoadMore: () => void;
-  sentinelRef: RefObject<HTMLDivElement | null>;
+  sentinelRef: RefObject<any>;
   label: string;
   loadingLabel: string;
 }
