@@ -278,6 +278,7 @@ These icon names are established across the codebase. Use them consistently so i
 
 ## Related docs
 
+- [docs/ICON_REFERENCE.md](ICON_REFERENCE.md) — full icon name → source → preferred-use reference table for every icon in the codebase
 - [docs/iconography-guidelines-handoff.md](iconography-guidelines-handoff.md) — full design handoff: size-and-stroke grid, breakpoint guidance, container specs, open questions
 - [docs/COMPONENTS.md](COMPONENTS.md) — per-component notes; `BackToTop` documents its icon accessibility pattern
 - [docs/THEMING.md](THEMING.md) — colour tokens and brand palette
