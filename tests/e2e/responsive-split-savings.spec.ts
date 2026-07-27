@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { CTA_TEST_IDS } from '@/lib/cta-testids';
+import { VIEWPORTS as viewports } from './shared-viewports';
 
 /**
  * Responsive Breakpoint Tests for Split Configuration and Savings Goals
@@ -37,18 +38,6 @@ async function prepareDashboardTest(page: Page) {
     localStorage.setItem('remitwise_whats_new_last_seen', 'playwright-seed');
   });
 }
-
-// Viewport configurations matching our custom breakpoints
-const viewports = [
-  { name: 'iPhone SE', width: 320, height: 568 },
-  { name: 'iPhone 14', width: 375, height: 667 },
-  { name: 'iPhone 14 Plus', width: 414, height: 896 },
-  { name: 'Foldable', width: 450, height: 800 },
-  { name: 'iPad Portrait', width: 768, height: 1024 },
-  { name: 'iPad Landscape', width: 1024, height: 768 },
-  { name: 'Small Desktop', width: 1280, height: 800 },
-  { name: 'Desktop', width: 1440, height: 900 },
-];
 
 // Helper function to check for horizontal overflow
 async function checkNoHorizontalOverflow(page: Page) {

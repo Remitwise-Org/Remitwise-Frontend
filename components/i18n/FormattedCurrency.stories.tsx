@@ -10,6 +10,7 @@
  * `tsc` and the production build pass either way.
  */
 import type { Meta, StoryObj } from "@storybook/react";
+import { within, expect } from "@storybook/test";
 import { FormattedCurrency } from "./FormattedCurrency";
 
 const meta = {
@@ -44,12 +45,22 @@ export const UsdDefault: Story = {
     value: 1234.5,
     currency: "USD",
   },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const element = canvas.getByText("$1,234.50");
+    await expect(element).toBeVisible();
+  },
 };
 
 export const StablecoinFallback: Story = {
   args: {
     value: 1234.5,
     currency: "USDC",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const element = canvas.getByText("1,234.50 USDC");
+    await expect(element).toBeVisible();
   },
 };
 
@@ -58,12 +69,22 @@ export const ZeroValue: Story = {
     value: 0,
     currency: "USD",
   },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const element = canvas.getByText("$0.00");
+    await expect(element).toBeVisible();
+  },
 };
 
 export const NegativeValue: Story = {
   args: {
     value: -45.67,
     currency: "USD",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const element = canvas.getByText("-$45.67");
+    await expect(element).toBeVisible();
   },
 };
 
@@ -72,6 +93,11 @@ export const SpanishLocaleOverride: Story = {
     value: 1234.5,
     currency: "USD",
     locale: "es-ES",
+  },
+  play: async ({ canvasElement }) => {
+    const el = canvasElement.querySelector('[data-i18n-locale="es-ES"]');
+    await expect(el).toBeTruthy();
+    await expect(el?.textContent).toContain("1234");
   },
 };
 
@@ -82,4 +108,29 @@ export const RoundToWholeUnit: Story = {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const element = canvas.getByText("$1,851");
+    await expect(element).toBeVisible();
+  },
+};
+
+/**
+ * RTL layout preview — wraps the story in `<div dir="rtl" lang="ar">` so
+ * Arabic/Hebrew script and number formatting can be inspected side by side
+ * with the LTR stories above.
+ */
+export const ArabicRtlPreview: Story = {
+  args: {
+    value: 9999.99,
+    currency: "USD",
+    locale: "ar-SA",
+  },
+  decorators: [
+    (Story) => (
+      <div dir="rtl" lang="ar" style={{ padding: 24, fontFamily: "monospace", color: "white", background: "#0A0A0A" }}>
+        <Story />
+      </div>
+    ),
+  ],
 };

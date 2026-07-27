@@ -1,14 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Activity, Users, AlertTriangle, RotateCcw, Play } from 'lucide-react';
+import { Activity, Users, AlertTriangle, RotateCcw, Play, GitPullRequest } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import WidgetErrorState from '@/components/ui/WidgetErrorState';
 import WidgetEmptyState from '@/components/ui/WidgetEmptyState';
+import ParameterDiffView from '@/components/governance/ParameterDiffView';
 import { apiClient, ApiClientError } from '@/lib/client/apiClient';
 import { runWidgetFetchWithRetry } from '@/lib/client/widgetFetchRetry';
 import { useClientTranslator } from '@/lib/i18n/client';
 import { useToast } from '@/lib/context/ToastContext';
+import type { SplitPercentages } from '@/lib/validation/percentages';
 
 type LoadState = 'loading' | 'error' | 'ready' | 'unauthorized';
 
@@ -144,6 +146,11 @@ export default function AdminPage() {
   const users = useAdminResource<User[]>('/api/v1/admin/users', (json) => json.users);
   const dlq = useAdminResource<DLQResponse>('/api/v1/admin/webhooks/dlq', (json) => json.data);
 
+  // Demo data for governance proposals
+  const [showProposalDemo, setShowProposalDemo] = useState(false);
+  const currentSplit: SplitPercentages = { spending: 50, savings: 25, bills: 15, insurance: 10 };
+  const proposedSplit: SplitPercentages = { spending: 40, savings: 30, bills: 20, insurance: 10 };
+
   const handleReplay = useCallback(async (id: string) => {
     try {
       const res = await apiClient.post(`/api/v1/admin/webhooks/dlq/${id}/replay`);
@@ -194,7 +201,7 @@ export default function AdminPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-white">Access Denied</h2>
-                  <p className="mt-1 text-sm text-white/50">You don't have permission to access the admin panel.</p>
+                  <p className="mt-1 text-sm text-white/50">You don&apos;t have permission to access the admin panel.</p>
                 </div>
               </div>
             </div>
@@ -211,7 +218,28 @@ export default function AdminPage() {
               <h1 className="text-2xl font-bold text-white">Admin Operations</h1>
               <p className="mt-1 text-sm text-white/50">Manage audit logs, users, and webhook DLQ.</p>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowProposalDemo(!showProposalDemo)}
+              className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              <GitPullRequest className="h-4 w-4" />
+              {showProposalDemo ? 'Hide Proposal Demo' : 'Show Proposal Demo'}
+            </button>
           </header>
+
+          {showProposalDemo && (
+            <SectionShell>
+              <div className="mb-4 flex items-center gap-2">
+                <GitPullRequest className="h-5 w-5 text-white/70" />
+                <h2 className="text-lg font-semibold text-white">Governance Proposal Demo</h2>
+              </div>
+              <ParameterDiffView
+                currentParameters={currentSplit}
+                proposedParameters={proposedSplit}
+              />
+            </SectionShell>
+          )}
 
           <SectionShell>
             <div className="mb-4 flex items-center justify-between gap-4">

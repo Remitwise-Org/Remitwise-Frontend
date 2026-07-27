@@ -6,6 +6,7 @@
  * `components/Toast.stories.tsx` and `components/Nav.stories.tsx`.
  */
 import type { Meta, StoryObj } from "@storybook/react";
+import { within, expect } from "@storybook/test";
 import { FormattedNumber } from "./FormattedNumber";
 
 const meta = {
@@ -31,6 +32,12 @@ type Story = StoryObj<typeof meta>;
 export const Plain: Story = {
   args: {
     value: 1234567.89,
+    maximumFractionDigits: 2,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const element = canvas.getByText("1,234,567.89");
+    await expect(element).toBeVisible();
   },
 };
 
@@ -38,6 +45,11 @@ export const Percent: Story = {
   args: {
     value: 0.42,
     style: "percent",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const element = canvas.getByText("42%");
+    await expect(element).toBeVisible();
   },
 };
 
@@ -53,4 +65,22 @@ export const SpanishOverride: Story = {
     value: 1234567.89,
     locale: "es-ES",
   },
+};
+
+/**
+ * RTL layout preview — wraps the story in `<div dir="rtl" lang="ar">` so
+ * Arabic numeral formatting and right-to-left text direction can be verified.
+ */
+export const ArabicRtlPreview: Story = {
+  args: {
+    value: 1234567.89,
+    locale: "ar-SA",
+  },
+  decorators: [
+    (Story) => (
+      <div dir="rtl" lang="ar" style={{ padding: 24, fontFamily: "monospace", color: "white", background: "#0A0A0A" }}>
+        <Story />
+      </div>
+    ),
+  ],
 };

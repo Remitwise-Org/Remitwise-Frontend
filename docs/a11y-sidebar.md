@@ -49,6 +49,10 @@
 2. Double-tap to activate
 3. Draw "L" gesture for continuous reading
 
+## Related documentation
+
+For the app-wide focus management contract — focus-visible styles, focus trap hooks, dialog focus restoration, and testing patterns — see the [Accessible Focus Baseline](ACCESSIBLE_FOCUS_BASELINE.md).
+
 ## Axe Testing
 
 ```bash

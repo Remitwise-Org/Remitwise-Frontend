@@ -101,6 +101,22 @@ export default function AsyncOperationsPanel({
 	const [expanded, setExpanded] = useState(false);
 	const [openIndex, setOpenIndex] = useState<number | null>(null);
 
+	// Sync from sessionStorage on mount to prevent hydration mismatch
+	useEffect(() => {
+		try {
+			if (sessionStorage.getItem('asyncPanelExpanded') === 'true') {
+				setExpanded(true);
+			}
+		} catch {}
+	}, []);
+
+	// Sync to sessionStorage on change
+	useEffect(() => {
+		try {
+			sessionStorage.setItem('asyncPanelExpanded', String(expanded));
+		} catch {}
+	}, [expanded]);
+
 	const queueItems = useMemo(() => {
 		if (state.operations.length > 0) {
 			return state.operations.map(op => ({

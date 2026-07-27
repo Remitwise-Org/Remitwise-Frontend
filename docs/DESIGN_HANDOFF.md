@@ -1,5 +1,7 @@
 # Design Handoff
 
+For the contributor-facing workflow that explains how Figma specs should be handed off to engineering, see [FIGMA_HANDOFF.md](./FIGMA_HANDOFF.md).
+
 ## Route mapping
 - `/dashboard` — Main dashboard overview
 - `/send` — Send Money flow

@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
+import { VR_VIEWPORTS } from './tests/e2e/shared-viewports';
 
 // ---------------------------------------------------------------------------
 // Visual-regression snapshot update flag.
@@ -27,7 +28,7 @@ export default defineConfig({
     extraHTTPHeaders: {
       'x-playwright-test': 'true',
     },
-    // Force reduced-motion so CSS transitions don't pollute snapshots.
+    // @ts-expect-error reducedMotion is a valid Playwright context option
     reducedMotion: 'reduce',
     // Consistent colour scheme for snapshot stability.
     colorScheme: 'dark',
@@ -55,30 +56,14 @@ export default defineConfig({
     // Each project maps to one CI matrix entry so snapshots are isolated and
     // reproducible across runs.
     // -----------------------------------------------------------------------
-    {
-      name: 'vr-chromium-360',
+    ...VR_VIEWPORTS.map(({ label, width, height }) => ({
+      name: `vr-chromium-${label}`,
       use: {
         ...devices['Desktop Chrome'],
-        viewport: { width: 360, height: 640 },
+        viewport: { width, height },
       },
       testMatch: '**/visual-regression.spec.ts',
-    },
-    {
-      name: 'vr-chromium-768',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 768, height: 1024 },
-      },
-      testMatch: '**/visual-regression.spec.ts',
-    },
-    {
-      name: 'vr-chromium-1280',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 1280, height: 800 },
-      },
-      testMatch: '**/visual-regression.spec.ts',
-    },
+    })),
   ],
 
   webServer: {
@@ -92,7 +77,7 @@ export default defineConfig({
 
     // 🔥 Critical: Inject required environment variables for CI
     env: {
-      DATABASE_URL: 'file:./ci.db', // Required for Prisma in CI
+      DATABASE_URL: `file:${path.resolve(__dirname, 'prisma/ci.db')}`, // Required for Prisma in CI
       SESSION_PASSWORD:
         'supersecurelongsessionpasswordatleast32characters!!',
       AUTH_SECRET: 'ci-test-secret',

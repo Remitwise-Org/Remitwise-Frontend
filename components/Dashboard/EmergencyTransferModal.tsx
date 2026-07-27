@@ -13,7 +13,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { StrKey } from "@stellar/stellar-sdk";
-import { useFocusTrap } from "../../src/lib/hooks/useFocusTrap";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 import { apiClient } from "@/lib/client/apiClient";
 import { useClientTranslator } from "@/lib/i18n/client";
 
@@ -40,7 +40,6 @@ const EmergencyTransferModal = ({
     recipient: false,
     amount: false,
   });
-  const modalRef = useRef<HTMLDivElement>(null);
   const initialFocusRef = useRef<HTMLInputElement>(null);
 
   const priorityFee = speed === "emergency" ? 2.0 : 0.0;
@@ -82,7 +81,7 @@ const EmergencyTransferModal = ({
   };
 
   // Focus trap hook
-  useFocusTrap({
+  const modalRef = useFocusTrap<HTMLDivElement>({
     isActive: isOpen,
     onEscape: onClose,
     onOverlayClick: onClose,

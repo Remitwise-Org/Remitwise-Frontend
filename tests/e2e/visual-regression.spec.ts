@@ -22,11 +22,7 @@ import { test, expect, type Page } from '@playwright/test';
 // Viewport definitions
 // ---------------------------------------------------------------------------
 
-const VIEWPORTS = [
-  { label: '360px', width: 360, height: 640 },
-  { label: '768px', width: 768, height: 1024 },
-  { label: '1280px', width: 1280, height: 800 },
-] as const;
+import { VR_VIEWPORTS as VIEWPORTS } from './shared-viewports';
 
 // ---------------------------------------------------------------------------
 // Deterministic fixture data (no Date.now(), no Math.random())

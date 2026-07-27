@@ -21,131 +21,145 @@ import TransactionHistoryItem, {
   TransactionStatus,
   TransactionType,
 } from "@/components/Dashboard/TransactionHistoryItem";
+import PageHeadingLink from "@/components/PageHeadingLink";
 import { useDensity } from "@/lib/context/DensityContext";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useDebounce } from "@/lib/hooks/useDebounce";
-import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
 import {
   serializeToCsv,
   serializeToJson,
   getExportFilename,
 } from "@/lib/utils/export-serializer";
-import PageHeadingLink from "@/components/PageHeadingLink";
+import { useSeo } from "@/lib/hooks/useSeo";
+import {
+  getTransactionDateGroupKey,
+  type TransactionDateGroupKey,
+} from "@/lib/utils/transaction-date-groups";
 
-const allTransactions: Transaction[] = [
-  {
-    id: "TX001",
-    type: "Send Money",
-    amount: -500.0,
-    currency: "USDC",
-    counterpartyName: "Maria Santos (Philippines)",
-    counterpartyLabel: "To",
-    date: "2026-06-02 14:32:15",
-    fee: 0.5,
-    status: "Completed",
-  },
-  {
-    id: "TX002",
-    type: "Smart Split",
-    amount: -1200.0,
-    currency: "USDC",
-    counterpartyName: "Smart Split: 4 allocations",
-    counterpartyLabel: "To",
-    date: "2026-06-02 09:15:42",
-    fee: 0.3,
-    status: "Completed",
-  },
-  {
-    id: "TX003",
-    type: "Bill Payment",
-    amount: -85.5,
-    currency: "USDC",
-    counterpartyName: "Manila Electric Company",
-    counterpartyLabel: "To",
-    date: "2026-05-31 16:45:23",
-    fee: 0.1,
-    status: "Completed",
-  },
-  {
-    id: "TX004",
-    type: "Insurance",
-    amount: -25.0,
-    currency: "USDC",
-    counterpartyName: "HealthGuard Insurance Premium",
-    counterpartyLabel: "To",
-    date: "2026-05-30 11:20:05",
-    fee: 0.05,
-    status: "Completed",
-  },
-  {
-    id: "TX005",
-    type: "Savings",
-    amount: -200.0,
-    currency: "USDC",
-    counterpartyName: "Education Fund Goal",
-    counterpartyLabel: "To",
-    date: "2026-05-29 08:55:17",
-    fee: 0.1,
-    status: "Completed",
-  },
-  {
-    id: "TX006",
-    type: "Family Transfer",
-    amount: -150.0,
-    currency: "USDC",
-    counterpartyName: "Carlos Santos (Son)",
-    counterpartyLabel: "To",
-    date: "2026-05-27 19:30:44",
-    fee: 0.15,
-    status: "Completed",
-  },
-  {
-    id: "TX007",
-    type: "Received",
-    amount: 75.0,
-    currency: "USDC",
-    counterpartyName: "Refund from LOBSTR Anchor",
-    counterpartyLabel: "From",
-    date: "2026-05-22 13:15:30",
-    fee: 0.0,
-    status: "Completed",
-  },
-  {
-    id: "TX008",
-    type: "Send Money",
-    amount: -320.0,
-    currency: "USDC",
-    counterpartyName: "Juan Dela Cruz (Philippines)",
-    counterpartyLabel: "To",
-    date: "2026-05-18 10:42:18",
-    fee: 0.4,
-    status: "Pending",
-  },
-  {
-    id: "TX009",
-    type: "Bill Payment",
-    amount: -120.0,
-    currency: "USDC",
-    counterpartyName: "Water District Payment",
-    counterpartyLabel: "To",
-    date: "2026-05-14 15:22:55",
-    fee: 0.0,
-    status: "Failed",
-  },
-  {
-    id: "TX010",
-    type: "Smart Split",
-    amount: -800.0,
-    currency: "USDC",
-    counterpartyName: "Smart Split: 4 allocations",
-    counterpartyLabel: "To",
-    date: "2026-05-09 12:08:33",
-    fee: 0.25,
-    status: "Completed",
-  },
-];
+/** Relative sample timestamps so Today / This Week / Earlier groups stay demo-visible. */
+function daysAgoAt(now: Date, days: number, hours: number, minutes: number) {
+  const d = new Date(now);
+  d.setDate(d.getDate() - days);
+  d.setHours(hours, minutes, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+}
 
+function buildSampleTransactions(now = new Date()): Transaction[] {
+  return [
+    {
+      id: "TX001",
+      type: "Send Money",
+      amount: -500.0,
+      currency: "USDC",
+      counterpartyName: "Maria Santos (Philippines)",
+      counterpartyLabel: "To",
+      date: daysAgoAt(now, 0, 14, 32),
+      fee: 0.5,
+      status: "Completed",
+    },
+    {
+      id: "TX002",
+      type: "Smart Split",
+      amount: -1200.0,
+      currency: "USDC",
+      counterpartyName: "Smart Split: 4 allocations",
+      counterpartyLabel: "To",
+      date: daysAgoAt(now, 0, 9, 15),
+      fee: 0.3,
+      status: "Completed",
+    },
+    {
+      id: "TX003",
+      type: "Bill Payment",
+      amount: -85.5,
+      currency: "USDC",
+      counterpartyName: "Manila Electric Company",
+      counterpartyLabel: "To",
+      date: daysAgoAt(now, 2, 16, 45),
+      fee: 0.1,
+      status: "Completed",
+    },
+    {
+      id: "TX004",
+      type: "Insurance",
+      amount: -25.0,
+      currency: "USDC",
+      counterpartyName: "HealthGuard Insurance Premium",
+      counterpartyLabel: "To",
+      date: daysAgoAt(now, 3, 11, 20),
+      fee: 0.05,
+      status: "Completed",
+    },
+    {
+      id: "TX005",
+      type: "Savings",
+      amount: -200.0,
+      currency: "USDC",
+      counterpartyName: "Education Fund Goal",
+      counterpartyLabel: "To",
+      date: daysAgoAt(now, 5, 8, 55),
+      fee: 0.1,
+      status: "Completed",
+    },
+    {
+      id: "TX006",
+      type: "Family Transfer",
+      amount: -150.0,
+      currency: "USDC",
+      counterpartyName: "Carlos Santos (Son)",
+      counterpartyLabel: "To",
+      date: daysAgoAt(now, 6, 19, 30),
+      fee: 0.15,
+      status: "Completed",
+    },
+    {
+      id: "TX007",
+      type: "Received",
+      amount: 75.0,
+      currency: "USDC",
+      counterpartyName: "Refund from LOBSTR Anchor",
+      counterpartyLabel: "From",
+      date: daysAgoAt(now, 12, 13, 15),
+      fee: 0.0,
+      status: "Completed",
+    },
+    {
+      id: "TX008",
+      type: "Send Money",
+      amount: -320.0,
+      currency: "USDC",
+      counterpartyName: "Juan Dela Cruz (Philippines)",
+      counterpartyLabel: "To",
+      date: daysAgoAt(now, 18, 10, 42),
+      fee: 0.4,
+      status: "Pending",
+    },
+    {
+      id: "TX009",
+      type: "Bill Payment",
+      amount: -120.0,
+      currency: "USDC",
+      counterpartyName: "Water District Payment",
+      counterpartyLabel: "To",
+      date: daysAgoAt(now, 24, 15, 22),
+      fee: 0.0,
+      status: "Failed",
+    },
+    {
+      id: "TX010",
+      type: "Smart Split",
+      amount: -800.0,
+      currency: "USDC",
+      counterpartyName: "Smart Split: 4 allocations",
+      counterpartyLabel: "To",
+      date: daysAgoAt(now, 30, 12, 8),
+      fee: 0.25,
+      status: "Completed",
+    },
+  ];
+}
 const primaryTypeOptions: TransactionType[] = [
   "Send Money",
   "Smart Split",
@@ -243,21 +257,7 @@ const statusStyles: Record<
   },
 };
 
-type GroupKey = "today" | "yesterday" | "earlier";
-
-function startOfDay(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-function getGroupKey(date: Date): GroupKey {
-  const d = startOfDay(date);
-  const today = startOfDay(new Date());
-  const yesterday = startOfDay(new Date(Date.now() - 86400000));
-
-  if (d.getTime() === today.getTime()) return "today";
-  if (d.getTime() === yesterday.getTime()) return "yesterday";
-  return "earlier";
-}
+type GroupKey = TransactionDateGroupKey;
 
 function parseTransactionDate(date: string) {
   return new Date(date.replace(" ", "T"));
@@ -275,7 +275,26 @@ function normalizeQuery(value: string) {
   return value.trim().toLowerCase();
 }
 
-import { useSeo } from "@/lib/hooks/useSeo";
+type SortKey = "date" | "amount";
+type SortDirection = "asc" | "desc";
+
+function sortTransactions(
+  transactions: Transaction[],
+  sortKey: SortKey,
+  sortDirection: SortDirection
+) {
+  const direction = sortDirection === "asc" ? 1 : -1;
+
+  return [...transactions].sort((a, b) => {
+    const left =
+      sortKey === "date" ? parseTransactionDate(a.date).getTime() : a.amount;
+    const right =
+      sortKey === "date" ? parseTransactionDate(b.date).getTime() : b.amount;
+
+    if (left === right) return a.id.localeCompare(b.id);
+    return (left - right) * direction;
+  });
+}
 
 export default function TransactionsPage() {
   useSeo({
@@ -285,25 +304,38 @@ export default function TransactionsPage() {
 
   const { t } = useClientTranslator();
   const { density } = useDensity();
+  const allTransactions = useMemo(() => buildSampleTransactions(), []);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedTypes, setSelectedTypes] = useState<TransactionType[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<TransactionStatus[]>([]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const groupLabels: Record<GroupKey, { label: string; helper: string }> = {
     today: {
-      label: t("transactionHistory.dateGroups.today"),
-      helper: t("transactionHistory.dateGroups.todayHelper"),
+      label: t("transactionHistory.dateGroups.today", "Today"),
+      helper: t(
+        "transactionHistory.dateGroups.todayHelper",
+        "Transactions from today"
+      ),
     },
-    yesterday: {
-      label: t("transactionHistory.dateGroups.yesterday"),
-      helper: t("transactionHistory.dateGroups.yesterdayHelper"),
+    thisWeek: {
+      label: t("transactionHistory.dateGroups.thisWeek", "This Week"),
+      helper: t(
+        "transactionHistory.dateGroups.thisWeekHelper",
+        "Earlier this week (Mon–Sun, excluding today)"
+      ),
     },
     earlier: {
-      label: t("transactionHistory.dateGroups.earlier"),
-      helper: t("transactionHistory.dateGroups.earlierHelper"),
+      label: t("transactionHistory.dateGroups.earlier", "Earlier"),
+      helper: t(
+        "transactionHistory.dateGroups.earlierHelper",
+        "Before this week"
+      ),
     },
   };
 
@@ -343,23 +375,40 @@ export default function TransactionsPage() {
 
       return matchesSearch && matchesType && matchesStatus && matchesDate;
     });
-  }, [debouncedSearch, selectedStatuses, selectedTypes, dateFrom, dateTo]);
+  }, [
+    allTransactions,
+    debouncedSearch,
+    selectedStatuses,
+    selectedTypes,
+    dateFrom,
+    dateTo,
+  ]);
 
   const groupedTransactions = useMemo(() => {
     const groups: Record<GroupKey, Transaction[]> = {
       today: [],
-      yesterday: [],
+      thisWeek: [],
       earlier: [],
     };
 
-    filteredTransactions.forEach((transaction) => {
-      groups[getGroupKey(parseTransactionDate(transaction.date))].push(
+    sortTransactions(filteredTransactions, sortKey, sortDirection).forEach((transaction) => {
+      groups[getTransactionDateGroupKey(parseTransactionDate(transaction.date))].push(
         transaction
       );
     });
 
     return groups;
-  }, [filteredTransactions]);
+  }, [filteredTransactions, sortDirection, sortKey]);
+
+  const handleSortChange = (nextSortKey: SortKey) => {
+    if (nextSortKey === sortKey) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortKey(nextSortKey);
+    setSortDirection(nextSortKey === "date" ? "desc" : "asc");
+  };
 
   const activeFilterCount =
     selectedTypes.length +
@@ -393,6 +442,8 @@ export default function TransactionsPage() {
     setSelectedStatuses([]);
     setDateFrom("");
     setDateTo("");
+    // Return focus to search after clearing from no-results / summary actions.
+    queueMicrotask(() => searchInputRef.current?.focus());
   };
 
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
@@ -470,7 +521,7 @@ export default function TransactionsPage() {
     <main className="min-h-screen bg-[#010101]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <div className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-4 sm:p-6 lg:p-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between tall:sticky tall:top-16 375:tall:top-20 tall:z-40 bg-[#121212] py-4 border-b border-white/[0.04]">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-red-300">
                 {t("transactionHistory.titleStandalone")}
@@ -494,7 +545,6 @@ export default function TransactionsPage() {
                 type="button"
                 onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
                 disabled={filteredTransactions.length === 0}
-                data-testid={CTA_TEST_IDS.page.transactionsPrimary}
                 aria-expanded={isExportDropdownOpen}
                 aria-haspopup="true"
                 aria-label="Export filtered transactions"
@@ -568,11 +618,15 @@ export default function TransactionsPage() {
                   </span>
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
                   <input
+                    ref={searchInputRef}
                     type="search"
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     className="min-h-[48px] w-full rounded-xl border border-white/10 bg-black/40 py-3 pl-12 pr-12 text-sm text-white placeholder:text-gray-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-red-400"
-                    placeholder={t("transactionHistory.searchStandalonePlaceholder")}
+                    placeholder={t(
+                      "transactionHistory.searchStandalonePlaceholder",
+                      "Search id, recipient, type, status, amount"
+                    )}
                     aria-describedby="transaction-results-count"
                   />
                   {searchQuery.length > 0 && (
@@ -593,10 +647,12 @@ export default function TransactionsPage() {
                   id="transaction-results-count"
                   className="font-medium text-white"
                   aria-live="polite"
+                  aria-atomic="true"
                 >
-                  {t("transactionHistory.showing")
-                    .replace("{{count}}", String(filteredTransactions.length))
-                    .replace("{{total}}", String(allTransactions.length))}
+                  {t("transactionHistory.showing", {
+                    count: filteredTransactions.length,
+                    total: allTransactions.length,
+                  })}
                 </div>
                 <p className="mt-1 text-xs leading-5 text-gray-500">
                   {t("transactionHistory.filtersHelper")}
@@ -729,30 +785,27 @@ export default function TransactionsPage() {
                   <>
                     {normalizeQuery(debouncedSearch).length > 0 && (
                       <ActivePill
-                        label={t("transactionHistory.activeFilters.search").replace(
-                          "{{query}}",
-                          debouncedSearch
-                        )}
+                        label={t("transactionHistory.activeFilters.search", {
+                          query: debouncedSearch,
+                        })}
                         onRemove={() => setSearchQuery("")}
                       />
                     )}
                     {selectedTypes.map((type) => (
                       <ActivePill
                         key={type}
-                        label={t("transactionHistory.activeFilters.type").replace(
-                          "{{type}}",
-                          type
-                        )}
+                        label={t("transactionHistory.activeFilters.type", {
+                          type,
+                        })}
                         onRemove={() => toggleType(type)}
                       />
                     ))}
                     {selectedStatuses.map((status) => (
                       <ActivePill
                         key={status}
-                        label={t("transactionHistory.activeFilters.status").replace(
-                          "{{status}}",
-                          status
-                        )}
+                        label={t("transactionHistory.activeFilters.status", {
+                          status,
+                        })}
                         onRemove={() => toggleStatus(status)}
                       />
                     ))}
@@ -776,6 +829,36 @@ export default function TransactionsPage() {
               >
                 {t("transactionHistory.activeFilters.clearAll")}
               </button>
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+                {t("transactionHistory.sort.label", "Sort")}
+              </span>
+              {(["date", "amount"] as const).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleSortChange(key)}
+                  aria-pressed={sortKey === key}
+                  className={`inline-flex min-h-[40px] items-center rounded-full border px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 ${
+                    sortKey === key
+                      ? "border-red-400/40 bg-red-500/15 text-red-100"
+                      : "border-white/10 bg-white/[0.03] text-gray-300 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {key === "date"
+                    ? t("transactionHistory.sort.date", "Date")
+                    : t("transactionHistory.sort.amount", "Amount")}
+                  {sortKey === key
+                    ? ` ${
+                        sortDirection === "asc"
+                          ? t("transactionHistory.sort.ascending", "ascending")
+                          : t("transactionHistory.sort.descending", "descending")
+                      }`
+                    : ""}
+                </button>
+              ))}
             </div>
           </section>
 
@@ -802,7 +885,7 @@ export default function TransactionsPage() {
 
             {filteredTransactions.length > 0 && (
               <div className={density === "compact" ? "space-y-7" : "space-y-8"}>
-                {(["today", "yesterday", "earlier"] as GroupKey[]).map(
+                {(["today", "thisWeek", "earlier"] as GroupKey[]).map(
                   (groupKey) => {
                     const transactions = groupedTransactions[groupKey];
                     if (transactions.length === 0) return null;
@@ -825,16 +908,13 @@ export default function TransactionsPage() {
                             </p>
                           </div>
                           <p className="text-xs font-medium text-gray-400">
-                            {transactions.length}{" "}
                             {transactions.length === 1
-                              ? t("transactionHistory.results_one").replace(
-                                  "{{count}}",
-                                  "1"
-                                )
-                              : t("transactionHistory.results_many").replace(
-                                  "{{count}}",
-                                  String(transactions.length)
-                                )}
+                              ? t("transactionHistory.results_one", {
+                                  count: 1,
+                                })
+                              : t("transactionHistory.results_many", {
+                                  count: transactions.length,
+                                })}
                           </p>
                         </div>
                         <div

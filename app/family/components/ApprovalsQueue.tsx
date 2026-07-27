@@ -1,113 +1,121 @@
 "use client";
 
-import { CheckCircle2, Clock3, Loader2, PenLine, Users, XCircle } from "lucide-react";
+import { CheckCircle2, ClipboardList, History, Timer, Users, XCircle } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useWallet } from "stellar-wallet-kit";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useToast } from "@/lib/context/ToastContext";
 import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
 import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
-import WidgetErrorState from "@/components/ui/WidgetErrorState";
 import { useApprovalsQueue, type ApprovalItem, type ApprovalStatus } from "@/lib/hooks/useApprovalsQueue";
+import ApprovalRequestCard from "./ApprovalRequestCard";
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Status helpers
 // ---------------------------------------------------------------------------
 
-const statusIcon: Record<ApprovalStatus, React.ElementType> = {
-  building: Loader2,
-  pending: Clock3,
-  signing: Loader2,
-  approved: CheckCircle2,
-  expired: XCircle,
-};
+/** Statuses that are still awaiting action */
+const PENDING_STATUSES: ApprovalStatus[] = ["building", "requested", "pending", "partially_approved", "signing"];
 
-const statusCardClass: Record<ApprovalStatus, string> = {
-  building: "border-white/10 bg-white/[0.02]",
-  pending: "border-amber-500/20 bg-amber-500/[0.05]",
-  signing: "border-red-500/20 bg-red-500/[0.06]",
-  approved: "border-emerald-500/20 bg-emerald-500/[0.07]",
-  expired: "border-white/[0.06] bg-white/[0.01] opacity-60",
-};
+/** Terminal statuses shown in history */
+const HISTORY_STATUSES: ApprovalStatus[] = ["approved", "rejected", "expired"];
 
-const statusIconClass: Record<ApprovalStatus, string> = {
-  building: "text-gray-400 animate-spin",
-  pending: "text-amber-300",
-  signing: "text-red-300 animate-spin",
-  approved: "text-emerald-300",
+// ---------------------------------------------------------------------------
+// History row — compact read-only representation
+// ---------------------------------------------------------------------------
+
+const historyIconClass: Partial<Record<ApprovalStatus, string>> = {
+  approved: "text-status-success-fg",
+  rejected: "text-status-error-fg",
   expired: "text-gray-500",
 };
 
-// ---------------------------------------------------------------------------
-// Single queue item row
-// ---------------------------------------------------------------------------
+const historyBadgeClass: Partial<Record<ApprovalStatus, string>> = {
+  approved:
+    "border-status-success-border bg-status-success-bg text-status-success-fg",
+  rejected:
+    "border-status-error-border bg-status-error-bg text-status-error-fg",
+  expired: "border-white/[0.06] bg-white/[0.02] text-gray-500",
+};
 
-interface QueueItemRowProps {
+const historyLabel: Partial<Record<ApprovalStatus, string>> = {
+  approved: "Approved",
+  rejected: "Rejected",
+  expired: "Expired",
+};
+
+const historyIcon: Partial<Record<ApprovalStatus, React.ElementType>> = {
+  approved: CheckCircle2,
+  rejected: XCircle,
+  expired: Timer,
+};
+
+interface HistoryRowProps {
   item: ApprovalItem;
-  onSign: (id: string) => void;
-  canSign: boolean;
-  t: (key: string, opts?: string | Record<string, unknown>) => string;
 }
 
-function QueueItemRow({ item, onSign, canSign, t }: QueueItemRowProps) {
-  const Icon = statusIcon[item.status];
-  const cardClass = statusCardClass[item.status];
-  const iconClass = statusIconClass[item.status];
-  const isPending = item.status === "pending";
-  const isSigning = item.status === "signing";
+function HistoryRow({ item }: HistoryRowProps) {
+  const Icon = historyIcon[item.status] ?? CheckCircle2;
+  const badge = historyBadgeClass[item.status] ?? "border-white/10 bg-white/[0.03] text-gray-400";
+  const iconCls = historyIconClass[item.status] ?? "text-gray-400";
+  const label = historyLabel[item.status] ?? item.status;
+  const actionLabel = item.action === "add_member" ? "Add member" : "Update limit";
 
-  const sigRatio = `${item.collectedSignatures.length}/${item.requiredSignatures}`;
-  const actionLabel = item.action === "add_member"
-    ? t("approvals_queue.action_add_member")
-    : t("approvals_queue.action_update_limit");
+  const fmt = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
+
+  const date = new Date(item.createdAt).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
 
   return (
-    <article
-      className={`rounded-2xl border p-4 transition-colors ${cardClass}`}
-      aria-label={`${actionLabel}: ${item.label}`}
+    <li
+      className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.01] px-3 py-3"
+      aria-label={`${actionLabel}: ${item.label} — ${label}`}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]">
-          <Icon className={`h-4 w-4 ${iconClass}`} aria-hidden="true" />
-        </div>
+      {/* Status icon */}
+      <div
+        className={`mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border ${badge}`}
+        aria-hidden="true"
+      >
+        <Icon className={`h-3.5 w-3.5 ${iconCls}`} />
+      </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-white">{item.label}</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[11px] uppercase tracking-[0.14em] text-gray-400">
-              {actionLabel}
-            </span>
-          </div>
-
-          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-400">
-            <span>
-              {t("approvals_queue.signatures_label")}: {sigRatio}
-            </span>
-            <span aria-label={t("approvals_queue.status_aria", { status: item.status })}>
-              {t(`approvals_queue.status_${item.status}`)}
-            </span>
-          </div>
-
-          {item.error && (
-            <p className="mt-1 text-xs text-red-300" role="alert">
-              {item.error}
-            </p>
+      {/* Content */}
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs font-semibold text-white">{item.label}</span>
+          <span className="text-[10px] uppercase tracking-[0.14em] text-gray-500">
+            {actionLabel}
+          </span>
+          {item.amount !== undefined && (
+            <span className="text-[10px] text-gray-500">{fmt.format(item.amount)}</span>
           )}
         </div>
-
-        {(isPending || isSigning) && canSign && (
-          <button
-            type="button"
-            disabled={isSigning || !item.xdr}
-            onClick={() => onSign(item.id)}
-            aria-label={t("approvals_queue.sign_aria", { label: item.label })}
-            className="flex-shrink-0 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 transition-colors hover:bg-red-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isSigning ? t("approvals_queue.signing") : t("approvals_queue.sign")}
-          </button>
-        )}
+        <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-gray-500">
+          <span>{date}</span>
+          <span>·</span>
+          <span>
+            {item.collectedSignatures.length}/{item.requiredSignatures} sig
+            {item.requiredSignatures !== 1 ? "s" : ""}
+          </span>
+        </div>
       </div>
-    </article>
+
+      {/* Status badge */}
+      <span
+        role="status"
+        aria-label={`Status: ${label}`}
+        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${badge}`}
+      >
+        <Icon className={`h-2.5 w-2.5 flex-shrink-0 ${iconCls}`} aria-hidden="true" />
+        <span>{label}</span>
+      </span>
+    </li>
   );
 }
 
@@ -126,7 +134,7 @@ export default function ApprovalsQueue({ hook }: ApprovalsQueueProps) {
   const { account, isConnected: connected, signTransaction } = useWallet();
   const address = account?.address ?? "";
   const internal = useApprovalsQueue();
-  const { queue, signItem, expireStale } = hook ?? internal;
+  const { queue, signItem, rejectItem, expireStale } = hook ?? internal;
 
   // Expire stale items on mount and every minute
   const expireRef = useRef(expireStale);
@@ -137,12 +145,16 @@ export default function ApprovalsQueue({ hook }: ApprovalsQueueProps) {
     return () => clearInterval(id);
   }, []);
 
-  const visibleQueue = queue.filter((i) => i.status !== "expired");
+  const pendingQueue = queue.filter((i) => PENDING_STATUSES.includes(i.status));
+  const historyQueue = queue.filter((i) => HISTORY_STATUSES.includes(i.status));
 
-  const handleSign = async (id: string) => {
+  const pendingCount = pendingQueue.filter(
+    (i) => i.status === "requested" || i.status === "partially_approved" || i.status === "pending"
+  ).length;
+
+  const handleApprove = async (id: string) => {
     if (!connected || !address) return;
     const result = await signItem(id, address, (xdr) =>
-      // Route through the wallet-kit signTransaction — no new primitive
       signTransaction(xdr, { networkPassphrase: undefined as unknown as string })
         .then((r) => (typeof r === "string" ? r : (r as { signedTxXdr: string }).signedTxXdr))
     );
@@ -163,14 +175,22 @@ export default function ApprovalsQueue({ hook }: ApprovalsQueueProps) {
     }
   };
 
-  const pendingCount = visibleQueue.filter((i) => i.status === "pending").length;
+  const handleReject = (id: string) => {
+    if (!connected || !address) return;
+    rejectItem(id, address);
+    toast({
+      variant: "error",
+      title: "Approval rejected",
+      description: "The approval request has been rejected.",
+    });
+  };
 
   return (
     <section
       aria-label={t("approvals_queue.section_aria")}
       className="rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-6 sm:p-7"
     >
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="border-b border-white/[0.08] pb-5">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-300">
           {t("approvals_queue.eyebrow")}
@@ -180,8 +200,11 @@ export default function ApprovalsQueue({ hook }: ApprovalsQueueProps) {
             {t("approvals_queue.title")}
           </h2>
           {pendingCount > 0 && (
-            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
-              {t("approvals_queue.pending_badge", { count: pendingCount })}
+            <span
+              aria-live="polite"
+              className="rounded-full border border-status-warning-border bg-status-warning-bg px-3 py-1 text-xs font-semibold text-status-warning-fg"
+            >
+              {pendingCount} pending
             </span>
           )}
         </div>
@@ -190,7 +213,7 @@ export default function ApprovalsQueue({ hook }: ApprovalsQueueProps) {
         </p>
       </div>
 
-      {/* Wallet connection status banner */}
+      {/* ── Wallet connection banner ── */}
       {!connected && (
         <div className="mt-5">
           <AsyncSubmissionStatus
@@ -202,9 +225,16 @@ export default function ApprovalsQueue({ hook }: ApprovalsQueueProps) {
         </div>
       )}
 
-      {/* Queue list */}
+      {/* ── Pending approvals ── */}
       <div className="mt-5">
-        {visibleQueue.length === 0 ? (
+        <div className="mb-3 flex items-center gap-2">
+          <ClipboardList className="h-3.5 w-3.5 text-gray-500" aria-hidden="true" />
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+            Pending approvals
+          </p>
+        </div>
+
+        {pendingQueue.length === 0 ? (
           <WidgetEmptyState
             icon={Users}
             title={t("approvals_queue.empty_title")}
@@ -215,13 +245,13 @@ export default function ApprovalsQueue({ hook }: ApprovalsQueueProps) {
             className="space-y-3"
             aria-label={t("approvals_queue.list_aria")}
           >
-            {visibleQueue.map((item) => (
+            {pendingQueue.map((item) => (
               <li key={item.id}>
-                <QueueItemRow
+                <ApprovalRequestCard
                   item={item}
-                  onSign={handleSign}
-                  canSign={connected}
-                  t={t}
+                  canAct={connected}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
                 />
               </li>
             ))}
@@ -229,7 +259,27 @@ export default function ApprovalsQueue({ hook }: ApprovalsQueueProps) {
         )}
       </div>
 
-      {/* Footer note */}
+      {/* ── Approval history ── */}
+      {historyQueue.length > 0 && (
+        <div className="mt-6 border-t border-white/[0.06] pt-5">
+          <div className="mb-3 flex items-center gap-2">
+            <History className="h-3.5 w-3.5 text-gray-500" aria-hidden="true" />
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+              History
+            </p>
+          </div>
+          <ol
+            className="space-y-2"
+            aria-label="Approval history"
+          >
+            {historyQueue.map((item) => (
+              <HistoryRow key={item.id} item={item} />
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {/* ── Footer note ── */}
       <p className="mt-5 text-xs leading-5 text-gray-500">
         {t("approvals_queue.footer")}
       </p>

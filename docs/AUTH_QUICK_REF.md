@@ -42,3 +42,7 @@ export const POST = withAuth(handler);
 3. POST `/api/auth/login` → set session cookie
 4. Access protected routes (cookie auto-sent)
 5. POST `/api/auth/logout` → clear session
+
+---
+
+**See also:** [Magic Links](MAGIC_LINKS.md) — nonce generation, TTL, and known limitations.

@@ -1,74 +1,181 @@
-"use client";
+import { useEffect, useRef, useCallback } from 'react';
+import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion';
 
-import { useEffect, useRef } from "react";
-
-interface UseFocusTrapOptions {
+interface UseFocusTrapProps {
   isActive: boolean;
   onEscape?: () => void;
+  onOverlayClick?: () => void;
+  restoreFocusOnClose?: boolean;
+  initialFocusRef?: React.RefObject<HTMLElement>;
 }
 
-export function useFocusTrap({ isActive, onEscape }: UseFocusTrapOptions) {
-  const containerRef = useRef<HTMLElement>(null);
-  const previousActiveElementRef = useRef<HTMLElement | null>(null);
+/**
+ * A custom hook that traps focus within a modal/dialog container.
+ * Also handles ESC key to close and overlay clicks.
+ *
+ * @param isActive - Whether the focus trap is active (modal open)
+ * @param onEscape - Callback when ESC key is pressed
+ * @param onOverlayClick - Callback when overlay/backdrop is clicked
+ * @param restoreFocusOnClose - Whether to restore focus to the element that opened the modal
+ * @param initialFocusRef - Ref to the element that should receive initial focus
+ *
+ * @example
+ * ```tsx
+ * const modalRef = useRef<HTMLDivElement>(null);
+ * useFocusTrap({
+ *   isActive: isOpen,
+ *   onEscape: onClose,
+ *   onOverlayClick: onClose,
+ *   restoreFocusOnClose: true,
+ * });
+ * ```
+ */
+export function useFocusTrap<T extends HTMLElement = HTMLDivElement>({
+  isActive,
+  onEscape,
+  onOverlayClick,
+  restoreFocusOnClose = true,
+  initialFocusRef,
+}: UseFocusTrapProps): React.RefObject<T> {
+  const modalRef = useRef<T>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
-  useEffect(() => {
-    if (!isActive || !containerRef.current) return;
+  // Check if user prefers reduced motion (supports user override)
+  const prefersReducedMotion = usePrefersReducedMotion();
 
-    // Store the previously focused element
-    previousActiveElementRef.current = document.activeElement as HTMLElement;
+  // Get all focusable elements within the modal
+  const getFocusableElements = useCallback((container: HTMLElement): HTMLElement[] => {
+    const selectors = [
+      'button:not([disabled])',
+      'a[href]:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      'details summary',
+      '[tabindex]:not([tabindex="-1"]):not([disabled])',
+    ];
+    const elements = container.querySelectorAll<HTMLElement>(selectors.join(','));
+    return Array.from(elements).filter((el) => !el.hasAttribute('aria-hidden'));
+  }, []);
 
-    // Focus the first focusable element in the container
-    const focusableElements = containerRef.current.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    const firstFocusable = focusableElements[0];
-    if (firstFocusable) {
-      firstFocusable.focus();
-    }
-
-    // Handle Tab/Shift+Tab cycling
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onEscape?.();
+  // Handle focus trapping
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && onEscape) {
+        event.preventDefault();
+        // Use requestAnimationFrame for smooth transition
+        requestAnimationFrame(() => {
+          onEscape();
+        });
         return;
       }
 
-      if (event.key !== "Tab") return;
+      if (event.key !== 'Tab') return;
 
-      const focusableElements = containerRef.current?.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
+      const container = modalRef.current;
+      if (!container) return;
 
-      if (!focusableElements || focusableElements.length === 0) return;
+      const focusable = getFocusableElements(container);
+      if (focusable.length === 0) return;
 
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
+      const firstFocusable = focusable[0];
+      const lastFocusable = focusable[focusable.length - 1];
 
-      if (event.shiftKey) {
-        // Shift+Tab: if focus is on first element, move to last
-        if (document.activeElement === firstElement) {
-          event.preventDefault();
-          lastElement.focus();
-        }
-      } else {
-        // Tab: if focus is on last element, move to first
-        if (document.activeElement === lastElement) {
-          event.preventDefault();
-          firstElement.focus();
+      if (event.shiftKey && document.activeElement === firstFocusable) {
+        event.preventDefault();
+        lastFocusable.focus();
+        return;
+      }
+
+      if (!event.shiftKey && document.activeElement === lastFocusable) {
+        event.preventDefault();
+        firstFocusable.focus();
+        return;
+      }
+    },
+    [onEscape, getFocusableElements]
+  );
+
+  // Handle overlay click
+  const handleOverlayClick = useCallback(
+    (event: MouseEvent | TouchEvent) => {
+      const container = modalRef.current;
+      if (!container) return;
+
+      if (event.target instanceof Node && container.contains(event.target) && event.target === container) {
+        if (onOverlayClick) {
+          onOverlayClick();
         }
       }
-    };
+    },
+    [onOverlayClick]
+  );
 
-    document.addEventListener("keydown", handleKeyDown);
+  // Save previous focus and set initial focus when modal opens
+  useEffect(() => {
+    if (!isActive) return;
 
-    // Cleanup: restore focus to previous element
+    previousFocusRef.current = document.activeElement as HTMLElement;
+
+    // Use reduced motion if preferred
+    const delay = prefersReducedMotion ? 0 : 50;
+
+    const timer = setTimeout(() => {
+      const container = modalRef.current;
+      if (!container) return;
+
+      let target = initialFocusRef?.current;
+      if (!target) {
+        const focusable = getFocusableElements(container);
+        target = focusable[0] || null;
+      }
+
+      if (target) {
+        target.focus();
+      }
+    }, delay);
+
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      if (previousActiveElementRef.current) {
-        previousActiveElementRef.current.focus();
+      clearTimeout(timer);
+    };
+  }, [isActive, initialFocusRef, getFocusableElements, prefersReducedMotion]);
+
+  // Set up event listeners
+  useEffect(() => {
+    if (!isActive) return;
+
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = '0px';
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleOverlayClick);
+    document.addEventListener('touchstart', handleOverlayClick);
+
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleOverlayClick);
+      document.removeEventListener('touchstart', handleOverlayClick);
+
+      if (restoreFocusOnClose && previousFocusRef.current) {
+        const previousFocus = previousFocusRef.current;
+        // Use reduced motion if preferred
+        const delay = prefersReducedMotion ? 0 : 10;
+        setTimeout(() => {
+          try {
+            previousFocus.focus();
+          } catch {
+            // Silently fail if the element no longer exists
+          }
+        }, delay);
       }
     };
-  }, [isActive, onEscape]);
+  }, [isActive, handleKeyDown, handleOverlayClick, restoreFocusOnClose, prefersReducedMotion]);
 
-  return containerRef;
+  return modalRef;
 }
+
+export default useFocusTrap;

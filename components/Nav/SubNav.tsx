@@ -31,7 +31,7 @@ const SubNav = () => {
                                 className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition-all duration-300 whitespace-nowrap group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/50 375:gap-2 375:px-4 sm:text-sm
                                     ${isActive(link.href)
                                         ? "text-brand-red bg-brand-red/10 border border-brand-red/20 shadow-[0_0_15px_rgba(215,35,35,0.1)]"
-                                        : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
+                                        : "text-white/70 hover:text-white hover:bg-white/5 border border-transparent"
                                     }`}
                             >
                                 {link.icon}
