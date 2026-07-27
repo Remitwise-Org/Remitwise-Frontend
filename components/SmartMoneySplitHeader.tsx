@@ -42,10 +42,33 @@ export default function SmartMoneySplitHeader({ totalPercentage = 100 }: SmartMo
         </div>
 
         {/* Alert Section */}
-        <div className="rounded-xl bg-[#1c0a0a] border border-[#3d1414] p-4 375:p-5 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+        <div
+          className={`rounded-xl border p-4 375:p-5 flex items-center gap-3 transition-colors duration-200 ${
+            isValid
+              ? "bg-[rgba(34,197,94,0.08)] border-[rgba(34,197,94,0.28)]"
+              : totalPercentage > 100
+                ? "bg-[rgba(244,63,94,0.08)] border-[rgba(244,63,94,0.28)]"
+                : "bg-[rgba(245,158,11,0.08)] border-[rgba(245,158,11,0.28)]"
+          }`}
+        >
+          <AlertCircle
+            className={`w-5 h-5 shrink-0 ${
+              isValid
+                ? "text-emerald-400"
+                : totalPercentage > 100
+                  ? "text-rose-400"
+                  : "text-amber-400"
+            }`}
+          />
           <p className="text-xs 375:text-sm text-white">
-            <span className="font-bold">Important:</span> <span className='text-white/80'>Percentages must total exactly 100%</span>
+            <span className="font-bold">Important:</span>{" "}
+            <span className="text-white/80">
+              {isValid
+                ? "Percentages total exactly 100%"
+                : totalPercentage > 100
+                  ? `Percentages sum to ${totalPercentage}% (+${totalPercentage - 100}% over 100%)`
+                  : `Percentages sum to ${totalPercentage}% (-${100 - totalPercentage}% remaining)`}
+            </span>
           </p>
         </div>
       </div>
