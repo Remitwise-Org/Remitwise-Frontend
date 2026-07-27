@@ -787,6 +787,8 @@ MIT
 
 **Deprecation Policy**
 
+> See **[docs/DEPRECATIONS.md](docs/DEPRECATIONS.md)** for the current list of deprecated components, utilities, hooks, and API routes — every entry includes a concrete before/after migration example.
+
 - When a new major version (e.g. v2) is released, older major versions will be supported for a minimum of **6 months** before scheduled removal. During that window:
   - Maintain security fixes and critical bug fixes for the deprecated major version.
   - Announce deprecation clearly in changelogs and developer docs with migration guides.
