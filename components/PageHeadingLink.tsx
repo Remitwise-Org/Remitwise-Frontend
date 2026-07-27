@@ -7,6 +7,7 @@ import {
   copyTextToClipboard,
   PAGE_HEADING_LINK_FEEDBACK_MS,
 } from "@/lib/client/pageHeadingLink";
+import { useToast } from "@/lib/context/ToastContext";
 
 type PageHeadingLinkProps = {
   headingId: string;
@@ -39,6 +40,7 @@ export default function PageHeadingLink({
 }: PageHeadingLinkProps) {
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<number | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     return () => {
@@ -57,6 +59,12 @@ export default function PageHeadingLink({
       const canonicalUrl = buildCanonicalHeadingUrl(window.location, copyHeadingId);
       await copyTextToClipboard(canonicalUrl);
       setCopied(true);
+
+      toast({
+        variant: "success",
+        title: "Link copied",
+        description: canonicalUrl,
+      });
 
       if (timeoutRef.current !== null) {
         window.clearTimeout(timeoutRef.current);

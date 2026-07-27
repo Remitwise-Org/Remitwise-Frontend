@@ -12,4 +12,14 @@ export interface IEventStorageService {
    * Retrieves emergency events for analytics
    */
   getEmergencyEvents(filters: EventFilters): Promise<EmergencyTransferEvent[]>;
+
+  /**
+   * Gets daily usage for a user (in stroops as string)
+   */
+  getDailyUsage(userId: string): Promise<string>;
+
+  /**
+   * Gets monthly count for a user
+   */
+  getMonthlyCount(userId: string): Promise<number>;
 }

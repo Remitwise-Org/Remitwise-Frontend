@@ -45,6 +45,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthStatus'
+  /session/refresh:
+    post:
+      summary: Refresh session
+      tags:
+        - Session
+      description: |
+        Extends the current session expiry using a sliding-window mechanism
+        when SESSION_REFRESH_ENABLED is true. Returns the authenticated
+        user's address and new expiry timestamp. Returns 401 if the session
+        is missing, invalid, or expired.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Session refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionRefreshResponse'
+        '401':
+          description: Session expired or missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
   /remittance/quote:
     get:
       summary: Get Remittance Quote
@@ -825,6 +850,23 @@ components:
         coverageAmount:
           type: number
           example: 100000
+    SessionRefreshResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            address:
+              type: string
+              description: Stellar wallet public key of the authenticated user
+              example: GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5
+            expiresAt:
+              type: number
+              description: Session expiry timestamp in milliseconds since epoch
+              example: 1700000000000
     WebhookDlqResponse:
       type: object
       properties:

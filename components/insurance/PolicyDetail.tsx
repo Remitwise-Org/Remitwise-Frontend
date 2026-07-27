@@ -16,6 +16,7 @@ import {
 import { type Policy } from "@/lib/contracts/insurance";
 import { getPolicyPaymentPresentation } from "@/lib/ui/status-semantics";
 import { usePolicyActions } from "@/lib/hooks/usePolicyActions";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 import { useToast } from "@/lib/context/ToastContext";
 import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
 
@@ -67,8 +68,10 @@ export default function PolicyDetail({
   onPaySuccess,
   onDeactivateSuccess,
 }: PolicyDetailProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const dialogRef = useFocusTrap<HTMLDivElement>({
+    isActive: open,
+    onEscape: onClose,
+  });
   const [showPayConfirm, setShowPayConfirm] = useState(false);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
 
@@ -83,47 +86,15 @@ export default function PolicyDetail({
     resetDeactivate,
   } = usePolicyActions();
 
-  // ── Focus trap & ESC handling ────────────────────────────────────────────
+  // ── Prevent body scroll when open ─────────────────────────────────────────
   useEffect(() => {
     if (open) {
-      previousFocusRef.current = document.activeElement as HTMLElement;
-      const timer = setTimeout(() => {
-        dialogRef.current?.focus();
-      }, 50);
       document.body.style.overflow = "hidden";
       return () => {
-        clearTimeout(timer);
         document.body.style.overflow = "";
       };
-    } else {
-      previousFocusRef.current?.focus();
     }
   }, [open]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-      }
-      if (e.key === "Tab" && dialogRef.current) {
-        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    },
-    [onClose]
-  );
 
   // ── Reset local confirm states when dialog closes ─────────────────────────
   useEffect(() => {
@@ -212,7 +183,6 @@ export default function PolicyDetail({
         aria-describedby="policy-detail-desc"
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleKeyDown}
         className="relative w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl bg-[#0f1115] border border-white/[0.08] shadow-2xl max-h-[90vh] overflow-y-auto outline-none"
       >
         {/* Header */}

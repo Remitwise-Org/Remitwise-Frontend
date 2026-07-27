@@ -20,6 +20,8 @@ export default defineConfig({
       'tests/property/**/*.test.cjs',
       'tests/session/**/*.test.ts',
       'tests/session/**/*.test.cjs',
+      'tests/react/**/*.test.ts',
+      'tests/react/**/*.test.tsx',
       'components/**/*.test.tsx',
     ],
     environment: 'jsdom',
@@ -31,13 +33,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: [
-        'lib/contracts/**/*.ts',
-        'app/**/*.ts',
-        'app/**/*.tsx',
-        'lib/**/*.ts',
-        'components/**/*.tsx',
-      ],
+      include: ['lib/contracts/**/*.ts', 'app/**/*.ts', 'app/**/*.tsx', 'lib/**/*.ts', 'components/**/*.tsx'],
       exclude: [
         'lib/contracts/**/*.test.ts',
         'lib/**/*.test.ts',

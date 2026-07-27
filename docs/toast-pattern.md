@@ -87,7 +87,15 @@ toast({
 
 ### `dismiss(id)`
 
-Programmatically remove a toast before its timer expires.
+Programmatically remove a toast before its timer expires. Dismissed toasts are archived in the provider history so they can be surfaced in the recent notifications list.
+
+### `history`
+
+The provider keeps a compact history of recently dismissed toasts (up to 10 items). This is exposed via `useToast()` as `history` and is rendered by `ToastRegion` as a small "Recent notifications" list beneath the active toast stack.
+
+### `clearHistory()`
+
+Programmatically clear the archived toast history when the UI needs a fresh notification log.
 
 ## Variants and when to use them
 
@@ -126,6 +134,8 @@ Programmatically remove a toast before its timer expires.
 
 - Show at most **3 toasts** simultaneously. Queue additional toasts; they appear
   as earlier ones dismiss.
+- Keep a compact recent-history list (up to 10 items) for dismissed notifications
+  so users can still review outcomes that already disappeared from the active stack.
 - Do not toast on every keystroke or polling tick — only on user-initiated
   outcomes or significant background events.
 - Prefer `description` over a second toast for supporting detail.

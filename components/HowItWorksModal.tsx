@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { AlertCircle } from "lucide-react";
-import { useFocusTrap } from "../src/lib/hooks/useFocusTrap";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 
 interface HowItWorksModalProps {
   isOpen: boolean;
@@ -8,7 +8,7 @@ interface HowItWorksModalProps {
 }
 
 const HowItWorksModal = ({ isOpen, onClose }: HowItWorksModalProps) => {
-  const modalRef = useRef<HTMLDivElement>(null);
+
 
   const data = [
     { label: "Daily Spending", amount: "$500.00", percentage: "50%" },
@@ -18,7 +18,7 @@ const HowItWorksModal = ({ isOpen, onClose }: HowItWorksModalProps) => {
   ];
 
   // Focus trap hook
-  useFocusTrap({
+  const modalRef = useFocusTrap<HTMLDivElement>({
     isActive: isOpen,
     onEscape: onClose,
     onOverlayClick: onClose,

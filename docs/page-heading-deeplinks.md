@@ -20,8 +20,9 @@ The copied URL does not include the current query string or any existing hash.
 ## Feedback behavior
 
 - Clicking the inline hash button copies the canonical URL.
-- The control shows inline success feedback briefly.
-- The click does not mutate the current URL or trigger toast feedback.
+- The control shows inline success feedback briefly (icon swaps to a check mark).
+- A success toast is fired with the copied URL as the description.
+- The click does not mutate the current URL.
 
 ## Implementation note
 

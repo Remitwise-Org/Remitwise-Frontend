@@ -1,14 +1,10 @@
 'use client';
 import { errorReporter } from '../lib/client/errorReporter';
+import RootErrorFallback from '@/components/RootErrorFallback';
 
-export default function RootErrorBoundary({ error }: { error: Error }) {
+export default function RootErrorBoundary({ error, reset }: { error: Error, reset: () => void }) {
   // Report error with PII scrubbing handled by reporter
   errorReporter.captureException(error);
 
-  return (
-    <div>
-      <h1>Something went wrong.</h1>
-      <button onClick={() => window.location.reload()}>Retry</button>
-    </div>
-  );
+  return <RootErrorFallback onReset={reset} />;
 }

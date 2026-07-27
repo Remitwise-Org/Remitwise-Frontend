@@ -60,12 +60,7 @@ describe('ToastContext', () => {
 
   describe('useToast hook', () => {
     it('should throw error when used outside ToastProvider', () => {
-      const TestComponent = () => {
-        useToast();
-        return <div>Test</div>;
-      };
-
-      expect(() => render(<TestComponent />)).toThrow('useToast must be used within a ToastProvider');
+      expect(() => useToast()).toThrowError('useToast must be used within a ToastProvider');
     });
 
     it('should return toast context value', () => {
@@ -117,6 +112,37 @@ describe('ToastContext', () => {
       });
 
       expect(screen.getByTestId('toast-count')).toHaveTextContent('1');
+    });
+
+    it('should preserve dismissed toasts in history', () => {
+      const TestComponent = () => {
+        const { toast, toasts, history, dismiss } = useToast();
+        const toastId = toast({ variant: 'success', title: 'Archived Toast' });
+
+        return (
+          <div>
+            <button onClick={() => dismiss(toastId)}>Dismiss Toast</button>
+            <div data-testid="active-count">{toasts.length}</div>
+            <div data-testid="history-count">{history.length}</div>
+          </div>
+        );
+      };
+
+      render(
+        <ToastProvider>
+          <TestComponent />
+        </ToastProvider>
+      );
+
+      expect(screen.getByTestId('active-count')).toHaveTextContent('1');
+      expect(screen.getByTestId('history-count')).toHaveTextContent('1');
+
+      act(() => {
+        screen.getByText('Dismiss Toast').click();
+      });
+
+      expect(screen.getByTestId('active-count')).toHaveTextContent('0');
+      expect(screen.getByTestId('history-count')).toHaveTextContent('1');
     });
 
     it('should generate unique toast IDs', () => {

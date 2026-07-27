@@ -1,10 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-
-const viewports = [
-  { name: 'iPhone SE', width: 320, height: 568 },
-  { name: 'iPhone 14', width: 375, height: 667 },
-  { name: 'iPad Portrait', width: 768, height: 1024 },
-];
+import { RESPONSIVE_VIEWPORTS as viewports } from './shared-viewports';
 
 async function checkNoHorizontalOverflow(page: Page) {
   const hasOverflow = await page.evaluate(() => {

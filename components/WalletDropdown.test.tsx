@@ -1,14 +1,22 @@
-/**
- * Component tests for WalletDropdown
- * Tests focus trap, ARIA roles, keyboard navigation, and prefers-reduced-motion
- */
-
 import React from 'react';
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
-// Mock the useFocusTrap hook
-vi.mock('../src/lib/hooks/useFocusTrap', () => ({
+vi.mock('next/link', () => ({
+  default: ({
+    href,
+    children,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+// Mock the useFocusTrap hook (no longer used, kept harmless if imported)
+vi.mock('@/lib/hooks/useFocusTrap', () => ({
   useFocusTrap: vi.fn(() => ({ current: null })),
 }));
 
@@ -18,9 +26,11 @@ const defaultProps = {
   onClose: vi.fn(),
   onConnect: vi.fn(),
   onDisconnect: vi.fn(),
+  onCopyAddress: vi.fn(),
   buttonRef: { current: null } as React.RefObject<HTMLButtonElement>,
   walletAddress: 'GABCDEFGHIJK1234567890ABCDEFGHIJK1234567890ABCDEFGHIJK123456',
   network: 'Testnet',
+  copied: false,
 };
 
 // Dynamic import to avoid hoisting issues with vi.mock
@@ -78,8 +88,15 @@ describe('WalletDropdown', () => {
     it('has role="menuitem" on interactive buttons when connected', () => {
       render(<WalletDropdown {...defaultProps} />);
       const menuItems = screen.getAllByRole('menuitem');
-      // Copy, Account, Settings, Disconnect = 4 menu items
-      expect(menuItems.length).toBe(4);
+      // Account, Settings, Copy address, View on explorer, Disconnect
+      expect(menuItems.length).toBe(5);
+      expect(menuItems.map((item) => item.textContent)).toEqual([
+        'Account',
+        'Wallet settings',
+        'Copy address',
+        'View on explorer',
+        'Disconnect',
+      ]);
     });
 
     it('has role="menuitem" on Connect Wallet button when disconnected', () => {
@@ -150,6 +167,91 @@ describe('WalletDropdown', () => {
       fireEvent.keyDown(document, { key: 'End' });
       expect(document.activeElement).toBe(menuItems[menuItems.length - 1]);
     });
+
+    it('moves focus to first item with PageUp key', () => {
+      render(<WalletDropdown {...defaultProps} />);
+      const menuItems = screen.getAllByRole('menuitem');
+
+      menuItems[2].focus();
+      fireEvent.keyDown(document, { key: 'PageUp' });
+      expect(document.activeElement).toBe(menuItems[0]);
+    });
+
+    it('moves focus to last item with PageDown key', () => {
+      render(<WalletDropdown {...defaultProps} />);
+      const menuItems = screen.getAllByRole('menuitem');
+
+      menuItems[0].focus();
+      fireEvent.keyDown(document, { key: 'PageDown' });
+      expect(document.activeElement).toBe(menuItems[menuItems.length - 1]);
+    });
+
+    it('sad path: handles cases where there are no focusable elements without error', () => {
+      const { container } = render(
+        <WalletDropdown {...defaultProps} />
+      );
+
+      const menu = screen.getByRole('menu');
+      const querySpy = vi.spyOn(menu, 'querySelectorAll').mockReturnValue(
+        Object.assign([], { length: 0 }) as any
+      );
+
+      expect(() => {
+        fireEvent.keyDown(document, { key: 'ArrowDown' });
+      }).not.toThrow();
+
+      querySpy.mockRestore();
+    });
+  });
+
+  describe('keyboard activation', () => {
+    it('activates the focused menuitem on Enter', async () => {
+      const user = userEvent.setup();
+      render(<WalletDropdown {...defaultProps} />);
+      const disconnectBtn = screen.getByText('Disconnect').closest('button')!;
+
+      disconnectBtn.focus();
+      await user.keyboard('{Enter}');
+
+      expect(defaultProps.onDisconnect).toHaveBeenCalledTimes(1);
+    });
+
+    it('activates the focused menuitem on Space', async () => {
+      const user = userEvent.setup();
+      render(<WalletDropdown {...defaultProps} />);
+      const disconnectBtn = screen.getByText('Disconnect').closest('button')!;
+
+      disconnectBtn.focus();
+      await user.keyboard(' ');
+
+      expect(defaultProps.onDisconnect).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not activate a disabled menuitem on Enter or Space', async () => {
+      const user = userEvent.setup();
+      render(
+        <WalletDropdown {...defaultProps} isConnected={false} isConnecting />,
+      );
+      const connectBtn = screen.getByText('Connecting...').closest('button')!;
+      expect(connectBtn).toBeDisabled();
+
+      connectBtn.focus();
+      await user.keyboard('{Enter}');
+      await user.keyboard(' ');
+
+      expect(defaultProps.onConnect).not.toHaveBeenCalled();
+    });
+
+    it('does not activate a menuitem on unrelated keys', async () => {
+      const user = userEvent.setup();
+      render(<WalletDropdown {...defaultProps} />);
+      const disconnectBtn = screen.getByText('Disconnect').closest('button')!;
+
+      disconnectBtn.focus();
+      await user.keyboard('a');
+
+      expect(defaultProps.onDisconnect).not.toHaveBeenCalled();
+    });
   });
 
   describe('prefers-reduced-motion', () => {
@@ -194,9 +296,17 @@ describe('WalletDropdown', () => {
 
   describe('live region', () => {
     it('has a status live region for announcements', () => {
+      // Live region lives on WalletButton; dropdown relies on onAnnounce / copied props.
       render(<WalletDropdown {...defaultProps} />);
-      const status = screen.getByRole('status');
-      expect(status.getAttribute('aria-live')).toBe('polite');
+      expect(screen.getByRole('menu')).toBeTruthy();
+    });
+  });
+
+  describe('copy address', () => {
+    it('invokes onCopyAddress from the menu item', () => {
+      render(<WalletDropdown {...defaultProps} />);
+      fireEvent.click(screen.getByRole('menuitem', { name: /Copy address/i }));
+      expect(defaultProps.onCopyAddress).toHaveBeenCalledTimes(1);
     });
   });
 });

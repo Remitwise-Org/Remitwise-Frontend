@@ -250,4 +250,13 @@ Anchor routes return `501 Not Implemented` when `ANCHOR_API_BASE_URL` is not con
 - `400 Bad Request`: Invalid parameters (calculate endpoint)
 ```
 
----
+## Diagnostics Page (/debug)
+
+- **Path**: `/debug`
+- **Access Control**: Behind query parameter `?debug=1` (e.g., `/debug?debug=1`). Requests without `?debug=1` return `404 Not Found`.
+- **Emitted Information**:
+  - `buildSha`: Current build git SHA / release identifier.
+  - `featureFlags`: Record of active system feature flags.
+  - `walletChain`: Active connected wallet Stellar chain or configured network (`testnet` / `mainnet`).
+  - `lastRequestId`: Last tracked API request ID.
+

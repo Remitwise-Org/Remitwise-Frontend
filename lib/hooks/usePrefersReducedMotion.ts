@@ -27,6 +27,13 @@ export function usePrefersReducedMotion(): boolean {
 
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+    // Some environments expose `matchMedia` as a function but have it
+    // return a falsy value (e.g. restricted embeds, certain test/SSR
+    // shims). Guard here too, not just on `typeof window.matchMedia`.
+    if (!mediaQuery) {
+      return;
+    }
+
     const updatePreference = () => {
       setPrefersReducedMotion(mediaQuery.matches);
     };
@@ -48,4 +55,18 @@ export function usePrefersReducedMotion(): boolean {
   }, []);
 
   return prefersReducedMotion;
+}
+
+export function getStoredMotionPreference(): "system" | "reduced" | "no-preference" {
+  if (typeof window === 'undefined') return 'system';
+  const val = localStorage.getItem('motion-preference');
+  if (val === 'reduced' || val === 'no-preference' || val === 'system') {
+    return val;
+  }
+  return 'system';
+}
+
+export function setStoredMotionPreference(pref: "system" | "reduced" | "no-preference"): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('motion-preference', pref);
 }

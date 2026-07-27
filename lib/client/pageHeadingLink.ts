@@ -6,7 +6,21 @@ export function buildCanonicalHeadingUrl(
   location: CanonicalHeadingLocation,
   headingId: string,
 ): string {
-  return `${location.origin}${location.pathname}#${headingId}`;
+  let pathname = location.pathname;
+  let canonicalHeadingId = headingId;
+
+  // Remove trailing slash if present (unless it is the root path)
+  if (pathname.endsWith("/") && pathname.length > 1) {
+    pathname = pathname.slice(0, -1);
+  }
+
+  // Normalize legacy/redirected paths to their canonical counterparts
+  if (pathname === "/insights" || pathname === "/financial-insight") {
+    pathname = "/financial-insights";
+    canonicalHeadingId = "financial-insights-page-heading";
+  }
+
+  return `${location.origin}${pathname}#${canonicalHeadingId}`;
 }
 
 function fallbackCopyText(text: string): void {

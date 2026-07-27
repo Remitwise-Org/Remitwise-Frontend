@@ -3,6 +3,7 @@
 import { Zap, ArrowLeft, ShieldCheck, User, CreditCard, Loader2 } from "lucide-react";
 import AutomaticSplitCard from "./AutomaticSplitCard";
 import { CTA_TEST_IDS } from "@/lib/cta-testids";
+import Tooltip from "@/components/Tooltip";
 import { useClientLocale } from "@/lib/i18n/client";
 import { formatCurrency } from "@/lib/utils/format-currency";
 
@@ -91,7 +92,16 @@ export default function ReviewStep({
                 aria-label={isPending ? "Processing your transfer, please wait" : "Confirm and send remittance"}
                 className="w-full min-h-11 px-4 py-4 bg-red-600 hover:bg-red-700 disabled:bg-red-900 disabled:cursor-not-allowed text-white rounded-2xl text-base 375:text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/40 flex items-center justify-center gap-3 text-center break-words"
               >
-                {isPending ? (
+                <button
+                  id="send-confirm-btn"
+                  onClick={onConfirm}
+                  disabled={isPending}
+                  data-testid={CTA_TEST_IDS.flow.sendReviewPrimary}
+                  aria-busy={isPending}
+                  aria-label={isPending ? "Processing your transfer, please wait" : "Confirm and send remittance"}
+                  className="w-full min-h-11 px-4 py-4 bg-red-600 hover:bg-red-700 disabled:bg-red-900 disabled:cursor-not-allowed text-white rounded-2xl text-base 375:text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/40 flex items-center justify-center gap-3 text-center break-words"
+                >
+                  {isPending ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                     Processing&hellip;
@@ -103,6 +113,7 @@ export default function ReviewStep({
                   </>
                 )}
               </button>
+              </Tooltip>
 
               <button
                 type="button"

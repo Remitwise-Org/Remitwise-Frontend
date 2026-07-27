@@ -4,6 +4,8 @@
 
 Implemented CORS, security headers, and request body size validation for all `/api` routes in the Next.js application. The implementation follows best practices with modular helper functions, proper header ordering, and comprehensive test coverage.
 
+For the per-route handler decorators (`withAuth`, `validatedRoute`, `withApiErrorHandler`) that individual routes opt into on top of this global middleware, see [docs/api-route-decorators.md](./api-route-decorators.md).
+
 ## Implementation Details
 
 ### 1. **middleware.ts** - Core Implementation
@@ -19,7 +21,7 @@ Three modular, testable helper functions added at the start of the middleware:
 - Sets proper CORS headers:
   - `Access-Control-Allow-Origin` (from request origin or env var)
   - `Access-Control-Allow-Methods` (GET, POST, PUT, DELETE, PATCH, OPTIONS)
-  - `Access-Control-Allow-Headers` (Content-Type, Authorization, X-Requested-With)
+  - `Access-Control-Allow-Headers` (Content-Type, Authorization, X-Request-ID, X-Requested-With)
   - `Access-Control-Allow-Credentials: true`
   - `Vary: Origin` (for proper cache behavior)
 

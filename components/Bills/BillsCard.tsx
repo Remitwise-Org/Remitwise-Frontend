@@ -115,8 +115,9 @@ export function BillCards({ bill, density = "comfortable" }: { bill: Bill; densi
 
                 {bill.status !== "paid" && (
                     <button
-                        className="p-2 rounded-lg bg-red-600 hover:bg-red-500 text-white"
+                        className="p-2 rounded-lg bg-brand-red hover:bg-brand-redHover active:bg-red-800 text-white transition-colors focus-visible:outline-none focus-visible:ring-focus focus-visible:ring-red-400 focus-visible:ring-offset-focus focus-visible:ring-offset-black"
                         title="Pay Now"
+                        aria-label="Pay bill now"
                     >
                         <Zap className="w-4 h-4" />
                     </button>
@@ -199,11 +200,7 @@ export function BillCards({ bill, density = "comfortable" }: { bill: Bill; densi
                 {/* Pay Now Button */}
                 {bill.status !== "paid" &&
                     <button
-                        className="w-full h-10 rounded-[14px] flex items-center justify-center gap-2"
-                        style={{
-                            background: 'linear-gradient(180deg, #DC2626 0%, #B91C1C 100%)',
-                            boxShadow: '0px 10px 15px -3px rgba(220, 38, 38, 0.2), 0px 4px 6px -4px rgba(220, 38, 38, 0.2)',
-                        }}
+                        className="w-full h-10 rounded-[14px] flex items-center justify-center gap-2 bg-brand-red hover:bg-brand-redHover active:bg-red-800 text-white font-semibold text-sm transition-colors focus-visible:outline-none focus-visible:ring-focus focus-visible:ring-red-400 focus-visible:ring-offset-focus focus-visible:ring-offset-black"
                     >
                         {/* Lightning Icon */}
                         <Zap className="w-4 h-4" />

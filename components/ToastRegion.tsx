@@ -13,9 +13,9 @@ import Toast from "./Toast";
  * callers should use duration=0 and the user dismisses manually.
  */
 export default function ToastRegion() {
-  const { toasts, dismiss } = useToast();
+  const { toasts, history, dismiss } = useToast();
 
-  if (toasts.length === 0) return null;
+  if (toasts.length === 0 && history.length === 0) return null;
 
   return (
     <div
@@ -27,6 +27,24 @@ export default function ToastRegion() {
       {toasts.slice(0, 3).map((t) => (
         <Toast key={t.id} toast={t} onDismiss={dismiss} />
       ))}
+
+      {history.length > 0 && (
+        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-left shadow-lg backdrop-blur">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/60">
+            Recent notifications
+          </p>
+          <ul className="mt-2 space-y-2">
+            {history.slice(0, 3).map((item) => (
+              <li key={item.id} className="rounded-xl bg-white/5 px-3 py-2">
+                <p className="text-sm font-medium text-white">{item.title}</p>
+                {item.description ? (
+                  <p className="mt-1 text-xs text-white/60">{item.description}</p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

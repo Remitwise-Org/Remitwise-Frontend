@@ -3,46 +3,15 @@
 import React, { useEffect, useRef } from "react";
 import { X, ExternalLink, CheckCheck } from "lucide-react";
 import { useWhatsNew } from "@/lib/context/WhatsNewContext";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 
 export default function WhatsNewPanel() {
     const { isOpen, close, entries, readIds, unreadCount, markAllRead } =
         useWhatsNew();
-        const panelRef = useRef<HTMLElement>(null);
-    const previouslyFocused = useRef<HTMLElement | null>(null);
-
-    useEffect(() => {
-        if (!isOpen) return;
-
-        previouslyFocused.current = document.activeElement as HTMLElement;
-        const panel = panelRef.current;
-        const focusables = panel?.querySelectorAll<HTMLElement>(
-            'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        );
-        focusables?.[0]?.focus();
-
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
-                close();
-                return;
-            }
-            if (e.key !== "Tab" || !focusables || focusables.length === 0) return;
-            const first = focusables[0];
-            const last = focusables[focusables.length - 1];
-            if (e.shiftKey && document.activeElement === first) {
-                e.preventDefault();
-                last.focus();
-            } else if (!e.shiftKey && document.activeElement === last) {
-                e.preventDefault();
-                first.focus();
-            }
-        };
-
-        document.addEventListener("keydown", onKeyDown);
-        return () => {
-            document.removeEventListener("keydown", onKeyDown);
-            previouslyFocused.current?.focus();
-        };
-    }, [isOpen, close]);
+    const panelRef = useFocusTrap<HTMLElement>({
+        isActive: isOpen,
+        onEscape: close,
+    });
 
     const unreadEntries = entries.filter((entry) => !readIds.has(entry.id));
 

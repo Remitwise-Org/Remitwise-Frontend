@@ -26,7 +26,8 @@ import SessionExpiryNotification from './SessionExpiryNotification';
  * ```
  */
 export default function SessionExpiryProvider({ children }: { children: React.ReactNode }) {
-  const { phase, message, countdown, staySignedIn, reconnect, clearExpiry } = useSessionExpiry();
+  const { phase, message, countdown, isRefreshing, staySignedIn, reconnect, clearExpiry } =
+    useSessionExpiry();
 
   return (
     <>
@@ -34,6 +35,7 @@ export default function SessionExpiryProvider({ children }: { children: React.Re
         phase={phase}
         message={message}
         countdown={countdown}
+        isRefreshing={isRefreshing}
         onStaySignedIn={staySignedIn}
         onReconnect={reconnect}
         onDismiss={clearExpiry}

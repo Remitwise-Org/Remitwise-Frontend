@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { } from "vitest";
 import { useFormAction } from "./useFormAction";
 import { apiClient } from "@/lib/client/apiClient";
+import fc from "fast-check";
 
 type TestState = {
   error?: string;
@@ -467,5 +468,46 @@ describe("useFormAction", () => {
 
     act(() => root.unmount());
     container.remove();
+  });
+  // ── Property Tests ────────────────────────────────────────────────────────
+  it("property test: arbitrary API responses correctly update hook state (happy and sad paths)", async () => {
+    const arbPayload = fc.record(
+      {
+        success: fc.boolean(),
+        error: fc.record({ code: fc.string(), message: fc.string() }),
+        validationErrors: fc.array(fc.record({ path: fc.string(), message: fc.string() }))
+      }
+    );
+    const arbStatus = fc.integer({ min: 200, max: 599 });
+    
+    await fc.assert(
+      fc.asyncProperty(arbPayload, arbStatus, async (payload, status) => {
+        vi.spyOn(apiClient, "request").mockResolvedValueOnce(jsonResponse(payload, status));
+
+        const harness = createHookHarness();
+        try {
+          await act(async () => {
+            harness.hook[1](new FormData());
+            await flushPromises();
+          });
+          
+          const state = harness.hook[0];
+          expect(typeof state).toBe("object");
+
+          if (status >= 400) {
+            if (payload.success === false && payload.error?.message) {
+              expect(state.error).toBe(payload.error.message);
+            } else if (Array.isArray(payload.validationErrors) && payload.validationErrors.length > 0) {
+              expect(state.error).toBe(payload.validationErrors[0].message);
+            } else {
+              expect(state.error).toBe(`Request failed with status ${status}`);
+            }
+          }
+        } finally {
+          harness.unmount();
+        }
+      }),
+      { numRuns: 30 }
+    );
   });
 });

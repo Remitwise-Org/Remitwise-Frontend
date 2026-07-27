@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { LRUCache } from "lru-cache";
 import { logRequest, logResponse, logError, normalizeRequestId } from "@/lib/logger";
-import { generateRequestId } from "@/lib/requestId";
+import { generateRequestId, isValidRequestId } from "@/lib/requestId";
+import { API_REQUEST_ID_HEADER } from "@/lib/api/headers";
 
 // In-memory metrics store
 const metrics: Record<string, { count: number; errorCount: number }> = {};
@@ -28,6 +29,7 @@ const CORS_ALLOWED_METHODS = [
 const CORS_ALLOWED_HEADERS = [
   "Content-Type",
   "Authorization",
+  API_REQUEST_ID_HEADER,
   "X-Requested-With",
 ];
 const MAX_BODY_SIZE = parseInt(process.env.API_MAX_BODY_SIZE || "1048576", 10); // Default 1MB
@@ -181,10 +183,14 @@ export async function middleware(request: NextRequest) {
   const start = Date.now();
   const method = request.method;
   const url = request.nextUrl.pathname;
-  const requestId = generateRequestId();
-  const isApiRoute = url.startsWith("/api/");
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const isApiRoute = url.startsWith("/api");
+  const incomingRequestId = request.headers.get(API_REQUEST_ID_HEADER);
+  const requestId =
+    incomingRequestId && isValidRequestId(incomingRequestId)
+      ? incomingRequestId
+      : generateRequestId();
 
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
 

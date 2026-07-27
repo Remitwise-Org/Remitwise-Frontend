@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const layoutConfig = require('./lib/config/layout.json');
+
 module.exports = {
   darkMode: ['class'],
   content: [
@@ -10,12 +12,13 @@ module.exports = {
     extend: {
       // Custom responsive breakpoints for mobile-first design
       screens: {
-        '320': '320px',      // iPhone SE (smallest mobile)
-        '375': '375px',      // iPhone 14 (primary mobile target)
-        '450': '450px',      // Foldables and larger phones
-        'tablet': '768px',   // iPad portrait
-        'laptop': '1024px',  // iPad landscape
-        'desktop': '1440px', // Desktop standard
+        '320': `${layoutConfig.BREAKPOINTS.XS}px`,
+        '375': `${layoutConfig.BREAKPOINTS.SM}px`,
+        '450': `${layoutConfig.BREAKPOINTS.MD}px`,
+        'tablet': `${layoutConfig.BREAKPOINTS.TABLET}px`,
+        'laptop': `${layoutConfig.BREAKPOINTS.LAPTOP}px`,
+        'desktop': `${layoutConfig.BREAKPOINTS.DESKTOP}px`,
+        'tall': { 'raw': `(min-height: ${layoutConfig.TALL_SCREEN_MIN_HEIGHT}px)` },
       },
       
       // Semantic spacing tokens for design system

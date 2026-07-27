@@ -10,6 +10,7 @@ import { useClientTranslator } from "@/lib/i18n/client";
 import { buildChartImageLabel, buildChartSummary } from "@/lib/a11y/chart";
 import { useWidgetDeepLink } from "@/lib/hooks/useWidgetDeepLink";
 import { WIDGET_IDS } from "@/lib/config/widgets";
+import { useSaveData } from "@/lib/hooks/useSaveData";
 
 const data = [
   { name: "Remittances", value: 58, amount: "$3,240", displayPercent: "57.5%", color: "#dc2626" },
@@ -54,6 +55,7 @@ function MoneyDistributionWidget({
   const [retryKey, setRetryKey] = useState(0);
   const summaryId = useId();
   const { t } = useClientTranslator();
+  const saveData = useSaveData();
 
   // Deep-link: scrolls & highlights this widget when ?widget=money-distribution
   const widgetRef = useWidgetDeepLink(WIDGET_IDS.MONEY_DISTRIBUTION);
@@ -113,17 +115,56 @@ function MoneyDistributionWidget({
         <WidgetEmptyState icon={PieChartIcon} title="No distribution data yet" description="Set up your money split to see how your funds are allocated." ctaLabel="Set up your split" ctaHref="/split" />
       ) : (
         <div className="mt-8 flex flex-col gap-10 items-start">
-          <div className="h-[280px] w-full" role="img" aria-label={ariaLabel} aria-describedby={summaryId}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart aria-hidden="true">
-                <Pie data={distributionData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={110} innerRadius={0} startAngle={90} endAngle={-270} labelLine={false} label={renderLabel} stroke="rgba(255,255,255,0.35)" strokeWidth={1}>
-                  {distributionData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          {saveData ? (
+            /* Save-Data fallback: bar list, no PieChart SVG or animation cost */
+            <ul className="w-full space-y-3" aria-label={ariaLabel}>
+              {distributionData.map((item) => (
+                <li key={item.name}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-white flex items-center gap-2">
+                      <span
+                        className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: item.color }}
+                        aria-hidden="true"
+                      />
+                      {item.name}
+                    </span>
+                    <span className="text-sm font-bold text-white">
+                      {item.amount}{' '}
+                      <span className="text-xs text-white/40 font-normal">
+                        ({item.displayPercent ?? `${item.value}%`})
+                      </span>
+                    </span>
+                  </div>
+                  <div
+                    className="w-full bg-white/5 h-2 rounded-full overflow-hidden"
+                    role="presentation"
+                  >
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${item.value}%`,
+                        backgroundColor: item.color,
+                      }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            /* Full interactive PieChart */
+            <div className="h-[280px] w-full" role="img" aria-label={ariaLabel} aria-describedby={summaryId}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart aria-hidden="true">
+                  <Pie data={distributionData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={110} innerRadius={0} startAngle={90} endAngle={-270} labelLine={false} label={renderLabel} stroke="rgba(255,255,255,0.35)" strokeWidth={1}>
+                    {distributionData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
 
           <p id={summaryId} className="sr-only">{summaryText}</p>
 

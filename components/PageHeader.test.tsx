@@ -42,4 +42,20 @@ describe('PageHeader', () => {
     fireEvent.click(screen.getByRole('button', { name: /go back/i }))
     expect(back).toHaveBeenCalledTimes(1)
   })
+
+  it('applies sticky classes on tall screens', () => {
+    render(
+      <PageHeader
+        title="Bills"
+        subtitle="Manage your bills"
+        ctaLabel="Add Bill"
+      />
+    )
+
+    const headerElement = screen.getByRole('banner')
+    expect(headerElement).toHaveClass('tall:sticky')
+    expect(headerElement).toHaveClass('tall:top-16')
+    expect(headerElement).toHaveClass('375:tall:top-20')
+    expect(headerElement).toHaveClass('tall:z-40')
+  })
 })

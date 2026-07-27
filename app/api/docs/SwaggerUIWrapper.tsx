@@ -6,6 +6,9 @@ import SwaggerUI from 'swagger-ui-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import PageHeadingLink from '@/components/PageHeadingLink';
+import layoutConfig from '@/lib/config/layout.json';
+
+const { TABLET } = layoutConfig.BREAKPOINTS;
 
 type SwaggerUIWrapperProps = {
   specUrl: string;
@@ -288,7 +291,7 @@ export default function SwaggerUIWrapper({ specUrl }: SwaggerUIWrapperProps) {
         }
         
         /* Responsive adjustments */
-        @media (max-width: 768px) {
+        @media (max-width: ${TABLET}px) {
           .swagger-ui-container .swagger-ui .opblock-summary {
             flex-direction: column;
             align-items: flex-start;

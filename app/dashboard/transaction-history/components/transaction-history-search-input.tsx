@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
+import layoutConfig from "@/lib/config/layout.json";
+
+const { MOBILE_MAX_WIDTH } = layoutConfig.BREAKPOINTS;
 
 interface TransactionHistorySearchInputProps {
   value?: string;
@@ -21,7 +24,7 @@ const TransactionHistorySearchInput = ({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`);
     const updateMatch = () => setIsMobile(mediaQuery.matches);
 
     updateMatch();

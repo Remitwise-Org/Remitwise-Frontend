@@ -20,6 +20,7 @@ interface WhatsNewContextValue {
     readIds: Set<string>;
     unreadCount: number;
     markAllRead: () => void;
+    replay: () => void;
 }
 
 const WhatsNewContext = createContext<WhatsNewContextValue | null>(null);
@@ -80,9 +81,19 @@ export function WhatsNewProvider({ children }: { children: React.ReactNode }) {
     const close = useCallback(() => setIsOpen(false), []);
     const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
 
+    const replay = useCallback(() => {
+        setLastSeenId(null);
+        try {
+            localStorage.removeItem(STORAGE_KEY);
+        } catch {
+            // ignore storage errors
+        }
+        setIsOpen(true);
+    }, []);
+
     return (
         <WhatsNewContext.Provider
-            value={{ isOpen, open, close, toggle, entries: CHANGELOG, readIds, unreadCount, markAllRead }}
+            value={{ isOpen, open, close, toggle, entries: CHANGELOG, readIds, unreadCount, markAllRead, replay }}
         >
             {children}
         </WhatsNewContext.Provider>

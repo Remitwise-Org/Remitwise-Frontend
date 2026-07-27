@@ -46,6 +46,13 @@
  */
 
 import { sessionHandler } from './sessionHandler';
+import { createApiRequestHeaders, setApiClientAuthToken } from './apiHeaders';
+
+export {
+  API_AUTHORIZATION_HEADER,
+  API_REQUEST_ID_HEADER,
+  setApiClientAuthToken,
+} from './apiHeaders';
 
 export interface ApiClientOptions extends RequestInit {
   /** Max retry attempts for idempotent (GET/HEAD) requests. Ignored for writes. Default 3. */
@@ -264,7 +271,13 @@ async function fetchWithRetry(url: string, options: ApiClientOptions): Promise<R
  * @returns The raw `Response`, or `null` when the session-expiry flow has already been triggered.
  */
 async function request(url: string, options?: ApiClientOptions): Promise<Response | null> {
-  const response = await fetchWithRetry(url, options || {});
+  // Create these once per logical request. Retries and the one-time session
+  // refresh replay therefore carry the same correlation ID.
+  const requestOptions: ApiClientOptions = {
+    ...(options ?? {}),
+    headers: createApiRequestHeaders(options?.headers),
+  };
+  const response = await fetchWithRetry(url, requestOptions);
 
   if (response && response.headers && typeof window !== 'undefined') {
     const requestId = response.headers.get('x-request-id') ||
@@ -283,7 +296,7 @@ async function request(url: string, options?: ApiClientOptions): Promise<Respons
       const refreshed = await sessionHandler.refreshSession();
       if (refreshed) {
         // Retry original request once
-        return request(url, { ...options, _isRetry: true });
+        return request(url, { ...requestOptions, _isRetry: true });
       }
     }
 
@@ -439,19 +452,5 @@ export const apiClient = {
   patch,
   delete: del,
   getJson,
-  // Recurring schedule methods
-  getRecurringSchedules: (options) => apiClient.getJson('/api/remittance/recurring', options),
-  createRecurringSchedule: (payload, options) => apiClient.post('/api/remittance/recurring', { ...options, body: JSON.stringify(payload) }),
-  pauseRecurringSchedule: (id, options) => apiClient.patch(`/api/remittance/recurring/${id}`, { ...options, body: JSON.stringify({ action: 'pause' }) }),
-  resumeRecurringSchedule: (id, options) => apiClient.patch(`/api/remittance/recurring/${id}`, { ...options, body: JSON.stringify({ action: 'resume' }) }),
-  deleteRecurringSchedule: (id, options) => apiClient.del(`/api/remittance/recurring/${id}`, options),
-
-  request,
-  get,
-  head,
-  post,
-  put,
-  patch,
-  delete: del,
-  getJson,
+  setAuthToken: setApiClientAuthToken,
 };

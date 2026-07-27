@@ -53,7 +53,7 @@ interface BuildRemittanceResponse {
 
 // ── Validation ────────────────────────────────────────────────────────────────
 
-export function validateBuildRequest(body: unknown): BuildRemittanceRequest {
+function validateBuildRequest(body: unknown): BuildRemittanceRequest {
   if (!body || typeof body !== 'object') {
     throw new Error('Request body must be a JSON object');
   }

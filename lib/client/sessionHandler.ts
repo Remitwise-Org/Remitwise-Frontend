@@ -205,5 +205,3 @@ export const sessionHandler: SessionHandler = {
   dispatchSessionExpiring,
   clearAuthState,
 };
-
-export type { SessionHandler };

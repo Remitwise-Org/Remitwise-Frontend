@@ -72,6 +72,8 @@ export default function FAQSection() {
                                 onClick={() => toggleFAQ(index)}
                                 className="w-full flex items-center justify-between p-5 text-left bg-[#0f0f0f] hover:bg-[#1a1a1a] transition-colors focus:outline-none"
                                 aria-expanded={openIndex === index}
+                                aria-controls={`faq-panel-${index}`}
+                                id={`faq-button-${index}`}
                             >
                                 <span className="text-white font-medium text-lg">
                                     {item.question}
@@ -79,9 +81,14 @@ export default function FAQSection() {
                                 <ChevronDown
                                     className={`w-5 h-5 text-white transition-transform duration-300 ${openIndex === index ? "rotate-180" : ""
                                         }`}
+                                    aria-hidden="true"
                                 />
                             </button>
                             <div
+                                id={`faq-panel-${index}`}
+                                role="region"
+                                aria-labelledby={`faq-button-${index}`}
+                                hidden={openIndex !== index}
                                 className={`overflow-hidden transition-[max-height] duration-500 ease-in-out ${openIndex === index ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
                                     }`}
                             >
