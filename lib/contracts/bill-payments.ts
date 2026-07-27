@@ -18,6 +18,8 @@ export interface Bill {
   dueDate: string;
   recurring: boolean;
   isRecurring?: boolean;
+  recurrenceLabel?: string;
+  nextOccurrence?: string;
   // include presentation statuses used by the UI
   status: "paid" | "unpaid" | "cancelled" | "overdue" | "urgent" | "upcoming";
 }

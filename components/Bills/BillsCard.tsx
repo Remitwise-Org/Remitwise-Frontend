@@ -96,7 +96,7 @@ export function BillCards({ bill, density = "comfortable" }: { bill: Bill; densi
                         {bill.name}
                     </h3>
                     <span className="text-xs text-white/40 truncate">
-                        Bill • Due {bill.dueDate}
+                        Bill • Due {bill.dueDate}{bill.recurring ? ' • Recurring' : ''}
                     </span>
                 </div>
 

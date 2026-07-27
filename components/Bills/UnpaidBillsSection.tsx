@@ -21,7 +21,7 @@ export function UnpaidBillsSection({ bills }: { bills: Bill[] }) {
                         Unpaid Bills
                     </h2>
                     <p className="font-normal text-sm leading-5 tracking-[-0.150391px] text-white/40">
-                        {unpaidBills.length} bills pending payment
+                        {unpaidBills.length} bills pending payment{unpaidBills.filter(b => b.recurring).length > 0 ? ` — ${unpaidBills.filter(b => b.recurring).length} recurring` : ''}
                     </p>
                 </div>
             </div>
