@@ -58,6 +58,7 @@ const WalletButton = () => {
       setIsConnecting(true);
       await connect();
       setIsOpen(false);
+      buttonRef.current?.focus();
     } finally {
       setIsConnecting(false);
     }

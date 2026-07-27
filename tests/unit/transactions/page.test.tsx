@@ -2,6 +2,7 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { DensityProvider } from "@/lib/context/DensityContext";
+import { ToastProvider } from "@/lib/context/ToastContext";
 import TransactionsPage from "@/app/transactions/page";
 
 // Mock URL methods
@@ -10,13 +11,15 @@ const revokeObjectURLMock = vi.fn();
 
 describe("TransactionsPage Export Component Integration", () => {
   beforeEach(() => {
-    vi.stubGlobal("URL", {
-      createObjectURL: createObjectURLMock,
-      revokeObjectURL: revokeObjectURLMock,
-    });
+    createObjectURLMock.mockClear();
+    revokeObjectURLMock.mockClear();
+    vi.spyOn(URL, "createObjectURL").mockImplementation(createObjectURLMock);
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(revokeObjectURLMock);
     // Mock anchor click behavior
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     vi.useFakeTimers();
+    // Wednesday so sample rows land in Today / This Week / Earlier
+    vi.setSystemTime(new Date(2026, 6, 22, 15, 0, 0));
   });
 
   afterEach(() => {
@@ -26,9 +29,11 @@ describe("TransactionsPage Export Component Integration", () => {
 
   const renderComponent = () => {
     return render(
-      <DensityProvider>
-        <TransactionsPage />
-      </DensityProvider>
+      <ToastProvider>
+        <DensityProvider>
+          <TransactionsPage />
+        </DensityProvider>
+      </ToastProvider>
     );
   };
 
@@ -109,11 +114,12 @@ describe("TransactionsPage Export Component Integration", () => {
     fireEvent.click(dateSort);
     expect(screen.getByRole("button", { name: /date ascending/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Split" }));
+    fireEvent.click(screen.getByRole("button", { name: "Completed" }));
 
-    const firstSplit = screen.getByText("#TX010");
-    const secondSplit = screen.getByText("#TX002");
-    expect(firstSplit.compareDocumentPosition(secondSplit)).toBe(
+    // Within Earlier, ascending date keeps older TX010 before newer TX007
+    const older = screen.getByText("#TX010");
+    const newer = screen.getByText("#TX007");
+    expect(older.compareDocumentPosition(newer)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING
     );
   });
@@ -128,9 +134,10 @@ describe("TransactionsPage Export Component Integration", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Completed" }));
 
+    // Within Earlier, descending amount keeps TX007 (+75) before TX010 (-800)
     const received = screen.getByText("#TX007");
-    const insurance = screen.getByText("#TX004");
-    expect(received.compareDocumentPosition(insurance)).toBe(
+    const split = screen.getByText("#TX010");
+    expect(received.compareDocumentPosition(split)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING
     );
   });
@@ -161,5 +168,32 @@ describe("TransactionsPage Export Component Integration", () => {
     // Click outside
     fireEvent.mouseDown(document.body);
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("groups results into Today, This Week, and Earlier", () => {
+    renderComponent();
+    expect(screen.getByRole("heading", { name: "Today" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "This Week" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Earlier" })).toBeInTheDocument();
+  });
+
+  it("shows a distinct no-results state when filters match nothing", () => {
+    renderComponent();
+    const searchInput = screen.getByPlaceholderText(
+      /search id, recipient, type, status, amount/i
+    );
+    fireEvent.change(searchInput, {
+      target: { value: "NonExistentTransactionXYZ" },
+    });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(
+      screen.getByText("No matching transactions")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No transactions yet")).not.toBeInTheDocument();
   });
 });

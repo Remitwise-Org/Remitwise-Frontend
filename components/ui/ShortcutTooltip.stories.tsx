@@ -118,7 +118,7 @@ export const AllPositions: Story = {
           side={side}
         >
           <button
-            className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-600 hover:bg-blue-700 text-white border border-blue-500 transition-colors"
+            className="flex items-center justify-center w-10 h-10 rounded-lg bg-brand-red hover:bg-brand-redHover text-white border border-red-500 transition-colors focus-visible:outline-none focus-visible:ring-focus focus-visible:ring-red-400 focus-visible:ring-offset-focus focus-visible:ring-offset-black"
           >
             {side[0].toUpperCase()}
           </button>
