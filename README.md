@@ -47,6 +47,8 @@ These pages currently serve as placeholder mocks. Each page demonstrates the lay
 
 Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners. For detailed guidelines and implementation patterns on all UI states (Default, Error, Disabled, and Loading), see [docs/component-states.md](docs/component-states.md).
 
+Empty-state copy and layout are documented in the [empty states gallery](docs/EMPTY_STATES.md) (visual cards + CTA text). For the icon/props catalog used when adding a new empty state, see [docs/EMPTY_STATE_ILLUSTRATIONS.md](docs/EMPTY_STATE_ILLUSTRATIONS.md).
+
 ## Performance Budgets
 
 Every page route has a per-route load-time budget based on its user impact tier. These budgets are enforced in CI via Lighthouse E2E tests and monitored in production through structured request logs. For the full route-to-budget map, measurement approach, and how to add budgets for new routes, see [docs/LOAD_TIME_BUDGETS.md](docs/LOAD_TIME_BUDGETS.md).
