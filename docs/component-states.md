@@ -84,7 +84,7 @@ export function WidgetLoading() {
 ```
 
 ### 2.2 Button Loading Spinner
-When submitting forms, the action button should display a loading spinner and transition text while disabling interactions.
+When submitting forms, the action button should display a loading spinner and transition text while disabling interactions. Use a shared loader icon, expose `aria-busy` for the busy state, and keep the action disabled until the request completes.
 
 #### Usage Example:
 ```tsx
