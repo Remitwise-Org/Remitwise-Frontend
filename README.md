@@ -16,9 +16,10 @@ This is a Next.js-based frontend skeleton that provides the UI structure for all
 - [Period lifecycle and state machine](./docs/PERIOD_LIFECYCLE.md)
 - [Internal jargon glossary (contributors)](./docs/GLOSSARY.md)
 - [Hydration mismatch patterns and fixes](./docs/HYDRATION_MISMATCH.md)
+- [TypeScript conventions (ambient types, module augmentation, never-narrow)](./docs/TYPESCRIPT_CONVENTIONS.md)
 
 - **Next.js 14** - React framework with App Router
-- **TypeScript** - Type safety
+- **TypeScript** - Type safety — see [docs/TYPESCRIPT_CONVENTIONS.md](docs/TYPESCRIPT_CONVENTIONS.md) for ambient types, module augmentation, and never-narrow patterns
 - **Tailwind CSS** - Utility-first styling
 - **Lucide React** - Icon library — see [docs/ICON_SYSTEM.md](docs/ICON_SYSTEM.md) for usage, sizing, and adding custom icons
 
