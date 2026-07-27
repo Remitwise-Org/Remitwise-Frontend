@@ -127,6 +127,19 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 space-y-6">
+      <div className="bg-brand-red/10 border border-brand-red/20 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-lg font-bold text-white mb-1">Complete your setup</h3>
+          <p className="text-gray-300 text-sm">You haven&apos;t configured your smart split or first goal yet. Set them up to automate your remittances.</p>
+        </div>
+        <a 
+          href="/onboarding" 
+          className="shrink-0 bg-brand-red hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-red focus:ring-offset-2 focus:ring-offset-bg1"
+        >
+          Continue Onboarding
+        </a>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title={t('dashboard.totalSent')}
