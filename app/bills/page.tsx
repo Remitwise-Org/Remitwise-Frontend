@@ -166,7 +166,7 @@ export default function Bills() {
 		}
 	}, [toast, bills, t]);
 
-	const fetchBillsData = async (signal?: AbortSignal) => {
+	const fetchBillsData = useCallback(async (signal?: AbortSignal) => {
 		try {
 			const [billsRes, statsRes] = await Promise.all([
 				apiClient.get('/api/bills', { signal }),
