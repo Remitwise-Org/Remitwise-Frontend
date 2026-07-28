@@ -14,5 +14,5 @@ export const SafeImage = ({
   loading = "lazy",
   ...props
 }: SafeImageProps) => {
-  return <Image loading={loading} {...props} />;
+  return <Image loading={loading} {...props} alt={props.alt} />;
 };

@@ -1,10 +1,10 @@
 import { render } from "@testing-library/react";
-import { SafeImage } from "../SafeImage";
+import { SafeImage } from "./SafeImage";
 import { describe, it, expect, vi } from "vitest";
 
 // Mock next/image
 vi.mock("next/image", () => ({
-  default: (props: any) => <img {...props} />,
+  default: (props: any) => <image alt={props.alt || ""} {...props} />,
 }));
 
 describe("SafeImage", () => {
