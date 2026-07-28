@@ -2,6 +2,8 @@
 
 This document catalogs every empty state in RemitWise: which Lucide icon acts as the illustration, what copy is shown, and whether a call-to-action is present. Audience: **contributors** adding new views or changing existing ones.
 
+For a visual gallery of the same states (screenshot-style cards with copy), see [EMPTY_STATES.md](EMPTY_STATES.md).
+
 ---
 
 ## How empty states work
@@ -427,6 +429,7 @@ The table below makes the semantic intent of each icon explicit so future additi
 
 ## Related documentation
 
+- [Empty States Gallery](EMPTY_STATES.md) — screenshot-style cards of every empty state with title, description, and CTA copy.
 - [`components/ui/WidgetEmptyState.tsx`](../components/ui/WidgetEmptyState.tsx) — primary empty-state component source.
 - [`components/ui/WidgetStates.tsx`](../components/ui/WidgetStates.tsx) — legacy `WidgetEmptyState` and `WidgetErrorState`.
 - [Component States Guide](COMPONENT_STATES.md) — full guide to Default, Hover, Focus, Disabled, Error, and Loading states.

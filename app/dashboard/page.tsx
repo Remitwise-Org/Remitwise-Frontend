@@ -56,89 +56,45 @@ function StatGrid({ data }: { data: DashboardResponse }) {
       : undefined;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <StatCard
-        title="Total Sent"
-        value={totalSent}
-        icon={<Send className="w-5 h-5" />}
-        detail2={txCount}
-      />
-      <StatCard
-        title="Savings"
-        value={savingsTotal}
-        icon={<PiggyBank className="w-5 h-5" />}
-      />
-      <StatCard
-        title="Bills Paid"
-        value={billsAmount}
-        icon={<FileText className="w-5 h-5" />}
-        detail2={billsCount}
-      />
-      <StatCard
-        title="Insurance"
-        value={premium}
-        icon={<Shield className="w-5 h-5" />}
-        detail2={policiesCount}
-      />
-    </div>
-  );
-}
-
-function LoadingSkeleton() {
-  return (
-    <SkeletonGroup
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-      label="Loading dashboard"
-    >
-      {Array.from({ length: 4 }).map((_, i) => (
-        <SkeletonCard key={i} variant="stat" />
-      ))}
-    </SkeletonGroup>
-  );
-}
-
-function ErrorState({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div className="rounded-2xl border border-red-900/40 bg-red-950/20 p-6 text-center space-y-3">
-      <p className="text-sm text-red-400">Unable to load data. Check your connection and try again.</p>
-      <button
-        type="button"
-        aria-label="Retry loading data"
-        onClick={onRetry}
-        className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 transition-colors"
-      >
-        <RefreshCw className="w-4 h-4" aria-hidden="true" />
-        Retry
-      </button>
-    </div>
-  );
-}
-
-function StaleBanner({ onDismiss, onRefresh }: { onDismiss: () => void; onRefresh: () => void }) {
-  return (
-    <div
-      role="status"
-      className="flex items-center justify-between gap-3 rounded-xl border border-amber-800/40 bg-amber-950/20 px-4 py-2.5 text-sm text-amber-400"
-    >
-      <span>Showing cached data — live fetch failed.</span>
-      <div className="flex items-center gap-2 shrink-0">
-        <button
-          type="button"
-          aria-label="Refresh data"
-          onClick={onRefresh}
-          className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-amber-300 hover:bg-amber-900/30 transition-colors"
+    <div className="p-6 space-y-6">
+      <div className="bg-brand-red/10 border border-brand-red/20 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-lg font-bold text-white mb-1">Complete your setup</h3>
+          <p className="text-gray-300 text-sm">You haven&apos;t configured your smart split or first goal yet. Set them up to automate your remittances.</p>
+        </div>
+        <a 
+          href="/onboarding" 
+          className="shrink-0 bg-brand-red hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-red focus:ring-offset-2 focus:ring-offset-bg1"
         >
-          <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
-          Refresh
-        </button>
-        <button
-          type="button"
-          aria-label="Dismiss stale data warning"
-          onClick={onDismiss}
-          className="rounded-lg p-1 hover:bg-amber-900/30 transition-colors"
-        >
-          <X className="w-3.5 h-3.5" aria-hidden="true" />
-        </button>
+          Continue Onboarding
+        </a>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title={t('dashboard.totalSent')}
+          value={totalSentValue}
+          icon={<Send className="w-5 h-5" />}
+          detail2={transfersDetail}
+        />
+        <StatCard
+          title={t('dashboard.savings')}
+          value={savingsValue}
+          icon={<PiggyBank className="w-5 h-5" />}
+          detail2={goalsDetail}
+        />
+        <StatCard
+          title={t('dashboard.billsPaid')}
+          value={billsValue}
+          icon={<FileText className="w-5 h-5" />}
+          detail2={billsDetail}
+        />
+        <StatCard
+          title={t('dashboard.insurance')}
+          value={insuranceValue}
+          icon={<Shield className="w-5 h-5" />}
+          detail2={policiesDetail}
+        />
       </div>
     </div>
   );

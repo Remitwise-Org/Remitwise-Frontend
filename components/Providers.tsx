@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from "react";
 import { WalletProvider, useWallet } from "stellar-wallet-kit";
 import { DensityProvider } from "@/lib/context/DensityContext";
+import { TelemetryProvider } from "@/lib/context/TelemetryContext";
 import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { ToastProvider } from "@/lib/context/ToastContext";
 import { NetworkStatusProvider } from "@/lib/context/NetworkStatusContext";
@@ -42,16 +43,18 @@ export default function Providers({ children }: { children: ReactNode }) {
       <ApiClientAuthBridge />
       <ToastProvider>
         <DensityProvider>
-          <AsyncOperationsProvider>
-            <SessionExpiryProvider>
-              <ShortcutHelpProvider>
-                <LayoutWrapper>{children}</LayoutWrapper>
-                <ToastRegion />
-                <CommandPalette />
-                <ShortcutHelpModal />
-              </ShortcutHelpProvider>
-            </SessionExpiryProvider>
-          </AsyncOperationsProvider>
+          <TelemetryProvider>
+            <AsyncOperationsProvider>
+              <SessionExpiryProvider>
+                <ShortcutHelpProvider>
+                  <LayoutWrapper>{children}</LayoutWrapper>
+                  <ToastRegion />
+                  <CommandPalette />
+                  <ShortcutHelpModal />
+                </ShortcutHelpProvider>
+              </SessionExpiryProvider>
+            </AsyncOperationsProvider>
+          </TelemetryProvider>
         </DensityProvider>
       </ToastProvider>
     </WalletProvider>

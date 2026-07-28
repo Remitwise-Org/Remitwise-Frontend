@@ -2,7 +2,7 @@
 
 Frontend application for the RemitWise remittance and financial planning platform.
 
-> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers. For data fetching and caching patterns, see [docs/CACHE_STRATEGY.md](docs/CACHE_STRATEGY.md). For SSR vs. client-only patterns, see [docs/SSR_PATTERNS.md](docs/SSR_PATTERNS.md).
+> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers, and [docs/UX_ANTI_PATTERNS.md](docs/UX_ANTI_PATTERNS.md) for interaction patterns we intentionally avoid. For data fetching and caching patterns, see [docs/CACHE_STRATEGY.md](docs/CACHE_STRATEGY.md). For SSR vs. client-only patterns, see [docs/SSR_PATTERNS.md](docs/SSR_PATTERNS.md).
 
 ## Overview
 
@@ -34,7 +34,7 @@ These pages currently serve as placeholder mocks. Each page demonstrates the lay
 ### Shared Components
 
 - **AddressDisplay**: A component for displaying long strings like Stellar addresses, featuring truncation, a copy-to-clipboard button, and a tooltip showing the full address on hover.
-- **Global Search**: The `/search?q=...` route surfaces matching invoice, address, and settings results from the same search vocabulary used in the command palette.
+- **Global Search**: The `/search?q=...` route surfaces matching invoice, address, and settings results from the same search vocabulary used in the command palette — see [docs/SEARCH_UX.md](docs/SEARCH_UX.md) for how instant vs. submit search works.
 
 1. **Dashboard** - Overview of remittances, savings, bills, and insurance — see [docs/DASHBOARD_LAYOUT_RULES.md](docs/DASHBOARD_LAYOUT_RULES.md) for the intended column ratios, widget priority, and mobile stacking rules
 2. **Send Money** - Remittance sending interface with automatic split preview
@@ -47,6 +47,8 @@ These pages currently serve as placeholder mocks. Each page demonstrates the lay
 ## Loading States
 
 Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners. For detailed guidelines and implementation patterns on all UI states (Default, Error, Disabled, and Loading), see [docs/component-states.md](docs/component-states.md).
+
+Empty-state copy and layout are documented in the [empty states gallery](docs/EMPTY_STATES.md) (visual cards + CTA text). For the icon/props catalog used when adding a new empty state, see [docs/EMPTY_STATE_ILLUSTRATIONS.md](docs/EMPTY_STATE_ILLUSTRATIONS.md).
 
 ## Performance Budgets
 
@@ -263,6 +265,7 @@ remitwise-frontend/
 │   └── auth.ts              # Auth middleware
 ├── docs/                    # Documentation
 │   ├── API_ROUTES.md        # API routes documentation
+│   ├── PROP_CONVENTIONS.md  # Component prop naming, ordering, and boolean conventions
 │   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
 │   ├── contract-cache.md    # Contract caching architecture and guidelines
 │   ├── frame-budget-rules.md    # Frame budget performance guidelines
@@ -826,6 +829,8 @@ MIT
 - **How to introduce v2:** Create a new `app/api/v2/` namespace containing the new behavior. Update platform routes or API gateway rules to expose `/api/v2/...` and leave the rewrite in place so `/api/*` stays mapped to the last published stable version (v1) until you intentionally change it.
 
 **Deprecation Policy**
+
+> See **[docs/DEPRECATIONS.md](docs/DEPRECATIONS.md)** for the current list of deprecated components, utilities, hooks, and API routes — every entry includes a concrete before/after migration example.
 
 - When a new major version (e.g. v2) is released, older major versions will be supported for a minimum of **6 months** before scheduled removal. During that window:
   - Maintain security fixes and critical bug fixes for the deprecated major version.
