@@ -31,6 +31,7 @@ export default function LocaleSwitcher() {
       // Best-effort: cookie is already set, so locale persists locally even
       // if the preferences API call fails.
     }
+    console.info("[Breadcrumb] locale=info locale.switch", locale, "→", newLocale);
     window.location.reload();
   };
 
