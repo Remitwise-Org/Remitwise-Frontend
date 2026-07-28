@@ -33,6 +33,7 @@ Local storage persists data across browser sessions and tab closures. It is read
 |---|---|---|---|
 | `theme-preference` | Indefinite | Stores user visual theme choice (`dark` or `light`). | Cleared via developer tools or theme toggle in settings. |
 | `display-density` | Indefinite | Stores user layout density choice (`comfortable` or `compact`). | Cleared via developer tools or layout selector in settings. |
+| `developer-telemetry-enabled` | Indefinite | Stores the developer telemetry toggle state (`true` or `false`). When `true`, structured debug events are printed to the browser console. Defaults to `false` (off). | Toggled off via the **Developer Telemetry** switch in Settings → Preferences, or cleared via developer tools. |
 | `redirect_after_auth` | Temporary | Stores the path the user visited before authentication to redirect them back after logging in. | Deleted automatically upon login redirection. |
 | `session_expiry` | Temporary | Stores session expiry timestamp for client-side warning notifications. | Deleted automatically on logout. |
 | `remitwise_whats_new_last_seen` | Indefinite | Tracks the latest seen feature announcement ID. | Managed automatically by the application. |

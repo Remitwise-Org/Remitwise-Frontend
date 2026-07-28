@@ -2,9 +2,9 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Copy,
-  Wallet,
   User,
   Settings,
   LogOut,
@@ -201,8 +201,15 @@ export default function WalletDropdown({
       >
         <div className="border-b border-white/10 p-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-brand-red/15 text-brand-red">
-              <Wallet className="h-5 w-5" aria-hidden="true" />
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-brand-red/15">
+              <Image
+                src="/logo-icon.svg"
+                width={24}
+                height={24}
+                alt=""
+                className="h-6 w-6"
+                aria-hidden="true"
+              />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-white" id="wallet-dropdown-title">

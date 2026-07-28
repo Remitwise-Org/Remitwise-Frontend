@@ -48,7 +48,7 @@ describe('RemittanceTrendChart - Accessibility', () => {
 
   it('should handle empty data gracefully', () => {
     render(<RemittanceTrendChart data={[]} />);
-    expect(screen.getByText(/No remittance data yet/)).toBeInTheDocument();
+    expect(screen.getByText(/No activity timeline/)).toBeInTheDocument();
   });
 
   it('should have no accessibility violations', async () => {
