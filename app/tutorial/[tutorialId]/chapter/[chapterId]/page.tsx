@@ -27,8 +27,8 @@ export default async function TutorialChapterPage({ params }: Props) {
   const chaptersCount = 5; // placeholder; replace with real length
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-bg1 py-7 375:py-8">
-      <main className="mx-auto max-w-7xl px-5 320:px-6 375:px-7 tablet:px-6 laptop:px-8">
+    <div className="min-h-screen overflow-x-hidden bg-bg1 py-7 sm:py-8">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <ChapterView
           tutorialId={tutorialId}
           chapterId={String(chapterIndex)}
