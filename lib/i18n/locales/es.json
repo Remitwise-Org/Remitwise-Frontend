@@ -6,10 +6,61 @@
   },
   "transactionHistory": {
     "title": "Historial de Transacciones",
+    "titleStandalone": "Transacciones",
+    "subtitleStandalone": "Filtra, busca y revisa actividad de Envío, Smart Split, Pagos y Seguros.",
     "empty": "No se encontraron transacciones",
     "amount": "Monto",
     "status": "Estado",
-    "date": "Fecha"
+    "date": "Fecha",
+    "export": "Exportar",
+    "filtersHeading": "Filtros y búsqueda",
+    "filtersHelper": "Combina tipo, estado, rango de fechas y búsqueda. Los filtros activos aparecen abajo.",
+    "searchStandalonePlaceholder": "Buscar id, destinatario, tipo, estado, monto",
+    "showing": "Mostrando {{count}} de {{total}}",
+    "results_one": "{{count}} transacción",
+    "results_many": "{{count}} transacciones",
+    "typeFilterLabel": "Tipo",
+    "statusFilterLabel": "Estado",
+    "dateRange": {
+      "label": "Rango de fechas",
+      "from": "Desde",
+      "to": "Hasta",
+      "clear": "Borrar rango de fechas"
+    },
+    "activeFilters": {
+      "label": "Filtros activos",
+      "none": "Ninguno",
+      "clearAll": "Borrar todo",
+      "clearSearch": "Borrar búsqueda",
+      "search": "Búsqueda: {{query}}",
+      "type": "Tipo: {{type}}",
+      "status": "Estado: {{status}}"
+    },
+    "sort": {
+      "label": "Ordenar",
+      "date": "Fecha",
+      "amount": "Monto",
+      "ascending": "ascendente",
+      "descending": "descendente"
+    },
+    "dateGroups": {
+      "today": "Hoy",
+      "todayHelper": "Transacciones de hoy",
+      "thisWeek": "Esta semana",
+      "thisWeekHelper": "Antes en esta semana (lun–dom, sin hoy)",
+      "earlier": "Anteriores",
+      "earlierHelper": "Antes de esta semana"
+    },
+    "emptyState": {
+      "title": "Aún no hay transacciones",
+      "description": "Cuando envíes dinero, pagues facturas o uses Smart Split, tu actividad aparecerá aquí.",
+      "cta": "Enviar dinero"
+    },
+    "noResults": {
+      "title": "Sin transacciones coincidentes",
+      "description": "Prueba a borrar filtros o ajustar la búsqueda para ver más resultados.",
+      "clearFilters": "Borrar filtros"
+    }
   },
   "dashboard": {
     "totalSent": "Total Enviado",

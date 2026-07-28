@@ -772,6 +772,7 @@ GET  /api/admin/audit         # Admin-only audit events
 
 Design token reference and migration guides:
 
+- [docs/SEMANTIC_TOKENS_AND_CONTRAST.md](docs/SEMANTIC_TOKENS_AND_CONTRAST.md) — contributor guide to semantic tokens, WCAG contrast ratio requirements, and how to verify and add colour tokens.
 - [docs/THEMING.md](docs/THEMING.md) — full catalogue of CSS custom properties, Tailwind color, spacing, focus-ring, and animation tokens with semantic roles and usage examples.
 - [docs/DESIGN_TOKEN_MIGRATION.md](docs/DESIGN_TOKEN_MIGRATION.md) — step-by-step guide for safely renaming or deprecating a token, including a PR checklist.
 

@@ -2,6 +2,8 @@
 
 This document maps the route structure, library layers, and key subsystems of the RemitWise Frontend. Read it alongside [CONTRIBUTING.md](../CONTRIBUTING.md) before making changes.
 
+For React performance habits (memoization boundaries, key selectors, event delegation) see [docs/performance-patterns.md](performance-patterns.md).
+
 ---
 
 ## Table of Contents

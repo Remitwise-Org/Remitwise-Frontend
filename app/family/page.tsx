@@ -129,7 +129,7 @@ export default function FamilyWallets() {
 
 								<button
 									type='submit'
-									className='w-full rounded-xl bg-red-600 px-6 py-3 font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60'
+									className='w-full rounded-xl bg-brand-red hover:bg-brand-redHover active:bg-red-800 px-6 py-3 font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:bg-red-600/40 disabled:text-white/60 focus-visible:outline-none focus-visible:ring-focus focus-visible:ring-red-400 focus-visible:ring-offset-focus focus-visible:ring-offset-black'
 									disabled>
 									{t("family_wallets.form.submit_button")}
 								</button>

@@ -5,8 +5,8 @@ import { NextRequest } from 'next/server';
 // Mocks
 // ---------------------------------------------------------------------------
 
-const mockIsAdminAuthorized = vi.hoisted(() => vi.fn<(req: NextRequest) => boolean>());
-const mockReplayDLQEvent = vi.hoisted(() => vi.fn<(id: string) => Promise<boolean>>());
+const mockIsAdminAuthorized = vi.hoisted(() => vi.fn<[NextRequest], boolean>());
+const mockReplayDLQEvent = vi.hoisted(() => vi.fn<[string], Promise<boolean>>());
 
 vi.mock('@/lib/admin/auth', () => ({
   isAdminAuthorized: mockIsAdminAuthorized,
@@ -30,8 +30,7 @@ function makeRequest(adminKey?: string): NextRequest {
 }
 
 function makeParams(id: string) {
-  // Next.js 15+ route handlers receive `params` as a Promise.
-  return { params: Promise.resolve({ id }) };
+  return { params: { id } };
 }
 
 // ---------------------------------------------------------------------------
