@@ -149,8 +149,6 @@ function ResponsiveWidget() {
 
 You can also pass an existing React ref or an element directly.
 
----
-
 ## `useSaveData`
 
 **File:** `lib/hooks/useSaveData.ts`

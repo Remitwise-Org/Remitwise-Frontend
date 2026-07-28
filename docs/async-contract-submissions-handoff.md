@@ -22,6 +22,59 @@ Stacking rules:
 - Compress queued and completed items into smaller cards instead of replacing the active item.
 - On mobile, render the same stack inline below the initiating form or modal footer instead of floating it off-screen.
 
+## Panel redesign (2026-07): spotlight + collapse
+
+`AsyncOperationsPanel` and `AsyncSubmissionStatus` were redesigned to stop the
+stacked rail from competing with the primary form for attention. The rules
+below supersede the older "always-stacked" description above where they
+conflict.
+
+Status tokens (`lib/asyncStatusTokens.ts`):
+- Both components now read color, icon, and badge copy for a status from one
+  shared table, `ASYNC_STATUS_VISUALS`, keyed by `active | queued | complete |
+  failed`. `AsyncSubmissionStatus`'s idle/pending/success/error states map onto
+  the same four tokens via `SUBMISSION_TO_ASYNC_TOKEN` (idle→queued,
+  pending→active, success→complete, error→failed), so a red pulsing treatment
+  always means "in flight" and an amber treatment always means "needs
+  attention," regardless of which component is rendering it.
+- `failed` uses a distinct `AlertCircle` icon (previously it reused the
+  `queued` clock icon, which blurred the two states).
+
+Active-item spotlight:
+- The active operation (if any) always renders in full — title, detail,
+  duration, and a pulsing "Live now" badge — directly under the queue header,
+  outside the collapsible section. It is never hidden by the collapse toggle.
+- This is the single most prominent element in the queue: larger icon well,
+  a ring border, and full (non-truncated) detail copy.
+
+Collapse/expand:
+- Queued, complete, and failed items collapse behind one toggle by default,
+  shown as a single summary row (e.g. "2 more items · 1 queued · 1 confirmed").
+  Expanding reveals compact rows for each; each row still has its own
+  per-item expand for detail + retry (failed only).
+- This replaces the previous `max-h-[220px] overflow-hidden` clipping, which
+  visually cut cards off without a clear affordance to see the rest.
+- Expand state persists per browser session via `sessionStorage
+  ('asyncPanelExpanded')`, unchanged from before.
+- When there is no active operation and no queue items, the panel shows a
+  single sentence explaining it will populate once a contract action starts,
+  instead of rendering an empty queue section.
+
+Placement (unchanged, restated for clarity):
+- Desktop (`xl:` and up): the panel lives in a sticky top-right rail
+  (`aside.xl:sticky.xl:top-6`) alongside the primary form.
+- Mobile/tablet: the same panel renders inline, stacked below the initiating
+  form, in normal document flow (no floating/fixed positioning).
+
+Accessibility:
+- A single `aria-live="polite"` region announces the active operation (or,
+  absent one, the newest queue item) as `"<title>: <badge>"` on every status
+  change — e.g. "Split configuration update: Live now" → "... : Confirmed".
+- Expand/collapse toggles use `aria-expanded` + `aria-controls` and never call
+  `.focus()` on any other element, so opening/closing the queue cannot steal
+  focus from wherever the user currently is (e.g. the form they're filling
+  in).
+
 Duration guidance:
 - Validation: 0-2 seconds
 - Contract build: 2-6 seconds

@@ -1,8 +1,8 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, Clock3, Loader2 } from "lucide-react";
 import { useAsyncOperations } from "@/lib/context/AsyncOperationsContext";
 import LiveRegion from "@/components/ui/LiveRegion";
+import { ASYNC_STATUS_VISUALS, SUBMISSION_TO_ASYNC_TOKEN } from "@/lib/asyncStatusTokens";
 
 interface AsyncSubmissionStatusProps {
         pending?: boolean; // Made optional
@@ -17,35 +17,26 @@ interface AsyncSubmissionStatusProps {
         errorTitle?: string;
 }
 
+// Labels here are distinct from the panel's queue badges (idle/pending/success/error
+// describe *this* submission, not a queue position) but the color/icon per state
+// is sourced from the same ASYNC_STATUS_VISUALS tokens as AsyncOperationsPanel so
+// the two components read as one system across Split and Bills.
 const statusStyles = {
         idle: {
-                Icon: Clock3,
-                cardClass: "border-white/[0.08] bg-black/20",
-                iconClass: "text-gray-300",
+                ...ASYNC_STATUS_VISUALS[SUBMISSION_TO_ASYNC_TOKEN.idle],
                 label: "Ready",
-                spin: false,
         },
         pending: {
-                Icon: Loader2,
-                cardClass:
-                        "border-red-500/20 bg-[linear-gradient(180deg,rgba(127,29,29,0.18),rgba(16,16,16,0.96))]",
-                iconClass: "text-red-200",
+                ...ASYNC_STATUS_VISUALS[SUBMISSION_TO_ASYNC_TOKEN.pending],
                 label: "In progress",
-                spin: true,
         },
         success: {
-                Icon: CheckCircle2,
-                cardClass: "border-emerald-500/20 bg-emerald-500/[0.08]",
-                iconClass: "text-emerald-300",
+                ...ASYNC_STATUS_VISUALS[SUBMISSION_TO_ASYNC_TOKEN.success],
                 label: "Complete",
-                spin: false,
         },
         error: {
-                Icon: AlertCircle,
-                cardClass: "border-amber-500/20 bg-amber-500/[0.08]",
-                iconClass: "text-amber-200",
+                ...ASYNC_STATUS_VISUALS[SUBMISSION_TO_ASYNC_TOKEN.error],
                 label: "Needs attention",
-                spin: false,
         },
 } as const;
 

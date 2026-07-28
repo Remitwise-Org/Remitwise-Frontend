@@ -1,5 +1,3 @@
-# Idempotency Contract & Documentation
-
 This document describes the idempotency subsystem that guards money-moving POST routes from duplicate execution.
 
 ---

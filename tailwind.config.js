@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 const layoutConfig = require('./lib/config/layout.json');
+const chartPalette = require('./lib/config/chartPalette.json');
 
 module.exports = {
   darkMode: ['class'],
@@ -48,6 +49,16 @@ module.exports = {
         focus: "4px",
       },
       colors: {
+        chart: {
+          1: chartPalette.colors[0],
+          2: chartPalette.colors[1],
+          3: chartPalette.colors[2],
+          4: chartPalette.colors[3],
+          5: chartPalette.colors[4],
+          6: chartPalette.colors[5],
+          7: chartPalette.colors[6],
+          8: chartPalette.colors[7],
+        },
         brand: {
           red: "#D72323",
           dark: "#0A0A0A",

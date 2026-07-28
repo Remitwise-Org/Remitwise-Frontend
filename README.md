@@ -2,7 +2,7 @@
 
 Frontend application for the RemitWise remittance and financial planning platform.
 
-> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers. For data fetching and caching patterns, see [docs/CACHE_STRATEGY.md](docs/CACHE_STRATEGY.md). For SSR vs. client-only patterns, see [docs/SSR_PATTERNS.md](docs/SSR_PATTERNS.md).
+> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers, and [docs/UX_ANTI_PATTERNS.md](docs/UX_ANTI_PATTERNS.md) for interaction patterns we intentionally avoid. For data fetching and caching patterns, see [docs/CACHE_STRATEGY.md](docs/CACHE_STRATEGY.md). For SSR vs. client-only patterns, see [docs/SSR_PATTERNS.md](docs/SSR_PATTERNS.md).
 
 ## Overview
 
@@ -19,7 +19,7 @@ This is a Next.js-based frontend skeleton that provides the UI structure for all
 - [Search UX: instant debounce, URL-submit, and recent results](./docs/SEARCH_UX.md)
 
 - **Next.js 14** - React framework with App Router
-- **TypeScript** - Type safety
+- **TypeScript** - Type safety — see [docs/TYPESCRIPT_CONVENTIONS.md](docs/TYPESCRIPT_CONVENTIONS.md) for ambient types, module augmentation, and never-narrow patterns
 - **Tailwind CSS** - Utility-first styling
 - **Lucide React** - Icon library — see [docs/ICON_SYSTEM.md](docs/ICON_SYSTEM.md) for usage, sizing, and adding custom icons
 
@@ -47,6 +47,8 @@ These pages currently serve as placeholder mocks. Each page demonstrates the lay
 ## Loading States
 
 Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners. For detailed guidelines and implementation patterns on all UI states (Default, Error, Disabled, and Loading), see [docs/component-states.md](docs/component-states.md).
+
+Empty-state copy and layout are documented in the [empty states gallery](docs/EMPTY_STATES.md) (visual cards + CTA text). For the icon/props catalog used when adding a new empty state, see [docs/EMPTY_STATE_ILLUSTRATIONS.md](docs/EMPTY_STATE_ILLUSTRATIONS.md).
 
 ## Performance Budgets
 
@@ -263,6 +265,7 @@ remitwise-frontend/
 │   └── auth.ts              # Auth middleware
 ├── docs/                    # Documentation
 │   ├── API_ROUTES.md        # API routes documentation
+│   ├── PROP_CONVENTIONS.md  # Component prop naming, ordering, and boolean conventions
 │   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
 │   ├── contract-cache.md    # Contract caching architecture and guidelines
 │   ├── frame-budget-rules.md    # Frame budget performance guidelines
@@ -826,6 +829,8 @@ MIT
 - **How to introduce v2:** Create a new `app/api/v2/` namespace containing the new behavior. Update platform routes or API gateway rules to expose `/api/v2/...` and leave the rewrite in place so `/api/*` stays mapped to the last published stable version (v1) until you intentionally change it.
 
 **Deprecation Policy**
+
+> See **[docs/DEPRECATIONS.md](docs/DEPRECATIONS.md)** for the current list of deprecated components, utilities, hooks, and API routes — every entry includes a concrete before/after migration example.
 
 - When a new major version (e.g. v2) is released, older major versions will be supported for a minimum of **6 months** before scheduled removal. During that window:
   - Maintain security fixes and critical bug fixes for the deprecated major version.

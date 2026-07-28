@@ -10,7 +10,7 @@ const DarkFeatureCard: React.FC<DarkFeatureCardProps> = ({ icon, title, descript
   return (
     <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] p-8 rounded-2xl flex flex-col items-start gap-5 border border-white/8 hover:border-white/15 transition-all duration-300 group shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-red-600/10">
       {/* Icon container with minimal background */}
-      <div className="w-12 h-12 bg-gradient-to-br from-[#DC2626]/10 to-[#8B4513]/5 rounded-xl flex items-center justify-center text-[#FF5544] group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+      <div className="w-12 h-12 bg-gradient-to-br from-[#DC2626]/10 to-[#8B4513]/5 rounded-xl flex items-center justify-center text-[#FF5544] group-hover:scale-110 motion-reduce:group-hover:scale-100 transition-transform duration-300 flex-shrink-0">
         {icon}
       </div>
       

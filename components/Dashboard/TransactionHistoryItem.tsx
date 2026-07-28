@@ -162,7 +162,7 @@ export default function TransactionHistoryItem({
                 <a
                   href={`https://stellar.expert/explorer/public/tx/${transaction.hash || transaction.id}`}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#1A0505] border border-[#2A1515] text-[#FF4B26] text-sm font-medium hover:bg-[#2A0808] transition-colors"
                 >
                   <ExternalLink className="w-4 h-4" />
@@ -211,7 +211,7 @@ export default function TransactionHistoryItem({
             <a
               href={`https://stellar.expert/explorer/public/tx/${transaction.hash || transaction.id}`}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1A0505] border border-[#2A1515] text-[#FF4B26] text-sm font-medium hover:bg-[#2A0808] transition-colors"
             >
               <ExternalLink className="w-4 h-4" />
