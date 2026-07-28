@@ -8,7 +8,7 @@ const Logo = ({ className = "" }: { className?: string }) => {
     <Link href="/" className={`flex items-center gap-2 group ${className}`}>
       <div className="relative w-8 h-8 sm:w-10 sm:h-10 transition-transform group-hover:scale-105">
         <Image 
-          src="/logo.svg" 
+          src="/logo-icon.svg" 
           width={40} 
           height={40} 
           alt="RemitWise Logo" 

@@ -1,6 +1,6 @@
 <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background circle with gradient -->
-  <circle cx="22" cy="22" r="22" fill="url(#iconGradient)"/>
+  <!-- Background circle with gradient for light backgrounds -->
+  <circle cx="22" cy="22" r="22" fill="url(#iconGradientLight)"/>
   
   <!-- Stylized R letter with modern design -->
   <path d="M14 13V31" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
@@ -16,10 +16,10 @@
   <circle cx="25.5" cy="11" r="0.9" fill="white" fill-opacity="0.7"/>
   
   <defs>
-    <linearGradient id="iconGradient" x1="0" y1="0" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#DC2626"/>
-      <stop offset="0.5" stop-color="#B91C1C"/>
-      <stop offset="1" stop-color="#991B1B"/>
+    <linearGradient id="iconGradientLight" x1="0" y1="0" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EF4444"/>
+      <stop offset="0.5" stop-color="#DC2626"/>
+      <stop offset="1" stop-color="#B91C1C"/>
     </linearGradient>
   </defs>
 </svg>
