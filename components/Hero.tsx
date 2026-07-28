@@ -72,7 +72,7 @@ export default function Hero() {
           <Link
             href="/send"
             data-testid={CTA_TEST_IDS.page.homePrimary}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#DC2626] to-[#B91C1C] px-8 py-4 font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-red-600/40 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#DC2626] to-[#B91C1C] px-8 py-4 font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-red-600/40 hover:scale-105 motion-reduce:hover:scale-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black"
           >
             <LightningBoltIcon className="w-5 h-5" />
             Send Money Now
