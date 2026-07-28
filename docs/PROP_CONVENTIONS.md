@@ -248,6 +248,6 @@ export function WalletButton({
 ## Related Documentation
 
 For related design specifications and state guidelines, see:
-- [Frontend Component States Guide](COMPONENT_STATES.md) — Visual rules for handling default, hover, focus, disabled, error, and loading states.
+- [Frontend Component States Guide](file:///c:/Users/TOSHIBA/Remitwise-Frontend/docs/component-states.md) — Visual rules for handling default, disabled, error, and loading states.
 - [Theming Token Map](file:///c:/Users/TOSHIBA/Remitwise-Frontend/docs/THEMING.md) — Description of the styling variables and breakpoints.
 - [Components Inventory](file:///c:/Users/TOSHIBA/Remitwise-Frontend/docs/COMPONENTS.md) — Index of existing layout and formatting components.
