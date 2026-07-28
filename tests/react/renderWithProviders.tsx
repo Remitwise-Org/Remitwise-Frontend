@@ -3,6 +3,8 @@ import { render } from "@testing-library/react";
 import { DensityProvider, type Density } from "@/lib/context/DensityContext";
 import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { ToastProvider } from "@/lib/context/ToastContext";
+import { TelemetryProvider } from "@/lib/context/TelemetryContext";
+import { WhatsNewProvider } from "@/lib/context/WhatsNewContext";
 
 export function renderWithProviders(
   ui: React.ReactElement,
@@ -22,7 +24,11 @@ export function renderWithProviders(
   return render(
     <ThemeProvider>
       <DensityProvider>
-        <ToastProvider>{ui}</ToastProvider>
+        <TelemetryProvider>
+          <WhatsNewProvider>
+            <ToastProvider>{ui}</ToastProvider>
+          </WhatsNewProvider>
+        </TelemetryProvider>
       </DensityProvider>
     </ThemeProvider>,
   );

@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(DEFAULT_SEO.appUrl),
   title: DEFAULT_SEO.title,
   description: DEFAULT_SEO.description,
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
   openGraph: {
     title: DEFAULT_SEO.title,
     description: DEFAULT_SEO.description,

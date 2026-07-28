@@ -166,7 +166,7 @@ export default function Bills() {
 		}
 	}, [toast, bills, t]);
 
-	const fetchBillsData = async (signal?: AbortSignal) => {
+	const fetchBillsData = useCallback(async (signal?: AbortSignal) => {
 		try {
 			const [billsRes, statsRes] = await Promise.all([
 				apiClient.get('/api/bills', { signal }),
@@ -271,20 +271,24 @@ export default function Bills() {
 					</div>
 				) : (
 					<>
-
-
-						<section className='mb-8'>
+						{/* ── Stats ───────────────────────────────────────────── */}
+						<section className="mb-10">
 							<BillPaymentsStatsCards stats={stats} />
 						</section>
 
-                        <div className='mb-8'>
-                            <UnpaidBillsSection bills={bills} />
-                        </div>
+						{/* ── Action zone: bills that need attention ───────────── */}
+						<section
+							aria-labelledby="unpaid-bills-heading"
+							className="mb-12"
+						>
+							<UnpaidBillsSection bills={bills} />
+						</section>
 
-                        <div className='mb-8'>
-                            <RecentPaymentsSection bills={bills} />
-                        </div>
-                    </>
+						{/* ── History zone: de-emphasised recent payments ──────── */}
+						<section className="mb-10">
+							<RecentPaymentsSection bills={bills} />
+						</section>
+					</>
                 )}
 
 				<div className='grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_360px] xl:items-start'>

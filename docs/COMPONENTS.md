@@ -285,6 +285,88 @@ interface WhatsNewContextValue {
 - `tests/unit/components/ReceiptPageContent.test.tsx` covers the receipt page
   content component for valid/invalid hashes and successful/missing transactions.
 
+## TelemetryContext
+
+A context provider that manages the developer telemetry toggle — a settings
+switch that, when enabled, prints structured debug events to the browser
+console as JSON (issue #992).
+
+**File:** `lib/context/TelemetryContext.tsx`
+
+### Behavior
+
+- **Default:** Off (`false`). No console output is emitted unless the user
+  explicitly enables the toggle.
+- **Persistence:** Stores the preference in `localStorage` under the key
+  `developer-telemetry-enabled` so the setting survives page reloads.
+- **Structured output:** Each event is serialised as a JSON string and routed
+  to the matching console method (`console.debug`, `console.info`,
+  `console.warn`, `console.error`) with the prefix `[telemetry]`.
+
+### Log entry shape
+
+```ts
+interface TelemetryEvent {
+  timestamp: string;           // ISO-8601
+  level: "debug" | "info" | "warn" | "error";
+  source: string;              // dot-separated emitting module, e.g. "wallet.send"
+  message: string;
+  payload?: Record<string, unknown>;
+}
+```
+
+### API
+
+```ts
+interface TelemetryContextType {
+  telemetryEnabled: boolean;
+  setTelemetryEnabled: (enabled: boolean) => void;
+  logTelemetry: (
+    source: string,
+    message: string,
+    payload?: Record<string, unknown>,
+    level?: TelemetryEventLevel,   // default: "debug"
+  ) => void;
+}
+```
+
+### Integration
+
+- `TelemetryProvider` is wrapped in `components/Providers.tsx` between
+  `DensityProvider` and `AsyncOperationsProvider`, making it available
+  app-wide.
+- The toggle is exposed in `components/settings/PreferencesSection.tsx` under
+  **Settings → Preferences → Developer Telemetry**.
+- Consuming components call `useTelemetry()` to get `logTelemetry`. Calls are
+  no-ops when the toggle is off, so it is safe to leave them in production
+  code.
+
+### Usage
+
+```tsx
+import { useTelemetry } from "@/lib/context/TelemetryContext";
+
+function TransferForm() {
+  const { logTelemetry } = useTelemetry();
+
+  const handleSubmit = () => {
+    logTelemetry("transfer.submit", "Transfer initiated", {
+      amount: 50,
+      currency: "USDC",
+    });
+  };
+}
+```
+
+### Tests
+
+- `components/settings/PreferencesSection.test.tsx` — three tests covering:
+  - Toggle renders with `aria-checked="false"` by default.
+  - Clicking the toggle sets `aria-checked="true"` and writes `"true"` to
+    `localStorage` under `developer-telemetry-enabled`.
+  - A pre-existing `"true"` value in `localStorage` is correctly reflected as
+    `aria-checked="true"` on mount.
+
 ## ConnectionQualityIndicator
 
 A visual indicator that monitors the `/api/health` endpoint and displays the current connection quality.
@@ -711,8 +793,6 @@ interface WhatsNewContextValue {
   content component for valid/invalid hashes and successful/missing transactions.
 
 ## ConnectionQualityIndicator
-
-A visual indicator that monitors the `/api/health` endpoint and displays the current connection quality.
 
 **File:** `components/ConnectionQualityIndicator.tsx`
 
