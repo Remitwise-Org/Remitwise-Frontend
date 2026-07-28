@@ -2,15 +2,46 @@
 
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, AlertCircle } from 'lucide-react'
-import PageHeadingLink from '@/components/PageHeadingLink'
+import { SPLIT_BUCKETS } from '@/lib/config/split-buckets'
+import type { SplitConfig } from '@/lib/remittance/split'
 
 interface SmartMoneySplitHeaderProps {
   totalPercentage?: number
+  /** Current allocation — when provided, renders a compact proportional bar */
+  allocation?: SplitConfig
 }
 
-export default function SmartMoneySplitHeader({ totalPercentage = 100 }: SmartMoneySplitHeaderProps) {
+/**
+ * Rounds an array of values so they sum exactly to 100 (largest-remainder method).
+ * Duplicated from the split page so the header stays self-contained.
+ */
+function roundToHundred(values: number[]): number[] {
+  const floored = values.map(Math.floor)
+  const remainders = values.map((v, i) => ({ i, r: v - floored[i] }))
+  const deficit = 100 - floored.reduce((a, b) => a + b, 0)
+  remainders
+    .sort((a, b) => b.r - a.r)
+    .slice(0, deficit)
+    .forEach(({ i }) => { floored[i]++ })
+  return floored
+}
+
+export default function SmartMoneySplitHeader({
+  totalPercentage = 100,
+  allocation,
+}: SmartMoneySplitHeaderProps) {
   const router = useRouter()
   const isValid = totalPercentage === 100
+
+  // Build display segments when an allocation is provided and valid
+  const segments =
+    allocation && isValid
+      ? (() => {
+          const raw = SPLIT_BUCKETS.map((b) => allocation[b.key])
+          const rounded = roundToHundred(raw)
+          return SPLIT_BUCKETS.map((b, i) => ({ ...b, pct: rounded[i] }))
+        })()
+      : null
 
   return (
     <div className="bg-[#010101] text-white safari-safe-top">
@@ -40,6 +71,42 @@ export default function SmartMoneySplitHeader({ totalPercentage = 100 }: SmartMo
             Set how your remittances are automatically split across different categories. This helps your family manage money more effectively.
           </p>
         </div>
+
+        {/* Compact allocation bar — shown when allocation prop is supplied */}
+        {segments && (
+          <div className="mb-5 375:mb-6">
+            {/* Segmented bar */}
+            <div
+              className="flex h-2.5 w-full overflow-hidden rounded-full bg-white/10"
+              role="img"
+              aria-label={segments.map((s) => `${s.label} ${s.pct}%`).join(', ')}
+            >
+              {segments.map((s) =>
+                s.pct > 0 ? (
+                  <div
+                    key={s.key}
+                    className={`${s.barColor} h-full`}
+                    style={{ width: `${s.pct}%` }}
+                  />
+                ) : null
+              )}
+            </div>
+
+            {/* Legend — icon + text, not color alone */}
+            <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5">
+              {segments.map((s) => {
+                const Icon = s.icon
+                return (
+                  <span key={s.key} className="flex items-center gap-1.5 text-xs text-white/50">
+                    <Icon className={`h-3 w-3 ${s.textColor}`} aria-hidden="true" />
+                    <span className={s.textColor}>{s.pct}%</span>
+                    <span>{s.label}</span>
+                  </span>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Alert Section */}
         <div className="rounded-xl bg-[#1c0a0a] border border-[#3d1414] p-4 375:p-5 flex items-center gap-3">

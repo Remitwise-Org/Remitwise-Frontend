@@ -1,6 +1,6 @@
 # Design Handoff
 
-For the contributor-facing workflow that explains how Figma specs should be handed off to engineering, see [FIGMA_HANDOFF.md](./FIGMA_HANDOFF.md).
+> See [FIGMA_TO_TOKENS.md](./FIGMA_TO_TOKENS.md) for the workflow on exporting and consuming design tokens from Figma.
 
 ## Route mapping
 - `/dashboard` — Main dashboard overview

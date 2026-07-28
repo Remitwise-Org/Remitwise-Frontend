@@ -16,6 +16,7 @@ This is a Next.js-based frontend skeleton that provides the UI structure for all
 - [Period lifecycle and state machine](./docs/PERIOD_LIFECYCLE.md)
 - [Internal jargon glossary (contributors)](./docs/GLOSSARY.md)
 - [Hydration mismatch patterns and fixes](./docs/HYDRATION_MISMATCH.md)
+- [Search UX: instant debounce, URL-submit, and recent results](./docs/SEARCH_UX.md)
 
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type safety
@@ -33,7 +34,7 @@ These pages currently serve as placeholder mocks. Each page demonstrates the lay
 ### Shared Components
 
 - **AddressDisplay**: A component for displaying long strings like Stellar addresses, featuring truncation, a copy-to-clipboard button, and a tooltip showing the full address on hover.
-- **Global Search**: The `/search?q=...` route surfaces matching invoice, address, and settings results from the same search vocabulary used in the command palette.
+- **Global Search**: The `/search?q=...` route surfaces matching invoice, address, and settings results from the same search vocabulary used in the command palette — see [docs/SEARCH_UX.md](docs/SEARCH_UX.md) for how instant vs. submit search works.
 
 1. **Dashboard** - Overview of remittances, savings, bills, and insurance — see [docs/DASHBOARD_LAYOUT_RULES.md](docs/DASHBOARD_LAYOUT_RULES.md) for the intended column ratios, widget priority, and mobile stacking rules
 2. **Send Money** - Remittance sending interface with automatic split preview
@@ -46,6 +47,8 @@ These pages currently serve as placeholder mocks. Each page demonstrates the lay
 ## Loading States
 
 Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners. For detailed guidelines and implementation patterns on all UI states (Default, Error, Disabled, and Loading), see [docs/component-states.md](docs/component-states.md).
+
+Empty-state copy and layout are documented in the [empty states gallery](docs/EMPTY_STATES.md) (visual cards + CTA text). For the icon/props catalog used when adding a new empty state, see [docs/EMPTY_STATE_ILLUSTRATIONS.md](docs/EMPTY_STATE_ILLUSTRATIONS.md).
 
 ## Performance Budgets
 
@@ -826,6 +829,8 @@ MIT
 - **How to introduce v2:** Create a new `app/api/v2/` namespace containing the new behavior. Update platform routes or API gateway rules to expose `/api/v2/...` and leave the rewrite in place so `/api/*` stays mapped to the last published stable version (v1) until you intentionally change it.
 
 **Deprecation Policy**
+
+> See **[docs/DEPRECATIONS.md](docs/DEPRECATIONS.md)** for the current list of deprecated components, utilities, hooks, and API routes — every entry includes a concrete before/after migration example.
 
 - When a new major version (e.g. v2) is released, older major versions will be supported for a minimum of **6 months** before scheduled removal. During that window:
   - Maintain security fixes and critical bug fixes for the deprecated major version.

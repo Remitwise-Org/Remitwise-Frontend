@@ -4,6 +4,7 @@ import { useState, useCallback, type ChangeEvent } from "react";
 import { Globe, Moon, Sun, Smartphone, Sparkles } from "lucide-react";
 import { useDensity } from "@/lib/context/DensityContext";
 import { useTheme } from "@/lib/context/ThemeContext";
+import { useTelemetry } from "@/lib/context/TelemetryContext";
 import { useWhatsNew } from "@/lib/context/WhatsNewContext";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useAutosave } from "@/lib/hooks/useAutosave";
@@ -12,6 +13,7 @@ import {
   SectionCard,
   SectionHeader,
   FieldRow,
+  Toggle,
   SaveButton,
 } from "./SettingsPrimitives";
 import {
@@ -23,6 +25,7 @@ export function PreferencesSection() {
   const { t } = useClientTranslator();
   const { density, setDensity } = useDensity();
   const { replay } = useWhatsNew();
+  const { telemetryEnabled, setTelemetryEnabled } = useTelemetry();
   const [theme, setTheme] = useState<"system" | "light" | "dark">("system");
   const [language, setLanguage] = useState("en-US");
   const [timezone, setTimezone] = useState("Africa/Lagos");
@@ -225,6 +228,15 @@ export function PreferencesSection() {
             {t("settings.preferences.replay_tour_button")}
           </button>
         </FieldRow>
+        <Toggle
+          labelKey="settings.preferences.developer_telemetry_label"
+          descriptionKey="settings.preferences.developer_telemetry_description"
+          checked={telemetryEnabled}
+          onChange={(next) => {
+            setTelemetryEnabled(next);
+            triggerSave();
+          }}
+        />
       </div>
       <SaveButton labelKey="settings.save_changes" saveState={saveState} />
     </SectionCard>

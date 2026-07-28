@@ -4,6 +4,7 @@ allowBuilds:
   '@reown/appkit': true
   '@scarf/scarf': true
   '@sentry/cli': true
+  '@swc/core': set this to true or false
   '@tree-sitter-grammars/tree-sitter-yaml': true
   bufferutil: true
   core-js-pure: true

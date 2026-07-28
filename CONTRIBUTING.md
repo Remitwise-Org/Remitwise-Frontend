@@ -4,6 +4,8 @@ Thank you for contributing! This guide covers everything you need to get started
 
 For a deeper look at how the codebase is structured, see [docs/architecture.md](docs/architecture.md).
 For component conventions (naming, ordering, and boolean-props), see [docs/PROP_CONVENTIONS.md](docs/PROP_CONVENTIONS.md).
+For ambient types, module augmentation, and `never`-narrow patterns, see [docs/TYPESCRIPT_CONVENTIONS.md](docs/TYPESCRIPT_CONVENTIONS.md).
+For standard component state implementations (default, hover, focus, disabled, error, loading), see [docs/COMPONENT_STATES.md](docs/COMPONENT_STATES.md).
 For authenticated browser data fetching, also read [docs/client-api.md](docs/client-api.md) before adding new `fetch` calls.
 
 ---

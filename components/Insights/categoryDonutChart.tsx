@@ -33,7 +33,7 @@ export const MOCK_CATEGORY_DATA: CategoryDataPoint[] = [
 
 const SLICE_COLORS = INSIGHTS_PALETTE.slice(0, 8);
 
-const AXIS_COLOR = '#6b7280'
+const AXIS_COLOR = '#9CA3AF'
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 const CustomTooltip = memo(function CustomTooltip({ active, payload }: CustomTooltipProps) {
@@ -108,7 +108,7 @@ function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutCha
   const summaryId = useId()
   const { t } = useClientTranslator()
   const summaryItems = useMemo(() =>
-    data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage}%)`),
+    data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage} percent)`),
     [data]
   );
   const chartSummary = buildChartSummary(summaryItems, t);
@@ -148,7 +148,7 @@ function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutCha
     />
   )), [data, activeCategory, reducedMotion])
 
-  const ariaLabel = useMemo(() => buildChartImageLabel('Top categories', summaryItems, t), [summaryItems, t])
+  const ariaLabel = useMemo(() => buildChartImageLabel('Top Categories', summaryItems, t), [summaryItems, t])
   const summaryText = useMemo(() => buildChartSummary(summaryItems, t), [summaryItems, t])
 
   return (
