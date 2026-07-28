@@ -7,8 +7,10 @@ import SmartMoneySplitHeader from "@/components/SmartMoneySplitHeader";
 import HowItWorks from "@/components/HowItWorksModal";
 import AsyncOperationsPanel from "@/components/AsyncOperationsPanel";
 import AsyncSubmissionStatus from "@/components/AsyncSubmissionStatus";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import { DEFAULT_SPLIT_CONFIG, type SplitConfig } from "@/lib/remittance/split";
 import { validatePercentages } from "@/lib/validation/percentages";
+import { SPLIT_BUCKETS } from "@/lib/config/split-buckets";
 
 const splitStages = [
 	{
@@ -75,7 +77,14 @@ function computeTotal(alloc: SplitConfig): number {
 	return alloc.spending + alloc.savings + alloc.bills + alloc.insurance;
 }
 
+import { useSeo } from "@/lib/hooks/useSeo";
+
 export default function SplitConfiguration() {
+	useSeo({
+		title: "Split Transactions - RemitWise",
+		description: "Configure and split your remittances automatically",
+	});
+
 	const [allocation, setAllocation] = useState<SplitConfig>(DEFAULT_SPLIT_CONFIG);
 	const [pending, setPending] = useState(false);
 	const [submissionError, setSubmissionError] = useState<string | undefined>();
@@ -118,12 +127,15 @@ export default function SplitConfiguration() {
 	};
 
 	return (
-		<div className='min-h-screen bg-[#010101] safari-safe-bottom'>
-			<SmartMoneySplitHeader />
+		<div className='min-h-screen overflow-x-hidden bg-[#010101] safari-safe-bottom'>
+			<SmartMoneySplitHeader
+				totalPercentage={total}
+				allocation={allocation}
+			/>
 
-			<main className='mx-auto max-w-7xl px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 py-7 375:py-8 sm:py-8'>
-				<div className='grid gap-7 375:gap-8 xl:grid-cols-[minmax(0,1.1fr)_360px] xl:items-start'>
-					<div className='rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-5 320:p-6 375:p-7 sm:p-8'>
+			<main className='mx-auto max-w-7xl overflow-x-hidden px-5 320:px-6 375:px-7 sm:px-6 lg:px-8 py-7 375:py-8 sm:py-8'>
+				<div className='grid min-w-0 gap-7 375:gap-8 xl:grid-cols-[minmax(0,1.1fr)_360px] xl:items-start'>
+					<div className='min-w-0 rounded-3xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(18,18,18,0.98),rgba(10,10,10,0.98))] p-5 320:p-6 375:p-7 sm:p-8'>
 						<div className='border-b border-white/[0.08] pb-5 375:pb-6'>
 							<p className='text-xs font-semibold uppercase tracking-[0.24em] text-red-300'>
 								Allocation editor
@@ -141,6 +153,13 @@ export default function SplitConfiguration() {
 						<p className='mt-3 text-sm leading-6 text-gray-300'>
 							Allocation changes are saved as a USDC smart contract action. The payload is prepared in-app and the wallet signs it locally.
 						</p>
+
+						{/* Proportional allocation bar */}
+						<AllocationBar allocation={allocation} isValid={isValid} />
+
+						{/* Per-bucket detail cards */}
+						<AllocationDetailCards allocation={allocation} isValid={isValid} />
+
 						<form
 							className='mt-6 space-y-5 375:space-y-6'
 							onSubmit={handleSubmit}
@@ -151,28 +170,28 @@ export default function SplitConfiguration() {
 								label='Daily Spending'
 								description='For immediate family expenses'
 								value={allocation.spending}
-								color='bg-blue-500'
+								color={SPLIT_BUCKETS[0].barColor}
 								onChange={(v) => handleChange("spending", v)}
 							/>
 							<SplitInput
 								label='Savings'
 								description='Allocated to savings goals'
 								value={allocation.savings}
-								color='bg-green-500'
+								color={SPLIT_BUCKETS[1].barColor}
 								onChange={(v) => handleChange("savings", v)}
 							/>
 							<SplitInput
 								label='Bills'
 								description='Automated bill payments'
 								value={allocation.bills}
-								color='bg-yellow-500'
+								color={SPLIT_BUCKETS[2].barColor}
 								onChange={(v) => handleChange("bills", v)}
 							/>
 							<SplitInput
 								label='Insurance'
 								description='Micro-insurance premiums'
 								value={allocation.insurance}
-								color='bg-violet-500'
+								color={SPLIT_BUCKETS[3].barColor}
 								onChange={(v) => handleChange("insurance", v)}
 							/>
 
@@ -252,6 +271,7 @@ export default function SplitConfiguration() {
 								</Link>
 								<button
 									type='submit'
+									data-testid={CTA_TEST_IDS.flow.splitConfigurationPrimary}
 									className='touch-target-wide flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-red-600 to-red-700 px-6 py-3.5 text-sm 375:text-base font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010] disabled:cursor-not-allowed disabled:opacity-60'
 									disabled={!isValid || pending}
 									aria-disabled={!isValid || pending}
@@ -272,7 +292,7 @@ export default function SplitConfiguration() {
 						</form>
 					</div>
 
-					<aside className='space-y-6 xl:sticky xl:top-6'>
+					<aside className='min-w-0 space-y-6 xl:sticky xl:top-6'>
 						<AsyncOperationsPanel
 							eyebrow='Async behavior'
 							title='Duration, Stacking, and Placement'
@@ -286,6 +306,137 @@ export default function SplitConfiguration() {
 					</aside>
 				</div>
 			</main>
+		</div>
+	);
+}
+
+/**
+ * Rounds percentages so they sum exactly to 100.
+ * Uses the "largest remainder" algorithm to distribute rounding error.
+ */
+function roundToHundred(values: number[]): number[] {
+	const floored = values.map(Math.floor);
+	const remainders = values.map((v, i) => ({ i, r: v - floored[i] }));
+	const deficit = 100 - floored.reduce((a, b) => a + b, 0);
+	remainders
+		.sort((a, b) => b.r - a.r)
+		.slice(0, deficit)
+		.forEach(({ i }) => { floored[i]++; });
+	return floored;
+}
+
+/**
+ * Proportional allocation bar that visualises all four buckets as coloured segments.
+ * Buckets at 0% are omitted from the bar but still appear in the detail cards.
+ * When a single bucket is at 100% it spans the full width.
+ */
+function AllocationBar({ allocation, isValid }: { allocation: SplitConfig; isValid: boolean }) {
+	const buckets = SPLIT_BUCKETS;
+	const rawValues = buckets.map((b) => allocation[b.key]);
+	const total = rawValues.reduce((a, b) => a + b, 0);
+
+	// Only render proportional segments when the config is valid (sums to 100).
+	// When invalid, show a flat grey bar so the user understands something is wrong.
+	const displayValues = isValid ? roundToHundred(rawValues) : rawValues;
+
+	const ariaLabel = isValid
+		? buckets
+				.map((b, i) => `${b.label} ${displayValues[i]}%`)
+				.join(", ")
+		: `Total allocation ${total}% — must equal 100%`;
+
+	return (
+		<div className="mt-6">
+			<p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/40">
+				Allocation preview
+			</p>
+			{/* The bar itself */}
+			<div
+				className="flex h-3 w-full overflow-hidden rounded-full bg-white/10"
+				role="img"
+				aria-label={ariaLabel}
+			>
+				{isValid
+					? buckets.map((b, i) =>
+							displayValues[i] > 0 ? (
+								<div
+									key={b.key}
+									className={`${b.barColor} h-full transition-all duration-300`}
+									style={{ width: `${displayValues[i]}%` }}
+								/>
+							) : null
+					  )
+					: null /* grey fallback already applied via bg-white/10 on parent */}
+			</div>
+
+			{/* Bucket legend — icon + text, not color alone */}
+			<div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+				{buckets.map((b) => {
+					const Icon = b.icon;
+					return (
+						<span key={b.key} className="flex items-center gap-1.5 text-xs text-white/60">
+							<Icon className={`h-3.5 w-3.5 ${b.textColor}`} aria-hidden="true" />
+							{b.label}
+						</span>
+					);
+				})}
+			</div>
+		</div>
+	);
+}
+
+/**
+ * Per-bucket detail cards showing the absolute percentage and a visual indicator.
+ * Buckets at 0% are visually suppressed (reduced opacity) but remain labelled.
+ */
+function AllocationDetailCards({ allocation, isValid }: { allocation: SplitConfig; isValid: boolean }) {
+	const rawValues = SPLIT_BUCKETS.map((b) => allocation[b.key]);
+	const displayValues = isValid ? roundToHundred(rawValues) : rawValues;
+
+	return (
+		<div className="mt-6 grid grid-cols-2 gap-3 375:gap-4 sm:grid-cols-4">
+			{SPLIT_BUCKETS.map((b, i) => {
+				const Icon = b.icon;
+				const pct = displayValues[i];
+				const isZero = pct === 0;
+
+				return (
+					<div
+						key={b.key}
+						className={`rounded-2xl border border-white/[0.07] bg-black/20 p-3 375:p-4 transition-opacity duration-200 ${
+							isZero ? "opacity-40" : "opacity-100"
+						}`}
+						aria-label={`${b.label}: ${pct}%`}
+					>
+						{/* Icon + label */}
+						<div className="mb-2 flex items-center gap-2">
+							<span
+								className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/5 ${b.textColor}`}
+							>
+								<Icon className="h-3.5 w-3.5" aria-hidden="true" />
+							</span>
+							<span className="truncate text-xs font-medium text-white/70">
+								{b.label}
+							</span>
+						</div>
+
+						{/* Percentage */}
+						<p className={`text-2xl font-semibold tabular-nums ${isZero ? "text-white/30" : b.textColor}`}>
+							{pct}<span className="text-base font-normal">%</span>
+						</p>
+
+						{/* Thin bar */}
+						<div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10" aria-hidden="true">
+							{!isZero && (
+								<div
+									className={`${b.barColor} h-full rounded-full transition-all duration-300`}
+									style={{ width: `${pct}%` }}
+								/>
+							)}
+						</div>
+					</div>
+				);
+			})}
 		</div>
 	);
 }

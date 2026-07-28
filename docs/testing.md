@@ -7,7 +7,7 @@ it runs, describes the `tests/` layout, states the coverage and gate expectation
 gives a copy-paste recipe for adding a test with each runner.
 
 > New here? Read [CONTRIBUTING.md](../CONTRIBUTING.md) first for branch naming and PR
-> expectations, then come back here when you need to add or run tests.
+> expectations, and see [TESTING_STANDARDS.md](TESTING_STANDARDS.md) for contributor testing expectations.
 
 ---
 
@@ -93,6 +93,9 @@ waits for `http://localhost:3000`, injecting test env vars (`DATABASE_URL`,
 `tests/e2e/` (matched by `testDir`) and are named `*.spec.ts`.
 
 **Example:** [tests/e2e/health.spec.ts](../tests/e2e/health.spec.ts)
+
+For details on verifying responsive breakpoints and layout behavior, check the [Responsive Testing Guide](./RESPONSIVE_TESTING.md).
+
 
 ---
 
@@ -231,13 +234,13 @@ Before opening a PR, run the same checks CI runs (see
 
 ```bash
 npm run lint            # ESLint must pass
-npx tsc --noEmit        # type-check (npm run build runs this as part of next build)
+npm run typecheck        # type-check (npm run build runs tsc as part of next build)
 npm run test            # unit suites
 npm run test:integration# integration suites (needs DATABASE_URL)
 npm run test:e2e        # Playwright (CI installs chromium first)
 ```
 
-For local development the fast loop is `npm run lint && npx tsc --noEmit && npm run test`;
+For local development the fast loop is `npm run check` (or `npm run lint && npm run typecheck && npm run test`);
 run `npm run test:coverage`, `test:integration`, and `test:e2e` before pushing anything
 that touches API routes, validation, or user flows.
 

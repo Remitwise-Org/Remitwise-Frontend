@@ -1,10 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-
-const viewports = [
-  { name: 'iPhone SE', width: 320, height: 568 },
-  { name: 'iPhone 14', width: 375, height: 667 },
-  { name: 'iPad Portrait', width: 768, height: 1024 },
-];
+import { RESPONSIVE_VIEWPORTS as viewports } from './shared-viewports';
 
 async function checkNoHorizontalOverflow(page: Page) {
   const hasOverflow = await page.evaluate(() => {
@@ -13,16 +8,17 @@ async function checkNoHorizontalOverflow(page: Page) {
   expect(hasOverflow).toBe(false);
 }
 
+async function waitForTutorialPage(page: Page) {
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('text=Tutorial progress')).toBeVisible();
+}
+
 test.describe('Tutorial Reading Flow - Responsive Tests', () => {
   viewports.forEach(({ name, width, height }) => {
     test(`${name} (${width}×${height}) - Layout and Overflow`, async ({ page }) => {
       await page.setViewportSize({ width, height });
-      // Assuming a tutorial 1, chapter 0 exists
       await page.goto('/tutorial/1/chapter/0');
-      
-      await page.waitForLoadState('networkidle');
-      
-      // Check no horizontal overflow
+      await waitForTutorialPage(page);
       await checkNoHorizontalOverflow(page);
     });
   });

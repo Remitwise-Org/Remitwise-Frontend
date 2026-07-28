@@ -1,6 +1,6 @@
 import { Contract, scValToNative, nativeToScVal, SorobanRpc } from "@stellar/stellar-sdk";
-import { getSorobanClient } from "../soroban-client";
-import { resolveContractId } from "./network-resolution";
+import { getSorobanClient, getNetworkPassphrase } from "../soroban-client";
+import { resolveContractId, getSorobanNetworkPassphrase } from "./network-resolution";
 import { ContractReadError } from "./dashboard-aggregate";
 export { ContractReadError };
 
@@ -72,6 +72,7 @@ function mapToGoal(id: string, rawData: any): SavingsGoal {
 
 export async function getGoal(goalId: string): Promise<SavingsGoal | null> {
   const contractId = getContractId();
+  const server = getSorobanClient();
   try {
     const result = await withRetry("getGoal", () =>
       server.getContractData(
@@ -94,6 +95,7 @@ export async function getGoal(goalId: string): Promise<SavingsGoal | null> {
 
 export async function getAllGoals(owner: string): Promise<SavingsGoal[]> {
   const contractId = getContractId();
+  const server = getSorobanClient();
   try {
     const contract = new Contract(contractId);
     const operation = contract.call(
@@ -151,4 +153,4 @@ export async function isGoalCompleted(goalId: string): Promise<boolean> {
 }
 
 // Re-export resolved passphrase for callers that need it when signing transactions.
-export { getNetworkPassphrase };
+export { getSorobanNetworkPassphrase as getNetworkPassphrase };

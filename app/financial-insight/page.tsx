@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
     ArrowLeft,
@@ -7,8 +9,15 @@ import {
     Shield,
 } from "lucide-react";
 import StatCard from "@/components/Dashboard/StatCard";
+import PageHeadingLink from "@/components/PageHeadingLink";
+import { useSeo } from "@/lib/hooks/useSeo";
 
 export default function FinancialInsight() {
+    useSeo({
+        title: "Financial Insight | RemitWise",
+        description: "View your financial summary including total remittances, savings, bills paid, and insurance premiums.",
+    });
+
     return (
         <div className="min-h-screen bg-[#0A0A0A]">
             {/* Header */}
@@ -21,9 +30,14 @@ export default function FinancialInsight() {
                         >
                             <ArrowLeft className="w-6 h-6" />
                         </Link>
-                        <h1 className="text-2xl font-bold text-white">
+                        <PageHeadingLink
+                            headingId="financial-insight-page-heading"
+                            label="Financial Insights"
+                            headingClassName="text-2xl font-bold text-white"
+                            buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
+                        >
                             Financial Insights
-                        </h1>
+                        </PageHeadingLink>
                     </div>
                 </div>
             </header>

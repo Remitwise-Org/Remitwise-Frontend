@@ -1,5 +1,9 @@
 /** @type {import('tailwindcss').Config} */
+const layoutConfig = require('./lib/config/layout.json');
+const chartPalette = require('./lib/config/chartPalette.json');
+
 module.exports = {
+  darkMode: ['class'],
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,12 +13,13 @@ module.exports = {
     extend: {
       // Custom responsive breakpoints for mobile-first design
       screens: {
-        '320': '320px',      // iPhone SE (smallest mobile)
-        '375': '375px',      // iPhone 14 (primary mobile target)
-        '450': '450px',      // Foldables and larger phones
-        'tablet': '768px',   // iPad portrait
-        'laptop': '1024px',  // iPad landscape
-        'desktop': '1440px', // Desktop standard
+        '320': `${layoutConfig.BREAKPOINTS.XS}px`,
+        '375': `${layoutConfig.BREAKPOINTS.SM}px`,
+        '450': `${layoutConfig.BREAKPOINTS.MD}px`,
+        'tablet': `${layoutConfig.BREAKPOINTS.TABLET}px`,
+        'laptop': `${layoutConfig.BREAKPOINTS.LAPTOP}px`,
+        'desktop': `${layoutConfig.BREAKPOINTS.DESKTOP}px`,
+        'tall': { 'raw': `(min-height: ${layoutConfig.TALL_SCREEN_MIN_HEIGHT}px)` },
       },
       
       // Semantic spacing tokens for design system
@@ -44,6 +49,16 @@ module.exports = {
         focus: "4px",
       },
       colors: {
+        chart: {
+          1: chartPalette.colors[0],
+          2: chartPalette.colors[1],
+          3: chartPalette.colors[2],
+          4: chartPalette.colors[3],
+          5: chartPalette.colors[4],
+          6: chartPalette.colors[5],
+          7: chartPalette.colors[6],
+          8: chartPalette.colors[7],
+        },
         brand: {
           red: "#D72323",
           dark: "#0A0A0A",
@@ -123,16 +138,5 @@ module.exports = {
   },
   plugins: [
     require('@tailwindcss/container-queries'),
-    function ({ addUtilities }) {
-      addUtilities({
-        '@media (prefers-reduced-motion: reduce)': {
-          '*, *::before, *::after': {
-            'animation-duration': '0.01ms !important',
-            'animation-iteration-count': '1 !important',
-            'transition-duration': '0.01ms !important',
-          },
-        },
-      });
-    },
   ],
 };

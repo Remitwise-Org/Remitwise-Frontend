@@ -15,6 +15,9 @@ const {
     checkIdempotency,
     storeIdempotentResponse,
     withIdempotency,
+    resetIdempotencyCleanup,
+    startIdempotencyCleanup,
+    isCleanupActive,
     IDEMPOTENCY_CONFIG,
 } = await import('../../../lib/idempotency');
 
@@ -400,6 +403,25 @@ describe('Timer & Lifecycle Integration Unit Tests', () => {
         storeIdempotencyRecord('key-c', 'hash-c', { status: 200, body: {} });
         expect(getStoreSize()).toBe(1);
         expect(checkIdempotencyKey('key-c', 'hash-c').exists).toBe(true);
+    });
+
+    it('should clear the cleanup timer on reset and leave no dangling interval', () => {
+        // Timer was started at import time via initializeCleanup().
+        expect(isCleanupActive()).toBe(true);
+
+        resetIdempotencyCleanup();
+        expect(isCleanupActive()).toBe(false);
+
+        // Records added after reset are NOT swept while the timer is stopped.
+        storeIdempotencyRecord('post-reset', 'h', { status: 200, body: {} }, 10 * 1000);
+        vi.advanceTimersByTime(60 * 60 * 1000);
+        expect(getStoreSize()).toBe(1);
+
+        // Re-initialise so the rest of the suite keeps a live sweeper.
+        startIdempotencyCleanup();
+        expect(isCleanupActive()).toBe(true);
+        vi.advanceTimersByTime(60 * 60 * 1000);
+        expect(checkIdempotencyKey('post-reset', 'h').exists).toBe(false);
     });
 
     it('should keep the same interval handle and not create duplicates when module is loaded once', () => {

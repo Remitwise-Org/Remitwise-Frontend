@@ -2,16 +2,21 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Send, LayoutDashboard, FileText, Shield, Users, Settings, Bell } from "lucide-react";
+import { Send, LayoutDashboard, FileText, Shield, Users, Settings, Bell, Search, HelpCircle } from "lucide-react";
 import Logo from "./Logo";
 import WalletButton from "../WalletButton";
 import MobileNav from "./MobileNav";
 import { useWhatsNewOptional } from "@/lib/context/WhatsNewContext";
+import { useShortcutHelp } from "@/lib/context/ShortcutHelpContext";
 import WhatsNewBadge from "@/components/Dashboard/WhatsNewBadge";
+import WrongNetworkBanner from "@/components/WrongNetworkBanner";
+import NetworkStatusIndicator from "@/components/NetworkStatusIndicator";
+import ShortcutTooltip from "@/components/ui/ShortcutTooltip";
 
 const PrimaryNav = () => {
     const pathname = usePathname();
     const whatsNew = useWhatsNewOptional();
+    const { open: openShortcutHelp } = useShortcutHelp();
 
     const links = [
         { name: "Send", href: "/send", icon: <Send className="w-4 h-4" /> },
@@ -28,62 +33,96 @@ const PrimaryNav = () => {
     };
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-[60] border-b border-white/5 bg-brand-dark/50 backdrop-blur-xl">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-20">
+        <>
+        <header className="fixed top-0 left-0 right-0 z-[60] overflow-x-hidden border-b border-white/5 bg-brand-dark/50 backdrop-blur-xl">
+            <div className="mx-auto max-w-7xl overflow-x-hidden px-4 sm:px-6 lg:px-8">
+                <div className="flex h-16 min-w-0 items-center justify-between gap-2 375:h-20">
                     {/* Left: Logo */}
-                    <div className="flex-shrink-0">
+                    <div className="min-w-0 flex-shrink">
                         <Logo />
                     </div>
 
-                    {/* Center: Desktop Links */}
-                    <nav aria-label="Primary navigation" className="hidden lg:flex items-center">
-                        <ul className="flex items-center gap-1">
-                            {links.map((link) => (
-                                <li key={link.name}>
-                                    <Link
-                                        href={link.href}
-                                        aria-current={isActive(link.href) ? "page" : undefined}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/50
-                                            ${isActive(link.href)
-                                                ? "text-white bg-brand-red/10 border border-brand-red/20 shadow-[0_0_15px_rgba(215,35,35,0.2)]"
-                                                : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
-                                            }`}
-                                    >
-                                        <span className={isActive(link.href) ? "text-brand-red" : "text-white/40 group-hover:text-white/60"}>
-                                            {link.icon}
-                                        </span>
-                                        {link.name}
-                                        {isActive(link.href) && (
-                                            <span className="absolute inset-0 rounded-full bg-brand-red/10 blur-[2px] -z-10 animate-neon-pulse" />
-                                        )}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </nav>
+                        {/* Center: Desktop Links */}
+                        <nav aria-label="Primary navigation" className="hidden lg:flex items-center">
+                            <ul className="flex items-center gap-1">
+                                {links.map((link) => (
+                                    <li key={link.name}>
+                                        <Link
+                                            href={link.href}
+                                            aria-current={isActive(link.href) ? "page" : undefined}
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/50
+                                                ${isActive(link.href)
+                                                    ? "text-white bg-brand-red/10 border border-brand-red/20 shadow-[0_0_15px_rgba(215,35,35,0.2)]"
+                                                    : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
+                                                }`}
+                                        >
+                                            <span className={isActive(link.href) ? "text-brand-red" : "text-white/40 group-hover:text-white/60"}>
+                                                {link.icon}
+                                            </span>
+                                            {link.name}
+                                            {isActive(link.href) && (
+                                                <span className="absolute inset-0 rounded-full bg-brand-red/10 blur-[2px] -z-10 animate-neon-pulse" />
+                                            )}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
 
-                    {/* Right: Wallet & Mobile Menu Toggle */}
-                  <div className="flex items-center gap-3">
-                        {whatsNew && (
-                            <button
-                                onClick={whatsNew.toggle}
-                                aria-label="What's New"
-                                aria-expanded={whatsNew.isOpen}
-                                className="relative flex items-center justify-center w-10 h-10 rounded-full text-white/60 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
-                            >
-                                <Bell className="w-5 h-5" />
-                                <WhatsNewBadge className="top-1.5 right-1.5 w-5 h-5" />
-                            </button>
-                        )}
-                        <WalletButton />
-                        <div className="lg:hidden">
-                            <MobileNav />
+                        {/* Right: Wallet & Mobile Menu Toggle */}
+                      <div className="flex min-w-0 flex-shrink-0 items-center gap-2 375:gap-3">
+                            {/* Command Palette Button */}
+                            <ShortcutTooltip label="Command Palette" shortcut="⌘K">
+                              <button
+                                onClick={() => {
+                                  // Trigger Cmd+K keyboard event
+                                  document.dispatchEvent(
+                                    new KeyboardEvent("keydown", {
+                                      key: "k",
+                                      metaKey: true,
+                                      bubbles: true,
+                                    })
+                                  );
+                                }}
+                                aria-label="Command Palette"
+                                className="flex items-center justify-center w-10 h-10 rounded-full text-white/60 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
+                              >
+                                <Search className="w-5 h-5" aria-hidden="true" />
+                              </button>
+                            </ShortcutTooltip>
+
+                            {/* Help / Keyboard Shortcuts Button */}
+                            <ShortcutTooltip label="Keyboard Shortcuts" shortcut="?">
+                              <button
+                                onClick={openShortcutHelp}
+                                aria-label="Keyboard Shortcuts Help"
+                                className="flex items-center justify-center w-10 h-10 rounded-full text-white/60 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
+                              >
+                                <HelpCircle className="w-5 h-5" aria-hidden="true" />
+                              </button>
+                            </ShortcutTooltip>
+
+                            {whatsNew && (
+                                <button
+                                    onClick={whatsNew.toggle}
+                                    aria-label="What's New"
+                                    aria-expanded={whatsNew.isOpen}
+                                    className="relative hidden 450:flex items-center justify-center w-10 h-10 rounded-full text-white/60 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
+                                >
+                                    <Bell className="w-5 h-5" />
+                                    <WhatsNewBadge className="top-1.5 right-1.5 w-5 h-5" />
+                                </button>
+                            )}
+                            <WalletButton />
+                            <div className="lg:hidden">
+                                <MobileNav />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </header>
+            </header>
+            <WrongNetworkBanner />
+        </>
     );
 };
 

@@ -17,6 +17,7 @@ import {
   validateFutureDate 
 } from '@/lib/validation/savings-goals'
 import { useClientTranslator } from '@/lib/i18n/client'
+import { useFocusTrap } from '@/lib/hooks/useFocusTrap'
 
 interface SavingsGoalModalProps {
   isOpen: boolean
@@ -48,7 +49,10 @@ export default function SavingsGoalModal({
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const modalRef = useRef<HTMLDivElement>(null)
+  const modalRef = useFocusTrap<HTMLDivElement>({
+    isActive: isOpen,
+    onEscape: onClose,
+  });
 
   useEffect(() => {
     if (editingGoal) {
@@ -76,39 +80,6 @@ export default function SavingsGoalModal({
     }
     setErrors({})
   }, [editingGoal, isOpen])
-
-  // Focus trap and ESC key
-  useEffect(() => {
-    if (!isOpen) return
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-      if (e.key === 'Tab') {
-        const focusableElements = modalRef.current?.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        )
-        if (!focusableElements) return
-        
-        const firstElement = focusableElements[0] as HTMLElement
-        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
-
-        if (e.shiftKey) {
-          if (document.activeElement === firstElement) {
-            lastElement.focus()
-            e.preventDefault()
-          }
-        } else {
-          if (document.activeElement === lastElement) {
-            firstElement.focus()
-            e.preventDefault()
-          }
-        }
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -148,7 +119,7 @@ export default function SavingsGoalModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm motion-reduce:backdrop-blur-none"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm motion-reduce:backdrop-blur-none"
       onClick={onClose}
     >
       <div
@@ -165,7 +136,7 @@ export default function SavingsGoalModal({
       >
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-2 text-white/50 hover:text-white transition-colors motion-reduce:transition-none"
+          className="touch-target absolute right-4 top-4 flex items-center justify-center p-2 text-white/50 hover:text-white transition-colors motion-reduce:transition-none"
           aria-label="Close modal"
         >
           <X className="w-5 h-5" />

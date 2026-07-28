@@ -32,10 +32,67 @@ function validatePublicKey(key: string, error: string) {
   }
 }
 
-function validateDueDate(date: string) {
-  if (isNaN(Date.parse(date))) {
+/**
+ * Validates that a due-date string is both parseable **and** strictly in the
+ * future (> now at millisecond precision).
+ *
+ * Rejection criteria:
+ *  - Not a valid ISO / parseable date string           → "invalid-dueDate"
+ *  - Unix epoch zero  ("0", "1970-01-01T00:00:00Z")   → "dueDate-in-past"
+ *  - Any timestamp ≤ Date.now()                        → "dueDate-in-past"
+ *
+ * Exported so the API route and tests can call it independently.
+ */
+export function validateDueDateNotPast(date: string): void {
+  const parsed = Date.parse(date);
+  if (isNaN(parsed)) {
     throw new Error("invalid-dueDate");
   }
+  if (parsed <= Date.now()) {
+    throw new Error("dueDate-in-past");
+  }
+}
+
+/**
+ * Given a frequency in days, returns the ISO string of the *next* occurrence
+ * that is strictly after the current moment.
+ *
+ * If the naive `baseDate + frequencyDays` falls in the past (e.g. the bill was
+ * last processed days ago), the function keeps advancing by `frequencyDays`
+ * until the result is in the future — guaranteeing the returned date always
+ * passes `validateDueDateNotPast`.
+ *
+ * @param baseDateStr - ISO date string of the last due date (or bill creation date).
+ * @param frequencyDays - Positive integer recurrence interval.
+ * @returns ISO string of the next due date that is strictly > now.
+ */
+export function nextDueDateFromNow(
+  baseDateStr: string,
+  frequencyDays: number
+): string {
+  if (isNaN(Date.parse(baseDateStr))) {
+    throw new Error("invalid-dueDate");
+  }
+  if (!frequencyDays || frequencyDays <= 0) {
+    throw new Error("invalid-frequency");
+  }
+
+  const stepMs = frequencyDays * 86_400_000;
+  const now = Date.now();
+  let next = Date.parse(baseDateStr);
+
+  // Advance until we land strictly after now.
+  // Maximum iterations guard (prevents infinite loop on absurdly small step).
+  let iterations = 0;
+  const MAX_ITERATIONS = 100_000;
+  while (next <= now) {
+    next += stepMs;
+    if (++iterations > MAX_ITERATIONS) {
+      throw new Error("invalid-frequency");
+    }
+  }
+
+  return new Date(next).toISOString();
 }
 
 function getMockBills(owner: string): Bill[] {
@@ -84,7 +141,7 @@ export async function buildCreateBillTx(
     throw new Error("invalid-frequency");
   }
 
-  validateDueDate(dueDate);
+  validateDueDateNotPast(dueDate);
 
   const account = new Account(owner, "0");
 

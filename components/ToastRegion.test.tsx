@@ -244,6 +244,29 @@ describe('ToastRegion', () => {
   });
 
   describe('Dismissal', () => {
+    it('should render dismissed toasts in the history list', () => {
+      const TestComponent = () => {
+        const { toast, dismiss, history } = useToast();
+        const toastId = toast({ variant: 'success', title: 'History toast' });
+        return (
+          <div>
+            <button onClick={() => dismiss(toastId)}>Dismiss</button>
+            <ToastRegion />
+            <div data-testid="history-count">{history.length}</div>
+          </div>
+        );
+      };
+
+      renderWithProvider(<TestComponent />);
+
+      act(() => {
+        screen.getByText('Dismiss').click();
+      });
+
+      expect(screen.getByTestId('history-count')).toHaveTextContent('1');
+      expect(screen.getByText('History toast')).toBeInTheDocument();
+    });
+
     it('should remove toast when dismiss is called', () => {
       const TestComponent = () => {
         const { toast, dismiss } = useToast();

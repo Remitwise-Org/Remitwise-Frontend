@@ -8,7 +8,7 @@ import type { FamilyMemberRole } from "@/utils/types/family-wallet.types";
 // Types
 // ---------------------------------------------------------------------------
 
-export type ApprovalStatus = "building" | "pending" | "signing" | "approved" | "expired";
+export type ApprovalStatus = "building" | "requested" | "pending" | "partially_approved" | "signing" | "approved" | "rejected" | "expired";
 
 export type ApprovalAction = "add_member" | "update_spending_limit";
 
@@ -25,6 +25,10 @@ export interface ApprovalItem {
   createdAt: string;
   requiredSignatures: number;
   collectedSignatures: string[];
+  /** Stellar address of the requester who initiated this approval */
+  requester: string;
+  /** Amount involved in the action (e.g. spending limit value) */
+  amount?: number;
   error?: string;
 }
 
@@ -37,6 +41,7 @@ type QueueAction =
   | { type: "SET_XDR"; id: string; xdr: string }
   | { type: "SET_STATUS"; id: string; status: ApprovalStatus; error?: string }
   | { type: "ADD_SIGNATURE"; id: string; signer: string }
+  | { type: "REJECT"; id: string; rejector: string }
   | { type: "EXPIRE_ALL" };
 
 /** 30 minutes before an unacted-on approval is considered expired */
@@ -49,7 +54,7 @@ export function queueReducer(state: ApprovalItem[], action: QueueAction): Approv
 
     case "SET_XDR":
       return state.map((item) =>
-        item.id === action.id ? { ...item, xdr: action.xdr, status: "pending" } : item
+        item.id === action.id ? { ...item, xdr: action.xdr, status: "requested" } : item
       );
 
     case "SET_STATUS":
@@ -65,20 +70,33 @@ export function queueReducer(state: ApprovalItem[], action: QueueAction): Approv
         // Idempotent — ignore duplicate signer
         if (item.collectedSignatures.includes(action.signer)) return item;
         const collected = [...item.collectedSignatures, action.signer];
-        const approved = collected.length >= item.requiredSignatures;
+        const fullyApproved = collected.length >= item.requiredSignatures;
+        const newStatus: ApprovalStatus = fullyApproved
+          ? "approved"
+          : collected.length > 0
+          ? "partially_approved"
+          : "requested";
         return {
           ...item,
           collectedSignatures: collected,
-          status: approved ? "approved" : "pending",
+          status: newStatus,
           error: undefined,
         };
+      });
+    }
+
+    case "REJECT": {
+      return state.map((item) => {
+        if (item.id !== action.id) return item;
+        return { ...item, status: "rejected" as ApprovalStatus, error: undefined };
       });
     }
 
     case "EXPIRE_ALL": {
       const cutoff = Date.now() - APPROVAL_TTL_MS;
       return state.map((item) =>
-        item.status === "pending" && new Date(item.createdAt).getTime() < cutoff
+        (item.status === "requested" || item.status === "partially_approved") &&
+        new Date(item.createdAt).getTime() < cutoff
           ? { ...item, status: "expired" }
           : item
       );
@@ -100,12 +118,16 @@ export interface EnqueueAddMemberParams {
   spendingLimit: number;
   requiredSignatures?: number;
 }
-
 export interface EnqueueUpdateLimitParams {
   callerAddress: string;
   memberId: string;
   newLimit: number;
   requiredSignatures?: number;
+}
+export interface SignItemResult {
+  success: boolean;
+  approved: boolean;
+  error?: string;
 }
 
 export interface UseApprovalsQueueReturn {
@@ -115,12 +137,18 @@ export interface UseApprovalsQueueReturn {
   /**
    * Sign a pending item.
    * `signXdr` should invoke the wallet-kit sign method and return the signed XDR.
+   * Returns the outcome so callers can show toast feedback.
    */
   signItem: (
     id: string,
     signerAddress: string,
     signXdr: (xdr: string) => Promise<string>
-  ) => Promise<void>;
+  ) => Promise<SignItemResult | undefined>;
+  /**
+   * Reject an approval request.
+   * The item is moved to `rejected` state immediately.
+   */
+  rejectItem: (id: string, rejectorAddress: string) => void;
   /** Mark any items older than APPROVAL_TTL_MS as expired */
   expireStale: () => void;
 }
@@ -164,6 +192,8 @@ export function useApprovalsQueue(): UseApprovalsQueueReturn {
           createdAt: new Date().toISOString(),
           requiredSignatures,
           collectedSignatures: [],
+          requester: adminAddress,
+          amount: spendingLimit,
         },
       });
 
@@ -202,6 +232,8 @@ export function useApprovalsQueue(): UseApprovalsQueueReturn {
           createdAt: new Date().toISOString(),
           requiredSignatures,
           collectedSignatures: [],
+          requester: callerAddress,
+          amount: newLimit,
         },
       });
 
@@ -225,24 +257,49 @@ export function useApprovalsQueue(): UseApprovalsQueueReturn {
       id: string,
       signerAddress: string,
       signXdr: (xdr: string) => Promise<string>
-    ) => {
+    ): Promise<SignItemResult | undefined> => {
       const item = queue.find((i) => i.id === id);
-      if (!item || item.status !== "pending") return;
+      if (!item) return;
+      // Allow signing on requested or partially_approved
+      if (item.status !== "requested" && item.status !== "partially_approved" && item.status !== "pending") return;
       if (item.collectedSignatures.includes(signerAddress)) return;
 
       dispatch({ type: "SET_STATUS", id, status: "signing" });
       try {
         await signXdr(item.xdr);
         dispatch({ type: "ADD_SIGNATURE", id, signer: signerAddress });
+        // Use the original item data (from the closure) plus the new signer
+        // to determine approval status.  Reading queue after dispatch would
+        // still see the stale closure, so we compute from what we know.
+        const approved =
+          item.collectedSignatures.length + 1 >= item.requiredSignatures;
+        return { success: true, approved };
       } catch (err) {
-        // Revert to pending so the user can retry
+        // Revert to the pre-signing status so the user can retry
+        const revertStatus: ApprovalStatus =
+          item.collectedSignatures.length > 0 ? "partially_approved" : "requested";
         dispatch({
           type: "SET_STATUS",
           id,
-          status: "pending",
+          status: revertStatus,
           error: err instanceof Error ? err.message : "Signing failed",
         });
+        return {
+          success: false,
+          approved: false,
+          error: err instanceof Error ? err.message : "Signing failed",
+        };
       }
+    },
+    [queue]
+  );
+
+  const rejectItem = useCallback(
+    (id: string, rejectorAddress: string) => {
+      const item = queue.find((i) => i.id === id);
+      if (!item) return;
+      if (item.status !== "requested" && item.status !== "partially_approved") return;
+      dispatch({ type: "REJECT", id, rejector: rejectorAddress });
     },
     [queue]
   );
@@ -251,5 +308,5 @@ export function useApprovalsQueue(): UseApprovalsQueueReturn {
     dispatch({ type: "EXPIRE_ALL" });
   }, []);
 
-  return { queue, enqueueAddMember, enqueueUpdateLimit, signItem, expireStale };
+  return { queue, enqueueAddMember, enqueueUpdateLimit, signItem, rejectItem, expireStale };
 }

@@ -10,5 +10,5 @@ export async function GET() {
       { status: 401 }
     );
   }
-  return Response.json({ address: session.address });
+  return Response.json({ address: session.address, expiresAt: session.expiresAt });
 }

@@ -54,3 +54,7 @@ export const GET = withAuth(handler);
 - Add session expiration and refresh logic
 - Add rate limiting
 - Add CSRF protection
+
+---
+
+**See also:** [Magic Links](MAGIC_LINKS.md) — nonce lifecycle, TTL, and known limitations.

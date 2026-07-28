@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Shield, Plus } from "lucide-react";
+import { Shield, Plus, Info } from "lucide-react";
 import { type Policy } from "@/lib/contracts/insurance";
 import { getPolicyPaymentPresentation } from "@/lib/ui/status-semantics";
 import { apiClient } from "@/lib/client/apiClient";
+import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import PolicyDetail from "@/components/insurance/PolicyDetail";
 import NewPolicyForm from "@/components/forms/NewPolicyForm";
+import PrimaryButton from "@/components/ui/PrimaryButton";
 
 // ─── i18n stubs (replace with your real i18n hook) ───────────────────────────
 
@@ -83,6 +85,7 @@ interface PageState {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function InsurancePage() {
+  const { t } = useClientTranslator();
   const [state, setState] = useState<PageState>({
     policies: [],
     loading: true,
@@ -91,6 +94,20 @@ export default function InsurancePage() {
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [showNewPolicy, setShowNewPolicy] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const { toast } = useToast();
+
+  // Live create-policy form wired to POST /api/insurance.
+  const [formState, formAction, formPending] = useFormAction("/api/insurance");
+
+  // On a successful create, toast, reset the form, and refresh the list.
+  useEffect(() => {
+    if (!formState?.success) return;
+    toast({ variant: "success", title: t("insurance.form_success") });
+    setShowNewPolicy(false);
+    setFormKey((k) => k + 1); // remount the form to clear inputs/errors
+    setSelectedPolicy(null);
+  }, [formState?.success, toast, t]);
 
   // Fetch policies on mount
   useEffect(() => {
@@ -124,7 +141,7 @@ export default function InsurancePage() {
 
     fetchPolicies();
     return () => { cancelled = true; };
-  }, []);
+  }, [t]);
 
   const handleOpenDetail = useCallback((policy: Policy) => {
     setSelectedPolicy(policy);
@@ -144,22 +161,27 @@ export default function InsurancePage() {
     <div className="min-h-screen bg-[#0a0b0f] text-white">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 tall:sticky tall:top-16 375:tall:top-20 tall:z-40 bg-[#0a0b0f] py-4 border-b border-white/[0.04]">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            <PageHeadingLink
+              headingId="insurance-page-heading"
+              label={t("insurance.page_title")}
+              headingClassName="text-2xl sm:text-3xl font-bold tracking-tight"
+              buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0b0f]"
+            >
               {t("insurance.page_title")}
-            </h1>
+            </PageHeadingLink>
             <p className="text-gray-400 mt-1 text-sm sm:text-base">
               {t("insurance.page_subtitle")}
             </p>
           </div>
-          <button
+          <PrimaryButton
             onClick={() => setShowNewPolicy((s) => !s)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/40"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl"
           >
             <Plus className="w-4 h-4" />
             {t("insurance.new_policy")}
-          </button>
+          </PrimaryButton>
         </div>
 
         {/* Total premium stat */}
@@ -180,8 +202,8 @@ export default function InsurancePage() {
                   {t("insurance.total_premium_sub")}
                 </p>
               </div>
-              <div className="p-3 rounded-xl bg-red-500/10">
-                <Shield className="w-6 h-6 text-red-400" />
+              <div className="p-3 rounded-xl bg-brand.red/10">
+                <Shield className="w-6 h-6 text-brand.red" />
               </div>
             </div>
           </div>
@@ -191,9 +213,11 @@ export default function InsurancePage() {
         {showNewPolicy && (
           <div className="mb-8">
             <NewPolicyForm
-              pending={false}
-              state={{}}
-              formAction={() => {}}
+              key={formKey}
+              pending={formPending}
+              state={formState}
+              formAction={formAction}
+              t={t}
             />
           </div>
         )}
@@ -201,7 +225,7 @@ export default function InsurancePage() {
         {/* Policies list */}
         <div>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-red-400" />
+            <Shield className="w-5 h-5 text-brand.red" />
             {t("insurance.active_policies")}
           </h2>
 
@@ -210,11 +234,11 @@ export default function InsurancePage() {
           )}
 
           {state.error && !state.loading && (
-            <div className="p-6 rounded-2xl border border-red-500/20 bg-red-500/[0.06] text-center">
-              <p className="text-red-300 text-sm">{state.error}</p>
+            <div className="p-6 rounded-2xl border border-brand.red/20 bg-brand.red/[0.06] text-center">
+              <p className="text-brand.red text-sm">{state.error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="mt-3 px-4 py-2 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-sm transition-colors"
+                className="mt-3 px-4 py-2 rounded-lg bg-brand.red/20 hover:bg-brand.red/30 text-brand.red text-sm transition-colors"
               >
                 Retry
               </button>
@@ -227,6 +251,7 @@ export default function InsurancePage() {
               body={t("insurance.no_policies_body")}
               onCta={() => setShowNewPolicy(true)}
               ctaLabel={t("insurance.new_policy")}
+              ctaTestId={CTA_TEST_IDS.page.insuranceEmptyPrimary}
             />
           )}
 
@@ -276,7 +301,7 @@ function PolicyCard({
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-white/[0.05]">
-            <Shield className="w-5 h-5 text-red-400" />
+            <Shield className="w-5 h-5 text-brand.red" />
           </div>
           <div>
             <h3 className="font-semibold text-white text-sm sm:text-base">{policy.name}</h3>
@@ -334,7 +359,7 @@ function PolicyCard({
       {/* View detail button */}
       <button
         onClick={onViewDetail}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.15] text-sm text-gray-300 hover:text-white font-medium transition-all focus:outline-none focus:ring-2 focus:ring-red-500/30"
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.15] text-sm text-gray-300 hover:text-white font-medium transition-all focus:outline-none focus:ring-2 focus:ring-brand.red/30"
       >
         {t("insurance.card_view_detail")}
       </button>
@@ -364,11 +389,13 @@ function EmptyPolicies({
   body,
   onCta,
   ctaLabel,
+  ctaTestId,
 }: {
   title: string;
   body: string;
   onCta: () => void;
   ctaLabel: string;
+  ctaTestId?: string;
 }) {
   return (
     <div className="text-center py-12 sm:py-16 px-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] border-dashed">
@@ -379,7 +406,7 @@ function EmptyPolicies({
       <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6">{body}</p>
       <button
         onClick={onCta}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium transition-colors"
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand.red hover:bg-brand.redHover text-white text-sm font-medium transition-colors"
       >
         <Plus className="w-4 h-4" />
         {ctaLabel}

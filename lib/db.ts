@@ -1,4 +1,4 @@
-export { prisma as default, prisma, getDatabaseUrl } from './prisma';
+// Duplicate export removed – definitions are in this file
 import { PrismaClient } from "@prisma/client";
 
 declare global {
@@ -37,3 +37,4 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export default prisma;
+

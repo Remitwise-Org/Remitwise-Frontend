@@ -1,47 +1,17 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft, BookOpen } from "lucide-react";
 import TutorialList from "../../components/tutorials/TutorialList";
+import PageHeadingLink from "@/components/PageHeadingLink";
+import { useSeo } from "@/lib/hooks/useSeo";
+import { TUTORIALS } from "@/lib/tutorials";
 
 export default function TutorialPage() {
-  const tutorials = [
-    {
-      id: "getting-started",
-      title: "Getting Started with RemitWise",
-      description:
-        "Learn the basics of sending money and managing your account",
-      duration: "5 min",
-      progress: 0,
-    },
-    {
-      id: "family-wallets",
-      title: "Setting Up Family Wallets",
-      description:
-        "Connect and manage family member wallets for easy transfers",
-      duration: "3 min",
-      progress: 20,
-    },
-    {
-      id: "savings-goals",
-      title: "Creating Savings Goals",
-      description: "Set up and track your financial goals with RemitWise",
-      duration: "4 min",
-      progress: 60,
-    },
-    {
-      id: "emergency-transfers",
-      title: "Emergency Transfers",
-      description: "How to use emergency transfer for urgent situations",
-      duration: "2 min",
-      progress: 0,
-    },
-    {
-      id: "bill-payments",
-      title: "Bill Payments",
-      description: "Pay bills directly from your RemitWise wallet",
-      duration: "3 min",
-      progress: 0,
-    },
-  ];
+  useSeo({
+    title: "Tutorials | RemitWise",
+    description: "Learn how to use RemitWise with step-by-step tutorials for sending money, managing wallets, savings goals, and more.",
+  });
 
   return (
     <div className="min-h-screen bg-bg1">
@@ -55,7 +25,14 @@ export default function TutorialPage() {
             >
               <ArrowLeft className="w-6 h-6" />
             </Link>
-            <h1 className="text-2xl font-bold text-foreground">Tutorials</h1>
+            <PageHeadingLink
+              headingId="tutorials-page-heading"
+              label="Tutorials"
+              headingClassName="text-2xl font-bold text-foreground"
+              buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-current/15 text-current/70 transition-colors hover:bg-current/10 hover:text-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010]"
+            >
+              Tutorials
+            </PageHeadingLink>
           </div>
         </div>
       </header>
@@ -70,7 +47,7 @@ export default function TutorialPage() {
           </p>
         </div>
 
-        <TutorialList tutorials={tutorials} />
+        <TutorialList tutorials={TUTORIALS} />
 
         <div className="mt-12 bg-gradient-to-br from-bg2 to-bg3 rounded-2xl p-8 border border-border">
           <div className="flex items-start gap-6">

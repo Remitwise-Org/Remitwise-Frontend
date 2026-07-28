@@ -43,14 +43,14 @@ export default function WidgetEmptyState(props: WidgetEmptyStateProps) {
       <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#DC2626]/30 bg-[#DC2626]/10 text-[#DC2626]">
         <Icon className="h-6 w-6" aria-hidden="true" />
       </span>
-      <div className="space-y-1">
+      <div className="max-w-full space-y-1">
         <p className="text-sm font-semibold text-white">{title}</p>
         <p className="text-xs text-white/50">{description}</p>
       </div>
       {ctaLabel && ctaHref && (
         <Link
           href={ctaHref}
-          className="rounded-lg bg-[#DC2626] px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
+          className="min-h-11 max-w-full rounded-lg bg-[#DC2626] px-4 py-2 text-center text-xs font-semibold text-white transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] break-words"
         >
           {ctaLabel}
         </Link>
@@ -59,7 +59,7 @@ export default function WidgetEmptyState(props: WidgetEmptyStateProps) {
         <button
           type="button"
           onClick={onAction}
-          className="rounded-lg bg-[#DC2626] px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
+          className="min-h-11 max-w-full rounded-lg bg-[#DC2626] px-4 py-2 text-center text-xs font-semibold text-white transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] break-words"
         >
           {ctaLabel}
         </button>

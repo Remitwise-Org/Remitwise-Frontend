@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { X, User, Send, ShieldCheck, Edit2, Save, XCircle, Users, Activity } from "lucide-react";
 import { useFamilyMemberDetail } from "@/lib/hooks/useFamilyMemberDetail";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 import { useToast } from "@/lib/context/ToastContext";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { validateSpendingLimit } from "@/lib/validation/family-limits";
@@ -65,43 +66,7 @@ function usageMeta(pct: number) {
   };
 }
 
-// Focus-trap: cycle focusable elements inside a container
-const FOCUSABLE = [
-  "a[href]",
-  "button:not([disabled])",
-  "input:not([disabled])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  '[tabindex]:not([tabindex="-1"])',
-].join(",");
 
-function useFocusTrap(ref: React.RefObject<HTMLElement | null>, active: boolean) {
-  useEffect(() => {
-    if (!active || !ref.current) return;
-    const el = ref.current;
-    const prev = document.activeElement as HTMLElement | null;
-    // Focus first focusable inside
-    const first = el.querySelectorAll<HTMLElement>(FOCUSABLE)[0];
-    first?.focus();
-
-    function onKey(e: KeyboardEvent) {
-      if (e.key !== "Tab") return;
-      const items = Array.from(el.querySelectorAll<HTMLElement>(FOCUSABLE));
-      if (!items.length) return;
-      const idx = items.indexOf(document.activeElement as HTMLElement);
-      if (e.shiftKey) {
-        if (idx <= 0) { e.preventDefault(); items[items.length - 1].focus(); }
-      } else {
-        if (idx === items.length - 1) { e.preventDefault(); items[0].focus(); }
-      }
-    }
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      prev?.focus();
-    };
-  }, [active, ref]);
-}
 
 // ---------------------------------------------------------------------------
 // Skeleton
@@ -158,8 +123,10 @@ export default function FamilyMemberDetailDrawer({
 }: FamilyMemberDetailDrawerProps) {
   const { t } = useClientTranslator();
   const { toast } = useToast();
-  const drawerRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(drawerRef, open);
+  const drawerRef = useFocusTrap<HTMLDivElement>({
+    isActive: open,
+    onEscape: onClose,
+  });
 
   const { state, fetch, updateLimit } = useFamilyMemberDetail(open ? (member?.id ?? null) : null);
   const [editing, setEditing] = useState(false);
@@ -180,13 +147,7 @@ export default function FamilyMemberDetailDrawer({
     setInputError(null);
   }, [open, member?.id]);
 
-  // ESC to close
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+
 
   // Prevent body scroll when open
   useEffect(() => {

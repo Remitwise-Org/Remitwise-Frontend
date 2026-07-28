@@ -2,6 +2,8 @@
 
 This is the canonical guide for the browser-side API layer in RemitWise.
 
+Primary page-level CTAs and main flow submit or confirm actions expose stable `data-testid` hooks via [`lib/cta-testids.ts`](../lib/cta-testids.ts). Use those hooks for browser automation and analytics instrumentation instead of visible button text when the button is in the shared primary-CTA scope.
+
 Use it when you are adding or reviewing client code that talks to `/api/*`. The goal is simple: authenticated browser requests should go through the shared client helpers so session refresh, expiry handling, and logout stay consistent across the app.
 
 ## At a Glance
@@ -18,7 +20,7 @@ Use raw `fetch` only when one of these is true:
 Related modules:
 
 - [`lib/client/apiClient.ts`](../lib/client/apiClient.ts): shared request wrapper.
-- [`lib/client/sessionHandler.ts`](../lib/client/sessionHandler.ts): session-expiry detection, refresh, and redirect flow.
+- [`lib/client/sessionHandler.ts`](../lib/client/sessionHandler.ts): session-expiry detection, refresh, and redirect flow (exports `SIGN_IN_PATH`, `getSignInUrl()`, `sessionHandler`).
 - [`lib/client/useSessionExpiry.ts`](../lib/client/useSessionExpiry.ts): hook that turns window events into UI state.
 - [`components/SessionExpiryProvider.tsx`](../components/SessionExpiryProvider.tsx): mounts the notification globally.
 - [`lib/client/logout.ts`](../lib/client/logout.ts): logout helper and post-auth redirect helper.
@@ -30,6 +32,8 @@ Real call sites in the repo:
 - [`lib/hooks/useFormAction.ts`](../lib/hooks/useFormAction.ts): generic form submission wrapper.
 - [`components/WalletButton.tsx`](../components/WalletButton.tsx) and [`components/Nav/MobileNav.tsx`](../components/Nav/MobileNav.tsx): logout entry points.
 - [`app/layout.tsx`](../app/layout.tsx): global `SessionExpiryProvider` mount point.
+
+For widget-style read surfaces that should stay inline while transient failures clear, use [`lib/client/widgetFetchRetry.ts`](../lib/client/widgetFetchRetry.ts) on top of `apiClient`. That helper retries failed reads up to 3 times with exponential backoff before the UI shows its inline retry CTA.
 
 ## `apiClient` Contract
 
@@ -49,6 +53,30 @@ Real call sites in the repo:
 - `retries?: number` — max retry attempts for idempotent (`GET`/`HEAD`) requests. Default `3`. Ignored for writes.
 - `backoff?: number` — base backoff in ms; doubles each attempt and is jittered. Default `1000`.
 - `timeout?: number` — per-request timeout in ms before the request is aborted. Default `10000`. Pass `0` to disable.
+
+### Shared authentication and request IDs
+
+`apiClient` injects `X-Request-ID` into every request so an operator can trace a
+browser action through gateway logs and support reports. The API gateway accepts
+valid client IDs and returns the same ID in its response. One ID is kept for all
+transport retries and for the single replay after a successful session refresh.
+
+The global provider also supplies `Authorization: Bearer <wallet address>` while
+a Stellar wallet is connected. Individual calls may supply `Authorization` or
+`X-Request-ID` in `options.headers`; explicit values are preserved, which is
+useful when forwarding a request from an integration or support tool.
+
+Non-React consumers can set or clear the credential directly:
+
+```ts
+import { apiClient } from '@/lib/client/apiClient';
+
+apiClient.setAuthToken('G...'); // becomes Authorization: Bearer G...
+apiClient.setAuthToken(null);   // clear on logout/disconnect
+```
+
+Do not add these headers manually to ordinary app calls. The API middleware
+allows both `Authorization` and `X-Request-ID` for cross-origin requests.
 
 Return type:
 
@@ -149,7 +177,7 @@ Important details:
 - Retry-once semantics are enforced with an internal `_isRetry` flag. The original request is replayed at most once after refresh.
 - Concurrent `401` responses share one in-flight refresh request. `sessionHandler.refreshSession()` memoizes the active refresh promise so only one `/api/auth/refresh` call is made at a time.
 - Each waiting request still retries its own original request once after the shared refresh resolves successfully.
-- Refresh failure does not call the `logout()` helper. It runs the session-expiry handler directly, which clears local client auth state, emits the expiry event, stores a post-auth redirect path, and schedules a redirect to `/`.
+- Refresh failure does not call the `logout()` helper. It runs the session-expiry handler directly, which clears local client auth state, emits the expiry event, stores a post-auth redirect path, and schedules a redirect to the sign-in page (`/`) with the current route preserved in `?next=`.
 
 ## Error Shape and Caller Responsibilities
 
@@ -315,7 +343,7 @@ Expired flow:
 4. `handleSessionExpiry()` stores `redirect_after_auth` when the current path is not `/`.
 5. It dispatches `session-expired`.
 6. The provider shows the expired notification.
-7. A redirect to `/` is scheduled after 15 seconds.
+7. A redirect to the sign-in page with `?next=<current_route>` is scheduled after 15 seconds (e.g. `/?next=%2Fdashboard`).
 
 Warning flow:
 
@@ -343,6 +371,8 @@ Contract:
 `handleSessionExpiry()` additionally stores:
 
 - `redirect_after_auth`
+
+and redirects to `/?next=<encoded_current_path>` (via `getSignInUrl()`).
 
 Use `getPostAuthRedirect()` after a successful wallet reconnect or login to read and clear that stored path.
 
@@ -384,6 +414,19 @@ This makes `apiClient` safe to use with abort-on-unmount patterns such as
 ### Concurrent `401`s
 
 Multiple requests can discover an expired session at the same time. They share a single refresh attempt, but each request still replays itself once after that shared refresh succeeds.
+
+## Transaction Export Utilities (`export-serializer.ts`)
+
+Client-side transaction list views (`/transactions` and `/dashboard/transaction-history`) use `serializeToCsv` from `@/lib/utils/export-serializer`:
+
+```ts
+import { serializeToCsv, UTF8_BOM } from '@/lib/utils/export-serializer';
+
+const csvString = serializeToCsv(rows); // Prepends UTF8_BOM (\uFEFF) by default
+```
+
+- **Excel Compatibility**: Includes UTF-8 BOM (`\uFEFF`) by default for locale-safe rendering in Microsoft Excel.
+- **Escaping & Protection**: Enforces RFC 4180 field escaping and protects against Excel formula injection (`=`, `@`, `\t`, `\r`, `+`/`-`).
 
 ## Contributor Checklist
 

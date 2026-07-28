@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { axe, toHaveNoViolations } from 'jest-axe';
 import MobileNav from './MobileNav';
+
+expect.extend(toHaveNoViolations);
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
@@ -33,6 +36,14 @@ describe('MobileNav', () => {
     const toggleButton = screen.getByRole('button', { name: /open mobile menu/i });
     expect(toggleButton).toBeInTheDocument();
     expect(toggleButton).toHaveAttribute('aria-label', 'Open Mobile Menu');
+  });
+
+  it('has no axe violations when the menu is open', async () => {
+    const { container } = render(<MobileNav />);
+    fireEvent.click(screen.getByRole('button', { name: /open mobile menu/i }));
+
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
   });
 
   it('opens menu on toggle click and closes on X button', () => {
@@ -107,13 +118,23 @@ describe('MobileNav', () => {
     expect(screen.queryByText('Menu')).not.toBeInTheDocument();
   });
 
-  it('closes menu on ESC key', () => {
+  it('exposes dialog semantics and labels the close control for assistive tech', () => {
     render(<MobileNav />);
     fireEvent.click(screen.getByRole('button', { name: /open mobile menu/i }));
-    expect(screen.getByText('Menu')).toBeInTheDocument();
 
+    const dialog = screen.getByRole('dialog', { name: /mobile navigation/i });
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /close mobile menu/i })).toBeInTheDocument();
+  });
+
+  it('restores focus to the toggle button when the menu closes with Escape', () => {
+    render(<MobileNav />);
+    const toggleButton = screen.getByRole('button', { name: /open mobile menu/i });
+    toggleButton.focus();
+
+    fireEvent.click(toggleButton);
     fireEvent.keyDown(document, { key: 'Escape' });
-    // Note: Current MobileNav doesn't implement ESC close; this test documents expected behavior
-    // If implementing ESC handling, this would pass
+
+    expect(toggleButton).toHaveFocus();
   });
 });

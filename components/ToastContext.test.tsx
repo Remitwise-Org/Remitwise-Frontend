@@ -60,12 +60,7 @@ describe('ToastContext', () => {
 
   describe('useToast hook', () => {
     it('should throw error when used outside ToastProvider', () => {
-      const TestComponent = () => {
-        useToast();
-        return <div>Test</div>;
-      };
-
-      expect(() => render(<TestComponent />)).toThrow('useToast must be used within a ToastProvider');
+      expect(() => useToast()).toThrowError('useToast must be used within a ToastProvider');
     });
 
     it('should return toast context value', () => {
@@ -117,6 +112,37 @@ describe('ToastContext', () => {
       });
 
       expect(screen.getByTestId('toast-count')).toHaveTextContent('1');
+    });
+
+    it('should preserve dismissed toasts in history', () => {
+      const TestComponent = () => {
+        const { toast, toasts, history, dismiss } = useToast();
+        const toastId = toast({ variant: 'success', title: 'Archived Toast' });
+
+        return (
+          <div>
+            <button onClick={() => dismiss(toastId)}>Dismiss Toast</button>
+            <div data-testid="active-count">{toasts.length}</div>
+            <div data-testid="history-count">{history.length}</div>
+          </div>
+        );
+      };
+
+      render(
+        <ToastProvider>
+          <TestComponent />
+        </ToastProvider>
+      );
+
+      expect(screen.getByTestId('active-count')).toHaveTextContent('1');
+      expect(screen.getByTestId('history-count')).toHaveTextContent('1');
+
+      act(() => {
+        screen.getByText('Dismiss Toast').click();
+      });
+
+      expect(screen.getByTestId('active-count')).toHaveTextContent('0');
+      expect(screen.getByTestId('history-count')).toHaveTextContent('1');
     });
 
     it('should generate unique toast IDs', () => {
@@ -314,6 +340,40 @@ describe('ToastContext', () => {
       });
 
       expect(screen.getByTestId('toast-description')).toHaveTextContent('Description');
+    });
+
+    it('should dismiss FIFO and cap overlap at 3', () => {
+      const TestComponent = () => {
+        const { toast, toasts } = useToast();
+        return (
+          <div>
+            <button onClick={() => toast({ variant: 'info', title: 'Toast 1' })}>Add 1</button>
+            <button onClick={() => toast({ variant: 'info', title: 'Toast 2' })}>Add 2</button>
+            <button onClick={() => toast({ variant: 'info', title: 'Toast 3' })}>Add 3</button>
+            <button onClick={() => toast({ variant: 'info', title: 'Toast 4' })}>Add 4</button>
+            <button onClick={() => toast({ variant: 'info', title: 'Toast 5' })}>Add 5</button>
+            <div data-testid="toast-ids">{toasts.map(t => t.title).join(',')}</div>
+          </div>
+        );
+      };
+
+      render(
+        <ToastProvider>
+          <TestComponent />
+        </ToastProvider>
+      );
+
+      act(() => {
+        screen.getByText('Add 1').click();
+        screen.getByText('Add 2').click();
+        screen.getByText('Add 3').click();
+        screen.getByText('Add 4').click();
+        screen.getByText('Add 5').click();
+      });
+
+      const titles = screen.getByTestId('toast-ids').textContent?.split(',');
+      expect(titles).toHaveLength(3);
+      expect(titles).toEqual(['Toast 3', 'Toast 4', 'Toast 5']);
     });
   });
 });

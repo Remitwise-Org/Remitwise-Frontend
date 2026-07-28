@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useScrollSpy } from "@/lib/hooks/useIntersectionObserver";
 
 type SettingsNavItem = {
   id: string;
@@ -15,28 +16,12 @@ interface SettingsNavigationProps {
 export default function SettingsNavigation({ items }: SettingsNavigationProps) {
   const [activeId, setActiveId] = useState(items[0]?.id ?? "");
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id);
-          }
-        });
-      },
-      {
-        rootMargin: "-40% 0px -55% 0px",
-        threshold: 0.1,
-      }
-    );
+  const sectionIds = useMemo(() => items.map((item) => item.id), [items]);
 
-    items.forEach((item) => {
-      const section = document.getElementById(item.id);
-      if (section) observer.observe(section);
-    });
-
-    return () => observer.disconnect();
-  }, [items]);
+  useScrollSpy(sectionIds, setActiveId, {
+    rootMargin: "-40% 0px -55% 0px",
+    threshold: 0.1,
+  });
 
   return (
     <nav aria-label="Settings navigation" className="space-y-6">

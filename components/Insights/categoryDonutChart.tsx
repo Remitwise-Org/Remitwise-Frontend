@@ -1,6 +1,8 @@
 'use client'
 
-import { useId, useState, useMemo, memo } from 'react'
+import { useId, useState, useMemo, useCallback, memo } from 'react'
+import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
+import { useSaveData } from '@/lib/hooks/useSaveData'
 import {
   PieChart,
   Pie,
@@ -22,11 +24,6 @@ export interface CategoryDataPoint {
   percentage: number
 }
 
-interface CustomTooltipProps {
-  active?: boolean
-  payload?: Array<{ color?: string; payload: CategoryDataPoint }>
-}
-
 export const MOCK_CATEGORY_DATA: CategoryDataPoint[] = [
   { name: 'Family Support', amount: 1800, percentage: 56 },
   { name: 'Education',      amount: 850,  percentage: 26 },
@@ -34,12 +31,12 @@ export const MOCK_CATEGORY_DATA: CategoryDataPoint[] = [
   { name: 'Emergency',      amount: 200,  percentage: 6  },
 ]
 
-const SLICE_COLORS = INSIGHTS_PALETTE.slice(0, 8); // use first 8 colors
+const SLICE_COLORS = INSIGHTS_PALETTE.slice(0, 8);
 
-const AXIS_COLOR = '#6b7280'
+const AXIS_COLOR = '#9CA3AF'
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
+const CustomTooltip = memo(function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null
   const entry = payload[0]
   const data  = entry.payload as CategoryDataPoint
@@ -65,7 +62,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
       </div>
     </div>
   )
-}
+})
 
 // ── Custom label inside donut center ─────────────────────────────────────────
 interface CenterLabelProps {
@@ -75,7 +72,7 @@ interface CenterLabelProps {
   total: number
 }
 
-function CenterLabel({ cx, cy, active, total }: CenterLabelProps) {
+const CenterLabel = memo(function CenterLabel({ cx, cy, active, total }: CenterLabelProps) {
   return (
     <g>
       {active ? (
@@ -99,7 +96,7 @@ function CenterLabel({ cx, cy, active, total }: CenterLabelProps) {
       )}
     </g>
   )
-}
+})
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -107,34 +104,52 @@ interface CategoryDonutChartProps {
   data?: CategoryDataPoint[]
 }
 
-function useReducedMotion() {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
 function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutChartProps) {
   const summaryId = useId()
   const { t } = useClientTranslator()
+  const summaryItems = useMemo(() =>
+    data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage} percent)`),
+    [data]
+  );
+  const chartSummary = buildChartSummary(summaryItems, t);
   const [activeCategory, setActiveCategory] = useState<CategoryDataPoint | null>(null)
-  const reducedMotion = useReducedMotion()
+  const reducedMotion = usePrefersReducedMotion()
+  const saveData = useSaveData()
 
-  const total  = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
+  const total = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
   const topCat = useMemo(() => data[0], [data])
 
-  const summaryItems = useMemo(
-    () => data.map((item) => `${item.name}: $${item.amount.toLocaleString()} (${item.percentage}%)`),
-    [data],
-  )
+  const pieStyle = useMemo(() => ({ cursor: 'pointer' as const }), [])
 
-  const ariaLabel = useMemo(
-    () => buildChartImageLabel('Top categories', summaryItems, t),
-    [summaryItems, t],
-  )
+  const handleMouseEnter = useCallback((_: unknown, index: number) => {
+    setActiveCategory(data[index])
+  }, [data])
 
-  const summaryText = useMemo(
-    () => buildChartSummary(summaryItems, t),
-    [summaryItems, t],
-  )
+  const handleMouseLeave = useCallback(() => {
+    setActiveCategory(null)
+  }, [])
+
+  const handleClick = useCallback((_: unknown, index: number) => {
+    setActiveCategory(prev =>
+      prev?.name === data[index].name ? null : data[index]
+    )
+  }, [data])
+
+  const cells = useMemo(() => data.map((entry, index) => (
+    <Cell
+      key={entry.name}
+      fill={SLICE_COLORS[index % SLICE_COLORS.length]}
+      opacity={
+        activeCategory === null || activeCategory.name === entry.name
+          ? 1
+          : 0.35
+      }
+      style={reducedMotion ? undefined : { transition: 'opacity 0.2s ease' }}
+    />
+  )), [data, activeCategory, reducedMotion])
+
+  const ariaLabel = useMemo(() => buildChartImageLabel('Top Categories', summaryItems, t), [summaryItems, t])
+  const summaryText = useMemo(() => buildChartSummary(summaryItems, t), [summaryItems, t])
 
   return (
     <div className="bg-black/40 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm w-full">
@@ -152,101 +167,126 @@ function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutCha
       {/* Chart + legend layout */}
       <div className="flex flex-col sm:flex-row items-center gap-6">
 
-        {/* Donut */}
-        <div className="w-full sm:w-auto flex-shrink-0" role="img" aria-label={ariaLabel} aria-describedby={summaryId}>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart aria-hidden="true">
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={90}
-                paddingAngle={3}
-                dataKey="amount"
-                stroke="none"
-                onMouseEnter={(_, index) => setActiveCategory(data[index])}
-                onMouseLeave={() => setActiveCategory(null)}
-                onClick={(_, index) =>
-                  setActiveCategory(prev =>
-                    prev?.name === data[index].name ? null : data[index]
-                  )
-                }
-                style={{ cursor: 'pointer' }}
-              >
-                {data.map((entry, index) => (
-                  <Cell
-                    key={entry.name}
-                    fill={SLICE_COLORS[index % SLICE_COLORS.length]}
-                    opacity={
-                      activeCategory === null || activeCategory.name === entry.name
-                        ? 1
-                        : 0.35
-                    }
-                    style={reducedMotion ? undefined : { transition: 'opacity 0.2s ease' }}
-                  />
-                ))}
-              </Pie>
-
-              {/* Center label rendered as custom content */}
-              <text>
-                <CenterLabel cx={0} cy={0} active={activeCategory} total={total} />
-              </text>
-
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Legend rows — interactive */}
-        <div className="w-full space-y-3">
-          {data.map((item, index) => {
-            const color     = SLICE_COLORS[index % SLICE_COLORS.length]
-            const isActive  = activeCategory?.name === item.name
-            const isDimmed  = activeCategory !== null && !isActive
-
-            return (
-              <button
-                key={item.name}
-                type="button"
-                onClick={() =>
-                  setActiveCategory(prev =>
-                    prev?.name === item.name ? null : item
-                  )
-                }
-                className={`w-full text-left space-y-1.5 transition-opacity ${
-                  isDimmed ? 'opacity-40' : 'opacity-100'
-                }`}
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: color }}
+        {saveData ? (
+          /* Save-Data fallback: static progress bars, no PieChart/animation */
+          <div className="w-full space-y-3" aria-label={ariaLabel}>
+            {data.map((item, index) => {
+              const color = SLICE_COLORS[index % SLICE_COLORS.length]
+              return (
+                <div key={item.name} className="space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: color }}
+                        aria-hidden="true"
+                      />
+                      <span className="text-white text-sm font-medium">{item.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-white font-bold text-sm">
+                        ${item.amount.toLocaleString()}
+                      </span>
+                      <span className="text-gray-500 text-xs w-8 text-right">
+                        {item.percentage}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden" role="presentation">
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${item.percentage}%`, backgroundColor: color }}
                     />
-                    <span className="text-white text-sm font-medium">{item.name}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-white font-bold text-sm">
-                      ${item.amount.toLocaleString()}
-                    </span>
-                    <span className="text-gray-500 text-xs w-8 text-right">
-                      {item.percentage}%
-                    </span>
                   </div>
                 </div>
+              )
+            })}
+          </div>
+        ) : (
+          <>
+            {/* Donut */}
+            <div className="w-full sm:w-auto flex-shrink-0" role="img" aria-label={ariaLabel} aria-describedby={summaryId}>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart aria-hidden="true">
+                  <Pie
+                    data={data}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={3}
+                    dataKey="amount"
+                    stroke="none"
+                    isAnimationActive={!reducedMotion}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                    onClick={handleClick}
+                    style={pieStyle}
+                  >
+                    {cells}
+                  </Pie>
 
-                {/* Progress bar */}
-                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${reducedMotion ? '' : 'transition-all duration-700 ease-out'}`}
-                    style={{ width: `${item.percentage}%`, backgroundColor: color }}
-                  />
-                </div>
-              </button>
-            )
-          })}
-        </div>
+                  {/* Center label rendered as custom content */}
+                  <text>
+                    <CenterLabel cx={0} cy={0} active={activeCategory} total={total} />
+                  </text>
+
+                  <Tooltip content={CustomTooltip} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Legend rows — interactive */}
+            <div className="w-full space-y-3">
+              {data.map((item, index) => {
+                const color     = SLICE_COLORS[index % SLICE_COLORS.length]
+                const isActive  = activeCategory?.name === item.name
+                const isDimmed  = activeCategory !== null && !isActive
+
+                return (
+                  <button
+                    key={item.name}
+                    type="button"
+                    onClick={() =>
+                      setActiveCategory(prev =>
+                        prev?.name === item.name ? null : item
+                      )
+                    }
+                    className={`w-full text-left space-y-1.5 transition-opacity ${
+                      isDimmed ? 'opacity-40' : 'opacity-100'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: color }}
+                        />
+                        <span className="text-white text-sm font-medium">{item.name}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-white font-bold text-sm">
+                          ${item.amount.toLocaleString()}
+                        </span>
+                        <span className="text-gray-500 text-xs w-8 text-right">
+                          {item.percentage}%
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${reducedMotion ? '' : 'transition-all duration-700 ease-out'}`}
+                        style={{ width: `${item.percentage}%`, backgroundColor: color }}
+                      />
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Insight alert */}
@@ -259,9 +299,10 @@ function CategoryDonutChartInner({ data = MOCK_CATEGORY_DATA }: CategoryDonutCha
           </p>
         </div>
       )}
+
       {/* Screen‑reader summary for the chart */}
       <p id={summaryId} className="sr-only" aria-live="polite">
-        {chartSummary}
+        {summaryText}
       </p>
     </div>
   )

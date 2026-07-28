@@ -1,53 +1,160 @@
 'use client'
 
-import { lazy, Suspense } from 'react'
+import { Suspense, useCallback, useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { Send, PiggyBank, FileText, Shield } from 'lucide-react'
 import FinancialInsightsHeader from '@/components/FinancialInsightsHeader'
+import type { DateRangeOption, ExportFormat } from '@/components/FinancialInsightsHeader'
+import { MOCK_SPENDING_VS_SAVINGS } from '@/components/Insights/spendingVsSavingChart'
+import { MOCK_TREND_DATA } from '@/components/Insights/remittanceTrendChart'
 import StatCard from '@/components/Dashboard/StatCard'
-import { SpendingVsSavingsChart } from '@/components/Insights/spendingVsSavingChart'
 import { TopCategoriesWidget } from '@/components/Insights/TopCategoriesWidget'
+import { SkeletonChart } from '@/components/ui/Skeleton'
+import { useSeo } from '@/lib/hooks/useSeo'
+import { useToast } from '@/lib/context/ToastContext'
 
-const RemittanceTrendChart = lazy(() =>
-  import('@/components/Insights/remittanceTrendChart').then(m => ({ default: m.RemittanceTrendChart }))
+const SpendingVsSavingsChart = dynamic(
+  () => import('@/components/Insights/spendingVsSavingChart').then(m => ({ default: m.SpendingVsSavingsChart })),
+  { ssr: false },
 )
-const CategoryDonutChart = lazy(() =>
-  import('@/components/Insights/categoryDonutChart').then(m => ({ default: m.CategoryDonutChart }))
+const RemittanceTrendChart = dynamic(
+  () => import('@/components/Insights/remittanceTrendChart').then(m => ({ default: m.RemittanceTrendChart })),
+  { ssr: false },
+)
+const CategoryDonutChart = dynamic(
+  () => import('@/components/Insights/categoryDonutChart').then(m => ({ default: m.CategoryDonutChart })),
+  { ssr: false },
 )
 
-// Summary overview — merges the StatCard breakdown (Total Remittances / Saved /
-// Bills / Insurance) with the "vs last period" change deltas. These map to the
-// totals returned by /api/insights (spending / savings / bills / insurance).
-const SUMMARY_STATS = [
-  { title: 'Total Remittances', value: '$3,240', change: '+18%', neutral: false, icon: <Send className="w-5 h-5" /> },
-  { title: 'Total Saved',       value: '$1,580', change: '+24%', neutral: false, icon: <PiggyBank className="w-5 h-5" /> },
-  { title: 'Bills Paid',        value: '$685',   change: '+5%',  neutral: false, icon: <FileText className="w-5 h-5" /> },
-  { title: 'Insurance Premiums',value: '$125',   change: '0%',   neutral: true,  icon: <Shield className="w-5 h-5" /> },
-] as const
+function getRangeLabel(range: DateRangeOption): string {
+  switch (range) {
+    case 'This Month': return 'this month'
+    case 'Last Month': return 'last month'
+    case 'Last 3 Months': return 'last 3 months'
+    case 'Last 6 Months': return 'last 6 months'
+    case 'This Year': return 'this year'
+    case 'Custom Range': return 'selected period'
+  }
+}
+
+// ── Summary stats (dynamic value + change based on range) ───────────────────
+
+function getSummaryStats(rangeLabel: string) {
+  return [
+    { title: 'Total Remittances', value: '$3,240', change: '+18%', neutral: false, icon: <Send className="w-5 h-5" /> },
+    { title: 'Total Saved',       value: '$1,580', change: '+24%', neutral: false, icon: <PiggyBank className="w-5 h-5" /> },
+    { title: 'Bills Paid',        value: '$685',   change: '+5%',  neutral: false, icon: <FileText className="w-5 h-5" /> },
+    { title: 'Insurance Premiums',value: '$125',   change: '0%',   neutral: true,  icon: <Shield className="w-5 h-5" /> },
+  ].map(stat => ({
+    ...stat,
+    detail2: `vs ${rangeLabel}`,
+  }))
+}
+
+// ── Simulated export ─────────────────────────────────────────────────────────
+
+function simulateExport(format: ExportFormat): Promise<void> {
+  const delay = format === 'pdf' ? 2000 : 1200
+  return new Promise(resolve => setTimeout(resolve, delay))
+}
 
 export default function FinancialInsightsPage() {
-  const handleExport = () => {
-    console.log('Exporting financial data...')
-    alert('Export functionality will be implemented here (CSV/PDF)')
-  }
+  useSeo({
+    title: 'Financial Insights | RemitWise',
+    description: 'Analyze your spending vs savings, remittance trends, and category breakdowns on RemitWise.',
+  })
 
-  const handleDateRangeChange = (range: string) => {
-    console.log('Date range changed to:', range)
-    // TODO: pass selected range to charts to filter data via API
-  }
+  const { toast, dismiss } = useToast()
+  const [selectedRange, setSelectedRange] = useState<DateRangeOption>('This Month')
+  const [customStart, setCustomStart] = useState('')
+  const [customEnd, setCustomEnd] = useState('')
+
+  const rangeLabel = useMemo(() => getRangeLabel(selectedRange), [selectedRange])
+  const summaryStats = useMemo(() => getSummaryStats(rangeLabel), [rangeLabel])
+
+  // Filter charts data based on selected range
+  const spendingSavingsData = useMemo(() => {
+    if (selectedRange === 'This Month') return MOCK_SPENDING_VS_SAVINGS.slice(-1)
+    if (selectedRange === 'Last Month') return MOCK_SPENDING_VS_SAVINGS.slice(-2, -1)
+    if (selectedRange === 'Last 3 Months') return MOCK_SPENDING_VS_SAVINGS.slice(-3)
+    if (selectedRange === 'Last 6 Months' || selectedRange === 'This Year') return MOCK_SPENDING_VS_SAVINGS
+    return MOCK_SPENDING_VS_SAVINGS // custom range fallback
+  }, [selectedRange])
+
+  const trendData = useMemo(() => {
+    if (selectedRange === 'This Month') return MOCK_TREND_DATA.slice(-4)
+    if (selectedRange === 'Last Month') return MOCK_TREND_DATA.slice(-8, -4)
+    if (selectedRange === 'Last 3 Months') return MOCK_TREND_DATA.slice(-10)
+    if (selectedRange === 'Last 6 Months' || selectedRange === 'This Year') return MOCK_TREND_DATA
+    return MOCK_TREND_DATA
+  }, [selectedRange])
+
+  const handleExport = useCallback(async (format: ExportFormat) => {
+    const toastId = toast({
+      variant: 'info',
+      title: `Exporting ${format.toUpperCase()}...`,
+      description: 'Preparing your financial insights data.',
+      duration: 0,
+    })
+
+    try {
+      await simulateExport(format)
+      // Dismiss the loading toast
+      dismiss(toastId)
+      toast({
+        variant: 'success',
+        title: `${format.toUpperCase()} exported successfully`,
+        description: `Your financial insights have been exported as ${format.toUpperCase()}.`,
+      })
+    } catch {
+      dismiss(toastId)
+      toast({
+        variant: 'error',
+        title: 'Export failed',
+        description: 'Something went wrong. Please try again.',
+      })
+    }
+  }, [toast, dismiss])
+
+  const handleDateRangeChange = useCallback((range: DateRangeOption) => {
+    setSelectedRange(range)
+    if (range !== 'Custom Range') {
+      setCustomStart('')
+      setCustomEnd('')
+    }
+    toast({
+      variant: 'info',
+      title: `Showing data for ${getRangeLabel(range)}`,
+      duration: 3000,
+    })
+  }, [toast])
+
+  const handleCustomDateChange = useCallback((start: string, end: string) => {
+    setCustomStart(start)
+    setCustomEnd(end)
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
       <FinancialInsightsHeader
         onExport={handleExport}
         onDateRangeChange={handleDateRangeChange}
+        onCustomDateChange={handleCustomDateChange}
       />
 
       <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
 
-        {/* Summary overview */}
-        <h2 className="text-lg sm:text-xl font-semibold text-gray-400 mb-4 sm:mb-6">Summary Overview</h2>
+        {/* Active range indicator */}
+        <div className="flex items-center gap-2 mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-400">Summary Overview</h2>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#D72323]/10 border border-[#D72323]/20 text-[#D72323] text-xs font-medium">
+            {selectedRange === 'Custom Range' && customStart && customEnd
+              ? `${customStart} – ${customEnd}`
+              : selectedRange}
+          </span>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          {SUMMARY_STATS.map(({ title, value, change, neutral, icon }) => (
+          {summaryStats.map(({ title, value, change, neutral, icon, detail2 }) => (
             <StatCard
               key={title}
               title={title}
@@ -56,7 +163,7 @@ export default function FinancialInsightsPage() {
               showTrend={!neutral}
               detail1={change}
               detail1Color={neutral ? 'text-gray-400' : 'text-emerald-400'}
-              detail2="vs last period"
+              detail2={detail2}
             />
           ))}
         </div>
@@ -66,16 +173,18 @@ export default function FinancialInsightsPage() {
 
           {/* Spending vs Savings — full width on mobile, half on desktop */}
           <div className="lg:col-span-2">
-            <SpendingVsSavingsChart />
+            <Suspense fallback={<SkeletonChart type="bar" />}>
+              <SpendingVsSavingsChart data={spendingSavingsData} />
+            </Suspense>
           </div>
 
           {/* Trend line */}
-          <Suspense fallback={<div className="h-[308px] rounded-3xl bg-white/5 animate-pulse" />}>
-            <RemittanceTrendChart />
+          <Suspense fallback={<SkeletonChart type="line" />}>
+            <RemittanceTrendChart data={trendData} />
           </Suspense>
 
           {/* Category donut */}
-          <Suspense fallback={<div className="h-[308px] rounded-3xl bg-white/5 animate-pulse" />}>
+          <Suspense fallback={<SkeletonChart type="donut" />}>
             <CategoryDonutChart />
           </Suspense>
 

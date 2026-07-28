@@ -5,6 +5,10 @@ import { useEffect, useState } from 'react';
 import SwaggerUI from 'swagger-ui-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import PageHeadingLink from '@/components/PageHeadingLink';
+import layoutConfig from '@/lib/config/layout.json';
+
+const { TABLET } = layoutConfig.BREAKPOINTS;
 
 type SwaggerUIWrapperProps = {
   specUrl: string;
@@ -48,7 +52,14 @@ export default function SwaggerUIWrapper({ specUrl }: SwaggerUIWrapperProps) {
                 <span className="text-brand-dark text-lg font-bold tracking-tight">RemitWise</span>
               </Link>
               <div className="hidden sm:block w-px h-6 bg-gray-300"></div>
-              <h1 className="text-gray-700 font-semibold text-base sm:text-lg">API Documentation</h1>
+              <PageHeadingLink
+                headingId="api-docs-page-heading"
+                label="API Documentation"
+                headingClassName="text-gray-700 font-semibold text-base sm:text-lg"
+                buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+              >
+                API Documentation
+              </PageHeadingLink>
             </div>
 
             {/* Navigation */}
@@ -280,7 +291,7 @@ export default function SwaggerUIWrapper({ specUrl }: SwaggerUIWrapperProps) {
         }
         
         /* Responsive adjustments */
-        @media (max-width: 768px) {
+        @media (max-width: ${TABLET}px) {
           .swagger-ui-container .swagger-ui .opblock-summary {
             flex-direction: column;
             align-items: flex-start;

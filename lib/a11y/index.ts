@@ -4,3 +4,4 @@
  */
 
 export * from './chartAccessibility';
+export * from './wcag-contrast';

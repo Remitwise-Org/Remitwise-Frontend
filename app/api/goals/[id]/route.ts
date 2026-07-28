@@ -1,12 +1,30 @@
 import { getGoal, ContractReadError } from "@/lib/contracts/savings-goal";
 import { NextResponse, NextRequest } from "next/server";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+type GoalRouteContext = {
+  params: Promise<{ id?: string }>;
+};
+
+async function getGoalId(context: GoalRouteContext): Promise<string | null> {
+  const params = await context.params;
+  return params?.id ?? null;
+}
+
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> } // ← note Promise
+  context: GoalRouteContext
 ) {
   try {
-    const { id } = await context.params; // ← unwrap
+    const id = await getGoalId(context);
+    if (!id) {
+      return NextResponse.json(
+        { error: "Goal id is required" },
+        { status: 400 }
+      );
+    }
 
     const publicKey = req.headers.get("x-public-key");
 
@@ -28,7 +46,7 @@ export async function GET(
 
     return NextResponse.json(goal, { status: 200 });
   } catch (error) {
-    console.error(`GET /api/goals/${await context.params} error:`, error);
+    console.error("GET /api/goals/[id] error:", error);
     if (error instanceof ContractReadError) {
       return NextResponse.json(
         { error: "Unable to read goal data. Please try again.", retryable: true },

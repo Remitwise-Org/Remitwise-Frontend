@@ -3,6 +3,8 @@
 import { AlertCircle, Home } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useClientTranslator } from "@/lib/i18n/client";
+import { usePathname } from "next/navigation";
+import { ROUTE_ERROR_MESSAGES, DEFAULT_ERROR_MESSAGE } from "@/lib/config/route-errors";
 
 interface RootErrorFallbackProps {
   onReset: () => void;
@@ -15,10 +17,27 @@ interface RootErrorFallbackProps {
 export default function RootErrorFallback({ onReset }: RootErrorFallbackProps) {
   const { t } = useClientTranslator();
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     headingRef.current?.focus();
   }, []);
+
+  const getErrorMessage = () => {
+    if (!pathname) return DEFAULT_ERROR_MESSAGE;
+    
+    for (const config of ROUTE_ERROR_MESSAGES) {
+      if (typeof config.match === 'string' && pathname.startsWith(config.match)) {
+        return config;
+      }
+      if (config.match instanceof RegExp && config.match.test(pathname)) {
+        return config;
+      }
+    }
+    return DEFAULT_ERROR_MESSAGE;
+  };
+
+  const messageConfig = getErrorMessage();
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10 text-white sm:px-6">
@@ -43,16 +62,13 @@ export default function RootErrorFallback({ onReset }: RootErrorFallbackProps) {
             tabIndex={-1}
             className="text-balance text-2xl font-semibold text-white focus:outline-none sm:text-3xl"
           >
-            {t("rootError.title", "Something went wrong")}
+            {t(messageConfig.titleKey, messageConfig.defaultTitle)}
           </h1>
           <p
             id="root-error-description"
             className="mx-auto max-w-md text-sm leading-6 text-white/60"
           >
-            {t(
-              "rootError.description",
-              "We hit an unexpected problem, but your session is still safe. Try reloading this view or return home."
-            )}
+            {t(messageConfig.descriptionKey, messageConfig.defaultDescription)}
           </p>
         </div>
 

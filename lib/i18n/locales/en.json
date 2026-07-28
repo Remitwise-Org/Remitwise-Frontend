@@ -4,55 +4,69 @@
     "network": "Network connection error. Check your connection.",
     "unauthorized": "Session expired. Please log in again."
   },
-  "contractErrors": {
-    "generic": "Contract execution failed. Please try again.",
-    "invalidInput": "Invalid input provided.",
-    "invalidAmount": "Invalid contract amount.",
-    "invalidRecipient": "Invalid contract recipient.",
-    "unauthorized": "Unauthorized access to contract.",
-    "forbidden": "Action forbidden by contract.",
-    "notFound": "Contract resource not found.",
-    "executionFailed": "Contract execution failed.",
-    "contractExecError": "Contract execution failed.",
-    "systemError": "Internal system error.",
-    "limitExceeded": "Contract operation limit exceeded."
-  },
   "transactionHistory": {
     "title": "Transaction History",
+    "titleStandalone": "Transactions",
+    "subtitleStandalone": "Filter, search, and review Send Money, Smart Split, Bill Payment, and Insurance activity.",
     "empty": "No transactions found",
     "amount": "Amount",
     "status": "Status",
-    "date": "Date"
-  },
-  "transactionStatus": {
-    "pending": {
-      "label": "Confirming",
-      "emphasis": "Waiting for network confirmation"
+    "date": "Date",
+    "export": "Export",
+    "filtersHeading": "Filter & search",
+    "filtersHelper": "Combine type, status, date range, and search. Active filters appear below.",
+    "searchStandalonePlaceholder": "Search id, recipient, type, status, amount",
+    "showing": "Showing {{count}} of {{total}}",
+    "results_one": "{{count}} transaction",
+    "results_many": "{{count}} transactions",
+    "typeFilterLabel": "Type",
+    "statusFilterLabel": "Status",
+    "dateRange": {
+      "label": "Date range",
+      "from": "From",
+      "to": "To",
+      "clear": "Clear date range"
     },
-    "confirmed": {
-      "label": "Confirmed",
-      "emphasis": "Settled on the Stellar network"
+    "activeFilters": {
+      "label": "Active filters",
+      "none": "None",
+      "clearAll": "Clear all",
+      "clearSearch": "Clear search",
+      "search": "Search: {{query}}",
+      "type": "Type: {{type}}",
+      "status": "Status: {{status}}"
     },
-    "failed": {
-      "label": "Failed",
-      "emphasis": "The transaction did not go through"
+    "sort": {
+      "label": "Sort",
+      "date": "Date",
+      "amount": "Amount",
+      "ascending": "ascending",
+      "descending": "descending"
     },
-    "unknown": {
-      "label": "Status unknown",
-      "emphasis": "Still unconfirmed — check the explorer"
+    "dateGroups": {
+      "today": "Today",
+      "todayHelper": "Transactions from today",
+      "thisWeek": "This Week",
+      "thisWeekHelper": "Earlier this week (Mon–Sun, excluding today)",
+      "earlier": "Earlier",
+      "earlierHelper": "Before this week"
+    },
+    "emptyState": {
+      "title": "No transactions yet",
+      "description": "When you send money, pay bills, or use Smart Split, your activity will show up here.",
+      "cta": "Send money"
+    },
+    "noResults": {
+      "title": "No matching transactions",
+      "description": "Try clearing filters or adjusting your search to see more results.",
+      "clearFilters": "Clear filters"
     }
   },
   "dashboard": {
     "totalSent": "Total Sent",
     "savings": "Savings",
     "billsPaid": "Bills Paid",
-    "insurance": "Insurance",
-    "transfers": "{{count}} transfers",
-    "goals": "{{count}} goals",
-    "billsCount": "{{count}} paid",
-    "policies": "{{count}} policies",
-    "loadError": "We couldn't load your dashboard summary.",
-    "unavailable": "—"
+    "insurance": "Insurance"
   },
   "quickActions": {
     "emergencyTransfer": "Emergency Transfer",
@@ -60,9 +74,5 @@
     "goals": "Goals",
     "bills": "Bills",
     "urgentBadge": "URGENT"
-  },
-  "charts": {
-    "imageLabel": "{{title}}: {{summary}}",
-    "noData": "No data available."
   }
 }

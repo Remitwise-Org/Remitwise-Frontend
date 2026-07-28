@@ -1,6 +1,7 @@
 // Policy Service Implementation
 
 import { IPolicyService } from './policy';
+import { IEventStorageService } from './event-storage';
 import { EmergencyLimits, ValidationResult, EmergencyTransferConfig } from '@/types/emergency-transfer';
 import { EmergencyConfig } from '@/models/emergency-transfer-config';
 
@@ -8,6 +9,8 @@ export class PolicyService implements IPolicyService {
   private config: EmergencyConfig | null = null;
   private configCache: { data: EmergencyConfig; timestamp: number } | null = null;
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  constructor(private eventStorage: IEventStorageService) {}
 
   /**
    * Loads configuration from database or cache
@@ -45,20 +48,14 @@ export class PolicyService implements IPolicyService {
    * Gets daily usage for a user
    */
   private async getDailyUsage(userId: string): Promise<string> {
-    // In a real implementation, this would query the database
-    // for sum of amounts from emergency_transfer_events
-    // where user_id = userId and created_at >= start of today
-    return '0';
+    return this.eventStorage.getDailyUsage(userId);
   }
 
   /**
    * Gets monthly count for a user
    */
   private async getMonthlyCount(userId: string): Promise<number> {
-    // In a real implementation, this would query the database
-    // for count of emergency_transfer_events
-    // where user_id = userId and created_at >= start of month
-    return 0;
+    return this.eventStorage.getMonthlyCount(userId);
   }
 
   /**
