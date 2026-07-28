@@ -1,6 +1,7 @@
 # Layout Patterns
 
 This document is for **contributors** working on frontend pages and components.
+For dashboard-specific hierarchy, column ratios, and mobile stacking rules, see [DASHBOARD_LAYOUT_RULES.md](./DASHBOARD_LAYOUT_RULES.md).
 It captures the layout conventions already used across the app so new pages
 stay visually and structurally consistent, instead of each page inventing its
 own spacing, grid, and wrapper structure.

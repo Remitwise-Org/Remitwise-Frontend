@@ -99,4 +99,95 @@ describe('ESLint Rules', () => {
 
     expect(noRestrictedSyntaxMessage).toBeUndefined();
   });
+
+  it('bans useState with an initial function call', async () => {
+    const eslint = new ESLint({
+      useEslintrc: true,
+      overrideConfig: {
+        parserOptions: {
+          ecmaVersion: 2022,
+          sourceType: 'module',
+        },
+      },
+    });
+
+    const code = `
+      import { useState } from 'react';
+      
+      export function MyComponent() {
+        const [state, setState] = useState(myExpensiveInit());
+        return null;
+      }
+    `;
+
+    const results = await eslint.lintText(code);
+    const messages = results[0].messages;
+
+    const noRestrictedSyntaxMessage = messages.find(
+      (msg) => msg.ruleId === 'no-restricted-syntax'
+    );
+
+    expect(noRestrictedSyntaxMessage).toBeDefined();
+    expect(noRestrictedSyntaxMessage?.message).toContain('useState with an initial function call runs on every render');
+  });
+
+  it('allows useState with a lazy initializer arrow function', async () => {
+    const eslint = new ESLint({
+      useEslintrc: true,
+      overrideConfig: {
+        parserOptions: {
+          ecmaVersion: 2022,
+          sourceType: 'module',
+        },
+      },
+    });
+
+    const code = `
+      import { useState } from 'react';
+      
+      export function MyComponent() {
+        const [state, setState] = useState(() => myExpensiveInit());
+        return null;
+      }
+    `;
+
+    const results = await eslint.lintText(code);
+    const messages = results[0].messages;
+
+    const noRestrictedSyntaxMessage = messages.find(
+      (msg) => msg.ruleId === 'no-restricted-syntax' && msg.message.includes('useState')
+    );
+
+    expect(noRestrictedSyntaxMessage).toBeUndefined();
+  });
+
+  it('allows useState with a simple value', async () => {
+    const eslint = new ESLint({
+      useEslintrc: true,
+      overrideConfig: {
+        parserOptions: {
+          ecmaVersion: 2022,
+          sourceType: 'module',
+        },
+      },
+    });
+
+    const code = `
+      import { useState } from 'react';
+      
+      export function MyComponent() {
+        const [state, setState] = useState(0);
+        return null;
+      }
+    `;
+
+    const results = await eslint.lintText(code);
+    const messages = results[0].messages;
+
+    const noRestrictedSyntaxMessage = messages.find(
+      (msg) => msg.ruleId === 'no-restricted-syntax' && msg.message.includes('useState')
+    );
+
+    expect(noRestrictedSyntaxMessage).toBeUndefined();
+  });
 });

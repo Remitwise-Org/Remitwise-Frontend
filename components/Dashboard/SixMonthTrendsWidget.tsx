@@ -10,8 +10,7 @@ import WidgetErrorState from '@/components/ui/WidgetErrorState'
 import { useWidgetDeepLink } from '@/lib/hooks/useWidgetDeepLink'
 import { WIDGET_IDS } from '@/lib/config/widgets'
 import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart'
-import { useWidgetDeepLink } from '@/lib/hooks/useWidgetDeepLink'
-import { WIDGET_IDS } from '@/lib/config/widgets'
+import { useSaveData } from '@/lib/hooks/useSaveData'
 
 // Sample data for the 6-month chart (Jul-Dec)
 function tooltipFormatter(value: any, name: any, item: any, index: any, payload: any) {
@@ -145,6 +144,7 @@ export default memo(function SixMonthTrendsWidget({ isLoading = false, hasError 
     const widgetRef = useWidgetDeepLink(WIDGET_IDS.SIX_MONTH_TRENDS);
     const [retryKey, setRetryKey] = useState(0)
     const handleRetry = useCallback(() => setRetryKey((k) => k + 1), [])
+    const saveData = useSaveData()
 
     const tooltipFormatter = useCallback((value: unknown, name: unknown) => {
         const numeric = typeof value === 'number' ? value : Number(value)
@@ -235,24 +235,56 @@ export default memo(function SixMonthTrendsWidget({ isLoading = false, hasError 
                 </button>
             </div>
 
-            {/* Chart */}
-            <div className="w-full h-[280px] sm:h-[320px]" role="img" aria-label={chartLabel}>
-                <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 5 }} aria-hidden="true">
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.063)" vertical={true} />
-                        <XAxis dataKey="month" axisLine={{ stroke: 'rgba(255, 255, 255, 0.25)' }} tickLine={{ stroke: 'rgba(255, 255, 255, 0.25)' }} tick={{ fill: 'rgba(255, 255, 255, 0.376)', fontSize: 12, fontWeight: 400 }} />
-                        <YAxis axisLine={{ stroke: 'rgba(255, 255, 255, 0.25)' }} tickLine={{ stroke: 'rgba(255, 255, 255, 0.25)' }} tick={{ fill: 'rgba(255, 255, 255, 0.376)', fontSize: 12, fontWeight: 400 }} tickFormatter={(value) => `$${value}`} domain={[0, 3400]} ticks={[0, 850, 1700, 2550, 3400]} width={45} />
-                        <Tooltip contentStyle={TOOLTIP_CONTENT_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} formatter={tooltipFormatter} />
-                        <Legend content={<CustomLegend />} />
-                        <Line type="monotone" dataKey="remittances" stroke={COLORS.remittances} strokeWidth={3} dot={DOT_REMITTANCES} activeDot={ACTIVE_DOT} />
-                        <Line type="monotone" dataKey="savings"     stroke={COLORS.savings}     strokeWidth={3} dot={DOT_SAVINGS}     activeDot={ACTIVE_DOT} />
-                        <Line type="monotone" dataKey="bills"       stroke={COLORS.bills}       strokeWidth={3} dot={DOT_BILLS}       activeDot={ACTIVE_DOT} />
-                        <Line type="monotone" dataKey="insurance"   stroke={COLORS.insurance}   strokeWidth={3} dot={DOT_INSURANCE}   activeDot={ACTIVE_DOT} />
-                    </LineChart>
-                </ResponsiveContainer>
-            </div>
+            {saveData ? (
+                /* Save-Data fallback: plain table, no Recharts bundle cost */
+                <div className="w-full overflow-x-auto">
+                    <table className="w-full text-sm text-white/80 border-collapse">
+                        <caption className="sr-only">6-Month financial trends</caption>
+                        <thead>
+                            <tr className="border-b border-white/10">
+                                <th scope="col" className="py-2 pr-4 text-left font-semibold text-white/60">Month</th>
+                                <th scope="col" className="py-2 pr-4 text-right font-semibold text-white/60">Remittances</th>
+                                <th scope="col" className="py-2 pr-4 text-right font-semibold text-white/60">Savings</th>
+                                <th scope="col" className="py-2 pr-4 text-right font-semibold text-white/60">Bills</th>
+                                <th scope="col" className="py-2 text-right font-semibold text-white/60">Insurance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {chartData.map((row) => (
+                                <tr key={row.month} className="border-b border-white/5 last:border-0">
+                                    <td className="py-2 pr-4 font-medium">{row.month}</td>
+                                    <td className="py-2 pr-4 text-right">${row.remittances.toLocaleString()}</td>
+                                    <td className="py-2 pr-4 text-right">${row.savings.toLocaleString()}</td>
+                                    <td className="py-2 pr-4 text-right">${row.bills.toLocaleString()}</td>
+                                    <td className="py-2 text-right">${row.insurance.toLocaleString()}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                /* Full interactive chart */
+                <>
+                    {/* Chart */}
+                    <div className="w-full h-[280px] sm:h-[320px]" role="img" aria-label={chartLabel}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 5 }} aria-hidden="true">
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.063)" vertical={true} />
+                                <XAxis dataKey="month" axisLine={{ stroke: 'rgba(255, 255, 255, 0.25)' }} tickLine={{ stroke: 'rgba(255, 255, 255, 0.25)' }} tick={{ fill: 'rgba(255, 255, 255, 0.376)', fontSize: 12, fontWeight: 400 }} />
+                                <YAxis axisLine={{ stroke: 'rgba(255, 255, 255, 0.25)' }} tickLine={{ stroke: 'rgba(255, 255, 255, 0.25)' }} tick={{ fill: 'rgba(255, 255, 255, 0.376)', fontSize: 12, fontWeight: 400 }} tickFormatter={(value) => `$${value}`} domain={[0, 3400]} ticks={[0, 850, 1700, 2550, 3400]} width={45} />
+                                <Tooltip contentStyle={TOOLTIP_CONTENT_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} formatter={tooltipFormatter} />
+                                <Legend content={<CustomLegend />} />
+                                <Line type="monotone" dataKey="remittances" stroke={COLORS.remittances} strokeWidth={3} dot={DOT_REMITTANCES} activeDot={ACTIVE_DOT} />
+                                <Line type="monotone" dataKey="savings"     stroke={COLORS.savings}     strokeWidth={3} dot={DOT_SAVINGS}     activeDot={ACTIVE_DOT} />
+                                <Line type="monotone" dataKey="bills"       stroke={COLORS.bills}       strokeWidth={3} dot={DOT_BILLS}       activeDot={ACTIVE_DOT} />
+                                <Line type="monotone" dataKey="insurance"   stroke={COLORS.insurance}   strokeWidth={3} dot={DOT_INSURANCE}   activeDot={ACTIVE_DOT} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
 
-            <p className="sr-only" aria-live="polite">{chartSummary}</p>
+                    <p className="sr-only" aria-live="polite">{chartSummary}</p>
+                </>
+            )}
 
             {/* Summary Cards */}
             <div className="w-full border-t border-[rgba(255,255,255,0.08)] pt-[25px]">

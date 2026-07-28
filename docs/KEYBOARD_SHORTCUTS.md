@@ -5,44 +5,53 @@
 
 ## Overview
 
-RemitWise does **not** have a centralized keybinding system. Every shortcut is registered via an inline `addEventListener("keydown", ...)` or JSX `onKeyDown` prop inside the owning component. This document enumerates every registered shortcut so reviewers can verify behaviour against documented intent and new contributors know where to look.
+RemitWise keeps a **central shortcut registry** at `lib/config/shortcuts.ts`. The in-app `?` help modal and the printable cheat sheet at [`/shortcuts`](/shortcuts) both read from that registry so the documented list stays in sync with what users see.
+
+Handlers themselves still live in owning components (`keydown` listeners / `onKeyDown` props). The registry is the user-facing catalogue; this document maps each shortcut to its implementation.
+
+## Printable cheat sheet
+
+Visit **`/shortcuts`** for the full list with a **Print** button. The page uses a screen layout plus a print-only white table so Chrome / Safari print dialogs produce a clean desk-side reference (header, footer, and marketing CTA are hidden via `print:hidden`).
+
+| Surface | Path / trigger | Source of truth |
+|---------|----------------|-----------------|
+| Printable page | `/shortcuts` | `KEYBOARD_SHORTCUTS` in `lib/config/shortcuts.ts` |
+| Quick help modal | `?` key, Help button, footer | `getModalShortcuts()` (subset of the registry) |
+| Command palette entry | `Cmd`/`Ctrl`+`K` → “Keyboard Shortcuts” | navigates to `/shortcuts` |
 
 ## Shortcut reference
 
 | Key | Scope | Action | Component | File |
 |-----|-------|--------|-----------|------|
-| `Cmd` / `Ctrl` + `K` | Global | Toggle command palette | `CommandPalette` | `components/CommandPalette.tsx:101` |
-| `Escape` | Global (when palette open) | Close command palette | `CommandPalette` | `components/CommandPalette.tsx:106` |
-| `Escape` | Global (when panel open) | Close "What's New" panel | `WhatsNewPanel` | `components/Dashboard/WhatsNewPanel.tsx:24` |
-| `Escape` | Global (when drawer open) | Close mobile nav drawer | `MobileNav` | `components/Nav/MobileNav.tsx:56` |
-| `Escape` | Global (when modal open) | Close session-expiry notification | `SessionExpiryNotification` | `components/SessionExpiryNotification.tsx:42` |
-| `Escape` | Global (when modal open) | Close savings-goal modal | `SavingsGoalModal` | `app/dashboard/goals/components/SavingsGoalModal.tsx:85` |
-| `Escape` | Global (when drawer open) | Close family-member detail drawer | `FamilyMemberDetailDrawer` | `app/family/components/FamilyMemberDetailDrawer.tsx:186` |
-| `Escape` | Global (when dropdown open) | Close export-format dropdown | Transactions page | `app/transactions/page.tsx:421` |
-| `Escape` | Component | Close policy-detail dialog | `PolicyDetail` | `components/insurance/PolicyDetail.tsx:105` |
-| `Escape` | Component | Close tooltip | `Tooltip` | `components/Tooltip.tsx:62` |
-| `Escape` | Focus-trap hook | Trigger `onEscape` callback | `useFocusTrap` | `lib/hooks/useFocusTrap.ts:31`, `src/lib/hooks/useFocusTrap.ts:64` |
-| `ArrowDown` | Command palette | Move selection to next command | `CommandPalette` | `components/CommandPalette.tsx:111` |
-| `ArrowUp` | Command palette | Move selection to previous command | `CommandPalette` | `components/CommandPalette.tsx:115` |
-| `ArrowDown` | Wallet dropdown | Move focus to next menu item | `WalletDropdown` | `components/WalletDropdown.tsx:123` |
-| `ArrowUp` | Wallet dropdown | Move focus to previous menu item | `WalletDropdown` | `components/WalletDropdown.tsx:126` |
-| `Home` | Wallet dropdown | Move focus to first menu item | `WalletDropdown` | `components/WalletDropdown.tsx:129` |
-| `End` | Wallet dropdown | Move focus to last menu item | `WalletDropdown` | `components/WalletDropdown.tsx:133` |
-| `Enter` | Command palette | Execute selected command | `CommandPalette` | `components/CommandPalette.tsx:120` |
-| `Enter` | Settings row | Activate clickable row | `SettingsItem` | `components/SettingsItem.tsx:56,117` |
-| `Enter` / `Space` | Toast disclosure | Toggle diagnostics section | `Toast` | `components/Toast.tsx:89` |
+| `?` | Global (ignored in inputs) | Open keyboard shortcuts help | `ShortcutHelpProvider` | `lib/context/ShortcutHelpContext.tsx` |
+| `Cmd` / `Ctrl` + `K` | Global | Toggle command palette | `CommandPalette` | `components/CommandPalette.tsx` |
+| `Escape` | Global (when palette open) | Close command palette | `CommandPalette` | `components/CommandPalette.tsx` |
+| `Escape` | Global (when panel open) | Close "What's New" panel | `WhatsNewPanel` | `components/Dashboard/WhatsNewPanel.tsx` |
+| `Escape` | Global (when drawer open) | Close mobile nav drawer | `MobileNav` | `components/Nav/MobileNav.tsx` |
+| `Escape` | Global (when modal open) | Close session-expiry notification | `SessionExpiryNotification` | `components/SessionExpiryNotification.tsx` |
+| `Escape` | Global (when modal open) | Close savings-goal modal | `SavingsGoalModal` | `app/dashboard/goals/components/SavingsGoalModal.tsx` |
+| `Escape` | Global (when drawer open) | Close family-member detail drawer | `FamilyMemberDetailDrawer` | `app/family/components/FamilyMemberDetailDrawer.tsx` |
+| `Escape` | Global (when dropdown open) | Close export-format dropdown | Transactions page | `app/transactions/page.tsx` |
+| `Escape` | Component | Close policy-detail dialog | `PolicyDetail` | `components/insurance/PolicyDetail.tsx` |
+| `Escape` | Component | Close tooltip | `Tooltip` | `components/Tooltip.tsx` |
+| `Escape` | Focus-trap hook | Trigger `onEscape` callback | `useFocusTrap` | `lib/hooks/useFocusTrap.ts`, `src/lib/hooks/useFocusTrap.ts` |
+| `ArrowDown` | Command palette | Move selection to next command | `CommandPalette` | `components/CommandPalette.tsx` |
+| `ArrowUp` | Command palette | Move selection to previous command | `CommandPalette` | `components/CommandPalette.tsx` |
+| `ArrowDown` | Wallet dropdown | Move focus to next menu item | `WalletDropdown` | `components/WalletDropdown.tsx` |
+| `ArrowUp` | Wallet dropdown | Move focus to previous menu item | `WalletDropdown` | `components/WalletDropdown.tsx` |
+| `Home` | Wallet dropdown | Move focus to first menu item | `WalletDropdown` | `components/WalletDropdown.tsx` |
+| `End` | Wallet dropdown | Move focus to last menu item | `WalletDropdown` | `components/WalletDropdown.tsx` |
+| `Enter` | Command palette | Execute selected command | `CommandPalette` | `components/CommandPalette.tsx` |
+| `Enter` | Settings row | Activate clickable row | `SettingsItem` | `components/SettingsItem.tsx` |
+| `Enter` / `Space` | Toast disclosure | Toggle diagnostics section | `Toast` | `components/Toast.tsx` |
 | `Tab` | Modal / drawer | Cycle focus forward (focus trap) | `useFocusTrap`, `PolicyDetail`, `WhatsNewPanel`, `FamilyMemberDetailDrawer`, `SavingsGoalModal` | Multiple |
 | `Shift` + `Tab` | Modal / drawer | Cycle focus backward (focus trap) | `useFocusTrap`, `PolicyDetail`, `WhatsNewPanel`, `FamilyMemberDetailDrawer`, `SavingsGoalModal` | Multiple |
 
-> **Note:** `Escape` is the most-used shortcut (11 registrations). It is handled independently by each component — there is no shared "close active overlay" mechanism.
+> **Note:** `Escape` is the most-used shortcut. It is handled independently by each component — there is no shared "close active overlay" mechanism.
 
 ## Command palette
 
-The file `components/CommandPalette.tsx` implements a `Cmd`/`Ctrl`+`K` command palette with route navigation and quick actions.
-
-### Current status
-
-The component is **not wired into the app layout**. It imports correctly and type-checks, but no parent renders `<CommandPalette />`. The shortcuts in the table above will not fire until it is mounted. To activate it, add `<CommandPalette />` to `app/layout.tsx` or `components/Providers.tsx`.
+The file `components/CommandPalette.tsx` implements a `Cmd`/`Ctrl`+`K` command palette with route navigation and quick actions. It is mounted from `components/Providers.tsx`.
 
 ### How to add a command
 
@@ -63,9 +72,25 @@ Import the icon from `lucide-react` (already a dependency).
 
 ## How to add or change a shortcut
 
-Because there is no central registry, you work in the component that owns the shortcut.
+### 1. Update the registry (required for UI surfaces)
 
-### Adding a new shortcut
+Edit `lib/config/shortcuts.ts` and add or change a `ShortcutEntry`:
+
+```ts
+{
+  id: "my-shortcut",
+  keys: ["⌘", "S"],
+  keysWin: ["Ctrl", "S"],
+  label: "Save draft",
+  category: "global",
+  scope: "Send flow",
+  showInModal: true, // omit from ? modal when false
+}
+```
+
+The printable page picks up every entry. The `?` modal only shows entries where `showInModal !== false`.
+
+### 2. Wire the handler in the owning component
 
 1. Locate the component that should own the shortcut.
 2. Add a `useEffect` with a `keydown` listener (for global/trapped shortcuts) or an `onKeyDown` prop on the JSX element (for component-scoped shortcuts).
@@ -98,7 +123,7 @@ Because there is no central registry, you work in the component that owns the sh
 1. Find the owning component via the file-path column in the reference table above.
 2. Change the `e.key` comparison in the handler.
 3. If the shortcut conflicts with a browser default (e.g. `Ctrl+S`), call `e.preventDefault()`.
-4. Update this document.
+4. Update `lib/config/shortcuts.ts` and this document.
 
 ### Testing a shortcut
 
@@ -115,13 +140,17 @@ it("closes on Escape", () => {
 });
 ```
 
+Registry and printable page coverage lives in:
+
+- `lib/config/shortcuts.test.ts`
+- `tests/unit/components/ShortcutsCheatSheet.test.tsx`
+- `tests/unit/components/ShortcutHelpModal.test.tsx`
+
 ## Future improvements
 
 The following are not yet implemented but have been discussed:
 
-1. **Wire `CommandPalette` into the layout** — it exists but is unmounted.
-2. **Centralized shortcut registry** — a single config object that all components read from, so contributors can see every shortcut in one file.
-3. **User-configurable keybindings** — allow power users to remap shortcuts via settings UI.
-4. **Keyboard shortcut cheat-sheet modal** — a `?` overlay showing all active shortcuts, similar to GitHub or VS Code.
+1. **User-configurable keybindings** — allow power users to remap shortcuts via settings UI.
+2. **Shared "close active overlay" mechanism** — reduce duplicated `Escape` handlers.
 
 See [docs/uiux-quick-actions-improvements.md](uiux-quick-actions-improvements.md) for the original feature proposal that mentioned keyboard hotkeys.

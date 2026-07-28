@@ -82,4 +82,17 @@ describe("useElementSize update behaviour", () => {
 
     unmount();
   });
+it("handles_multiple_resize_entries", () => {
+  const { result, unmount } = renderHook(() => useElementSize());
+  const sizes = [{ width: 100, height: 200 }, { width: 300, height: 400 }, { width: 500, height: 600 }];
+  act(() => {
+    if (triggerResize) {
+      triggerResize(sizes.map(s => ({ contentRect: s })));
+    }
+  });
+  const last = sizes[sizes.length - 1];
+  expect(result.current.width).toBe(last.width);
+  expect(result.current.height).toBe(last.height);
+  unmount();
+});
 });

@@ -18,15 +18,14 @@ export function useElementSize<T extends Element = HTMLElement>(
   const [size, setSize] = useState<ElementSize>({ width: 0, height: 0 });
 
   const handleResize = useCallback((entries: ResizeObserverEntry[]) => {
-    const entry = entries[0];
-    if (entry) {
-      const { width, height } = entry.contentRect;
-      setSize((prev) => 
-        prev.width === width && prev.height === height 
-          ? prev 
-          : { width, height }
-      );
-    }
+    if (!entries.length) return;
+    const entry = entries[entries.length - 1];
+    const { width, height } = entry.contentRect;
+    setSize((prev) =>
+      prev.width === width && prev.height === height
+        ? prev
+        : { width, height }
+    );
   }, []);
 
   const ref = useResizeObserver<T>(handleResize, target);

@@ -106,4 +106,19 @@ describe("ShortcutHelpModal", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
+
+  it("links to the printable shortcuts page", () => {
+    render(
+      <ShortcutHelpProvider>
+        <TestApp />
+      </ShortcutHelpProvider>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open Shortcuts" }));
+
+    const printableLink = screen.getByRole("link", {
+      name: /view printable cheat sheet/i,
+    });
+    expect(printableLink).toHaveAttribute("href", "/shortcuts");
+  });
 });

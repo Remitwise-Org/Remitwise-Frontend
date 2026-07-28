@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Home", icon: "Home" },
   { href: "/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
   { href: "/send", label: "Send Money", icon: "Send" },
+  { href: "/swap", label: "Swap", icon: "ArrowRightLeft" },
   { href: "/split", label: "Smart Split", icon: "PieChart" },
   { href: "/savings", label: "Savings Goals", icon: "Target" },
   { href: "/transactions", label: "Transactions", icon: "Receipt" },

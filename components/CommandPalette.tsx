@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Send, LayoutDashboard, FileText, Shield, Users, Settings, Wallet, X, Command, SearchCheck, Clock } from "lucide-react";
+import { Search, Send, LayoutDashboard, FileText, Shield, Users, Settings, Wallet, X, Command, SearchCheck, Clock, Keyboard } from "lucide-react";
+import { SHORTCUTS_PRINTABLE_PATH } from "@/lib/config/shortcuts";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useRecentItems } from "@/lib/hooks/useRecentItems";
 import { RECENT_COMMANDS_STORAGE_KEY } from "@/lib/config/recent";
@@ -78,6 +79,14 @@ export default function CommandPalette() {
       description: "Configure your settings",
       icon: <Settings className="w-4 h-4" />,
       action: () => router.push("/settings"),
+      category: "routes",
+    },
+    {
+      id: "shortcuts",
+      label: "Keyboard Shortcuts",
+      description: "View and print the full shortcuts cheat sheet",
+      icon: <Keyboard className="w-4 h-4" />,
+      action: () => router.push(SHORTCUTS_PRINTABLE_PATH),
       category: "routes",
     },
     {

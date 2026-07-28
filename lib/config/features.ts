@@ -33,6 +33,13 @@ export const FEATURE_FLAGS: FeatureFlagDefinition[] = [
     routes: ['/dashboard', '/send', '/bills', '/insurance'],
     envVar: 'NEXT_PUBLIC_SESSION_REFRESH_ENABLED',
   },
+  {
+    key: 'SWAP_PAGE',
+    label: 'Swap Page',
+    description: 'Enable the new currency swap page mock',
+    routes: ['/swap'],
+    envVar: 'NEXT_PUBLIC_SWAP_PAGE_ENABLED',
+  },
 ]
 
 /** Check whether a specific flag is enabled based on its env var. */

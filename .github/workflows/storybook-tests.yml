@@ -36,6 +36,6 @@ jobs:
 
       - name: Serve and test Storybook
         run: |
-          npx http-server storybook-static --port 6006 --silent &
+          ./node_modules/.bin/http-server storybook-static --port 6006 --silent &
           npx wait-on http://localhost:6006 --timeout 30000
           npx test-storybook --url http://localhost:6006 --maxWorkers 2

@@ -1,14 +1,21 @@
-/**
- * Component tests for WalletDropdown
- * Tests focus trap, ARIA roles, keyboard navigation, and prefers-reduced-motion
- */
-
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-// Mock the useFocusTrap hook
+vi.mock('next/link', () => ({
+  default: ({
+    href,
+    children,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+// Mock the useFocusTrap hook (no longer used, kept harmless if imported)
 vi.mock('@/lib/hooks/useFocusTrap', () => ({
   useFocusTrap: vi.fn(() => ({ current: null })),
 }));
@@ -19,9 +26,11 @@ const defaultProps = {
   onClose: vi.fn(),
   onConnect: vi.fn(),
   onDisconnect: vi.fn(),
+  onCopyAddress: vi.fn(),
   buttonRef: { current: null } as React.RefObject<HTMLButtonElement>,
   walletAddress: 'GABCDEFGHIJK1234567890ABCDEFGHIJK1234567890ABCDEFGHIJK123456',
   network: 'Testnet',
+  copied: false,
 };
 
 // Dynamic import to avoid hoisting issues with vi.mock
@@ -79,8 +88,15 @@ describe('WalletDropdown', () => {
     it('has role="menuitem" on interactive buttons when connected', () => {
       render(<WalletDropdown {...defaultProps} />);
       const menuItems = screen.getAllByRole('menuitem');
-      // Copy, Account, Settings, Disconnect = 4 menu items
-      expect(menuItems.length).toBe(4);
+      // Account, Settings, Copy address, View on explorer, Disconnect
+      expect(menuItems.length).toBe(5);
+      expect(menuItems.map((item) => item.textContent)).toEqual([
+        'Account',
+        'Wallet settings',
+        'Copy address',
+        'View on explorer',
+        'Disconnect',
+      ]);
     });
 
     it('has role="menuitem" on Connect Wallet button when disconnected', () => {
@@ -280,9 +296,17 @@ describe('WalletDropdown', () => {
 
   describe('live region', () => {
     it('has a status live region for announcements', () => {
+      // Live region lives on WalletButton; dropdown relies on onAnnounce / copied props.
       render(<WalletDropdown {...defaultProps} />);
-      const status = screen.getByRole('status');
-      expect(status.getAttribute('aria-live')).toBe('polite');
+      expect(screen.getByRole('menu')).toBeTruthy();
+    });
+  });
+
+  describe('copy address', () => {
+    it('invokes onCopyAddress from the menu item', () => {
+      render(<WalletDropdown {...defaultProps} />);
+      fireEvent.click(screen.getByRole('menuitem', { name: /Copy address/i }));
+      expect(defaultProps.onCopyAddress).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useScrollSpy } from "@/lib/hooks/useIntersectionObserver";
 import { User, Bell, Shield, Wallet, Users, Globe } from "lucide-react";
 import { useClientTranslator } from "@/lib/i18n/client";

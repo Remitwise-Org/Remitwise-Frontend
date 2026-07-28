@@ -505,6 +505,8 @@ import LiveRegion from "@/components/ui/LiveRegion";
 
 ---
 
+For component prop standards, including naming, ordering, and boolean-prop conventions, see [docs/PROP_CONVENTIONS.md](PROP_CONVENTIONS.md).
+
 ## BackToTop
 
 - [Layout Patterns](docs/LAYOUT_PATTERNS.md): conventions for page shells, stat rows, and cards used across the app.
@@ -938,3 +940,30 @@ export default function BillsPage() {
 - Clipboard failure does not leave the button stuck in "copied" state
 - Legacy path resolution (`/insights`, `/financial-insight`)
 - Trailing slash stripping
+
+---
+
+## ShortcutsCheatSheet
+
+Printable keyboard-shortcuts cheat sheet rendered at `/shortcuts`.
+
+**File:** `components/ShortcutsCheatSheet.tsx`  
+**Route:** `app/shortcuts/page.tsx`  
+**Registry:** `lib/config/shortcuts.ts`
+
+### Behaviour
+
+- Lists every entry from `KEYBOARD_SHORTCUTS`, grouped by category.
+- Screen layout matches other utility pages (dark slate surface, brand accent Print button).
+- Print layout (`hidden print:block`) renders a white portrait table; site chrome is `print:hidden` in `LayoutWrapper`.
+- Linked from `ShortcutHelpModal` (“View printable cheat sheet”) and the command palette.
+
+### Tests
+
+- `lib/config/shortcuts.test.ts` — registry shape and modal subset
+- `tests/unit/components/ShortcutsCheatSheet.test.tsx` — render + `window.print`
+- `tests/unit/components/ShortcutHelpModal.test.tsx` — printable link
+
+### Related docs
+
+See [KEYBOARD_SHORTCUTS.md](KEYBOARD_SHORTCUTS.md).

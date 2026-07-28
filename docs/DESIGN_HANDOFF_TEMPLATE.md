@@ -1,5 +1,7 @@
 # DESIGN HANDOFF TEMPLATE
 
+Use this template together with [FIGMA_HANDOFF.md](./FIGMA_HANDOFF.md) and [DESIGN_QA_CHECKLIST.md](./DESIGN_QA_CHECKLIST.md).
+
 ## Feature Area
 Example: Dashboard / Auth / Payments / Transfers
 

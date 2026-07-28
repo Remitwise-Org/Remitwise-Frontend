@@ -39,6 +39,8 @@ The `focus-visible:outline-none` paired with `focus-visible:ring-*` keeps the na
 
 ## Focus trap hooks
 
+For a contributor guide on when to trap focus, when not to, and which escape hatches are required, see [FOCUS_TRAPS.md](./FOCUS_TRAPS.md).
+
 Two hooks handle modal/dialog focus trapping. Choose the one that matches your component's needs.
 
 ### `useFocusTrap` (basic) — `lib/hooks/useFocusTrap.ts`
@@ -204,4 +206,5 @@ it('has_no_axe_violations', async () => {
 - [Sidebar Accessibility](a11y-sidebar.md) — WCAG 2.1 AA compliance for the navigation sidebar
 - [Testing Guide](testing.md) — Vitest, Playwright, and node:test test strategy
 - [Component Lifecycle](COMPONENT_LIFECYCLE.md) — from Figma to production component
+- [Focus Traps](FOCUS_TRAPS.md) — when to trap focus, required escape hatches, and testing expectations
 - [Design Handoff Template](DESIGN_HANDOFF_TEMPLATE.md) — behavioural contract template including accessibility

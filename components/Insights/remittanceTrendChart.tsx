@@ -2,6 +2,7 @@
 
 import { useMemo, useCallback, memo } from 'react'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
+import { useSaveData } from '@/lib/hooks/useSaveData'
 import { Activity } from 'lucide-react';
 import WidgetEmptyState from '@/components/ui/WidgetEmptyState';
 import {
@@ -100,6 +101,7 @@ function RemittanceTrendChartInner({
 }: RemittanceTrendChartProps) {
   // Use the canonical hook — reactive, SSR-safe, shared across the codebase.
   const reducedMotion = usePrefersReducedMotion()
+  const saveData = useSaveData()
 
   const isEmpty = data.length === 0
   const total   = useMemo(() => data.reduce((s, d) => s + d.amount, 0), [data])
@@ -189,58 +191,70 @@ function RemittanceTrendChartInner({
 
       {/* Chart */}
       <div role="img" aria-label={chartLabel}>
-        <ResponsiveContainer width="100%" height={220}>
-          <AreaChart
-            data={data}
-            margin={margin}
-            aria-hidden="true"
-          >
-            <defs>
-              <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor={LINE_COLOR} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={LINE_COLOR} stopOpacity={0}   />
-              </linearGradient>
-            </defs>
+        {saveData ? (
+          /* Save-Data fallback: ordered number list, no AreaChart cost */
+          <ol className="space-y-1.5" aria-label="Remittance amounts by date">
+            {data.map((point) => (
+              <li key={point.date} className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">{point.date}</span>
+                <span className="font-bold text-white">${point.amount.toLocaleString()}</span>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart
+              data={data}
+              margin={margin}
+              aria-hidden="true"
+            >
+              <defs>
+                <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor={LINE_COLOR} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={LINE_COLOR} stopOpacity={0}   />
+                </linearGradient>
+              </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
 
-            <XAxis
-              dataKey="date"
-              tick={xAxisTick}
-              axisLine={false}
-              tickLine={false}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              tick={yAxisTick}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={tickFormatter}
-              width={40}
-              className="hidden sm:block"
-            />
+              <XAxis
+                dataKey="date"
+                tick={xAxisTick}
+                axisLine={false}
+                tickLine={false}
+                interval="preserveStartEnd"
+              />
+              <YAxis
+                tick={yAxisTick}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={tickFormatter}
+                width={40}
+                className="hidden sm:block"
+              />
 
-            <Tooltip content={CustomTooltip} cursor={tooltipCursor} />
+              <Tooltip content={CustomTooltip} cursor={tooltipCursor} />
 
-            <ReferenceLine
-              y={average}
-              stroke="rgba(255,255,255,0.15)"
-              strokeDasharray="4 4"
-              label={referenceLabel}
-            />
+              <ReferenceLine
+                y={average}
+                stroke="rgba(255,255,255,0.15)"
+                strokeDasharray="4 4"
+                label={referenceLabel}
+              />
 
-            <Area
-              type="monotone"
-              dataKey="amount"
-              stroke={LINE_COLOR}
-              strokeWidth={2.5}
-              fill="url(#trendGradient)"
-              dot={false}
-              isAnimationActive={!reducedMotion}
-              activeDot={activeDot}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+              <Area
+                type="monotone"
+                dataKey="amount"
+                stroke={LINE_COLOR}
+                strokeWidth={2.5}
+                fill="url(#trendGradient)"
+                dot={false}
+                isAnimationActive={!reducedMotion}
+                activeDot={activeDot}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       {/* Screen‑reader summary */}

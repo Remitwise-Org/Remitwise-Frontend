@@ -1,12 +1,47 @@
 "use client";
 
 import React from "react";
-import { X, Keyboard } from "lucide-react";
+import Link from "next/link";
+import { X, Keyboard, ExternalLink } from "lucide-react";
 import { useShortcutHelp } from "@/lib/context/ShortcutHelpContext";
 import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
+import {
+  SHORTCUTS_PRINTABLE_PATH,
+  getModalShortcuts,
+  type ShortcutEntry,
+} from "@/lib/config/shortcuts";
+
+function ModalShortcutKeys({ entry }: { entry: ShortcutEntry }) {
+  return (
+    <div className="flex items-center gap-1 shrink-0">
+      {entry.keys.map((key, index) => (
+        <React.Fragment key={`mac-${entry.id}-${key}-${index}`}>
+          {index > 0 && <span className="text-gray-500 text-xs">+</span>}
+          <kbd className="px-2 py-1 bg-white/5 rounded border border-white/10 text-xs font-mono text-white">
+            {key}
+          </kbd>
+        </React.Fragment>
+      ))}
+      {entry.keysWin && (
+        <>
+          <span className="text-gray-500 text-xs">/</span>
+          {entry.keysWin.map((key, index) => (
+            <React.Fragment key={`win-${entry.id}-${key}-${index}`}>
+              {index > 0 && <span className="text-gray-500 text-xs">+</span>}
+              <kbd className="px-2 py-1 bg-white/5 rounded border border-white/10 text-xs font-mono text-white">
+                {key}
+              </kbd>
+            </React.Fragment>
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function ShortcutHelpModal() {
   const { isOpen, close } = useShortcutHelp();
+  const shortcuts = getModalShortcuts();
 
   // Traps focus inside the modal, closes on Escape, prevents background scrolling,
   // and restores focus to the previously active element when closed.
@@ -47,26 +82,26 @@ export default function ShortcutHelpModal() {
 
         {/* Shortcuts List */}
         <div className="space-y-3 pt-4">
-          <div className="flex justify-between items-center py-2.5 px-3 bg-white/[0.02] border border-white/5 rounded-xl">
-            <span className="text-sm text-gray-300">Open Keyboard Shortcuts</span>
-            <kbd className="px-2 py-1 bg-white/5 rounded border border-white/10 text-xs font-mono text-white">?</kbd>
-          </div>
-
-          <div className="flex justify-between items-center py-2.5 px-3 bg-white/[0.02] border border-white/5 rounded-xl">
-            <span className="text-sm text-gray-300">Toggle Command Palette</span>
-            <div className="flex items-center gap-1">
-              <kbd className="px-2 py-1 bg-white/5 rounded border border-white/10 text-xs font-mono text-white">⌘</kbd>
-              <span className="text-gray-500 text-xs">/</span>
-              <kbd className="px-2 py-1 bg-white/5 rounded border border-white/10 text-xs font-mono text-white">Ctrl</kbd>
-              <span className="text-gray-500 text-xs">+</span>
-              <kbd className="px-2 py-1 bg-white/5 rounded border border-white/10 text-xs font-mono text-white">K</kbd>
+          {shortcuts.map((entry) => (
+            <div
+              key={entry.id}
+              className="flex justify-between items-center gap-3 py-2.5 px-3 bg-white/[0.02] border border-white/5 rounded-xl"
+            >
+              <span className="text-sm text-gray-300">{entry.label}</span>
+              <ModalShortcutKeys entry={entry} />
             </div>
-          </div>
+          ))}
+        </div>
 
-          <div className="flex justify-between items-center py-2.5 px-3 bg-white/[0.02] border border-white/5 rounded-xl">
-            <span className="text-sm text-gray-300">Close Open Modal / Dialog</span>
-            <kbd className="px-2 py-1 bg-white/5 rounded border border-white/10 text-xs font-mono text-white">Esc</kbd>
-          </div>
+        <div className="pt-4 mt-2 border-t border-white/10">
+          <Link
+            href={SHORTCUTS_PRINTABLE_PATH}
+            onClick={close}
+            className="inline-flex items-center gap-1.5 text-sm text-red-400 hover:text-red-300 transition-colors"
+          >
+            View printable cheat sheet
+            <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+          </Link>
         </div>
       </div>
     </div>

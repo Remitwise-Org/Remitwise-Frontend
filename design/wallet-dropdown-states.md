@@ -15,33 +15,35 @@ Summary
   - Height: 36px on desktop, 44px on mobile.
   - Padding: 12px 16px.
   - Icon: wallet/plug icon left (16px) optional.
-  - Visual weight: solid primary color (brand blue) or subtle outline when header is dense.
+  - Visual weight: solid primary color (brand red `#D72323`, RemitWise design system) or subtle outline when header is dense.
   - Hover: elevate (box-shadow: 0 2px 6px rgba(0,0,0,0.08)).
+  - CSS state class: `.wallet--disconnected`
 
 Redline notes
 - Desktop: inline in header, right-aligned, 36px height.
 - Mobile (375px): use full tappable area; button remains visible in header top-right but increases hit target to 44px.
 
 2. Connected state (compact address + network)
-- Primary appearance: small pill showing network indicator + (ENS name or truncated address) + chevron.
-  - Layout: [network-dot] [label] [copy-icon] [chevron]
-  - Pill height: 36px; padding: 8px 12px; gap: 8px.
-  - Font-size: 14px; font-weight: 600 for label.
-  - Network indicator: 8px circle colored per network (green for mainnet, orange for testnet, gray for unknown).
-  - ENS precedence: display ENS name if available; fallback to truncated address.
+- Primary appearance: composite pill — menu trigger + copy control.
+  - Layout: `[network-dot] [truncated address] [chevron] | [copy-icon]`
+  - Pill height: 44px mobile / 36px from 375px breakpoint; padding: 8px 12px; gap: 8px.
+  - Font-size: 14px; font-weight: 600; mono for address.
+  - Network indicator: 8px circle colored per network (green for mainnet, amber for testnet, gray for unknown).
+  - CSS state class: `.wallet--connected`
 
 Truncated address format
 - Rule: keep first 6 chars and last 4 chars separated by ellipsis.
-  - Example: 0x12ab34...cdef (lowercase hex display; preserve case when ENS is present).
+  - Example (Stellar): `GABCDE...7890`
   - Rationale: balances recognizability and compactness; 6/4 fits within header at 1280px and 375px.
+  - Implementation: `truncateAddress()` in `lib/utils/walletAddress.ts`. Copy always uses the full address.
 
 Copy affordance and feedback
-- Inline copy icon: place a copy button immediately right of the label (12–16px tap target).
-  - Visual: subtle icon only (no new text) for compactness; on hover show tooltip “Copy address”.
-  - On click: copy full address (not truncated) to clipboard.
-  - Visual feedback: transient tooltip that changes to “Copied!” and fades after 2 seconds.
-  - Accessibility feedback: update a polite ARIA live region with text “Wallet address copied to clipboard”.
-  - Keyboard: copy button is focusable via Tab and activatable with Enter/Space; when activated, same feedback sequence.
+- Connected pill: copy control sits beside the menu trigger (not nested inside it).
+  - Visual: icon-only; tooltip “Copy address” → “Copied!” for 2 seconds after success.
+  - On click: copies the **full** address (never the truncated string).
+  - Accessibility: polite `aria-live` region announces “Wallet address copied to clipboard”.
+  - Keyboard: copy is a separate focusable button (Tab / Enter / Space).
+- Menu also exposes “Copy address” as item 3 for discoverability.
 
 3. Dropdown (menu) — layout & items
 Top area (non-interactive header within menu)
@@ -50,10 +52,10 @@ Top area (non-interactive header within menu)
   - Small label under address: wallet provider / connected wallet name (e.g., “MetaMask”).
 
 Primary menu items (ordered)
-1. Account — label: Account (open account panel / in-app account page)
-2. Settings — label: Wallet settings (jump to wallet/settings UI)
+1. Account — label: Account → `/dashboard`
+2. Settings — label: Wallet settings → `/settings`
 3. Copy address — label: Copy address (duplicates inline copy affordance)
-4. View on explorer — label: View on explorer (opens network explorer in new tab)
+4. View on explorer — label: View on explorer (stellar.expert, new tab)
 5. Disconnect — label: Disconnect (destructive action, visually separated)
 
 Menu visual rules

@@ -174,3 +174,5 @@ utility passed in `className` still wins over them. Apply them through the
   component when a token already represents the same role.
 - Update this file when `app/globals.css` or `tailwind.config.js` adds, removes,
   or changes theme tokens.
+- For contrast ratio requirements and how to verify new colour tokens, see
+  [docs/SEMANTIC_TOKENS_AND_CONTRAST.md](SEMANTIC_TOKENS_AND_CONTRAST.md).
