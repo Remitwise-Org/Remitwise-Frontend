@@ -45,7 +45,7 @@ import { INSIGHTS_PALETTE } from './palette';
 const SPENDING_COLOR = INSIGHTS_PALETTE[0];
 const SAVINGS_COLOR  = INSIGHTS_PALETTE[1];
 const GRID_COLOR     = 'rgba(255,255,255,0.06)';
-const AXIS_COLOR     = '#6b7280';
+const AXIS_COLOR     = '#9CA3AF';
 const margin = { top: 10, right: 10, left: -20, bottom: 0 };
 const axisTick = { fill: AXIS_COLOR, fontSize: 11 };
 const tickFormatter = (v: number) => `$${v}`;
@@ -87,7 +87,7 @@ const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: To
             )}
         </div>
     )
-}
+});
 
 type SpendingTooltipProps = TooltipContentProps<number | string | readonly (number | string)[], string | number>
 
@@ -97,13 +97,22 @@ const LEGEND_ITEMS = [
   { color: SAVINGS_COLOR,  label: 'Savings'  },
 ] as const
 
-const CustomLegend = memo(function CustomLegend() {
+interface CustomLegendProps {
+    spending: number
+    savings: number
+}
+
+const CustomLegend = memo(function CustomLegend({ spending, savings }: CustomLegendProps) {
+    const values: Record<string, number> = { Spending: spending, Savings: savings }
     return (
         <div className="flex items-center justify-center gap-6 mt-2">
             {LEGEND_ITEMS.map(({ color, label }) => (
                 <div key={label} className="flex items-center gap-2">
                     <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
                     <span className="text-xs text-gray-400">{label}</span>
+                    <span className="text-xs text-white font-semibold">
+                        ${values[label].toLocaleString()}
+                    </span>
                 </div>
             ))}
         </div>
@@ -128,6 +137,9 @@ function SpendingVsSavingsChartInner({
         const savings  = data.reduce((s, d) => s + d.savings,  0)
         return Math.round((savings / (spending + savings)) * 100)
     }, [data])
+
+    const totalSpending = useMemo(() => data.reduce((s, d) => s + d.spending, 0), [data])
+    const totalSavings  = useMemo(() => data.reduce((s, d) => s + d.savings,  0), [data])
 
     // Generate accessible label and summary
     const chartLabel = useMemo(
@@ -249,7 +261,7 @@ function SpendingVsSavingsChartInner({
             </p>
 
             {/* Legend shown in both modes */}
-            <CustomLegend />
+            <CustomLegend spending={totalSpending} savings={totalSavings} />
         </div>
     )
 }

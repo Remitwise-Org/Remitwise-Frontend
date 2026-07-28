@@ -18,10 +18,9 @@ import {
 import { INSIGHTS_PALETTE } from './palette';
 import { generateTrendChartLabel, generateTrendChartSummary } from '@/lib/a11y';
 import type { TrendChartDataPoint } from '@/lib/a11y/chartAccessibility';
-import WidgetEmptyState from '@/components/ui/WidgetEmptyState';
 
 const LINE_COLOR = INSIGHTS_PALETTE[0];
-const AXIS_COLOR  = '#6b7280'
+const AXIS_COLOR  = '#9CA3AF'
 const GRID_COLOR  = 'rgba(255,255,255,0.06)'
 const margin = { top: 10, right: 10, left: -20, bottom: 0 };
 const xAxisTick = { fill: AXIS_COLOR, fontSize: 11 };
@@ -29,6 +28,7 @@ const yAxisTick = { fill: AXIS_COLOR, fontSize: 11 };
 const tickFormatter = (v: number) => `$${v}`;
 const tooltipCursor = { stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 };
 const referenceLabel = { value: 'Avg', fill: 'rgba(255,255,255,0.3)', fontSize: 10, position: 'insideTopRight' };
+const activeDot = { r: 5, fill: LINE_COLOR, stroke: '#0a0a0a', strokeWidth: 2 };
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
 /**
@@ -189,7 +189,21 @@ function RemittanceTrendChartInner({
         </div>
       </div>
 
+
       {/* Chart */}
+      {/* Legend — ties the line color to its meaning for color-blind users
+          and screen readers alike; also surfaces the total as a value label. */}
+      <div className="flex items-center gap-2 mb-3">
+        <span
+          className="inline-block w-3 h-3 rounded-sm shrink-0"
+          style={{ backgroundColor: LINE_COLOR }}
+        />
+        <span className="text-xs text-gray-400">Amount sent</span>
+        <span className="text-xs text-white font-semibold">
+          ${total.toLocaleString()}
+        </span>
+      </div>
+
       <div role="img" aria-label={chartLabel}>
         {saveData ? (
           /* Save-Data fallback: ordered number list, no AreaChart cost */

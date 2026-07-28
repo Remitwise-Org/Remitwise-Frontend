@@ -67,7 +67,11 @@ fixed `id` matching `SECTIONS`:
 - **`FamilySection`** (`#family`) — family member list with role badges and an
   invite button. Does not use autosave (inline actions only).
 - **`PreferencesSection`** (`#preferences`) — theme picker, **density controls
-  wired to `useDensity()`**, language/timezone selects, and date-format radios.
+  wired to `useDensity()`**, language/timezone selects, date-format radios,
+  and a **Developer Telemetry toggle wired to `useTelemetry()`** that persists
+  to `localStorage` under the key `developer-telemetry-enabled`. When on,
+  structured events emitted via `logTelemetry()` are printed to the browser
+  console as JSON (`[telemetry] {...}`).
   Uses `useAutosave` (500ms debounce).
 
 ## Cross-cutting integrations
