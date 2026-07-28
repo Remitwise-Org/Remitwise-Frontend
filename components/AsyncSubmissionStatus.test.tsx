@@ -291,4 +291,31 @@ describe("AsyncSubmissionStatus", () => {
 			expect(screen.getByText("Ready")).toBeInTheDocument();
 		});
 	});
+
+	describe("Shared status tokens with AsyncOperationsPanel", () => {
+		it("colors pending the same as the queue's active token (both mean 'in flight')", () => {
+			const { container: pendingContainer } = render(
+				<AsyncSubmissionStatus {...defaultProps} pending={true} />
+			);
+			const pendingIcon = pendingContainer.querySelector("svg");
+			expect(pendingIcon).toHaveClass("text-red-300");
+			expect(pendingIcon).toHaveClass("animate-spin");
+		});
+
+		it("colors error the same as the queue's failed token (both mean 'needs attention')", () => {
+			const { container } = render(
+				<AsyncSubmissionStatus {...defaultProps} error="Timeout" />
+			);
+			const icon = container.querySelector("svg");
+			expect(icon).toHaveClass("text-amber-200");
+		});
+
+		it("colors success the same as the queue's complete token", () => {
+			const { container } = render(
+				<AsyncSubmissionStatus {...defaultProps} success="Done" />
+			);
+			const icon = container.querySelector("svg");
+			expect(icon).toHaveClass("text-emerald-300");
+		});
+	});
 });
