@@ -42,9 +42,9 @@ export interface ChipListProps {
  * - hybrid: renders chips wrapping up to maxHeight, then collapses remainder
  *
  * ## Accessibility
- * - Container has ole="list" with ria-label
- * - Each child is wrapped in a ole="listitem"
- * - "+X more" button has ria-label describing how many hidden items
+ * - Container has role="list" with aria-label
+ * - Each child is wrapped in a role="listitem"
+ * - "+X more" button has aria-label describing how many hidden items
  */
 export function ChipList({
   children,
@@ -75,7 +75,7 @@ export function ChipList({
         className={cn("flex flex-wrap gap-2", className)}
       >
         {chipArray.map((chip, index) => (
-          <div key={chip--} role="listitem">
+          <div key={index} role="listitem">
             {chip}
           </div>
         ))}
@@ -97,7 +97,7 @@ export function ChipList({
         className={cn("flex flex-wrap gap-2", className)}
       >
         {visibleChips.map((chip, index) => (
-          <div key={chip--} role="listitem">
+          <div key={index} role="listitem">
             {chip}
           </div>
         ))}
@@ -106,7 +106,7 @@ export function ChipList({
             <button
               type="button"
               onClick={handleToggleExpand}
-              aria-label={Show  more filter options}
+              aria-label="Show more filter options"
               className="inline-flex min-h-[40px] items-center gap-1 rounded-full border border-white/20 bg-white/[0.03] px-3 py-2 text-sm font-medium text-gray-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
             >
               +{hiddenCount} more
@@ -116,7 +116,7 @@ export function ChipList({
         {showToggle && !collapsed && (
           <>
             {chipArray.slice(maxVisible).map((chip, index) => (
-              <div key={chip-hidden--} role="listitem">
+              <div key={`hidden-${index}`} role="listitem">
                 {chip}
               </div>
             ))}
@@ -147,10 +147,10 @@ export function ChipList({
         role="list"
         aria-label={ariaLabel}
         className={cn("flex flex-wrap gap-2", className)}
-        style={{ maxHeight: collapsed ? ${maxHeight}px : "none", overflow: "hidden" }}
+        style={{ maxHeight: collapsed ? `${maxHeight}px` : "none", overflow: "hidden" }}
       >
         {visibleChips.map((chip, index) => (
-          <div key={chip--} role="listitem">
+          <div key={index} role="listitem">
             {chip}
           </div>
         ))}
@@ -159,7 +159,7 @@ export function ChipList({
             <button
               type="button"
               onClick={handleToggleExpand}
-              aria-label={Show  more filter options}
+              aria-label="Show more filter options"
               className="inline-flex min-h-[40px] items-center gap-1 rounded-full border border-white/20 bg-white/[0.03] px-3 py-2 text-sm font-medium text-gray-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
             >
               +{hiddenCount} more
