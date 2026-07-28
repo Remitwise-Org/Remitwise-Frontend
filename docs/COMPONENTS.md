@@ -2,6 +2,124 @@
 
 > For icon usage, sizing conventions, and how to add a custom icon, see [ICON_SYSTEM.md](ICON_SYSTEM.md).
 
+---
+
+## MenuButton
+
+A fully accessible dropdown menu button following the **WAI-ARIA 1.1 Menu Button** pattern
+(§3.15). Trigger opens a `role="menu"` popup containing `role="menuitem"` entries.
+
+**File:** `components/ui/MenuButton.tsx`
+**Stories:** `components/ui/MenuButton.stories.tsx`
+
+### Props
+
+| Prop | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `label` | `React.ReactNode` | ✓ | — | Visible label for the trigger button. |
+| `items` | `MenuItemDef[]` | ✓ | — | Array of menu items (see `MenuItemDef` below). |
+| `placement` | `"bottom-start" \| "bottom-end" \| "top-start" \| "top-end"` | — | `"bottom-start"` | Where the popup appears relative to the trigger. |
+| `variant` | `"default" \| "ghost" \| "danger"` | — | `"default"` | Visual style of the trigger button. |
+| `disabled` | `boolean` | — | `false` | Disables the trigger; the menu cannot be opened. |
+| `className` | `string` | — | — | Extra Tailwind classes on the trigger button. |
+| `menuClassName` | `string` | — | — | Extra Tailwind classes on the popup panel. |
+| `onOpen` | `() => void` | — | — | Called after the menu opens. |
+| `onClose` | `() => void` | — | — | Called after the menu closes. |
+
+### MenuItemDef
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `key` | `string` | ✓ | Unique key for React reconciliation. |
+| `label` | `React.ReactNode` | ✓ | Visible item text. |
+| `icon` | `React.ReactNode` | — | Leading icon; `aria-hidden` is applied automatically. |
+| `disabled` | `boolean` | — | Renders `aria-disabled="true"` and skips keyboard focus. |
+| `hasSeparatorAbove` | `boolean` | — | Renders a `role="separator"` divider above this item. |
+| `onSelect` | `() => void` | — | Called when the item is activated. |
+
+### Keyboard contract
+
+| Key | Action |
+| --- | --- |
+| Enter / Space / ↓ | Open menu; move focus to first enabled item |
+| ↑ | Open menu; move focus to last enabled item |
+| ↓ / ↑ | Navigate items (wraps at boundaries) |
+| Home / Page Up | Jump to first enabled item |
+| End / Page Down | Jump to last enabled item |
+| Escape | Close menu; return focus to trigger |
+| Tab | Close menu (focus leaves naturally) |
+| Enter / Space on item | Activate item; close menu |
+
+### Accessibility
+
+- Trigger has `aria-haspopup="menu"`, `aria-expanded`, and `aria-controls` (set only when open).
+- Popup has `role="menu"`, `aria-labelledby` (trigger id), and `aria-orientation="vertical"`.
+- Each item has `role="menuitem"`; disabled items have `aria-disabled="true"` and `tabIndex={-1}`.
+- Separator uses `role="separator"`.
+- Icons have `aria-hidden="true"` — they are visual supplements to the label.
+- Focus returns to the trigger on close (Escape, item activation, outside click).
+- Respects `prefers-reduced-motion` — animation classes omitted when user prefers no motion.
+- Uses design tokens from `tailwind.config.js`; no hardcoded colours, spacing, or radii.
+- Meets WCAG 2.1 AA: Keyboard (2.1.1), Focus Order (2.4.3), Name, Role, Value (4.1.2).
+
+### Usage examples
+
+```tsx
+import { MenuButton } from "@/components/ui/MenuButton";
+import { Pencil, Trash2, Share2 } from "lucide-react";
+
+// Basic
+<MenuButton
+  label="Actions"
+  items={[
+    { key: "edit",   label: "Edit",   icon: <Pencil />,  onSelect: handleEdit },
+    { key: "share",  label: "Share",  icon: <Share2 />,  onSelect: handleShare },
+    { key: "delete", label: "Delete", icon: <Trash2 />,
+      hasSeparatorAbove: true, onSelect: handleDelete },
+  ]}
+/>
+
+// With disabled item
+<MenuButton
+  label="Options"
+  items={[
+    { key: "a", label: "Available",    onSelect: handleA },
+    { key: "b", label: "Coming soon",  disabled: true },
+  ]}
+/>
+
+// Icon-only trigger with screen-reader label
+<MenuButton
+  label={
+    <>
+      <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+      <span className="sr-only">More options</span>
+    </>
+  }
+  items={items}
+  variant="ghost"
+  className="px-2"
+/>
+
+// Danger variant, placement top-end
+<MenuButton
+  label="Admin actions"
+  items={dangerItems}
+  variant="danger"
+  placement="top-end"
+/>
+```
+
+### Integration
+
+```tsx
+import { MenuButton } from "@/components/ui/MenuButton";
+```
+
+No context provider required.
+
+---
+
 ## Notice
 
 A reusable inline banner / callout for displaying informational, warning, error,
