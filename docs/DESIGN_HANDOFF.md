@@ -1,5 +1,7 @@
 # Design Handoff
 
+> See [FIGMA_TO_TOKENS.md](./FIGMA_TO_TOKENS.md) for the workflow on exporting and consuming design tokens from Figma.
+
 ## Route mapping
 - `/dashboard` — Main dashboard overview
 - `/send` — Send Money flow

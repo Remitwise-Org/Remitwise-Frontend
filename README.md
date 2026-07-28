@@ -2,8 +2,7 @@
 
 Frontend application for the RemitWise remittance and financial planning platform.
 
-> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map.
-
+> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map. For the design tokens workflow, see [docs/FIGMA_TO_TOKENS.md](docs/FIGMA_TO_TOKENS.md).
 ## Overview
 
 This is a Next.js-based frontend skeleton that provides the UI structure for all RemitWise features. The application is built with:
