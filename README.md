@@ -16,6 +16,7 @@ This is a Next.js-based frontend skeleton that provides the UI structure for all
 - [Period lifecycle and state machine](./docs/PERIOD_LIFECYCLE.md)
 - [Internal jargon glossary (contributors)](./docs/GLOSSARY.md)
 - [Hydration mismatch patterns and fixes](./docs/HYDRATION_MISMATCH.md)
+- [Search UX: instant debounce, URL-submit, and recent results](./docs/SEARCH_UX.md)
 
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type safety
@@ -33,7 +34,7 @@ These pages currently serve as placeholder mocks. Each page demonstrates the lay
 ### Shared Components
 
 - **AddressDisplay**: A component for displaying long strings like Stellar addresses, featuring truncation, a copy-to-clipboard button, and a tooltip showing the full address on hover.
-- **Global Search**: The `/search?q=...` route surfaces matching invoice, address, and settings results from the same search vocabulary used in the command palette.
+- **Global Search**: The `/search?q=...` route surfaces matching invoice, address, and settings results from the same search vocabulary used in the command palette — see [docs/SEARCH_UX.md](docs/SEARCH_UX.md) for how instant vs. submit search works.
 
 1. **Dashboard** - Overview of remittances, savings, bills, and insurance — see [docs/DASHBOARD_LAYOUT_RULES.md](docs/DASHBOARD_LAYOUT_RULES.md) for the intended column ratios, widget priority, and mobile stacking rules
 2. **Send Money** - Remittance sending interface with automatic split preview
