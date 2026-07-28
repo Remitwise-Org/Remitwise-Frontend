@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { AlertCircle, AlertTriangle, Clock, X } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Clock, Loader2, X } from 'lucide-react';
 import type { SessionPhase } from '@/lib/client/useSessionExpiry';
 
 interface SessionExpiryNotificationProps {
   phase: SessionPhase;
   message: string;
   countdown: number;
+  isRefreshing?: boolean;
   onStaySignedIn: () => void;
   onReconnect: () => void;
   onDismiss: () => void;
@@ -23,6 +24,7 @@ export default function SessionExpiryNotification({
   phase,
   message,
   countdown,
+  isRefreshing = false,
   onStaySignedIn,
   onReconnect,
   onDismiss,
@@ -39,13 +41,13 @@ export default function SessionExpiryNotification({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && (isWarning || isExpired)) {
+      if (e.key === 'Escape' && (isWarning || isExpired) && !isRefreshing) {
         onDismiss();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isWarning, isExpired, onDismiss]);
+  }, [isWarning, isExpired, isRefreshing, onDismiss]);
 
   if (!isWarning && !isExpired) return null;
 
@@ -102,9 +104,18 @@ export default function SessionExpiryNotification({
                 <button
                   ref={primaryActionRef}
                   onClick={onStaySignedIn}
-                  className="inline-flex items-center justify-center rounded-lg bg-status-warning-fg px-3 py-1.5 text-xs font-semibold text-[#0A0A0A] transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-warning-fg focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] touch-target-wide"
+                  disabled={isRefreshing}
+                  aria-busy={isRefreshing}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-status-warning-fg px-3 py-1.5 text-xs font-semibold text-[#0A0A0A] transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-warning-fg focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] touch-target-wide disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  Stay signed in
+                  {isRefreshing ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                      Extending…
+                    </>
+                  ) : (
+                    'Stay signed in'
+                  )}
                 </button>
               ) : (
                 <button
@@ -120,8 +131,9 @@ export default function SessionExpiryNotification({
 
           <button
             onClick={onDismiss}
+            disabled={isRefreshing}
             aria-label="Dismiss notification"
-            className="shrink-0 rounded-lg p-1 text-white/40 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 touch-target"
+            className="shrink-0 rounded-lg p-1 text-white/40 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 touch-target disabled:cursor-not-allowed disabled:opacity-40"
           >
             <X className="h-3.5 w-3.5" />
           </button>

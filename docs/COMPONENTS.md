@@ -505,6 +505,8 @@ import LiveRegion from "@/components/ui/LiveRegion";
 
 ---
 
+For component prop standards, including naming, ordering, and boolean-prop conventions, see [docs/PROP_CONVENTIONS.md](PROP_CONVENTIONS.md).
+
 ## BackToTop
 
 - [Layout Patterns](docs/LAYOUT_PATTERNS.md): conventions for page shells, stat rows, and cards used across the app.

@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, ArrowLeft, ShieldCheck, User, CreditCard } from "lucide-react";
+import { Zap, ArrowLeft, ShieldCheck, User, CreditCard, Loader2 } from "lucide-react";
 import AutomaticSplitCard from "./AutomaticSplitCard";
 import { CTA_TEST_IDS } from "@/lib/cta-testids";
 import Tooltip from "@/components/Tooltip";
@@ -75,10 +75,22 @@ export default function ReviewStep({
               </p>
             </div>
 
-            <div className="mt-10 space-y-4">
-              <Tooltip
-                disabledReason="Your transaction is being processed, please wait"
-                side="top"
+            <div
+              className="mt-10 space-y-4"
+              role="status"
+              aria-live="polite"
+              aria-busy={isPending}
+              aria-label={isPending ? "Transfer is being processed" : "Review actions"}
+            >
+              <button
+                id="send-confirm-btn"
+                type="button"
+                onClick={onConfirm}
+                disabled={isPending}
+                data-testid={CTA_TEST_IDS.flow.sendReviewPrimary}
+                aria-busy={isPending}
+                aria-label={isPending ? "Processing your transfer, please wait" : "Confirm and send remittance"}
+                className="w-full min-h-11 px-4 py-4 bg-red-600 hover:bg-red-700 disabled:bg-red-900 disabled:cursor-not-allowed text-white rounded-2xl text-base 375:text-lg font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/40 flex items-center justify-center gap-3 text-center break-words"
               >
                 <button
                   id="send-confirm-btn"
@@ -91,28 +103,7 @@ export default function ReviewStep({
                 >
                   {isPending ? (
                   <>
-                    {/* Inline SVG spinner — no extra dependency, works with prefers-reduced-motion via CSS media query */}
-                    <svg
-                      className="w-5 h-5 animate-spin motion-reduce:hidden"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      />
-                    </svg>
+                    <Loader2 className="w-5 h-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                     Processing&hellip;
                   </>
                 ) : (
@@ -125,6 +116,7 @@ export default function ReviewStep({
               </Tooltip>
 
               <button
+                type="button"
                 onClick={onBack}
                 disabled={isPending}
                 className="w-full min-h-11 px-4 py-4 bg-transparent hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-400 rounded-2xl text-sm font-medium transition-colors flex items-center justify-center gap-2 text-center break-words"

@@ -238,6 +238,8 @@ npm run test:e2e
 
 For validating responsive breakpoints and layouts across different viewports, see the [Responsive Testing Guide](docs/RESPONSIVE_TESTING.md).
 
+For verifying components in a right-to-left (RTL) locale (Arabic, Hebrew), see the [RTL Testing Guide](docs/RTL_TESTING.md).
+
 
 ## Project Structure
 
@@ -260,6 +262,7 @@ remitwise-frontend/
 │   └── auth.ts              # Auth middleware
 ├── docs/                    # Documentation
 │   ├── API_ROUTES.md        # API routes documentation
+│   ├── PROP_CONVENTIONS.md  # Component prop naming, ordering, and boolean conventions
 │   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
 │   ├── contract-cache.md    # Contract caching architecture and guidelines
 │   ├── frame-budget-rules.md    # Frame budget performance guidelines
@@ -770,6 +773,7 @@ GET  /api/admin/audit         # Admin-only audit events
 
 Design token reference and migration guides:
 
+- [docs/SEMANTIC_TOKENS_AND_CONTRAST.md](docs/SEMANTIC_TOKENS_AND_CONTRAST.md) — contributor guide to semantic tokens, WCAG contrast ratio requirements, and how to verify and add colour tokens.
 - [docs/THEMING.md](docs/THEMING.md) — full catalogue of CSS custom properties, Tailwind color, spacing, focus-ring, and animation tokens with semantic roles and usage examples.
 - [docs/DESIGN_TOKEN_MIGRATION.md](docs/DESIGN_TOKEN_MIGRATION.md) — step-by-step guide for safely renaming or deprecating a token, including a PR checklist.
 

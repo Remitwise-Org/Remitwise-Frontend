@@ -6,10 +6,61 @@
   },
   "transactionHistory": {
     "title": "Transaction History",
+    "titleStandalone": "Transactions",
+    "subtitleStandalone": "Filter, search, and review Send Money, Smart Split, Bill Payment, and Insurance activity.",
     "empty": "No transactions found",
     "amount": "Amount",
     "status": "Status",
-    "date": "Date"
+    "date": "Date",
+    "export": "Export",
+    "filtersHeading": "Filter & search",
+    "filtersHelper": "Combine type, status, date range, and search. Active filters appear below.",
+    "searchStandalonePlaceholder": "Search id, recipient, type, status, amount",
+    "showing": "Showing {{count}} of {{total}}",
+    "results_one": "{{count}} transaction",
+    "results_many": "{{count}} transactions",
+    "typeFilterLabel": "Type",
+    "statusFilterLabel": "Status",
+    "dateRange": {
+      "label": "Date range",
+      "from": "From",
+      "to": "To",
+      "clear": "Clear date range"
+    },
+    "activeFilters": {
+      "label": "Active filters",
+      "none": "None",
+      "clearAll": "Clear all",
+      "clearSearch": "Clear search",
+      "search": "Search: {{query}}",
+      "type": "Type: {{type}}",
+      "status": "Status: {{status}}"
+    },
+    "sort": {
+      "label": "Sort",
+      "date": "Date",
+      "amount": "Amount",
+      "ascending": "ascending",
+      "descending": "descending"
+    },
+    "dateGroups": {
+      "today": "Today",
+      "todayHelper": "Transactions from today",
+      "thisWeek": "This Week",
+      "thisWeekHelper": "Earlier this week (Mon–Sun, excluding today)",
+      "earlier": "Earlier",
+      "earlierHelper": "Before this week"
+    },
+    "emptyState": {
+      "title": "No transactions yet",
+      "description": "When you send money, pay bills, or use Smart Split, your activity will show up here.",
+      "cta": "Send money"
+    },
+    "noResults": {
+      "title": "No matching transactions",
+      "description": "Try clearing filters or adjusting your search to see more results.",
+      "clearFilters": "Clear filters"
+    }
   },
   "dashboard": {
     "totalSent": "Total Sent",
