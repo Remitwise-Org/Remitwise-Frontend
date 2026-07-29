@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, lazy, Suspense } from "react";
 import { WalletProvider, useWallet } from "stellar-wallet-kit";
 import { DensityProvider } from "@/lib/context/DensityContext";
 import { TelemetryProvider } from "@/lib/context/TelemetryContext";
@@ -13,10 +13,18 @@ import { ShortcutHelpProvider } from "@/lib/context/ShortcutHelpContext";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import ToastRegion from "@/components/ToastRegion";
 import SessionExpiryProvider from "@/components/SessionExpiryProvider";
-import CommandPalette from "@/components/CommandPalette";
 import ShortcutHelpModal from "@/components/ShortcutHelpModal";
 import UnhandledRejectionListener from "@/components/UnhandledRejectionListener";
 import { apiClient } from "@/lib/client/apiClient";
+
+/**
+ * Lazy-loaded: CommandPalette pulls in its own icon set (13 lucide-react
+ * icons) and renders `null` until the user opens it (Cmd/Ctrl+K), but was
+ * previously a static import here -- mounted on every route via `Providers`,
+ * its icons shipped in the initial bundle on every page load regardless of
+ * whether the palette was ever opened.
+ */
+const CommandPalette = lazy(() => import("@/components/CommandPalette"));
 
 /** Keeps the API client's authorization header aligned with wallet state. */
 function ApiClientAuthBridge() {
@@ -51,7 +59,9 @@ export default function Providers({ children }: { children: ReactNode }) {
                 <ShortcutHelpProvider>
                   <LayoutWrapper>{children}</LayoutWrapper>
                   <ToastRegion />
-                  <CommandPalette />
+                  <Suspense fallback={null}>
+                    <CommandPalette />
+                  </Suspense>
                   <ShortcutHelpModal />
                 </ShortcutHelpProvider>
               </SessionExpiryProvider>

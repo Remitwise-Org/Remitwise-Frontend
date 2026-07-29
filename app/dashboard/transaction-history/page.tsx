@@ -13,6 +13,7 @@ import { useClientTranslator } from "@/lib/i18n/client";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { useSeo } from "@/lib/hooks/useSeo";
 import { useInfiniteScrollObserver } from "@/lib/hooks/useInfiniteScrollObserver";
+import { useCursorPagination } from "@/lib/hooks/useCursorPagination";
 import {
   serializeToCsv,
   serializeToJson,
@@ -65,11 +66,7 @@ const TransactionHistoryPage = () => {
   });
 
   const { t } = useClientTranslator();
-  const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const [userAddress, setUserAddress] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 300);
   const [statusFilter, setStatusFilter] = useState<
@@ -78,9 +75,6 @@ const TransactionHistoryPage = () => {
   const [directionFilter, setDirectionFilter] = useState<Direction>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [cursor, setCursor] = useState<string | undefined>();
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
   const exportButtonRef = useRef<HTMLButtonElement>(null);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
@@ -114,62 +108,46 @@ const TransactionHistoryPage = () => {
       [t],
     );
 
-  const fetchTransactions = useCallback(
-    async (currentCursor?: string, reset = false) => {
-      try {
-        if (reset) {
-          setLoading(true);
-        } else {
-          setLoadingMore(true);
-        }
-        setError(null);
-
-        const params = new URLSearchParams();
-        params.append("limit", "50");
-        if (currentCursor && !reset) {
-          params.append("cursor", currentCursor);
-        }
-        if (statusFilter !== "all") {
-          params.append("status", statusFilter);
-        }
-
-        const response = await fetch(`/api/v1/remittance/history?${params}`);
-        if (!response.ok) {
-          throw new Error(t("transactionHistory.alerts.fetchFailed"));
-        }
-
-        const data = await response.json();
-
-        if (data.userAddress) {
-          setUserAddress(data.userAddress);
-        }
-
-        if (reset) {
-          setTransactions(data.transactions || []);
-        } else {
-          setTransactions((prev) => [...prev, ...(data.transactions || [])]);
-        }
-
-        setCursor(data.nextCursor);
-        setHasMore(!!data.nextCursor);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : t("transactionHistory.alerts.genericError"),
-        );
-      } finally {
-        setLoading(false);
-        setInitialLoading(false);
-        setLoadingMore(false);
+  const fetchTransactionsPage = useCallback(
+    async (currentCursor: string | undefined, reset: boolean) => {
+      const params = new URLSearchParams();
+      params.append("limit", "50");
+      if (currentCursor && !reset) {
+        params.append("cursor", currentCursor);
       }
+      if (statusFilter !== "all") {
+        params.append("status", statusFilter);
+      }
+
+      const response = await fetch(`/api/v1/remittance/history?${params}`);
+      if (!response.ok) {
+        throw new Error(t("transactionHistory.alerts.fetchFailed"));
+      }
+
+      const data = await response.json();
+
+      if (data.userAddress) {
+        setUserAddress(data.userAddress);
+      }
+
+      return { items: data.transactions || [], nextCursor: data.nextCursor };
     },
     [statusFilter, t],
   );
 
-  useEffect(() => {
-    fetchTransactions(undefined, true);
-  }, [fetchTransactions]);
+  const {
+    items: transactions,
+    loading,
+    loadingMore,
+    error,
+    hasMore,
+    isInitialLoading,
+    loadMore: handleLoadMore,
+    refetch: refetchTransactions,
+  } = useCursorPagination<TransactionItem>({
+    fetchPage: fetchTransactionsPage,
+    fallbackErrorMessage: t("transactionHistory.alerts.genericError"),
+  });
 
   // Close export dropdown on click outside or escape key
   useEffect(() => {
@@ -201,12 +179,6 @@ const TransactionHistoryPage = () => {
       document.removeEventListener("keydown", handleEscape);
     };
   }, [isExportDropdownOpen]);
-
-  const handleLoadMore = useCallback(() => {
-    if (hasMore && !loadingMore) {
-      fetchTransactions(cursor, false);
-    }
-  }, [hasMore, loadingMore, cursor, fetchTransactions]);
 
   const { sentinelRef } = useInfiniteScrollObserver({
     hasMore,
@@ -365,7 +337,7 @@ const TransactionHistoryPage = () => {
     },
     [groupedTransactions, dateFrom, dateTo, filteredCount],
   );
-  const isLoading = initialLoading && loading;
+  const isLoading = isInitialLoading;
   const noTransactions = !isLoading && !error && totalCount === 0;
   const noResults =
     !isLoading &&
@@ -499,10 +471,7 @@ const TransactionHistoryPage = () => {
                   <button
                     key={status}
                     type="button"
-                    onClick={() => {
-                      setStatusFilter(status);
-                      setCursor(undefined);
-                    }}
+                    onClick={() => setStatusFilter(status)}
                     aria-pressed={statusFilter === status}
                     className={`min-h-[40px] rounded-xl px-4 py-2 text-sm font-medium transition-colors whitespace-normal sm:text-base ${
                       statusFilter === status
@@ -660,7 +629,7 @@ const TransactionHistoryPage = () => {
             <div className="mt-3 text-center">
               <button
                 type="button"
-                onClick={() => fetchTransactions(undefined, true)}
+                onClick={refetchTransactions}
                 className="min-h-[40px] rounded-xl bg-[#FF4B26] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#FF4B26]/80"
               >
                 Retry

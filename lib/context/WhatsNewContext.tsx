@@ -30,6 +30,20 @@ export function WhatsNewProvider({ children }: { children: React.ReactNode }) {
     const [lastSeenId, setLastSeenId] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
 
+    const markAllRead = useCallback(() => {
+        const newestId = CHANGELOG[0]?.id || null;
+        setLastSeenId(newestId);
+        try {
+            if (newestId) {
+                localStorage.setItem(STORAGE_KEY, newestId);
+            } else {
+                localStorage.removeItem(STORAGE_KEY);
+            }
+        } catch {
+            // ignore storage errors
+        }
+    }, []);
+
     useEffect(() => {
         setMounted(true);
         try {
@@ -37,11 +51,19 @@ export function WhatsNewProvider({ children }: { children: React.ReactNode }) {
             if (stored) {
                 setLastSeenId(stored || null);
             } else {
+                // First-time visitor: open the panel and mark it read in the
+                // same batch as `mounted`/`isOpen`, instead of leaving
+                // markAllRead to the isOpen-driven effect below -- that
+                // reactive path cost a second post-hydration render, since it
+                // only runs after `isOpen`'s own render has already committed.
                 setIsOpen(true);
+                markAllRead();
             }
         } catch {
             setIsOpen(true);
+            markAllRead();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const unreadCount = mounted
@@ -57,20 +79,6 @@ export function WhatsNewProvider({ children }: { children: React.ReactNode }) {
     const readIds = new Set<string>(
         CHANGELOG.slice(unreadCount).map((entry) => entry.id)
     );
-
-    const markAllRead = useCallback(() => {
-        const newestId = CHANGELOG[0]?.id || null;
-        setLastSeenId(newestId);
-        try {
-            if (newestId) {
-                localStorage.setItem(STORAGE_KEY, newestId);
-            } else {
-                localStorage.removeItem(STORAGE_KEY);
-            }
-        } catch {
-            // ignore storage errors
-        }
-    }, []);
 
     useEffect(() => {
         if (!mounted || !isOpen) return;
