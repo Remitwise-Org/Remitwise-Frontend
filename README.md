@@ -1,5 +1,12 @@
 # RemitWise Frontend
 
+<!-- i18n-coverage-badge:start -->
+![i18n coverage](https://img.shields.io/badge/i18n%20coverage-100%25-brightgreen)
+<!-- i18n-coverage-badge:end -->
+<br>Coverage is the share of `lib/i18n/locales/en.json` keys that also exist
+in `es.json`. Regenerate after adding a translation with
+`npm run i18n:coverage -- --write`.
+
 Frontend application for the RemitWise remittance and financial planning platform.
 
 > **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers, and [docs/UX_ANTI_PATTERNS.md](docs/UX_ANTI_PATTERNS.md) for interaction patterns we intentionally avoid. For data fetching and caching patterns, see [docs/CACHE_STRATEGY.md](docs/CACHE_STRATEGY.md). For SSR vs. client-only patterns, see [docs/SSR_PATTERNS.md](docs/SSR_PATTERNS.md).
