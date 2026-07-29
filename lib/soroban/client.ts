@@ -19,7 +19,18 @@ import { getSorobanNetworkPassphrase } from "@/lib/contracts/network-resolution"
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 
-function getRpcUrl(): string {
+/**
+ * Reads the server-only `SOROBAN_RPC_URL` runtime env var (not baked into
+ * the client bundle at build time -- resolved fresh from `process.env` on
+ * every server-side call, the same way `SESSION_PASSWORD` and other
+ * deployment-specific secrets are). Deliberately does NOT fall back to any
+ * `NEXT_PUBLIC_*` variant: a prior version of this client read
+ * `NEXT_PUBLIC_SOROBAN_RPC_URL` and shipped transactions built against
+ * whatever RPC URL happened to be baked into that particular build's client
+ * bundle, rather than the deployment's actual configured endpoint -- see
+ * `lib/soroban-client.ts`'s deprecation notice for the incident this fixed.
+ */
+export function getRpcUrl(): string {
   const url = process.env.SOROBAN_RPC_URL;
   if (!url) {
     if (process.env.NODE_ENV === "production") {
