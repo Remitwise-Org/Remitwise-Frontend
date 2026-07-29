@@ -1,0 +1,65 @@
+# Issue #1518 – a Playwright smoke gate that actually gates.
+#
+# The existing e2e workflow runs the full suite on PRs but every step ends in
+# `|| true` / continue-on-error, so it can never fail — and its `npm ci` has
+# been silently failing against a corrupt lockfile regardless. This workflow
+# is the opposite contract: a small, fast smoke subset (server boots from a
+# clean install; /api/health contract holds) with NO failure suppression.
+#
+# Actions are pinned by commit SHA per repo policy preference; the version
+# comment records what each SHA is.
+name: Playwright Smoke
+
+on:
+  pull_request:
+
+concurrency:
+  group: smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Smoke (health + boot)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      TEST_WALLET_ADDRESS: "GDEMOXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+      TEST_SIGNATURE: "mock-signature"
+      SESSION_PASSWORD: "dummy-test-session-password-must-be-32-chars"
+      SOROBAN_RPC_URL: "https://soroban-testnet.stellar.org"
+      SOROBAN_NETWORK_PASSPHRASE: "Test SDF Network ; September 2015"
+      ANCHOR_WEBHOOK_SECRET: "dummy-test-secret"
+
+    steps:
+      - name: Checkout
+        # actions/checkout v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Setup Node.js (with npm cache)
+        # actions/setup-node v4.1.0
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare CI database
+        run: DATABASE_URL="file:$PWD/prisma/ci.db" npx prisma db push --skip-generate
+
+      - name: Install Playwright chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke suite
+        run: npm run test:e2e:smoke
+
+      - name: Upload report on failure
+        if: failure()
+        # actions/upload-artifact v4.4.3
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
+        with:
+          name: playwright-smoke-report
+          path: playwright-report/
+          retention-days: 7
