@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prepare": "husky",
     "postinstall": "node scripts/patch-next-config.js",
     "generate:types": "openapi-typescript ./openapi.yaml --output ./src/api/types.ts",
     "prebuild": "npm run generate:types",
     "dev": "next dev",
     "mock:backend": "node scripts/mock-backend.js",
+    "i18n:coverage": "node scripts/i18n-coverage.js",
     "build": "next build --webpack",
     "start": "next start",
     "check:img-alt": "node scripts/check-img-alt.js",
@@ -18,14 +20,16 @@
     "test:ui": "node node_modules/vitest/vitest.mjs --config vitest.config.mjs --configLoader runner --ui",
     "test:unit": "npm run test:unit:node && npm run test:unit:vitest",
     "typecheck": "tsc --noEmit",
-    "test:unit:node": "node --test tests/unit/webhooks-verify.test.cjs tests/unit/middleware.test.cjs tests/unit/contract-cache.test.cjs tests/unit/mock-backend.test.cjs",
-    "test:unit:vitest": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/unit/validation/savings-goals.test.ts tests/unit/middleware-gateway.test.ts tests/unit/apiClient.test.ts tests/unit/apiClient.retry-timeout.test.ts tests/unit/apiClient.headers.test.ts tests/unit/hooks/useVisibilityChange.test.ts lib/anchor/client.test.ts",
+    "test:unit:node": "node --test tests/unit/webhooks-verify.test.cjs tests/unit/middleware.test.cjs tests/unit/contract-cache.test.cjs tests/unit/mock-backend.test.cjs tests/unit/i18n-coverage.test.cjs",
+    "test:unit:vitest": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/unit/validation/savings-goals.test.ts tests/unit/middleware-gateway.test.ts tests/unit/apiClient.test.ts tests/unit/apiClient.retry-timeout.test.ts tests/unit/apiClient.headers.test.ts tests/unit/hooks/useVisibilityChange.test.ts",
     "test:property": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/property",
     "test:integration": "node --test tests/integration/auth.test.cjs tests/integration/health.test.cjs tests/integration/validation.test.cjs && node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/integration/api",
     "test:e2e": "playwright test",
+    "test:smoke": "playwright test --config playwright.smoke.config.ts",
     "test:perf": "npx playwright test tests/e2e/dashboard-performance.spec.ts",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build --quiet"
+    "build-storybook": "storybook build --quiet",
+    "test:e2e:smoke": "playwright test tests/e2e/health.spec.ts --project=chromium"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -55,6 +59,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.12",
     "@playwright/test": "^1.58.2",
     "@storybook/addon-essentials": "^8.6.18",
     "@storybook/react": "^8.6.18",
@@ -72,6 +77,7 @@
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.35",
     "http-server": "^14.1.1",
+    "husky": "^9.1.7",
     "jest": "^30.2.0",
     "jest-axe": "^10.0.0",
     "jsdom": "^29.1.1",
