@@ -40,6 +40,9 @@ jobs:
         run: npm run build
 
       - name: Analyze Bundle
-        uses: hashicorp/nextjs-bundle-analysis@f32e5f7f0f66a1347343c308ff407a8e2beca568 # Pinned by SHA (v3)
+        uses: transferwise/actions-next-bundle-analyzer@4277633c21d084fe92f75bfe8921ddd93d002262 # Pinned by SHA (master)
         with:
-          build-output-directory: .next
+          workflow-id: bundle-size.yml
+          base-branch: main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
