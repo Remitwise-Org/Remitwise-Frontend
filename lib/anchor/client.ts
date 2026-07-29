@@ -36,6 +36,26 @@ export interface AnchorFlowResponse {
     [key: string]: unknown;
 }
 
+const ALLOWED_ANCHOR_URL_PROTOCOLS = new Set(['http:', 'https:']);
+
+/**
+ * Anchor deposit/withdraw flow URLs come from the anchor's own API response --
+ * external, untrusted input from the app's perspective. A compromised anchor
+ * (or a MITM) returning a `javascript:`/`data:` URL here must never reach the
+ * client as something that later gets rendered as a link or navigated to.
+ * Fails closed: returns undefined for anything that isn't an absolute
+ * http(s) URL, including malformed strings and non-string input.
+ */
+export function sanitizeAnchorUrl(rawUrl: unknown): string | undefined {
+    if (typeof rawUrl !== 'string') return undefined;
+    try {
+        const parsed = new URL(rawUrl);
+        return ALLOWED_ANCHOR_URL_PROTOCOLS.has(parsed.protocol) ? rawUrl : undefined;
+    } catch {
+        return undefined;
+    }
+}
+
 import { fetchWithTimeout } from '../fetch-timeout';
 import {
   ANCHOR_DEFAULT_TIMEOUT_MS,
