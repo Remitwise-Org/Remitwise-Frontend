@@ -9,6 +9,7 @@ export interface SavingsGoal {
   currentAmount: number
   targetAmount: number
   targetDate: string
+  isLocked?: boolean
 }
 
 export interface SavingsGoalFormData {
