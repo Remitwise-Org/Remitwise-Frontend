@@ -12,6 +12,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/lib/client/logout";
 import ShortcutTooltip from "@/components/ui/ShortcutTooltip";
+import { getPendingTranslationKeys } from "@/lib/i18n/pending-translations";
+
+/** Dev-only: number of English strings with no Spanish translation yet
+ * (see docs/i18n-message-extraction.md). Computed once per module load
+ * rather than per render -- the locale files only change on a rebuild. */
+const PENDING_TRANSLATION_COUNT =
+  process.env.NODE_ENV === "development" ? getPendingTranslationKeys().length : 0;
 
 const MobileNav = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -216,6 +223,11 @@ const MobileNav = () => {
 
                     {/* Footer / Account */}
                     <div className="p-4 sm:p-6 pb-[calc(theme(spacing.4)+env(safe-area-inset-bottom))] sm:pb-[calc(theme(spacing.6)+env(safe-area-inset-bottom))] border-t border-white/5 bg-brand-dark/50 backdrop-blur-xl mt-auto sticky bottom-0">
+                        {PENDING_TRANSLATION_COUNT > 0 && (
+                            <div className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-400">
+                                {PENDING_TRANSLATION_COUNT} translation{PENDING_TRANSLATION_COUNT === 1 ? "" : "s"} pending for es
+                            </div>
+                        )}
                         <button
                             onClick={handleLogout}
                             className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-red-600/10 to-transparent border border-red-600/20 text-red-500 font-bold tracking-wide hover:from-red-600 hover:to-red-700 hover:text-white transition-all shadow-xl shadow-red-600/5 group"

@@ -101,6 +101,32 @@ describe("WhatsNewContext", () => {
     expect(result.current.isOpen).toBe(true);
   });
 
+  it("settles into its first-visit state (open, marked read) within a single post-hydration render", () => {
+    let renderCount = 0;
+    function ProbeComponent() {
+      renderCount++;
+      useWhatsNew();
+      return null;
+    }
+
+    renderHook(() => {}, {
+      wrapper: ({ children }) => (
+        <WhatsNewProvider>
+          <ProbeComponent />
+          {children}
+        </WhatsNewProvider>
+      ),
+    });
+
+    // Render 1: initial mount (isOpen/mounted/lastSeenId all at their
+    // useState defaults). Render 2: the mount effect's batched
+    // setMounted/setIsOpen/markAllRead update. Anything beyond that means
+    // the isOpen-driven effect fired a *third* render reacting to render 2's
+    // output instead of the mount effect settling state in one batch.
+    expect(renderCount).toBe(2);
+    expect(localStorage.getItem("remitwise_whats_new_last_seen")).toBe("v1.4.0");
+  });
+
   it("throws when useWhatsNew is used outside of WhatsNewProvider", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 

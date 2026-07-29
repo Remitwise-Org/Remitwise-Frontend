@@ -1,5 +1,12 @@
 # RemitWise Frontend
 
+<!-- i18n-coverage-badge:start -->
+![i18n coverage](https://img.shields.io/badge/i18n%20coverage-100%25-brightgreen)
+<!-- i18n-coverage-badge:end -->
+<br>Coverage is the share of `lib/i18n/locales/en.json` keys that also exist
+in `es.json`. Regenerate after adding a translation with
+`npm run i18n:coverage -- --write`.
+
 Frontend application for the RemitWise remittance and financial planning platform.
 
 > **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers, and [docs/UX_ANTI_PATTERNS.md](docs/UX_ANTI_PATTERNS.md) for interaction patterns we intentionally avoid. For data fetching and caching patterns, see [docs/CACHE_STRATEGY.md](docs/CACHE_STRATEGY.md). For SSR vs. client-only patterns, see [docs/SSR_PATTERNS.md](docs/SSR_PATTERNS.md).
@@ -19,7 +26,7 @@ This is a Next.js-based frontend skeleton that provides the UI structure for all
 - [Hydration mismatch patterns and fixes](./docs/HYDRATION_MISMATCH.md)
 - [Search UX: instant debounce, URL-submit, and recent results](./docs/SEARCH_UX.md)
 - [Transaction detail (receipt) page data flow for contributors](./docs/transaction-detail-receipt-page.md)
-- [How feature flags are read on the client](./docs/feature-flags.md)
+- [How i18n messages are extracted](./docs/i18n-message-extraction.md)
 
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type safety — see [docs/TYPESCRIPT_CONVENTIONS.md](docs/TYPESCRIPT_CONVENTIONS.md) for ambient types, module augmentation, and never-narrow patterns
@@ -242,6 +249,15 @@ To run the Playwright end-to-end tests for authentication and protected routes:
 # Run tests
 npm run test:e2e
 ```
+
+A lightweight smoke test (`npm run test:smoke`) runs automatically in a
+`pre-push` git hook (via husky — installed as part of `npm install`'s
+`prepare` script). It starts the dev server and checks that `/api/health`
+responds at all (200 healthy or 503 degraded both count — this isn't a
+dependency health check, just confirmation the app itself booted), using
+its own `playwright.smoke.config.ts` so it never depends on the root page
+rendering successfully. It's meant to be fast: no browser is launched, since
+the test only uses Playwright's `request` fixture.
 
 For validating responsive breakpoints and layouts across different viewports, see the [Responsive Testing Guide](docs/RESPONSIVE_TESTING.md).
 
@@ -783,6 +799,7 @@ Design token reference and migration guides:
 - [docs/SEMANTIC_TOKENS_AND_CONTRAST.md](docs/SEMANTIC_TOKENS_AND_CONTRAST.md) — contributor guide to semantic tokens, WCAG contrast ratio requirements, and how to verify and add colour tokens.
 - [docs/THEMING.md](docs/THEMING.md) — full catalogue of CSS custom properties, Tailwind color, spacing, focus-ring, and animation tokens with semantic roles and usage examples.
 - [docs/DESIGN_TOKEN_MIGRATION.md](docs/DESIGN_TOKEN_MIGRATION.md) — step-by-step guide for safely renaming or deprecating a token, including a PR checklist.
+- [docs/TYPOGRAPHY_SCALE.md](docs/TYPOGRAPHY_SCALE.md) — full type scale with px/rem values, line-height pairings, font-weight conventions, and real component examples for contributors.
 
 ## API Endpoints
 
