@@ -363,16 +363,16 @@ thrown back to the top.
 
 **What to do instead:**
 
-- Let Next.js handle scroll restoration natively (it does by default for `<Link>` navigation).
-- If you must override scroll behavior (e.g., on a tab switch), save and restore the scroll
-  position explicitly using `useRef` + `scrollIntoView`.
+- Rely on the global `ScrollRestoration` component mounted in `app/layout.tsx` (see [`HOOKS.md`](./HOOKS.md#usescrollrestoration)). It saves scroll per URL in `sessionStorage` and restores it on Back/Forward.
+- Only call `scrollTo` when entering a genuinely new flow (e.g. a wizard step), not on every route change.
+- For filter-only or hash-only updates, use `router.push(..., { scroll: false })` and, when needed, the one-shot `window.__rw_skip_scroll_restore` flag.
 
 ```tsx
 // ❌ Avoid
 useEffect(() => { window.scrollTo(0, 0); }, [route]);
 
-// ✅ Prefer — Next.js handles scroll restoration automatically.
-// Only call scrollTo when entering a genuinely new flow.
+// ✅ Prefer — global ScrollRestoration handles history back/forward.
+// Only scroll to top when entering a genuinely new flow.
 useEffect(() => {
   if (isNewFlow) window.scrollTo(0, 0);
 }, [isNewFlow]);

@@ -76,6 +76,21 @@ export function FilterButton({ filterId }: { filterId: string }) {
 
 This prevents the whole page layout from blocking and allows us to show localized feedback (like `opacity-50`) during the route state change.
 
+## Scroll Restoration
+
+Client-side route changes in the App Router do not automatically preserve scroll when the user presses **Back** or **Forward**. The global `ScrollRestoration` component (see [`components/ScrollRestoration.tsx`](../components/ScrollRestoration.tsx)) solves this by:
+
+1. Saving `{ x, y }` scroll coordinates to `sessionStorage` as the user scrolls (debounced).
+2. Resetting scroll to the top on push-style navigations (`<Link>`, `router.push()`).
+3. Restoring the saved position when a `popstate` event indicates a history navigation.
+
+For filter-only or hash-only updates that should not move the viewport, combine `router.push(..., { scroll: false })` with the one-shot escape hatch documented in [`HOOKS.md`](./HOOKS.md#usescrollrestoration):
+
+```tsx
+window.__rw_skip_scroll_restore = true;
+router.push(`?filter=${filterId}`, { scroll: false });
+```
+
 ## Related Docs
 - [Motion Guide](./MOTION.md)
 - [Component States](./component-states.md)

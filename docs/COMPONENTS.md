@@ -200,6 +200,24 @@ import Notice from "@/components/Notice";
 
 ---
 
+## ScrollRestoration
+
+Global client component that mounts `useScrollRestoration` inside a `Suspense` boundary (required because the hook reads `useSearchParams`).
+
+**File:** `components/ScrollRestoration.tsx`
+
+### Behavior
+
+- Renders nothing (`null`); side effects only.
+- Delegates all logic to [`useScrollRestoration`](./HOOKS.md#usescrollrestoration).
+- Push navigations scroll to the top; Back/Forward restores the prior position for that URL.
+
+### Integration
+
+Wired in `app/layout.tsx` alongside `BackToTop` so every route benefits without per-page setup.
+
+---
+
 ## BackToTop
 
 - [Layout Patterns](docs/LAYOUT_PATTERNS.md): conventions for page shells, stat rows, and cards used across the app.

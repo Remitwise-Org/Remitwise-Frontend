@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import BackToTop from "@/components/BackToTop";
+import ScrollRestoration from "@/components/ScrollRestoration";
 import { DEFAULT_SEO } from "@/lib/config/seo";
 
 // @ts-ignore
@@ -63,6 +64,7 @@ export default async function RootLayout({
       </head>
       <body className="starry-bg min-h-screen font-sans">
         <Providers>{children}</Providers>
+        <ScrollRestoration />
         <BackToTop />
       </body>
     </html>
