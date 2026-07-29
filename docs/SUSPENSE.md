@@ -74,7 +74,30 @@ Use `Suspense` when:
 
 Do not use `Suspense` to hide API failures that need explicit retry or reporting. Use a manual error/loading/render branch instead.
 
-## 3. Use manual loading state for data fetches and retry flows
+## 3. Use `FeatureBoundary` to combine Suspense and ChunkErrorBoundary
+
+For feature areas that require both a loading skeleton and explicit chunk-load/error handling, use the `FeatureBoundary` component.
+
+```tsx
+import { FeatureBoundary } from "@/components/FeatureBoundary";
+import { SkeletonChart } from "@/components/ui/Skeleton";
+import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
+
+export default function MyFeature() {
+  return (
+    <FeatureBoundary
+      loadingFallback={<SkeletonChart type="bar" />}
+      errorFallback={<ErrorDisplay />}
+    >
+      <LazyComponent />
+    </FeatureBoundary>
+  );
+}
+```
+
+This component encapsulates `Suspense` and `ChunkErrorBoundary`, ensuring consistent loading and error recovery UX across feature areas.
+
+## 4. Use manual loading state for data fetches and retry flows
 
 This repository prefers explicit `loading` / `error` / `data` state branches for data fetching inside client components.
 

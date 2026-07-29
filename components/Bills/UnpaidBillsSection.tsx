@@ -71,19 +71,7 @@ export function UnpaidBillsSection({ bills }: { bills: Bill[] }) {
     UNPAID_STATUSES.includes(bill.status)
   );
 
-    return (
-        <div className="w-full max-w-7xl bg-[#010101] p-3 mx-auto flex flex-col gap-6 px-4 sm:px-2 lg:px-0">
-            {/* Header */}
-            <div className="flex flex-row justify-between items-center">
-                <div className="flex flex-col gap-1">
-                    <h2 className="font-bold text-2xl leading-8 tracking-[0.0703125px] text-white">
-                        Unpaid Bills
-                    </h2>
-                    <p className="font-normal text-sm leading-5 tracking-[-0.150391px] text-white/40">
-                        {unpaidBills.length} bills pending payment{unpaidBills.filter(b => b.recurring).length > 0 ? ` — ${unpaidBills.filter(b => b.recurring).length} recurring` : ''}
-                    </p>
-                </div>
-            </div>
+  const sorted = sortBillsByUrgency(unpaidBills);
 
   // Group into tiers preserving sort order
   const tiers: Exclude<BillUrgency, "paid">[] = ["overdue", "urgent", "upcoming"];

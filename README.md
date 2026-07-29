@@ -13,6 +13,7 @@ This is a Next.js-based frontend skeleton that provides the UI structure for all
 - [Dashboard layout rules for contributors](./docs/DASHBOARD_LAYOUT_RULES.md)
 - [Figma handoff workflow for contributors](./docs/FIGMA_HANDOFF.md)
 - [Focus trap guide for contributors](./docs/FOCUS_TRAPS.md)
+- [UI PR review checklist for reviewers](./docs/CODE_REVIEW.md)
 - [Period lifecycle and state machine](./docs/PERIOD_LIFECYCLE.md)
 - [Internal jargon glossary (contributors)](./docs/GLOSSARY.md)
 - [Hydration mismatch patterns and fixes](./docs/HYDRATION_MISMATCH.md)
