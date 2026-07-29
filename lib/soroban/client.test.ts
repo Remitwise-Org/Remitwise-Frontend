@@ -48,6 +48,7 @@ import {
   getLatestLedger,
   getLedgerSequence,
   getNetworkPassphrase,
+  getRpcUrl,
   SorobanClientError,
 } from "./client";
 
@@ -64,6 +65,39 @@ describe("getServer()", () => {
 
   it("returns the same cached singleton on repeated calls", () => {
     expect(getServer()).toBe(getServer());
+  });
+});
+
+describe("getRpcUrl()", () => {
+  const ORIGINAL_ENV = process.env;
+
+  beforeEach(() => {
+    process.env = { ...ORIGINAL_ENV };
+    delete process.env.SOROBAN_RPC_URL;
+    delete process.env.NEXT_PUBLIC_SOROBAN_RPC_URL;
+  });
+
+  afterEach(() => {
+    process.env = ORIGINAL_ENV;
+  });
+
+  it("returns SOROBAN_RPC_URL when set", () => {
+    process.env.SOROBAN_RPC_URL = "https://custom-rpc.example.com";
+    expect(getRpcUrl()).toBe("https://custom-rpc.example.com");
+  });
+
+  it("defaults to the public testnet URL when SOROBAN_RPC_URL is unset", () => {
+    expect(getRpcUrl()).toBe("https://soroban-testnet.stellar.org");
+  });
+
+  it("never falls back to NEXT_PUBLIC_SOROBAN_RPC_URL", () => {
+    // Regression guard: a prior version of this client read the
+    // NEXT_PUBLIC_-prefixed (browser-exposed) variant, which shipped
+    // transactions built against whatever URL happened to be baked into
+    // that build's client bundle instead of the deployment's actual
+    // configured endpoint. SOROBAN_RPC_URL must be the only source.
+    process.env.NEXT_PUBLIC_SOROBAN_RPC_URL = "https://wrong-network.example.com";
+    expect(getRpcUrl()).toBe("https://soroban-testnet.stellar.org");
   });
 });
 
