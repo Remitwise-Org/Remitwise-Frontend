@@ -68,7 +68,10 @@ export default defineConfig({
 
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:3000',
+    // Issue #1518 – probe the health endpoint for readiness: the root route
+    // currently 500s on main (pre-existing app bug), and readiness should
+    // mean "server is up", not "every page renders" — the specs test pages.
+    url: 'http://localhost:3000/api/health',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
 
