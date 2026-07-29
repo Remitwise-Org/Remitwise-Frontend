@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Shield, Plus, Info } from "lucide-react";
+import { Shield, Plus } from "lucide-react";
 import { type Policy } from "@/lib/contracts/insurance";
 import { getPolicyPaymentPresentation } from "@/lib/ui/status-semantics";
 import { apiClient } from "@/lib/client/apiClient";
@@ -10,69 +10,10 @@ import { SkeletonList } from "@/components/ui/Skeleton";
 import PolicyDetail from "@/components/insurance/PolicyDetail";
 import NewPolicyForm from "@/components/forms/NewPolicyForm";
 import PrimaryButton from "@/components/ui/PrimaryButton";
-
-// ─── i18n stubs (replace with your real i18n hook) ───────────────────────────
-
-const en = {
-  insurance: {
-    page_title: "Micro-Insurance",
-    page_subtitle: "Manage your active coverage policies",
-    new_policy: "New Policy",
-    active_policies: "Active Policies",
-    no_policies_title: "No active policies yet",
-    no_policies_body: "Create your first policy to start protecting what matters most.",
-    total_premium: "Total Monthly Premium",
-    total_premium_sub: "Auto-paid from remittance allocation",
-    card_coverage_type: "Coverage Type",
-    card_monthly_premium: "Monthly Premium",
-    card_coverage_amount: "Coverage Amount",
-    card_next_payment: "Next Payment",
-    card_pay_now: "Pay Premium Now",
-    card_view_detail: "View Details",
-    detail_subtitle: "Policy details and actions",
-    detail_close: "Close policy details",
-    detail_status_idle_title: "Ready",
-    detail_status_idle_desc: "Select an action above to interact with this policy.",
-    detail_status_pending_title: "Processing request",
-    detail_status_pending_desc: "Building the on-chain payload — this takes a moment.",
-    detail_status_success_title: "Request ready",
-    detail_status_error_title: "Request failed",
-    pay_success_desc: "Premium payment payload is ready for signing.",
-    deactivate_success_desc: "Deactivation payload is ready for signing.",
-    pay_confirm_title: "Confirm premium payment",
-    pay_confirm_body: "You are about to pay {{amount}} for this policy. This action cannot be undone after signing.",
-    pay_submitting: "Preparing payment…",
-    pay_confirm: "Confirm Payment",
-    deactivate_confirm_title: "Deactivate policy permanently",
-    deactivate_confirm_body: "This will permanently deactivate your policy. You will lose coverage immediately and cannot reactivate it. Are you sure?",
-    deactivate_submitting: "Deactivating…",
-    deactivate_confirm: "Yes, Deactivate",
-    action_deactivate: "Deactivate Policy",
-    action_cancel: "Cancel",
-    already_deactivated: "This policy has been deactivated and can no longer be modified.",
-    error_fetch_policies: "Failed to load policies. Please try again.",
-    error_fetch_detail: "Failed to load policy details.",
-  },
-};
-
-function t(key: string, interpolations?: Record<string, string | number>): string {
-  const parts = key.split(".");
-  let value: unknown = en;
-  for (const part of parts) {
-    if (value && typeof value === "object" && part in value) {
-      value = (value as Record<string, unknown>)[part];
-    } else {
-      return key;
-    }
-  }
-  let result = typeof value === "string" ? value : key;
-  if (interpolations) {
-    Object.entries(interpolations).forEach(([k, v]) => {
-      result = result.replace(new RegExp(`{{${k}}}`, "g"), String(v));
-    });
-  }
-  return result;
-}
+import { useClientTranslator } from "@/lib/i18n/client";
+import { useToast } from "@/lib/context/ToastContext";
+import { useFormAction } from "@/lib/hooks/useFormAction";
+import PageHeadingLink from "@/components/PageHeadingLink";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -81,6 +22,47 @@ interface PageState {
   loading: boolean;
   error: string | null;
 }
+
+// ─── Coverage-type → semantic tone helper ─────────────────────────────────────
+//
+// Maps a free-text coverageType string to one of the four shared status tones so
+// the badge on each PolicyCard uses the same semantic colour tokens as the rest
+// of the product (bills, transactions, etc.).
+//
+// Mapping rationale:
+//   health / life / medical  → success  (green  — active protection, positive)
+//   disability / accident    → warning  (amber  — critical gap risk if missed)
+//   property / travel        → info     (blue   — informational / scheduled)
+//   everything else          → info     (blue   — safe neutral fallback)
+
+type CoverageTone = "success" | "warning" | "error" | "info";
+
+function getCoverageTone(coverageType: string): CoverageTone {
+  const lower = coverageType.toLowerCase();
+  if (/health|life|medical/.test(lower)) return "success";
+  if (/disability|accident/.test(lower)) return "warning";
+  return "info";
+}
+
+const coverageToneClasses: Record<
+  CoverageTone,
+  { badge: string }
+> = {
+  success: {
+    badge:
+      "border-status-success-border bg-status-success-bg text-status-success-fg",
+  },
+  warning: {
+    badge:
+      "border-status-warning-border bg-status-warning-bg text-status-warning-fg",
+  },
+  error: {
+    badge: "border-status-error-border bg-status-error-bg text-status-error-fg",
+  },
+  info: {
+    badge: "border-status-info-border bg-status-info-bg text-status-info-fg",
+  },
+};
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -159,15 +141,20 @@ export default function InsurancePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0b0f] text-white">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        {/* Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {/* ── Header ─────────────────────────────────────────────────────── */}
+        {/*
+         * Sticky on tall viewports — matches the bills / transactions header
+         * pattern. bg-[#0a0b0f] keeps the content readable while scrolling.
+         * border-b border-white/[0.04] matches the family & send page divider.
+         */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 tall:sticky tall:top-16 375:tall:top-20 tall:z-40 bg-[#0a0b0f] py-4 border-b border-white/[0.04]">
           <div>
             <PageHeadingLink
               headingId="insurance-page-heading"
               label={t("insurance.page_title")}
               headingClassName="text-2xl sm:text-3xl font-bold tracking-tight"
-              buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0b0f]"
+              buttonClassName="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D72323]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0b0f]"
             >
               {t("insurance.page_title")}
             </PageHeadingLink>
@@ -184,7 +171,15 @@ export default function InsurancePage() {
           </PrimaryButton>
         </div>
 
-        {/* Total premium stat */}
+        {/* ── Total premium summary card ──────────────────────────────────── */}
+        {/*
+         * Surface: bg-white/[0.03]  — L1 card, same as PolicyCard base.
+         * Border:  border-white/[0.06] — consistent with all dark cards.
+         * Icon bg: bg-[#D72323]/10 — brand accent at low opacity for depth.
+         * Icon:    text-[#D72323]  — brand.red resolved via arbitrary value
+         *          because Tailwind JIT does not support dot-notation tokens
+         *          with opacity modifiers (bg-brand.red/10 fails to compile).
+         */}
         {state.policies.length > 0 && !state.loading && (
           <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
             <div className="flex items-center justify-between">
@@ -202,14 +197,16 @@ export default function InsurancePage() {
                   {t("insurance.total_premium_sub")}
                 </p>
               </div>
-              <div className="p-3 rounded-xl bg-brand.red/10">
-                <Shield className="w-6 h-6 text-brand.red" />
+              {/* Shield icon — brand accent. bg-[#D72323]/10 is the correct
+                  Tailwind JIT syntax for brand red at 10 % opacity. */}
+              <div className="p-3 rounded-xl bg-[#D72323]/10">
+                <Shield className="w-6 h-6 text-[#D72323]" aria-hidden="true" />
               </div>
             </div>
           </div>
         )}
 
-        {/* New policy form */}
+        {/* ── New policy form ─────────────────────────────────────────────── */}
         {showNewPolicy && (
           <div className="mb-8">
             <NewPolicyForm
@@ -222,10 +219,12 @@ export default function InsurancePage() {
           </div>
         )}
 
-        {/* Policies list */}
+        {/* ── Policies list ───────────────────────────────────────────────── */}
         <div>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-brand.red" />
+            {/* Section icon uses brand red; text-[#D72323] resolves reliably
+                in Tailwind JIT (dot-notation text-brand.red does not). */}
+            <Shield className="w-5 h-5 text-[#D72323]" aria-hidden="true" />
             {t("insurance.active_policies")}
           </h2>
 
@@ -233,12 +232,20 @@ export default function InsurancePage() {
             <SkeletonList rows={3} variant="cards" />
           )}
 
+          {/* ── Error state ──────────────────────────────────────────────── */}
+          {/*
+           * Surface:  bg-[#D72323]/[0.06] — very low opacity brand red tint,
+           *           identical to PolicyDetail's deactivate confirm panel.
+           * Border:   border-[#D72323]/20
+           * Retry CTA: bg-[#D72323]/20 → hover:bg-[#D72323]/30, matching the
+           *            bills page error panel hover pattern.
+           */}
           {state.error && !state.loading && (
-            <div className="p-6 rounded-2xl border border-brand.red/20 bg-brand.red/[0.06] text-center">
-              <p className="text-brand.red text-sm">{state.error}</p>
+            <div className="p-6 rounded-2xl border border-[#D72323]/20 bg-[#D72323]/[0.06] text-center">
+              <p className="text-[#D72323] text-sm">{state.error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="mt-3 px-4 py-2 rounded-lg bg-brand.red/20 hover:bg-brand.red/30 text-brand.red text-sm transition-colors"
+                className="mt-3 px-4 py-2 rounded-lg bg-[#D72323]/20 hover:bg-[#D72323]/30 text-[#D72323] text-sm transition-colors"
               >
                 Retry
               </button>
@@ -270,7 +277,7 @@ export default function InsurancePage() {
         </div>
       </div>
 
-      {/* Policy Detail Dialog */}
+      {/* ── Policy Detail Dialog ─────────────────────────────────────────── */}
       <PolicyDetail
         policy={selectedPolicy}
         open={detailOpen}
@@ -282,6 +289,13 @@ export default function InsurancePage() {
 }
 
 // ─── PolicyCard ───────────────────────────────────────────────────────────────
+//
+// Dark elevation pattern (matches family member cards and bills cards):
+//   Base:   bg-white/[0.03]  border-white/[0.06]
+//   Hover:  bg-white/[0.05]  border-white/[0.12]   ← group-hover on the wrapper
+//
+// Coverage-type badge uses getCoverageTone() → semantic status token classes
+// so the colour system is consistent with bill status badges.
 
 function PolicyCard({
   policy,
@@ -295,32 +309,39 @@ function PolicyCard({
   const paymentStatus = getPolicyPaymentPresentation(policy.nextPaymentDate, policy.active);
   const StatusIcon = paymentStatus.icon;
 
+  const coverageTone = getCoverageTone(policy.coverageType);
+  const coverageBadgeClass = coverageToneClasses[coverageTone].badge;
+
   return (
-    <div className="group p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-200">
+    <div className="group p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] hover:border-white/[0.12] transition-all duration-200">
       {/* Card header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
+          {/* Icon container: slight elevation above card base */}
           <div className="p-2 rounded-lg bg-white/[0.05]">
-            <Shield className="w-5 h-5 text-brand.red" />
+            <Shield className="w-5 h-5 text-[#D72323]" aria-hidden="true" />
           </div>
           <div>
             <h3 className="font-semibold text-white text-sm sm:text-base">{policy.name}</h3>
+            {/* Payment-status badge (due / overdue / active) */}
             <span
               className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border mt-1 ${paymentStatus.badgeClassName}`}
             >
-              <StatusIcon className="w-3 h-3" />
+              <StatusIcon className="w-3 h-3" aria-hidden="true" />
               {paymentStatus.label}
             </span>
           </div>
         </div>
+        {/* Coverage-type badge — semantic colour token driven by policy type */}
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${coverageBadgeClass}`}
+        >
+          {policy.coverageType}
+        </span>
       </div>
 
       {/* Policy details */}
       <div className="space-y-2 mb-4">
-        <PolicyRow
-          label={t("insurance.card_coverage_type")}
-          value={policy.coverageType}
-        />
         <PolicyRow
           label={t("insurance.card_monthly_premium")}
           value={new Intl.NumberFormat(undefined, {
@@ -345,27 +366,34 @@ function PolicyCard({
         />
       </div>
 
-      {/* Status panel */}
+      {/* Payment-status panel */}
       <div
         className={`flex items-center gap-2 p-2.5 rounded-lg border mb-4 ${paymentStatus.panelClassName}`}
       >
-        <StatusIcon className="w-4 h-4 shrink-0" />
+        <StatusIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
         <div className="min-w-0">
           <p className="text-xs font-medium">{paymentStatus.label}</p>
           <p className="text-[11px] opacity-80 truncate">{paymentStatus.emphasis}</p>
         </div>
       </div>
 
-      {/* View detail button */}
+      {/* View detail CTA */}
+      {/*
+       * bg-white/[0.05] base → hover:bg-white/[0.08] — matches the
+       * "secondary ghost" button pattern used across dark card footers.
+       * focus:ring-[#D72323]/30 replaces the broken focus:ring-brand.red/30.
+       */}
       <button
         onClick={onViewDetail}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.15] text-sm text-gray-300 hover:text-white font-medium transition-all focus:outline-none focus:ring-2 focus:ring-brand.red/30"
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.15] text-sm text-gray-300 hover:text-white font-medium transition-all focus:outline-none focus:ring-2 focus:ring-[#D72323]/30"
       >
         {t("insurance.card_view_detail")}
       </button>
     </div>
   );
 }
+
+// ─── PolicyRow ────────────────────────────────────────────────────────────────
 
 function PolicyRow({
   label,
@@ -376,13 +404,19 @@ function PolicyRow({
 }) {
   return (
     <div className="flex items-center justify-between text-sm">
+      {/* text-gray-500 for label — secondary text, meets AA against #0a0b0f */}
       <span className="text-gray-500">{label}</span>
+      {/* text-gray-200 for value — primary data, well above 4.5:1 */}
       <span className="text-gray-200 font-medium">{value}</span>
     </div>
   );
 }
 
 // ─── EmptyPolicies ────────────────────────────────────────────────────────────
+//
+// CTA uses bg-brand-red / hover:bg-brand-redHover (kebab-case token, consistent
+// with family page submit button). The dashed border + bg-white/[0.02] base
+// matches the empty state pattern in bills and goals pages.
 
 function EmptyPolicies({
   title,
@@ -400,15 +434,16 @@ function EmptyPolicies({
   return (
     <div className="text-center py-12 sm:py-16 px-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] border-dashed">
       <div className="inline-flex p-3 rounded-xl bg-white/[0.05] mb-4">
-        <Shield className="w-8 h-8 text-gray-600" />
+        <Shield className="w-8 h-8 text-gray-600" aria-hidden="true" />
       </div>
       <h3 className="text-lg font-semibold text-gray-300 mb-2">{title}</h3>
       <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6">{body}</p>
       <button
         onClick={onCta}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand.red hover:bg-brand.redHover text-white text-sm font-medium transition-colors"
+        data-testid={ctaTestId}
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-red hover:bg-brand-redHover active:bg-red-800 text-white text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D72323]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0b0f]"
       >
-        <Plus className="w-4 h-4" />
+        <Plus className="w-4 h-4" aria-hidden="true" />
         {ctaLabel}
       </button>
     </div>
