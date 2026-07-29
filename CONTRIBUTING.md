@@ -7,6 +7,7 @@ For component conventions (naming, ordering, and boolean-props), see [docs/PROP_
 For ambient types, module augmentation, and `never`-narrow patterns, see [docs/TYPESCRIPT_CONVENTIONS.md](docs/TYPESCRIPT_CONVENTIONS.md).
 For standard component state implementations (default, hover, focus, disabled, error, loading), see [docs/COMPONENT_STATES.md](docs/COMPONENT_STATES.md).
 For authenticated browser data fetching, also read [docs/client-api.md](docs/client-api.md) before adding new `fetch` calls.
+For the UI PR review checklist that pairs with the PR expectations below, see [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md) (reviewers can also reference it directly).
 
 ---
 
