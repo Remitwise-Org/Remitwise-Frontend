@@ -23,6 +23,22 @@ import type {
   TransactionStatus,
 } from "@/components/Dashboard/TransactionHistoryItem";
 
+// Guards against dateTo < dateFrom whenever either value changes.
+// Setting dateFrom after dateTo (or dateTo before dateFrom) resets the
+// invalid value so the filter always represents a valid range.
+function useDateRangeValidation(
+  dateFrom: string,
+  dateTo: string,
+  setDateFrom: (v: string) => void,
+  setDateTo: (v: string) => void,
+) {
+  useEffect(() => {
+    if (dateFrom && dateTo && dateTo < dateFrom) {
+      setDateTo("");
+    }
+  }, [dateFrom, dateTo, setDateTo]);
+}
+
 type Direction = "all" | "sent" | "received";
 
 type GroupKey = "today" | "yesterday" | "earlier";
@@ -68,6 +84,9 @@ const TransactionHistoryPage = () => {
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
   const exportButtonRef = useRef<HTMLButtonElement>(null);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Keep the date range valid: end < start resets the end value
+  useDateRangeValidation(dateFrom, dateTo, setDateFrom, setDateTo);
 
   const todayStart = useMemo(() => startOfDay(new Date()), []);
   const yesterdayStart = useMemo(() => {
@@ -541,6 +560,7 @@ const TransactionHistoryPage = () => {
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
+                  max={dateTo || undefined}
                   className="min-h-[40px] rounded-xl border border-[#FFFFFF14] bg-[#1A1A1A] px-3 py-2 text-sm text-white focus:border-red-400/40 focus:outline-none focus:ring-1 focus:ring-red-400/40"
                 />
               </div>
