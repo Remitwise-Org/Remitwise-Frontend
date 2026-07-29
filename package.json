@@ -25,7 +25,8 @@
     "test:e2e": "playwright test",
     "test:perf": "npx playwright test tests/e2e/dashboard-performance.spec.ts",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build --quiet"
+    "build-storybook": "storybook build --quiet",
+    "test:e2e:smoke": "playwright test tests/e2e/health.spec.ts --project=chromium"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -55,6 +56,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.12",
     "@playwright/test": "^1.58.2",
     "@storybook/addon-essentials": "^8.6.18",
     "@storybook/react": "^8.6.18",
