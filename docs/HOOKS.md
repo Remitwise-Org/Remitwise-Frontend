@@ -92,7 +92,35 @@ function TransactionList({ hasMore, loading, onLoadMore }) {
 ```
 
 ---
+## `useScrollRestoration`
 
+**File:** `lib/hooks/useScrollRestoration.ts`  
+**Component:** `components/ScrollRestoration.tsx` (wired in `app/layout.tsx`)
+
+Preserves the window scroll position per route when the user navigates with browser **Back** or **Forward**, and scrolls to the top on push-style navigations (`<Link>`, `router.push()`).
+
+| Scenario | Result |
+| -------- | ------ |
+| Push navigation (link click, `router.push`) | Scroll resets to `(0, 0)` |
+| History navigation (Back / Forward) | Restores `{ x, y }` saved for that URL |
+| Tab refresh | Not preserved (`sessionStorage` is per-tab) |
+
+Positions are written to `sessionStorage` under keys shaped `rw:scroll:/path?query=1`, debounced by 80 ms on scroll and flushed when the route changes.
+
+Routes that manage their own scroll can set `window.__rw_skip_scroll_restore = true` before navigation completes; the flag is consumed once.
+
+```tsx
+// Already mounted globally — no per-page wiring required.
+import ScrollRestoration from "@/components/ScrollRestoration";
+
+// Opt out for a single transition (e.g. hash/filter-only change):
+window.__rw_skip_scroll_restore = true;
+router.push("/settings#security", { scroll: false });
+```
+
+**Unit tests:** `lib/hooks/useScrollRestoration.test.ts`
+
+---
 ## `useEventListener`
 
 **File:** `lib/hooks/useEventListener.ts`

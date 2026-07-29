@@ -1,9 +1,9 @@
 # Recipient Address Input State Inventory
 
-Core component:
+## Core component:
 - `RecipientAddressInput`
 
-Child interaction surfaces:
+## Child interaction surfaces:
 - Address text input
 - Paste action
 - Copy action
@@ -12,7 +12,7 @@ Child interaction surfaces:
 - Inline validation status
 - Success/error callout panels
 
-State inventory:
+## State inventory:
 - Empty idle:
   field blank
   helper copy invites paste or entry
@@ -46,12 +46,19 @@ State inventory:
 - Recent recipient:
   chip fills field and runs through the same validation flow
 
-Interaction dependencies:
+## Truncation Rules (Long Addresses):
+- **Trigger:** Input blur (loses focus).
+- **Threshold:** Address length > 24 characters.
+- **Format:** First 12 chars + ellipsis (&#8230;) + Last 12 chars. (e.g., `GABCDEFGHIJK…MNOPQRSTUVWXYZ`)
+- **Expansion:** When input regains focus, the full string is restored to allow accurate cursor placement and manual editing.
+- **Data integrity:** The underlying component state and parent callbacks always retain the full, normalized 56-character string regardless of visual truncation.
+
+## Interaction dependencies:
 - Validation depends on normalized input and `StrKey.isValidEd25519PublicKey(...)`
 - Clipboard actions depend on browser clipboard permissions and secure context support
 - QR action intentionally has no runtime dependency yet
 
-Suggested future states:
+## Suggested future states:
 - Loading:
   if network-backed recipient lookup or address-book resolution is added later
 - Resolved recipient:

@@ -196,4 +196,59 @@ describe("TransactionsPage Export Component Integration", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("No transactions yet")).not.toBeInTheDocument();
   });
+
+  it("preserves date sort order when clearing all filters", () => {
+    renderComponent();
+
+    // Sort by date ascending
+    const dateSort = screen.getByRole("button", { name: /date descending/i });
+    fireEvent.click(dateSort);
+    expect(screen.getByRole("button", { name: /date ascending/i })).toBeInTheDocument();
+
+    // Apply a filter
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    expect(screen.getByRole("button", { name: /date ascending/i })).toBeInTheDocument();
+
+    // Clear all filters
+    fireEvent.click(screen.getByRole("button", { name: /clear all/i }));
+
+    // Sort should still be ascending
+    expect(screen.getByRole("button", { name: /date ascending/i })).toBeInTheDocument();
+  });
+
+  it("preserves amount sort when search query changes", () => {
+    renderComponent();
+
+    // Sort by amount ascending
+    const amountSort = screen.getByRole("button", { name: /^amount$/i });
+    fireEvent.click(amountSort);
+
+    // Now add a search query
+    const searchInput = screen.getByPlaceholderText(
+      /search id, recipient, type, status, amount/i
+    );
+    fireEvent.change(searchInput, { target: { value: "TX00" } });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    // Sort should still be ascending
+    expect(screen.getByRole("button", { name: /amount ascending/i })).toBeInTheDocument();
+  });
+
+  it("preserves date sort when date range filter is applied", () => {
+    renderComponent();
+
+    // Sort by date ascending
+    const dateSort = screen.getByRole("button", { name: /date descending/i });
+    fireEvent.click(dateSort);
+    expect(screen.getByRole("button", { name: /date ascending/i })).toBeInTheDocument();
+
+    // Apply a date range filter
+    const fromInput = screen.getByLabelText(/from/i);
+    fireEvent.change(fromInput, { target: { value: "2026-07-01" } });
+
+    // Sort should still be ascending
+    expect(screen.getByRole("button", { name: /date ascending/i })).toBeInTheDocument();
+  });
 });

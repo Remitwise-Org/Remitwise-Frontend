@@ -13,10 +13,11 @@ This is a Next.js-based frontend skeleton that provides the UI structure for all
 - [Dashboard layout rules for contributors](./docs/DASHBOARD_LAYOUT_RULES.md)
 - [Figma handoff workflow for contributors](./docs/FIGMA_HANDOFF.md)
 - [Focus trap guide for contributors](./docs/FOCUS_TRAPS.md)
+- [UI PR review checklist for reviewers](./docs/CODE_REVIEW.md)
 - [Period lifecycle and state machine](./docs/PERIOD_LIFECYCLE.md)
 - [Internal jargon glossary (contributors)](./docs/GLOSSARY.md)
 - [Hydration mismatch patterns and fixes](./docs/HYDRATION_MISMATCH.md)
-- [TypeScript conventions (ambient types, module augmentation, never-narrow)](./docs/TYPESCRIPT_CONVENTIONS.md)
+- [Search UX: instant debounce, URL-submit, and recent results](./docs/SEARCH_UX.md)
 
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type safety — see [docs/TYPESCRIPT_CONVENTIONS.md](docs/TYPESCRIPT_CONVENTIONS.md) for ambient types, module augmentation, and never-narrow patterns
