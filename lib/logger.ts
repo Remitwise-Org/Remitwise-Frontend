@@ -84,12 +84,18 @@ export function logResponse(
   durationMs: number,
   responseData?: any,
 ): void {
-  if (!shouldLog('info')) return;
+  // Successful responses (e.g. routine polling/refetch traffic) log at
+  // 'debug' -- only errors are 'info'-and-above noise by default. Gate on
+  // the entry's own level, not a hardcoded 'info', so this downgrade
+  // actually takes effect under the default log level instead of every
+  // response still being emitted regardless of its computed level.
+  const level: LogLevel = statusCode >= 400 ? 'warn' : 'debug';
+  if (!shouldLog(level)) return;
 
   const entry: LogEntry = {
     requestId,
     timestamp: new Date().toISOString(),
-    level: statusCode >= 400 ? 'warn' : 'info',
+    level,
     method,
     path,
     statusCode,
