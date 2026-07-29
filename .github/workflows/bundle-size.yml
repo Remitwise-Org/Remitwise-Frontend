@@ -1,0 +1,48 @@
+name: "Bundle Size Delta"
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  analyze:
+    name: Analyze Bundle Size
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore Next.js cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+
+      - name: Build Next.js application
+        run: npm run build
+
+      - name: Analyze Bundle
+        uses: transferwise/actions-next-bundle-analyzer@4277633c21d084fe92f75bfe8921ddd93d002262 # Pinned by SHA (master)
+        with:
+          workflow-id: bundle-size.yml
+          base-branch: main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

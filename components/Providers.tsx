@@ -15,6 +15,7 @@ import ToastRegion from "@/components/ToastRegion";
 import SessionExpiryProvider from "@/components/SessionExpiryProvider";
 import CommandPalette from "@/components/CommandPalette";
 import ShortcutHelpModal from "@/components/ShortcutHelpModal";
+import UnhandledRejectionListener from "@/components/UnhandledRejectionListener";
 import { apiClient } from "@/lib/client/apiClient";
 
 /** Keeps the API client's authorization header aligned with wallet state. */
@@ -41,6 +42,7 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <WalletProvider>
       <ApiClientAuthBridge />
+      <UnhandledRejectionListener />
       <ToastProvider>
         <DensityProvider>
           <TelemetryProvider>

@@ -7,6 +7,9 @@ import {
     CheckCircle2,
     Clock3,
     Sparkles,
+    Lock,
+    Unlock,
+    ArrowDownToLine,
 } from 'lucide-react'
 import { useClientTranslator } from '@/lib/i18n/client'
 
@@ -20,8 +23,11 @@ export interface SavingsGoalCardProps {
     targetDate: string
     daysLeft?: number
     isOverdue?: boolean
+    isLocked?: boolean
     onAddFunds?: () => void
     onEdit?: () => void
+    onToggleLock?: () => void
+    onWithdraw?: () => void
 }
 
 function formatCurrency(amount: number): string {
@@ -157,8 +163,11 @@ export default function SavingsGoalCard({
     targetDate,
     daysLeft,
     isOverdue = false,
+    isLocked = false,
     onAddFunds,
     onEdit,
+    onToggleLock,
+    onWithdraw,
 }: SavingsGoalCardProps) {
     const { t } = useClientTranslator()
 
@@ -209,24 +218,55 @@ export default function SavingsGoalCard({
             />
 
             <div className="relative z-10 flex flex-col gap-5">
-                {/* ── Row 1: icon + status badge ── */}
+                {/* ── Row 1: icon + status badge + actions ── */}
                 <div className="flex min-w-0 items-start justify-between gap-3 375:gap-4">
                     <div
-                        className="w-12 h-12 shrink-0 rounded-[14px] flex items-center justify-center"
+                        className="w-12 h-12 shrink-0 rounded-[14px] flex items-center justify-center relative"
                         style={{
                             background: `linear-gradient(180deg, ${iconGradient.from} 0%, ${iconGradient.to} 100%)`,
                         }}
                         aria-hidden="true"
                     >
                         <div className="w-6 h-6 text-white">{icon}</div>
+                        {isLocked && (
+                            <div className="absolute -bottom-1 -right-1 bg-[#111] p-0.5 rounded-full border border-white/20">
+                                <Lock className="w-3 h-3 text-blue-400" />
+                            </div>
+                        )}
                     </div>
 
-                    {/* Status badge — icon + text label, never color alone */}
-                    <div
-                        className={`inline-flex max-w-full shrink items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${badgeClassName}`}
-                    >
-                        <StatusIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                        <span className="truncate">{statusLabel}</span>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                        {/* Status badge — icon + text label, never color alone */}
+                        <div
+                            className={`inline-flex max-w-full shrink items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${badgeClassName}`}
+                        >
+                            <StatusIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                            <span className="truncate">{statusLabel}</span>
+                        </div>
+                        
+                        {/* Action buttons (Lock/Withdraw) */}
+                        <div className="flex items-center gap-2">
+                            {onToggleLock && (
+                                <button 
+                                    type="button" 
+                                    onClick={onToggleLock} 
+                                    className="text-white/50 hover:text-white transition-colors p-1.5 bg-white/5 rounded-lg border border-white/10" 
+                                    aria-label={isLocked ? (t('savingsGoals.card.unlock') || 'Unlock') : (t('savingsGoals.card.lock') || 'Lock')}
+                                >
+                                    {isLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                                </button>
+                            )}
+                            {onWithdraw && (
+                                <button 
+                                    type="button" 
+                                    onClick={onWithdraw} 
+                                    className="text-white/50 hover:text-white transition-colors p-1.5 bg-white/5 rounded-lg border border-white/10" 
+                                    aria-label={t('savingsGoals.card.withdraw') || 'Withdraw'}
+                                >
+                                    <ArrowDownToLine className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 

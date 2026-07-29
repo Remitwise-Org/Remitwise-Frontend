@@ -181,3 +181,4 @@ Each row shows the icon, label, formatted amount, and a proportional bar (`width
 - [docs/family-wallets-handoff.md](./family-wallets-handoff.md) — Wallets handoff notes (split concept)
 - [docs/SEMANTIC_TOKENS_AND_CONTRAST.md](./SEMANTIC_TOKENS_AND_CONTRAST.md) — Status token colour and contrast requirements
 - [docs/SPLIT_BUCKETS_DESIGN.md](./SPLIT_BUCKETS_DESIGN.md) — Bucket colour rationale and icon choice
+- [docs/transaction-detail-receipt-page.md](./transaction-detail-receipt-page.md) — the standalone, shareable `/receipt/[txHash]` page. Different component and trigger (a permalink vs. this post-send modal), similar visual language.

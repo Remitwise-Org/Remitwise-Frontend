@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import FamilyMemberStatCard, { FamilyMember } from "./FamilyMemberStatCard";
 import FamilyMemberDetailDrawer from "./FamilyMemberDetailDrawer";
 import { useClientTranslator } from "@/lib/i18n/client";
@@ -60,17 +60,24 @@ const FamilyMemberSection: React.FC = () => {
 	const { t } = useClientTranslator();
 	const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null);
 	const activeCount = getActiveMemberCount();
-	const totalLimit = familyMembers.reduce(
-		(sum, member) => sum + member.spendingLimit,
-		0
-	);
-	const totalUsed = familyMembers.reduce((sum, member) => sum + member.used, 0);
-	const nearLimitCount = familyMembers.filter(
-		(member) => member.usedPercentage >= 75
-	).length;
-	const orderedMembers = [...familyMembers].sort(
-		(a, b) => b.usedPercentage - a.usedPercentage
-	);
+	// familyMembers is a module-level constant, but the reduce/filter/sort
+	// transforms below previously re-ran (and, for the sort, allocated a new
+	// array) on every render of this section -- including renders triggered
+	// by unrelated state, like selecting a member to open the detail drawer.
+	// Memoized so they only recompute if the underlying data actually
+	// changes; the derived values are identical to before, this only changes
+	// when they're computed.
+	const { totalLimit, totalUsed, nearLimitCount, orderedMembers } = useMemo(() => {
+		return {
+			totalLimit: familyMembers.reduce((sum, member) => sum + member.spendingLimit, 0),
+			totalUsed: familyMembers.reduce((sum, member) => sum + member.used, 0),
+			nearLimitCount: familyMembers.filter((member) => member.usedPercentage >= 75)
+				.length,
+			orderedMembers: [...familyMembers].sort(
+				(a, b) => b.usedPercentage - a.usedPercentage
+			),
+		};
+	}, []);
 
 	return (
 		<section className='space-y-6'>

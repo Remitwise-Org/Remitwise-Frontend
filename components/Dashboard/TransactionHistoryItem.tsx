@@ -18,6 +18,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
+import {
+  getSemanticTonePresentation,
+  type SemanticStatusPresentation,
+} from "@/lib/ui/status-semantics";
 
 export type TransactionStatus = "Completed" | "Pending" | "Failed";
 
@@ -70,29 +74,44 @@ const getIcon = (type: TransactionType, className?: string) => {
   }
 };
 
-const StatusBadge = ({ status }: { status: TransactionStatus }) => {
-  if (status === "Completed") {
-    return (
-      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#DC26261A] border border-[#DC262633]">
-        <Check className="w-3.5 h-3.5 text-[#FF4B26]" />
-        <span className="text-xs font-medium text-[#FF4B26]">Completed</span>
-      </div>
-    );
-  } else if (status === "Pending") {
-    return (
-      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1F1F1F] border border-[#333]">
-        <Clock className="w-3.5 h-3.5 text-gray-400" />
-        <span className="text-xs font-medium text-gray-400">Pending</span>
-      </div>
-    );
-  } else {
-    return (
-      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1F1F1F] border border-[#333]">
-        <X className="w-3.5 h-3.5 text-gray-400" />
-        <span className="text-xs font-medium text-red-500">Failed</span>
-      </div>
-    );
+// Colors/icons come from the shared status-semantics system (see
+// TransactionStatusIndicator) instead of being hardcoded here, so a
+// transaction's status always reads consistently with bills/insurance/live
+// status elsewhere in the app.
+function getStatusPresentation(status: TransactionStatus): SemanticStatusPresentation {
+  switch (status) {
+    case "Completed":
+      return getSemanticTonePresentation("success", {
+        label: "Completed",
+        emphasis: "Transaction completed",
+        icon: Check,
+      });
+    case "Pending":
+      return getSemanticTonePresentation("warning", {
+        label: "Pending",
+        emphasis: "Transaction pending",
+        icon: Clock,
+      });
+    case "Failed":
+      return getSemanticTonePresentation("error", {
+        label: "Failed",
+        emphasis: "Transaction failed",
+        icon: X,
+      });
   }
+}
+
+const StatusBadge = ({ status }: { status: TransactionStatus }) => {
+  const presentation = getStatusPresentation(status);
+  const Icon = presentation.icon;
+  return (
+    <div
+      className={`flex items-center gap-1.5 px-3 py-1 rounded-full border ${presentation.badgeClassName}`}
+    >
+      <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+      <span className="text-xs font-medium">{presentation.label}</span>
+    </div>
+  );
 };
 
 export default function TransactionHistoryItem({

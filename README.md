@@ -18,6 +18,7 @@ This is a Next.js-based frontend skeleton that provides the UI structure for all
 - [Internal jargon glossary (contributors)](./docs/GLOSSARY.md)
 - [Hydration mismatch patterns and fixes](./docs/HYDRATION_MISMATCH.md)
 - [Search UX: instant debounce, URL-submit, and recent results](./docs/SEARCH_UX.md)
+- [Transaction detail (receipt) page data flow for contributors](./docs/transaction-detail-receipt-page.md)
 
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type safety — see [docs/TYPESCRIPT_CONVENTIONS.md](docs/TYPESCRIPT_CONVENTIONS.md) for ambient types, module augmentation, and never-narrow patterns
