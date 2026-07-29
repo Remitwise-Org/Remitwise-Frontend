@@ -20,15 +20,17 @@ const RECENT_RECIPIENTS = [
   { name: "Maria S.", address: "GAMARIASXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" },
 ];
 
-export default function RecipientAddressInput({ 
+export default function RecipientAddressInput({
   onAddressChange,
   onContinue,
-  initialAddress = "" 
+  initialAddress = ""
 }: RecipientAddressInputProps) {
   const inputId = useId();
   const hintId = `${inputId}-hint`;
   const statusId = `${inputId}-status`;
+  
   const [address, setAddress] = useState(() => normalizeStellarAddress(initialAddress));
+  const [isFocused, setIsFocused] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const [pasteState, setPasteState] = useState<"idle" | "pasted" | "error">("idle");
 
@@ -69,37 +71,38 @@ export default function RecipientAddressInput({
         setPasteState("error");
         return;
       }
-
       setAddress(normalizeStellarAddress(clipboardText));
       setPasteState("pasted");
     } catch (error) {
-      console.error("Failed to paste address from clipboard:", error);
+      console.error("Failed to paste address:", error);
       setPasteState("error");
     }
   };
 
   const handleCopyAddress = async () => {
     if (!address) return;
-
     try {
       await navigator.clipboard.writeText(address);
       setCopyState("copied");
     } catch (error) {
-      console.error("Failed to copy recipient address:", error);
+      console.error("Failed to copy address:", error);
       setCopyState("error");
     }
   };
 
   const isContinueEnabled = validation.isValid;
 
+  // Truncation logic: Middle-truncate if blurred and long.
+  const displayAddress = !isFocused && address.length > 24 
+    ? `${address.slice(0, 12)}…${address.slice(-12)}` 
+    : address;
+
   return (
     <div className="mx-auto relative overflow-hidden bg-[#0c0c0c] border border-white/5 rounded-[2rem] p-5 375:p-6 sm:p-10 mb-8 shadow-2xl">
-      {/* Subtle Gradient Glow */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-red-900/20 blur-[120px] rounded-full -mr-48 -mt-48 pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-white/[0.02] blur-[100px] rounded-full -ml-32 -mb-32 pointer-events-none" />
 
       <div className="relative z-10 space-y-6">
-        {/* Label */}
         <label htmlFor={inputId} className="block text-xl font-bold text-white tracking-tight">
           Recipient Address <span className="text-red-500 ml-1">*</span>
         </label>
@@ -146,8 +149,10 @@ export default function RecipientAddressInput({
               autoCapitalize="characters"
               autoCorrect="off"
               spellCheck={false}
-              value={address}
+              value={displayAddress}
               onChange={(e) => handleInputChange(e.target.value)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               placeholder="GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
               className={`w-full rounded-2xl border bg-[#161616]/80 px-5 py-4 pr-14 font-mono text-sm text-gray-200 backdrop-blur-sm transition placeholder:text-white/25 ${
                 isValid
@@ -170,7 +175,6 @@ export default function RecipientAddressInput({
           </div>
         </div>
 
-        {/* Helper Text */}
         <div className="space-y-2">
           <p id={hintId} className="text-[0.9375rem] leading-relaxed text-[#8a8a8a]">
             Stellar public key for the recipient wallet. We normalize pasted input and verify the checksum before send.
@@ -205,7 +209,7 @@ export default function RecipientAddressInput({
 
         {isValid && (
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-            Address checksum verified. You can safely continue to amount and send details.
+            Address verified. Ready to continue.
           </div>
         )}
 
@@ -219,10 +223,8 @@ export default function RecipientAddressInput({
           QR capture is intentionally parked for now; the disabled action keeps the hook visible for a future scanner flow.
         </p>
 
-        {/* Separator */}
         <div className="h-px bg-white/5 w-full my-8" />
 
-        {/* Recent Recipients */}
         <div className="space-y-4">
           <h3 className="text-[0.9375rem] font-medium text-[#444444]">Recent Recipients</h3>
           <div className="flex flex-wrap gap-3">
@@ -239,7 +241,6 @@ export default function RecipientAddressInput({
           </div>
         </div>
 
-        {/* Primary CTA */}
         <div className="pt-6">
           <Tooltip
             disabledReason="Enter a valid Stellar address to continue"
