@@ -12,5 +12,9 @@ constants defined in `lib/config/route-errors.ts`.
 Dashboard widgets still use `WidgetErrorBoundary` so a single widget failure can
 degrade locally without replacing the whole shell.
 
+For feature-level isolation, use `FeatureBoundary` from `components/FeatureBoundary.tsx`.
+It combines `ChunkErrorBoundary` and `React.Suspense` to handle both chunk-load failures
+and component loading states in a single, reusable wrapper.
+
 For more details on implementing standard default, hover, focus, error, disabled, and loading states across components, see the [Frontend Component States Guide](COMPONENT_STATES.md).
 
