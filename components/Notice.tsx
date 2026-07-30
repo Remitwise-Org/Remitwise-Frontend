@@ -27,7 +27,7 @@ const VARIANT_ROLE: Record<NoticeVariant, "alert" | "status"> = {
  * `panel`  — border + background for the notice card surface (status.*.soft)
  * `icon`   — foreground colour for the icon and title (status.*.fg)
  */
-const VARIANT_STYLES: Record<
+export const VARIANT_STYLES: Record<
   NoticeVariant,
   { panel: string; icon: string; Icon: React.ElementType }
 > = {
@@ -63,7 +63,7 @@ export interface NoticeAction {
   onClick: () => void;
 }
 
-export interface NoticeProps {
+export interface NoticeProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   /** Visual and semantic variant. Determines colour, icon, and ARIA role. */
   variant: NoticeVariant;
   /**
@@ -75,7 +75,7 @@ export interface NoticeProps {
    * Body content. Accepts a string or any React node for rich content
    * (links, code, etc.).
    */
-  children: React.ReactNode;
+  children?: React.ReactNode;
   /**
    * When provided, renders a dismiss (×) button.
    * The caller is responsible for removing the notice from the DOM on dismiss
@@ -93,6 +93,14 @@ export interface NoticeProps {
    * token-driven surface.
    */
   className?: string;
+  /** Overrides the title text color/styles. Default uses variant icon color. */
+  titleClassName?: string;
+  /** Overrides the children wrapper styles. */
+  contentClassName?: string;
+  /** Overrides the icon styles. */
+  iconClassName?: string;
+  /** Content to render full-width below the padded notice area. */
+  bottomContent?: React.ReactNode;
 }
 
 // ---------------------------------------------------------------------------
@@ -101,23 +109,11 @@ export interface NoticeProps {
 
 /**
  * Notice — a reusable inline banner / callout for info, warning, error, and
- * success messages.
+ * success messages. Also serves as the canonical UI base for Toast.
  *
  * @example
  * // Basic informational callout
  * <Notice variant="info">Your wallet is in read-only mode.</Notice>
- *
- * @example
- * // Warning with title and dismiss
- * <Notice variant="warning" title="Rates have changed" onDismiss={() => setOpen(false)}>
- *   Exchange rates updated. Your quoted amount may differ.
- * </Notice>
- *
- * @example
- * // Error with action
- * <Notice variant="error" title="Transfer failed" action={{ label: "Retry", onClick: handleRetry }}>
- *   The transfer could not be completed. Please try again.
- * </Notice>
  */
 export default function Notice({
   variant,
@@ -126,31 +122,40 @@ export default function Notice({
   onDismiss,
   action,
   className = "",
+  titleClassName,
+  contentClassName,
+  iconClassName,
+  bottomContent,
+  role: overrideRole,
+  ...rest
 }: NoticeProps) {
   const { panel, icon, Icon } = VARIANT_STYLES[variant];
-  const role = VARIANT_ROLE[variant];
+  const role = overrideRole || VARIANT_ROLE[variant];
 
   return (
     <div
       role={role}
       aria-atomic="true"
-      className={`rounded-2xl border p-4 ${panel} ${className}`.trim()}
+      className={`rounded-2xl border ${panel} ${className}`.trim()}
+      {...rest}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 p-4">
         {/* Status icon — decorative, paired with text */}
         <Icon
-          className={`mt-0.5 h-5 w-5 shrink-0 ${icon}`}
+          className={iconClassName || `mt-0.5 h-5 w-5 shrink-0 ${icon}`}
           aria-hidden="true"
         />
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           {title && (
-            <p className={`text-sm font-semibold leading-5 ${icon}`}>{title}</p>
+            <p className={`text-sm font-semibold leading-5 ${titleClassName || icon}`}>{title}</p>
           )}
-          <div className={`text-sm leading-6 text-white/70 ${title ? "mt-1" : ""}`}>
-            {children}
-          </div>
+          {children && (
+            <div className={contentClassName || `text-sm leading-6 text-white/70 ${title ? "mt-1" : ""}`}>
+              {children}
+            </div>
+          )}
           {action && (
             <button
               type="button"
@@ -174,6 +179,7 @@ export default function Notice({
           </button>
         )}
       </div>
+      {bottomContent}
     </div>
   );
 }
