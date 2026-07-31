@@ -1,5 +1,71 @@
 # Hooks
 
+## `useTitle`
+
+**File:** `lib/hooks/useTitle.ts`
+
+Page + section title stacking hook for dynamically composing `document.title` from nested layout levels. Callers register a title string with an optional `depth` parameter (default `0`). Lower depth = outer layout (page title); higher depth = nested section. Titles at the same depth compose in insertion order.
+
+When a component unmounts, its title entry is removed and `document.title` updates automatically.
+
+**API:**
+
+```tsx
+useTitle(title: string, options?: { depth?: number }): void
+```
+
+**Exported helpers:**
+
+| Export | Type | Description |
+| --- | --- | --- |
+| `composeTitles(titles: string[]): string` | Pure function | Joins non-blank trimmed segments with ` \| `. Returns `""` for empty input. |
+| `titleStack: TitleEntry[]` | Global array | Internal stack (for test inspection only — do not mutate externally). |
+
+**Usage:**
+
+```tsx
+import { useTitle } from "@/lib/hooks/useTitle";
+
+// In a layout wrapper (depth 0 – page-level title)
+export default function DashboardLayout({ children }) {
+  useTitle("Dashboard");
+  return <div>{children}</div>;
+}
+
+// In a nested section widget (depth 1)
+export default function GoalsWidget() {
+  useTitle("Goals", { depth: 1 });
+  return <div>…</div>;
+}
+
+// → document.title becomes "Dashboard | Goals"
+```
+
+**Depth behaviour:**
+
+| Depth | Typical use case |
+| --- | --- |
+| `0` (default) | Top-level page or route name (e.g. "Dashboard", "Send Money"). |
+| `1` | Section within a page (e.g. "Transaction History", "Goals"). |
+| `2+` | Nested sub-section (rare; increases specificity further). |
+
+When multiple hooks with the same depth mount, their titles appear in mount order. Depth controls the primary sort; within the same depth, insertion order is preserved.
+
+**Cleanup:**
+
+Every `useTitle` call registers a cleanup function that removes its entry when the component unmounts. The remaining titles recompose automatically.
+
+**SSR safety:**
+
+The hook guards `document.title` writes behind `typeof window === "undefined"`, so it is safe to call in server-rendered components (though it has no effect there).
+
+**Tests:**
+
+- **Unit tests:** `tests/unit/hooks/useTitle.test.tsx`
+- **Property tests:** `tests/property/useTitle.property.test.tsx` (verifies composition invariants with fast-check)
+
+---
+
 ## `useIntersectionObserver`
 
 **File:** `lib/hooks/useIntersectionObserver.ts`
