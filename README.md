@@ -187,6 +187,8 @@ This project uses a multi-tool testing strategy. Note that **Jest is not used** 
 > reference — when to use Vitest vs. node:test vs. Playwright, a map of every
 > `package.json` test script, the `tests/` layout, coverage and gate expectations, and a
 > "how to add a test" recipe per runner.
+> For React component testing conventions (render helpers, accessible queries, mocking
+> hooks and context, a11y assertions), see [docs/COMPONENT_TESTING.md](docs/COMPONENT_TESTING.md).
 
 #### Running Tests
 

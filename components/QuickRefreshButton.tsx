@@ -15,6 +15,7 @@ export default function QuickRefreshButton() {
 
   return (
     <button
+      type="button"
       onClick={handleRefresh}
       aria-label={t("quickRefresh.label") || "Quick Refresh"}
       className="inline-flex items-center justify-center gap-2 rounded-md bg-white/[0.02] px-3 py-2 text-sm font-medium text-white hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/50 transition-colors"

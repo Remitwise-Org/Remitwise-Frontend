@@ -5,8 +5,12 @@ import { ArrowLeft, Star, Activity, Settings, Sparkles } from "lucide-react";
 import { useWhatsNew } from "@/lib/context/WhatsNewContext";
 import WhatsNewBadge from "@/components/Dashboard/WhatsNewBadge";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
+import { useTitle } from "@/lib/hooks/useTitle";
+import QuickRefreshButton from "@/components/QuickRefreshButton";
 
 const DashboardHeader = () => {
+  useTitle("Financial Dashboard", { depth: 0 });
+
   const { toggle } = useWhatsNew();
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -53,6 +57,9 @@ const DashboardHeader = () => {
             <Activity className="w-4 h-4 text-brand-red relative z-10" />
             <span className="text-sm font-medium text-brand-red relative z-10">Insights</span>
           </Link>
+
+          {/* Quick Refresh — refetches all active widgets without resetting filters */}
+          <QuickRefreshButton />
 
           {/* What's New Button */}
           <button
