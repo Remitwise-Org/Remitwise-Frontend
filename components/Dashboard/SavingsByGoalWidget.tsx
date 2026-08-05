@@ -64,6 +64,10 @@ export default function SavingsByGoalWidget({
           onRetry={handleRetry}
         />
       ) : isEmpty ? (
+        // CTA DESTINATION: /goals — Savings goals management page.
+        // Rationale: this widget tracks progress across named goals; with no goals
+        // created the only path to meaningful data is creating the first goal.
+        // See issue #1316 CTA destinations table.
         <WidgetEmptyState
           icon={PiggyBank}
           title="No savings goals yet"

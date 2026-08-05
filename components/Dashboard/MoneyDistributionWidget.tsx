@@ -59,16 +59,25 @@ function MoneyDistributionWidget({
   const widgetRef = useWidgetDeepLink(WIDGET_IDS.MONEY_DISTRIBUTION);
 
   const labelItems = useMemo(
-    () => distributionData.map((item) => `${item.name} ${item.displayPercent ?? `${item.value}%`}`),
+    () => distributionData.map((item) => {
+      // Convert "57.5%" → "57 percent" for accessible screen-reader friendly label
+      const pct = item.displayPercent ?? `${item.value}%`
+      const spoken = pct.replace(/([0-9.]+)%/, (_, n) => `${Math.floor(parseFloat(n))} percent`)
+      return `${item.name} ${spoken}`
+    }),
     [distributionData],
   );
 
   const summaryItems = useMemo(
-    () => distributionData.map((item) => `${item.name}: ${item.amount} (${item.displayPercent ?? `${item.value}%`})`),
+    () => distributionData.map((item) => {
+      const pct = item.displayPercent ?? `${item.value}%`
+      const spoken = pct.replace(/([0-9.]+)%/, (_, n) => `${Math.floor(parseFloat(n))} percent`)
+      return `${item.name}: ${item.amount} (${spoken})`
+    }),
     [distributionData],
   );
 
-  const ariaLabel = buildChartImageLabel("Money distribution", labelItems, t);
+  const ariaLabel = buildChartImageLabel("Money Distribution", labelItems, t);
   const summaryText = buildChartSummary(summaryItems, t);
   const handleRetry = useCallback(() => setRetryKey((k) => k + 1), []);
 
@@ -110,6 +119,10 @@ function MoneyDistributionWidget({
       ) : hasError ? (
         <WidgetErrorState message="We couldn't load your distribution data. Please try again." onRetry={handleRetry} />
       ) : isEmpty ? (
+        // CTA DESTINATION: /split — Money split setup page.
+        // Rationale: the widget shows how money is allocated across categories; with no data,
+        // the most direct next action is to configure the split so RemitWise knows how to
+        // allocate funds. See issue #1316 CTA destinations table.
         <WidgetEmptyState icon={PieChartIcon} title="No distribution data yet" description="Set up your money split to see how your funds are allocated." ctaLabel="Set up your split" ctaHref="/split" />
       ) : (
         <div className="mt-8 flex flex-col gap-10 items-start">
@@ -125,7 +138,7 @@ function MoneyDistributionWidget({
             </ResponsiveContainer>
           </div>
 
-          <p id={summaryId} className="sr-only">{summaryText}</p>
+          <p id={summaryId} className="sr-only" aria-live="polite">{summaryText}</p>
 
           <div className="w-[90%] sm:w-full">
             <div className="grid w-full grid-cols-2 gap-x-10 gap-y-4 text-left">

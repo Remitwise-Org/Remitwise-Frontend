@@ -9,9 +9,7 @@ import WidgetEmptyState from '@/components/ui/WidgetEmptyState'
 import WidgetErrorState from '@/components/ui/WidgetErrorState'
 import { useWidgetDeepLink } from '@/lib/hooks/useWidgetDeepLink'
 import { WIDGET_IDS } from '@/lib/config/widgets'
-import { buildChartImageLabel, buildChartSummary } from '@/lib/a11y/chart'
-import { useWidgetDeepLink } from '@/lib/hooks/useWidgetDeepLink'
-import { WIDGET_IDS } from '@/lib/config/widgets'
+import { buildChartImageLabel } from '@/lib/a11y/chart'
 
 // Sample data for the 6-month chart (Jul-Dec)
 function tooltipFormatter(value: any, name: any, item: any, index: any, payload: any) {
@@ -161,11 +159,19 @@ export default memo(function SixMonthTrendsWidget({ isLoading = false, hasError 
     }, [])
 
     const a11ySummaryItems = useMemo(() => {
-        return ['Remittances', 'Savings', 'Bills', 'Insurance']
+        return ['remittances', 'savings', 'bills', 'insurance']
     }, [])
 
     const chartLabel = useMemo(() => buildChartImageLabel('6-Month Trends', a11ySummaryItems, t), [a11ySummaryItems, t])
-    const chartSummary = useMemo(() => buildChartSummary(a11ySummaryItems, t), [a11ySummaryItems, t])
+
+    // Per-month sr-only summary: "Jul: remittances $2,800, savings $1,200, ..."
+    const chartSummary = useMemo(() => {
+        return chartData
+            .map((row) =>
+                `${row.month}: remittances $${row.remittances.toLocaleString()}, savings $${row.savings.toLocaleString()}, bills $${row.bills.toLocaleString()}, insurance $${row.insurance.toLocaleString()}`
+            )
+            .join('; ')
+    }, [])
 
     if (isLoading) {
         return (
@@ -202,6 +208,12 @@ export default memo(function SixMonthTrendsWidget({ isLoading = false, hasError 
     }
 
     if (isEmpty) {
+        // NO CTA for the trends widget empty state.
+        // Rationale: the widget aggregates data from transactions and goals over 6 months.
+        // There is no single direct action to "create trends" — they emerge organically
+        // from activity. Directing users elsewhere would be confusing. The copy instead
+        // sets expectations ("Keep using Remitwise to see your financial patterns").
+        // See issue #1316 CTA destinations table.
         return (
             <div ref={widgetRef} id={WIDGET_IDS.SIX_MONTH_TRENDS} className="rounded-2xl border border-[rgba(255,255,255,0.08)] w-full max-w-[928px] p-6 bg-[#0f0f0f]">
                 <WidgetEmptyState icon={TrendingUp} title="No trends data yet" description="Keep using Remitwise to see your financial patterns over time." />

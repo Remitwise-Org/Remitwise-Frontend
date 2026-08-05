@@ -96,6 +96,10 @@ const RecentTransactionsWidget = ({
             ) : hasError ? (
                 <WidgetErrorState message="We couldn't load your transactions. Please try again." onRetry={handleRetry} />
             ) : isEmpty ? (
+                // CTA DESTINATION: /send — Send money page.
+                // Rationale: transactions are created when money is sent; the most direct
+                // next action for a new user with no activity is to initiate a send.
+                // See issue #1316 CTA destinations table.
                 <WidgetEmptyState icon={ArrowLeftRight} title="No transactions yet" description="Send money to a recipient and your activity will appear here." ctaLabel="Send money" ctaHref="/send" />
             ) : (
                 <>
