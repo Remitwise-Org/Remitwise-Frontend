@@ -7,6 +7,7 @@ import { SHORTCUTS_PRINTABLE_PATH } from "@/lib/config/shortcuts";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useRecentItems } from "@/lib/hooks/useRecentItems";
 import { RECENT_COMMANDS_STORAGE_KEY } from "@/lib/config/recent";
+import { sanitizeSearchQuery } from "@/lib/sanitize";
 
 interface CommandItem {
   id: string;
@@ -94,7 +95,7 @@ export default function CommandPalette() {
       label: "Global Search",
       description: "Search invoices, addresses, and settings",
       icon: <SearchCheck className="w-4 h-4" />,
-      action: () => router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`),
+      action: () => router.push(`/search?q=${encodeURIComponent(sanitizeSearchQuery(searchQuery))}`),
       category: "routes",
     },
     // Quick Actions

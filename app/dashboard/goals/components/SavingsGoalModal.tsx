@@ -10,12 +10,13 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { SavingsGoal, SavingsGoalFormData } from '../types'
-import { 
-  validateGoalName, 
+import {
+  validateGoalName,
   validateGoalDescription,
-  validateAmount, 
-  validateFutureDate 
+  validateAmount,
+  validateFutureDate
 } from '@/lib/validation/savings-goals'
+import { sanitizePastedValue } from '@/lib/validation/sanitizePaste'
 import { useClientTranslator } from '@/lib/i18n/client'
 import { useFocusTrap } from '@/lib/hooks/useFocusTrap'
 
@@ -82,6 +83,23 @@ export default function SavingsGoalModal({
   }, [editingGoal, isOpen])
 
   if (!isOpen) return null
+
+  const handleDescriptionPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    // Only intervene when the clipboard actually carries an HTML payload
+    // (e.g. copied from a web page); a plain-text copy is left to the
+    // browser's normal paste behavior.
+    if (!e.clipboardData.types.includes('text/html')) return
+
+    e.preventDefault()
+    const target = e.currentTarget
+    const nextValue = sanitizePastedValue(
+      e.clipboardData,
+      target.value,
+      target.selectionStart,
+      target.selectionEnd
+    )
+    setFormData((prev) => ({ ...prev, description: nextValue }))
+  }
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {}
@@ -177,6 +195,7 @@ export default function SavingsGoalModal({
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onPaste={handleDescriptionPaste}
               className={`w-full rounded-xl bg-white/5 border ${errors.description ? 'border-red-500' : 'border-white/10'} px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all motion-reduce:transition-none resize-none h-20`}
               placeholder={t('savingsGoals.modal.descriptionPlaceholder')}
             />

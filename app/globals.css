@@ -200,3 +200,101 @@ body {
   outline-offset: 2px !important;
 }
 
+/* Custom Interactive Range Sliders for Smart Money Split */
+@layer components {
+  .rw-slider-input {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .rw-slider-input::-webkit-slider-runnable-track {
+    height: 10px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .rw-slider-input::-moz-range-track {
+    height: 10px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .rw-slider-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    margin-top: -6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 2px solid #D72323;
+    box-shadow: 0 0 12px rgba(215, 35, 35, 0.4), 0 2px 4px rgba(0, 0, 0, 0.5);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+
+  .rw-slider-input::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 2px solid #D72323;
+    box-shadow: 0 0 12px rgba(215, 35, 35, 0.4), 0 2px 4px rgba(0, 0, 0, 0.5);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+
+  .rw-slider-input:hover::-webkit-slider-thumb {
+    transform: scale(1.15);
+    box-shadow: 0 0 16px rgba(215, 35, 35, 0.6), 0 4px 8px rgba(0, 0, 0, 0.6);
+  }
+
+  .rw-slider-input:hover::-moz-range-thumb {
+    transform: scale(1.15);
+    box-shadow: 0 0 16px rgba(215, 35, 35, 0.6), 0 4px 8px rgba(0, 0, 0, 0.6);
+  }
+
+  .rw-slider-input:active::-webkit-slider-thumb,
+  .rw-slider-input.is-dragging::-webkit-slider-thumb {
+    transform: scale(1.25);
+    background: #FF4D4D;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 0 0 0 4px rgba(215, 35, 35, 0.3);
+  }
+
+  .rw-slider-input:active::-moz-range-thumb,
+  .rw-slider-input.is-dragging::-moz-range-thumb {
+    transform: scale(1.25);
+    background: #FF4D4D;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 0 0 0 4px rgba(215, 35, 35, 0.3);
+  }
+
+  .rw-slider-input:focus-visible::-webkit-slider-thumb {
+    outline: 3px solid #D72323;
+    outline-offset: 4px;
+    box-shadow: 0 0 0 3px rgba(215, 35, 35, 0.5), 0 0 16px rgba(215, 35, 35, 0.8);
+  }
+
+  .rw-slider-input:focus-visible::-moz-range-thumb {
+    outline: 3px solid #D72323;
+    outline-offset: 4px;
+    box-shadow: 0 0 0 3px rgba(215, 35, 35, 0.5), 0 0 16px rgba(215, 35, 35, 0.8);
+  }
+
+  .rw-slider-input:disabled::-webkit-slider-thumb {
+    background: #6B7280;
+    border-color: #4B5563;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .rw-slider-input:disabled::-moz-range-thumb {
+    background: #6B7280;
+    border-color: #4B5563;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+

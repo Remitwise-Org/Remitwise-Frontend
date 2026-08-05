@@ -385,6 +385,40 @@ export function Combobox({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [isOpen, close]);
 
+  // ── Dropdown position adjustment ─────────────────────────────────────────
+  // When the dropdown is near the right edge of the viewport, shift it left
+  // so it doesn't clip off-screen.
+  useEffect(() => {
+    if (!isOpen || !listboxRef.current || !containerRef.current) return;
+
+    const listbox = listboxRef.current;
+    // Reset any previous inline adjustment
+    listbox.style.left = "";
+    listbox.style.width = "";
+
+    // Use requestAnimationFrame to ensure layout is complete after the DOM
+    // insertion of the conditionally-rendered listbox
+    requestAnimationFrame(() => {
+      const rect = listbox.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+
+      if (rect.right > viewportWidth) {
+        const overflow = rect.right - viewportWidth + 8; // 8px visual padding
+        // Don't shift more than the left edge allows (keep 8px gutter)
+        const shift = Math.min(overflow, rect.left - 8);
+        if (shift > 0) {
+          listbox.style.left = `-${shift}px`;
+        }
+
+        // If the dropdown still can't fit after shifting, cap its width
+        const newLeft = rect.left - shift;
+        if (newLeft < 0) {
+          listbox.style.width = `${viewportWidth - 16}px`; // 8px gutter on each side
+        }
+      }
+    });
+  }, [isOpen]);
+
   // ── Display label for the selected option ───────────────────────────────
   const selectedOption = useMemo(
     () => options.find((o) => o.value === selectedValue),

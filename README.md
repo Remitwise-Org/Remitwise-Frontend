@@ -1,8 +1,15 @@
 # RemitWise Frontend
 
+<!-- i18n-coverage-badge:start -->
+![i18n coverage](https://img.shields.io/badge/i18n%20coverage-100%25-brightgreen)
+<!-- i18n-coverage-badge:end -->
+<br>Coverage is the share of `lib/i18n/locales/en.json` keys that also exist
+in `es.json`. Regenerate after adding a translation with
+`npm run i18n:coverage -- --write`.
+
 Frontend application for the RemitWise remittance and financial planning platform.
 
-> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers. For data fetching and caching patterns, see [docs/CACHE_STRATEGY.md](docs/CACHE_STRATEGY.md). For SSR vs. client-only patterns, see [docs/SSR_PATTERNS.md](docs/SSR_PATTERNS.md).
+> **New contributors:** start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, verified test commands, and PR expectations, then read [docs/architecture.md](docs/architecture.md) for a full route and layer map, and [docs/infrastructure.md](docs/infrastructure.md) for request gateway, logging, and runtime layers, and [docs/UX_ANTI_PATTERNS.md](docs/UX_ANTI_PATTERNS.md) for interaction patterns we intentionally avoid. For data fetching and caching patterns, see [docs/CACHE_STRATEGY.md](docs/CACHE_STRATEGY.md). For SSR vs. client-only patterns, see [docs/SSR_PATTERNS.md](docs/SSR_PATTERNS.md).
 
 ## Overview
 
@@ -13,12 +20,16 @@ This is a Next.js-based frontend skeleton that provides the UI structure for all
 - [Dashboard layout rules for contributors](./docs/DASHBOARD_LAYOUT_RULES.md)
 - [Figma handoff workflow for contributors](./docs/FIGMA_HANDOFF.md)
 - [Focus trap guide for contributors](./docs/FOCUS_TRAPS.md)
+- [UI PR review checklist for reviewers](./docs/CODE_REVIEW.md)
 - [Period lifecycle and state machine](./docs/PERIOD_LIFECYCLE.md)
 - [Internal jargon glossary (contributors)](./docs/GLOSSARY.md)
 - [Hydration mismatch patterns and fixes](./docs/HYDRATION_MISMATCH.md)
+- [Search UX: instant debounce, URL-submit, and recent results](./docs/SEARCH_UX.md)
+- [Transaction detail (receipt) page data flow for contributors](./docs/transaction-detail-receipt-page.md)
+- [How i18n messages are extracted](./docs/i18n-message-extraction.md)
 
 - **Next.js 14** - React framework with App Router
-- **TypeScript** - Type safety
+- **TypeScript** - Type safety — see [docs/TYPESCRIPT_CONVENTIONS.md](docs/TYPESCRIPT_CONVENTIONS.md) for ambient types, module augmentation, and never-narrow patterns
 - **Tailwind CSS** - Utility-first styling
 - **Lucide React** - Icon library — see [docs/ICON_SYSTEM.md](docs/ICON_SYSTEM.md) for usage, sizing, and adding custom icons
 
@@ -33,7 +44,8 @@ These pages currently serve as placeholder mocks. Each page demonstrates the lay
 ### Shared Components
 
 - **AddressDisplay**: A component for displaying long strings like Stellar addresses, featuring truncation, a copy-to-clipboard button, and a tooltip showing the full address on hover.
-- **Global Search**: The `/search?q=...` route surfaces matching invoice, address, and settings results from the same search vocabulary used in the command palette.
+- **Scroll restoration**: Back/Forward navigation restores the prior scroll position per route via `components/ScrollRestoration.tsx` — see [docs/HOOKS.md](docs/HOOKS.md#usescrollrestoration) and [docs/ROUTE_TRANSITIONS.md](docs/ROUTE_TRANSITIONS.md#scroll-restoration).
+- **Global Search**: The `/search?q=...` route surfaces matching invoice, address, and settings results from the same search vocabulary used in the command palette — see [docs/SEARCH_UX.md](docs/SEARCH_UX.md) for how instant vs. submit search works.
 
 1. **Dashboard** - Overview of remittances, savings, bills, and insurance — see [docs/DASHBOARD_LAYOUT_RULES.md](docs/DASHBOARD_LAYOUT_RULES.md) for the intended column ratios, widget priority, and mobile stacking rules
 2. **Send Money** - Remittance sending interface with automatic split preview
@@ -46,6 +58,8 @@ These pages currently serve as placeholder mocks. Each page demonstrates the lay
 ## Loading States
 
 Dashboard, Bills, and Insights now use route-level skeleton screens built from `components/ui/Skeleton.tsx` so primary panels load with stable layout blocks instead of ad-hoc spinners. For detailed guidelines and implementation patterns on all UI states (Default, Error, Disabled, and Loading), see [docs/component-states.md](docs/component-states.md).
+
+Empty-state copy and layout are documented in the [empty states gallery](docs/EMPTY_STATES.md) (visual cards + CTA text). For the icon/props catalog used when adding a new empty state, see [docs/EMPTY_STATE_ILLUSTRATIONS.md](docs/EMPTY_STATE_ILLUSTRATIONS.md).
 
 ## Performance Budgets
 
@@ -121,6 +135,13 @@ Useful endpoints:
 - `GET /api/health`
 - `GET /api/dashboard`
 - `GET /api/remittance/quote?amountMinor=10000&currency=USD&toCurrency=NGN`
+- `POST /api/auth/nonce`, `POST /api/auth/login`, `POST /api/auth/logout`
+- `GET /api/transactions` — paginated list (supports `?limit=N`)
+- `GET /api/split` — active split allocations
+- `GET /api/goals` — savings goals list
+- `GET /api/bills` — bills list
+- `GET /api/insurance` — insurance policies list
+- `GET /api/family` — family members list
 
 Mock money values are returned as integer minor units, for example
 `amountMinor`, `feeMinor`, and `receiveAmountMinor`.
@@ -236,8 +257,18 @@ To run the Playwright end-to-end tests for authentication and protected routes:
 npm run test:e2e
 ```
 
-For validating responsive breakpoints and layouts across different viewports, see the [Responsive Testing Guide](docs/RESPONSIVE_TESTING.md).
+### Storybook
 
+Primitive components (e.g. `Toast`, `Nav`, the `i18n` formatters) have stories
+under `components/**/*.stories.tsx`, viewable in isolation with Storybook:
+
+```bash
+# Start the local Storybook dev server on http://localhost:6006
+npm run storybook
+
+# Build a static Storybook (output: storybook-static/)
+npm run build-storybook
+```
 
 ## Project Structure
 
@@ -260,6 +291,7 @@ remitwise-frontend/
 │   └── auth.ts              # Auth middleware
 ├── docs/                    # Documentation
 │   ├── API_ROUTES.md        # API routes documentation
+│   ├── PROP_CONVENTIONS.md  # Component prop naming, ordering, and boolean conventions
 │   ├── component-states.md  # Standard UI states (default, error, disabled, loading) guide
 │   ├── contract-cache.md    # Contract caching architecture and guidelines
 │   ├── frame-budget-rules.md    # Frame budget performance guidelines
@@ -278,16 +310,7 @@ Every route handler under `app/api/` is composed from a small set of reusable de
 
 For authenticated browser-side requests, use the shared client API layer documented in [docs/client-api.md](docs/client-api.md). That guide covers when to use `apiClient` instead of raw `fetch`, the `401 -> refresh -> retry once` flow, session-expiry UI surfacing, and logout behavior.
 
-For server-side and third-party requests that need automatic abort on deadline, use the `fetchWithTimeout` wrapper documented in [docs/fetch-timeout.md](docs/fetch-timeout.md). Each endpoint declares its timeout in `lib/config/fetch-timeouts.ts`; the wrapper aborts and throws a `TimeoutError` if the deadline is exceeded. `apiClient` uses the same design for browser requests.
-
-### Transaction Export
-
-Both the standalone **Transactions** page (`/transactions`) and the dashboard
-**Transaction History** page (`/dashboard/transaction-history`) support
-exporting the currently filtered transaction list as **CSV** or **JSON**.
-Click the Export button to open a format picker (CSV for spreadsheets, JSON
-for programmatic consumption). Exports are capped at **10,000 rows** and
-include the filter context (date range) in the download filename.
+Form input is validated with Zod schemas kept in `lib/validation/*.ts`, separate from the form components. See [docs/zod-form-composition.md](docs/zod-form-composition.md) for the convention: where the schema lives, how it reports errors, and how a component wires it up.
 
 Route-level page titles now use a shared deep-link heading pattern. Use the shared heading primitive with a stable route-specific id whenever you add or update a primary page title. See [docs/page-heading-deeplinks.md](docs/page-heading-deeplinks.md).
 
@@ -770,8 +793,10 @@ GET  /api/admin/audit         # Admin-only audit events
 
 Design token reference and migration guides:
 
+- [docs/SEMANTIC_TOKENS_AND_CONTRAST.md](docs/SEMANTIC_TOKENS_AND_CONTRAST.md) — contributor guide to semantic tokens, WCAG contrast ratio requirements, and how to verify and add colour tokens.
 - [docs/THEMING.md](docs/THEMING.md) — full catalogue of CSS custom properties, Tailwind color, spacing, focus-ring, and animation tokens with semantic roles and usage examples.
 - [docs/DESIGN_TOKEN_MIGRATION.md](docs/DESIGN_TOKEN_MIGRATION.md) — step-by-step guide for safely renaming or deprecating a token, including a PR checklist.
+- [docs/TYPOGRAPHY_SCALE.md](docs/TYPOGRAPHY_SCALE.md) — full type scale with px/rem values, line-height pairings, font-weight conventions, and real component examples for contributors.
 
 ## API Endpoints
 
@@ -822,6 +847,8 @@ MIT
 - **How to introduce v2:** Create a new `app/api/v2/` namespace containing the new behavior. Update platform routes or API gateway rules to expose `/api/v2/...` and leave the rewrite in place so `/api/*` stays mapped to the last published stable version (v1) until you intentionally change it.
 
 **Deprecation Policy**
+
+> See **[docs/DEPRECATIONS.md](docs/DEPRECATIONS.md)** for the current list of deprecated components, utilities, hooks, and API routes — every entry includes a concrete before/after migration example.
 
 - When a new major version (e.g. v2) is released, older major versions will be supported for a minimum of **6 months** before scheduled removal. During that window:
   - Maintain security fixes and critical bug fixes for the deprecated major version.

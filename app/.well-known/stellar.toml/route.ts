@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSorobanNetworkPassphrase } from "@/lib/contracts/network-resolution";
+import { AUTH_ISSUER_URL } from "@/lib/config/auth";
 
 export async function GET() {
   const {
@@ -7,7 +8,6 @@ export async function GET() {
     STELLAR_DOCUMENTATION_URL,
     STELLAR_SIGNING_KEY,
     STELLAR_TRANSFER_SERVER,
-    STELLAR_WEB_AUTH_ENDPOINT,
     STELLAR_KYC_SERVER,
     STELLAR_ORG_NAME = "RemitWise",
     STELLAR_ORG_URL = "https://remitwise.app",
@@ -29,9 +29,9 @@ export async function GET() {
   if (STELLAR_TRANSFER_SERVER) {
     lines.push(`TRANSFER_SERVER="${STELLAR_TRANSFER_SERVER}"`);
   }
-  if (STELLAR_WEB_AUTH_ENDPOINT) {
-    lines.push(`WEB_AUTH_ENDPOINT="${STELLAR_WEB_AUTH_ENDPOINT}"`);
-  }
+  // AUTH_ISSUER_URL always resolves to a value (env override, or a sane
+  // default derived from NEXT_PUBLIC_APP_URL) -- see lib/config/auth.ts.
+  lines.push(`WEB_AUTH_ENDPOINT="${AUTH_ISSUER_URL}"`);
   if (STELLAR_KYC_SERVER) {
     lines.push(`KYC_SERVER="${STELLAR_KYC_SERVER}"`);
   }

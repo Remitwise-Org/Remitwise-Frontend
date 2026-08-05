@@ -100,6 +100,10 @@ export function useTransactionStatus(txHash: string | null, options: UseTransact
     }
   }, [txHash, maxAttempts]);
 
+  // Keep the ref pollRef.current points at in sync with the latest `poll`
+  // closure -- this is what lets `scheduleNext` above call the current
+  // `poll` via the ref instead of depending on it directly (which would
+  // otherwise create a circular useCallback dependency between the two).
   pollRef.current = poll;
 
   useEffect(() => {

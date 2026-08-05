@@ -29,6 +29,9 @@ export const POST = withApiErrorHandler(async function POST(req: NextRequest) {
   if (!dueDate || Number.isNaN(Date.parse(dueDate))) {
     throw new ApiRouteError(400, 'VALIDATION_ERROR', t('errors.invalid_due_date') || 'Invalid dueDate')
   }
+  if (Date.parse(dueDate) <= Date.now()) {
+    throw new ApiRouteError(400, 'VALIDATION_ERROR', t('errors.due_date_in_past') || 'dueDate must be in the future')
+  }
 
   const xdr = await buildCreateBillTx(caller, name, numAmount, dueDate, Boolean(recurring), frequencyDays ? Number(frequencyDays) : undefined)
   return NextResponse.json({ xdr })

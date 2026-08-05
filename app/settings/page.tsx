@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useScrollSpy } from "@/lib/hooks/useIntersectionObserver";
 import { User, Bell, Shield, Wallet, Users, Globe } from "lucide-react";
 import { useClientTranslator } from "@/lib/i18n/client";
@@ -104,8 +104,8 @@ export default function SettingsPage() {
             headingClassName="shrink-0 text-base font-semibold text-gray-900 dark:text-white"
           >
             {t("settings.page_title")}
-          </PageHeadingLink>
-          {/* Mobile: horizontal scrollable nav pills with roving tabindex */}
+          </h1>
+          {/* Mobile: horizontal scrollable nav pills */}
           <nav
             ref={mobileNavRef}
             aria-label={t("settings.nav_aria_label")}

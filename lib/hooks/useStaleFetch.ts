@@ -90,6 +90,47 @@ interface CacheEnvelope<T> {
   readonly cachedAt: number;
 }
 
+type FetchResult<T> =
+  | { readonly status: 'success'; readonly data: T }
+  | { readonly status: 'session-expired' };
+
+/**
+ * Shares GETs that overlap for the same URL. React Strict Mode intentionally
+ * replays mount effects in development, and multiple consumers can mount in
+ * the same render, but neither case should allocate an identical request.
+ *
+ * The response body is parsed inside the shared promise because a Response
+ * stream cannot safely be consumed by each caller independently.
+ */
+const inFlightFetches = new Map<string, Promise<FetchResult<unknown>>>();
+
+function fetchJsonOnce<T>(url: string): Promise<FetchResult<T>> {
+  const existing = inFlightFetches.get(url);
+  if (existing) return existing as Promise<FetchResult<T>>;
+
+  const request = (async (): Promise<FetchResult<T>> => {
+    const response = await apiClient.get(url);
+    if (response === null) return { status: 'session-expired' };
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    return {
+      status: 'success',
+      data: (await response.json()) as T,
+    };
+  })();
+
+  inFlightFetches.set(url, request as Promise<FetchResult<unknown>>);
+
+  const clear = () => {
+    if (inFlightFetches.get(url) === request) {
+      inFlightFetches.delete(url);
+    }
+  };
+  void request.then(clear, clear);
+
+  return request;
+}
+
 // ---------------------------------------------------------------------------
 // Storage helpers — wrapping sessionStorage so SSR and quota errors are safe
 // ---------------------------------------------------------------------------
@@ -146,25 +187,19 @@ export function useStaleFetch<T>({
     setStaleAt(null);
 
     try {
-      const res = await apiClient.get(url);
+      const result = await fetchJsonOnce<T>(url);
 
-      // `null` means the session-expiry flow already took over (redirect).
+      // The session-expired result means the redirect flow already took over.
       // We do not fall back to stale data in this case — just let the
       // session-expiry UI handle it.
-      if (res === null) {
+      if (result.status === 'session-expired') {
         if (mountedRef.current) setState('error');
         return;
       }
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      const json = (await res.json()) as T;
-
       if (!mountedRef.current) return;
-      writeCache(cacheKey, json);
-      setData(json);
+      writeCache(cacheKey, result.data);
+      setData(result.data);
       setState('ready');
     } catch {
       if (!mountedRef.current) return;

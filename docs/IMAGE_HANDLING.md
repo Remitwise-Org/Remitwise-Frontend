@@ -2,20 +2,27 @@
 
 This guide is for contributors who add or update images in the UI. The repository uses Next.js image optimization for local assets, and the goal is to keep image delivery fast, responsive, and accessible without relying on tribal knowledge.
 
-## Use the local image pattern
+## Use the SafeImage wrapper
 
-Prefer `next/image` for all UI images. The current app uses local assets from the `public/` directory, so the default pattern should be:
+For consistent image handling, prefer the `SafeImage` component from `components/ui/SafeImage.tsx`. It is a wrapper around `next/image` that enforces:
+
+1. Required `alt` text for accessibility.
+2. `loading="lazy"` by default (unless `priority` is set).
 
 ```tsx
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 
-<Image
+<SafeImage
   src="/logo.svg"
   width={40}
   height={40}
   alt="RemitWise logo"
 />
 ```
+
+## Use the local image pattern
+
+Prefer `next/image` (or `SafeImage` wrapper) for all UI images. The current app uses local assets from the `public/` directory, so the default pattern should be:
 
 The same approach is already used in [components/Nav/Logo.tsx](../components/Nav/Logo.tsx) and [components/Hero.tsx](../components/Hero.tsx).
 

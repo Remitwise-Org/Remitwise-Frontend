@@ -2,6 +2,7 @@
 
 import { useMemo, useCallback, memo } from 'react'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
+import { useSaveData } from '@/lib/hooks/useSaveData'
 import {
     BarChart,
     Bar,
@@ -44,7 +45,7 @@ import { INSIGHTS_PALETTE } from './palette';
 const SPENDING_COLOR = INSIGHTS_PALETTE[0];
 const SAVINGS_COLOR  = INSIGHTS_PALETTE[1];
 const GRID_COLOR     = 'rgba(255,255,255,0.06)';
-const AXIS_COLOR     = '#6b7280';
+const AXIS_COLOR     = '#9CA3AF';
 const margin = { top: 10, right: 10, left: -20, bottom: 0 };
 const axisTick = { fill: AXIS_COLOR, fontSize: 11 };
 const tickFormatter = (v: number) => `$${v}`;
@@ -86,7 +87,7 @@ const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: To
             )}
         </div>
     )
-}
+});
 
 type SpendingTooltipProps = TooltipContentProps<number | string | readonly (number | string)[], string | number>
 
@@ -96,13 +97,22 @@ const LEGEND_ITEMS = [
   { color: SAVINGS_COLOR,  label: 'Savings'  },
 ] as const
 
-const CustomLegend = memo(function CustomLegend() {
+interface CustomLegendProps {
+    spending: number
+    savings: number
+}
+
+const CustomLegend = memo(function CustomLegend({ spending, savings }: CustomLegendProps) {
+    const values: Record<string, number> = { Spending: spending, Savings: savings }
     return (
         <div className="flex items-center justify-center gap-6 mt-2">
             {LEGEND_ITEMS.map(({ color, label }) => (
                 <div key={label} className="flex items-center gap-2">
                     <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
                     <span className="text-xs text-gray-400">{label}</span>
+                    <span className="text-xs text-white font-semibold">
+                        ${values[label].toLocaleString()}
+                    </span>
                 </div>
             ))}
         </div>
@@ -120,12 +130,16 @@ function SpendingVsSavingsChartInner({
 }: SpendingVsSavingsChartProps) {
     // Use the canonical hook — reactive, SSR-safe, shared across the codebase.
     const reducedMotion = usePrefersReducedMotion()
+    const saveData = useSaveData()
 
     const savingsRate = useMemo(() => {
         const spending = data.reduce((s, d) => s + d.spending, 0)
         const savings  = data.reduce((s, d) => s + d.savings,  0)
         return Math.round((savings / (spending + savings)) * 100)
     }, [data])
+
+    const totalSpending = useMemo(() => data.reduce((s, d) => s + d.spending, 0), [data])
+    const totalSavings  = useMemo(() => data.reduce((s, d) => s + d.savings,  0), [data])
 
     // Generate accessible label and summary
     const chartLabel = useMemo(
@@ -161,48 +175,93 @@ function SpendingVsSavingsChartInner({
                 </div>
             </div>
 
-            {/* Chart */}
-            <div role="img" aria-label={chartLabel}>
-                <ResponsiveContainer width="100%" height={220}>
-                    <BarChart
-                        data={data}
-                        barCategoryGap="30%"
-                        barGap={4}
-                        margin={margin}
-                        aria-hidden="true"
-                    >
-                        <CartesianGrid
-                            strokeDasharray="3 3"
-                            stroke={GRID_COLOR}
-                            vertical={false}
-                        />
-                        <XAxis
-                            dataKey="month"
-                            tick={axisTick}
-                            axisLine={false}
-                            tickLine={false}
-                        />
-                        <YAxis
-                            tick={axisTick}
-                            axisLine={false}
-                            tickLine={false}
-                            tickFormatter={tickFormatter}
-                            width={40}
-                            className="hidden sm:block"
-                        />
-                        <Tooltip content={CustomTooltip as any} cursor={tooltipCursor} />
-                        <Bar dataKey="spending" name="spending" fill={SPENDING_COLOR} radius={barRadius} isAnimationActive={!reducedMotion} />
-                        <Bar dataKey="savings"  name="savings"  fill={SAVINGS_COLOR}  radius={barRadius} isAnimationActive={!reducedMotion} />
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
+            {/* Chart — or plain table when Save-Data is active */}
+            {saveData ? (
+                /* Save-Data fallback: plain data table, no BarChart bundle cost */
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-white/80 border-collapse">
+                        <caption className="sr-only">Monthly spending vs savings</caption>
+                        <thead>
+                            <tr className="border-b border-white/10">
+                                <th scope="col" className="py-2 pr-4 text-left font-semibold text-white/60">Month</th>
+                                <th scope="col" className="py-2 pr-4 text-right font-semibold text-white/60">
+                                    <span className="inline-flex items-center gap-1">
+                                        <span
+                                            className="inline-block w-2.5 h-2.5 rounded-sm"
+                                            style={{ backgroundColor: SPENDING_COLOR }}
+                                            aria-hidden="true"
+                                        />
+                                        Spending
+                                    </span>
+                                </th>
+                                <th scope="col" className="py-2 text-right font-semibold text-white/60">
+                                    <span className="inline-flex items-center gap-1">
+                                        <span
+                                            className="inline-block w-2.5 h-2.5 rounded-sm"
+                                            style={{ backgroundColor: SAVINGS_COLOR }}
+                                            aria-hidden="true"
+                                        />
+                                        Savings
+                                    </span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.map((row) => (
+                                <tr key={row.month} className="border-b border-white/5 last:border-0">
+                                    <td className="py-2 pr-4 font-medium">{row.month}</td>
+                                    <td className="py-2 pr-4 text-right">${row.spending.toLocaleString()}</td>
+                                    <td className="py-2 text-right">${row.savings.toLocaleString()}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                /* Full interactive BarChart */
+                <div role="img" aria-label={chartLabel}>
+                    <ResponsiveContainer width="100%" height={220}>
+                        <BarChart
+                            data={data}
+                            barCategoryGap="30%"
+                            barGap={4}
+                            margin={margin}
+                            aria-hidden="true"
+                        >
+                            <CartesianGrid
+                                strokeDasharray="3 3"
+                                stroke={GRID_COLOR}
+                                vertical={false}
+                            />
+                            <XAxis
+                                dataKey="month"
+                                tick={axisTick}
+                                axisLine={false}
+                                tickLine={false}
+                            />
+                            <YAxis
+                                tick={axisTick}
+                                axisLine={false}
+                                tickLine={false}
+                                tickFormatter={tickFormatter}
+                                width={40}
+                                className="hidden sm:block"
+                            />
+                            <Tooltip content={CustomTooltip as any} cursor={tooltipCursor} />
+                            <Bar dataKey="spending" name="spending" fill={SPENDING_COLOR} radius={barRadius} isAnimationActive={!reducedMotion} />
+                            <Bar dataKey="savings"  name="savings"  fill={SAVINGS_COLOR}  radius={barRadius} isAnimationActive={!reducedMotion} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
 
             {/* Screen‑reader summary */}
             <p className="sr-only" aria-live="polite">
                 {chartSummary}
             </p>
 
-            <CustomLegend />
+            {/* Legend shown in both modes */}
+            <CustomLegend spending={totalSpending} savings={totalSavings} />
         </div>
     )
 }

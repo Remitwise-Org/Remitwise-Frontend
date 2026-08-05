@@ -86,6 +86,13 @@ export default function AmountCurrencySection({ onReview, onBack }: AmountCurren
 
     if (value === "") return
 
+    // Reject amounts with more than 2 decimal places.
+    const parts = value.split(".")
+    if (parts.length === 2 && parts[1].length > 2) {
+      setError("Amount must have at most 2 decimal places")
+      return
+    }
+
     const numValue = parseFloat(value)
     if (isNaN(numValue)) {
       setError("Please enter a valid amount")

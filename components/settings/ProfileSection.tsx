@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { User } from "lucide-react";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useAutosave } from "@/lib/hooks/useAutosave";
-import { useSafeReload } from "@/lib/hooks/useSafeReload";
+import { isValidProfilePhone } from "@/lib/validation/phone";
 import {
   SectionCard,
   SectionHeader,
@@ -18,6 +18,7 @@ export function ProfileSection() {
   const [name, setName] = useState("Amara Osei");
   const [email, setEmail] = useState("amara@example.com");
   const [phone, setPhone] = useState("+234 801 234 5678");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const onSave = useCallback(async () => {
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -26,18 +27,37 @@ export function ProfileSection() {
   const { saveState, isDirty, triggerSave } = useAutosave(onSave);
   useSafeReload(isDirty);
 
+  // Re-validates the full form on every field change and only triggers the
+  // (auto)save when it passes -- an invalid field blocks the whole save
+  // rather than persisting a partially-invalid profile.
+  const revalidateAndSave = (next: { name: string; email: string; phone: string }) => {
+    const result = validateProfileForm(next);
+    setErrors(result.errors);
+    if (result.isValid) {
+      triggerSave();
+    }
+  };
+
   const handleNameChange = (value: string) => {
     setName(value);
-    triggerSave();
+    revalidateAndSave({ name: value, email, phone });
   };
 
   const handleEmailChange = (value: string) => {
     setEmail(value);
-    triggerSave();
+    revalidateAndSave({ name, email: value, phone });
   };
 
   const handlePhoneChange = (value: string) => {
     setPhone(value);
+
+    // Reject saving an invalid number, but don't nag the user while
+    // they're still mid-edit of an otherwise-valid international number.
+    if (!isValidProfilePhone(value)) {
+      setPhoneError(t("settings.profile.phone_invalid"));
+      return;
+    }
+    setPhoneError(null);
     triggerSave();
   };
 
@@ -75,6 +95,11 @@ export function ProfileSection() {
             onChange={handleNameChange}
             placeholderKey="settings.profile.full_name_placeholder"
           />
+          {errors.name && (
+            <p className="mt-1 text-xs text-red-500" role="alert">
+              {t(`errors.${errors.name}`)}
+            </p>
+          )}
         </FieldRow>
         <FieldRow
           labelKey="settings.profile.email_label"
@@ -86,6 +111,11 @@ export function ProfileSection() {
             onChange={handleEmailChange}
             placeholderKey="settings.profile.email_placeholder"
           />
+          {errors.email && (
+            <p className="mt-1 text-xs text-red-500" role="alert">
+              {t(`errors.${errors.email}`)}
+            </p>
+          )}
         </FieldRow>
         <FieldRow
           labelKey="settings.profile.phone_label"
@@ -97,6 +127,11 @@ export function ProfileSection() {
             onChange={handlePhoneChange}
             placeholderKey="settings.profile.phone_placeholder"
           />
+          {phoneError && (
+            <p role="alert" className="mt-1.5 text-xs text-red-600 dark:text-red-400">
+              {phoneError}
+            </p>
+          )}
         </FieldRow>
         <FieldRow
           labelKey="settings.profile.stellar_key_label"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { useClientTranslator, useClientLocale } from "@/lib/i18n/client";
 import { setLocaleCookie, type SupportedLocale } from "@/lib/i18n/cookie";
 import { Globe } from "lucide-react";
@@ -18,6 +19,15 @@ export default function LocaleSwitcher() {
   const currentLocale = locales.find((l) => l.code === locale) || locales[0];
 
   const handleLocaleChange = async (newLocale: SupportedLocale) => {
+    // Structured breadcrumb (no free-form message) so a locale switch shows
+    // up in the timeline leading up to any error reported after it -- these
+    // are common triggers for locale-dependent formatting/routing bugs.
+    Sentry.addBreadcrumb({
+      category: "locale",
+      level: "info",
+      data: { from: locale, to: newLocale },
+    });
+
     // Set cookie immediately (readable by both server and client)
     setLocaleCookie(newLocale);
     // Persist to server-side user preferences so it survives across devices
@@ -31,6 +41,7 @@ export default function LocaleSwitcher() {
       // Best-effort: cookie is already set, so locale persists locally even
       // if the preferences API call fails.
     }
+    console.info("[Breadcrumb] locale=info locale.switch", locale, "→", newLocale);
     window.location.reload();
   };
 

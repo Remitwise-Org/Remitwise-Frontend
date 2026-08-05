@@ -147,17 +147,79 @@ function dispatchSessionExpiring(countdown: number = 120, message?: string): voi
 }
 
 /**
+ * Known auth-related localStorage keys that must be cleared on logout
+ * or session expiry.
+ *
+ * Declared as a const array so it serves as a single source of truth for
+ * both the clear function and tests.
+ */
+export const AUTH_STORAGE_KEYS = [
+  'wallet_address',
+  'wallet_connected',
+  'auth_state',
+  'remitwise_session_expiry',
+  'redirect_after_auth',
+] as const;
+
+/**
+ * Prefix pattern for form-state entries in localStorage.
+ * Any key starting with this prefix is treated as user-entered form data
+ * that must be wiped on logout to prevent accidental exposure of sensitive
+ * or stale information after a session change.
+ */
+export const FORM_STATE_PREFIX = 'remitwise_form_' as const;
+
+/**
+ * Additional sessionStorage keys that may hold form draft data.
+ * These are cleared alongside localStorage entries.
+ */
+export const SESSION_STORAGE_FORM_KEYS = ['form_draft', 'transfer_draft', 'bill_draft'] as const;
+
+/**
+ * Wipe all client-side state from both localStorage and sessionStorage.
+ *
+ * This is a defensive sweep:
+ * 1. Removes every known auth key (wallet address, session data, redirect).
+ * 2. Removes every localStorage key starting with `FORM_STATE_PREFIX` — this
+ *    catches dynamically-named form draft keys added by any component.
+ * 3. Removes known sessionStorage draft keys.
+ *
+ * The sweep is best-effort — if `localStorage` or `sessionStorage` throws
+ * (e.g. private browsing on some older browsers) the error is swallowed.
+ */
+export function wipeClientState(): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    // 1. Clear known auth keys
+    for (const key of AUTH_STORAGE_KEYS) {
+      localStorage.removeItem(key);
+    }
+
+    // 2. Clear any key with the form-state prefix (catches dynamic keys)
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(FORM_STATE_PREFIX)) {
+        localStorage.removeItem(key);
+      }
+    }
+
+    // 3. Clear sessionStorage draft keys
+    for (const key of SESSION_STORAGE_FORM_KEYS) {
+      sessionStorage.removeItem(key);
+    }
+  } catch {
+    // Storage unavailable — swallow
+  }
+}
+
+/**
  * Clear local authentication state
- * Removes stored wallet address and connection status from localStorage
+ * Removes stored wallet address, connection status, and any form state
+ * from localStorage and sessionStorage.
  */
 function clearAuthState(): void {
-  // Clear any stored authentication data
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('wallet_address');
-    localStorage.removeItem('wallet_connected');
-    localStorage.removeItem('auth_state');
-    localStorage.removeItem('remitwise_session_expiry');
-  }
+  wipeClientState();
 }
 
 /**

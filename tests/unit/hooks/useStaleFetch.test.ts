@@ -22,6 +22,7 @@ import {
   it,
   vi,
 } from 'vitest';
+import { createElement, StrictMode, type ReactNode } from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useStaleFetch } from '@/lib/hooks/useStaleFetch';
 
@@ -54,6 +55,20 @@ function writeSessionStorage<T>(key: string, data: T, cachedAt = Date.now()) {
   sessionStorage.setItem(key, JSON.stringify({ data, cachedAt }));
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
+
+function strictModeWrapper({ children }: { children: ReactNode }) {
+  return createElement(StrictMode, null, children);
+}
+
 // ---------------------------------------------------------------------------
 // Setup / teardown
 // ---------------------------------------------------------------------------
@@ -72,10 +87,53 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('useStaleFetch', () => {
+  it('collapses Strict Mode mount effects into one in-flight request', async () => {
+    const pending = deferred<Response>();
+    const json = vi.fn().mockResolvedValue({ value: 42 });
+    mockGet.mockReturnValue(pending.promise);
+
+    const { result } = renderHook(
+      () => useStaleFetch<{ value: number }>({ url: SAMPLE_URL, cacheKey: CACHE_KEY }),
+      { wrapper: strictModeWrapper }
+    );
+
+    expect(mockGet).toHaveBeenCalledTimes(1);
+
+    pending.resolve({ ok: true, json } as unknown as Response);
+
+    await waitFor(() => expect(result.current.state).toBe('ready'));
+    expect(result.current.data).toEqual({ value: 42 });
+    expect(json).toHaveBeenCalledTimes(1);
+  });
+
+  it('evicts a failed in-flight request so an explicit retry starts a new one', async () => {
+    const pending = deferred<Response>();
+    mockGet.mockReturnValueOnce(pending.promise);
+
+    const { result } = renderHook(
+      () => useStaleFetch<{ value: number }>({ url: SAMPLE_URL, cacheKey: CACHE_KEY }),
+      { wrapper: strictModeWrapper }
+    );
+
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    pending.reject(new Error('Network failure'));
+
+    await waitFor(() => expect(result.current.state).toBe('error'));
+
+    mockGet.mockResolvedValueOnce(makeOkResponse({ value: 7 }));
+    act(() => {
+      result.current.load();
+    });
+
+    await waitFor(() => expect(result.current.state).toBe('ready'));
+    expect(result.current.data).toEqual({ value: 7 });
+    expect(mockGet).toHaveBeenCalledTimes(2);
+  });
+
   it('shows loading state while the fetch is in-flight', () => {
     mockGet.mockReturnValue(new Promise(() => {})); // never resolves
     const { result } = renderHook(() =>
-      useStaleFetch({ url: SAMPLE_URL, cacheKey: CACHE_KEY })
+      useStaleFetch({ url: '/api/test-pending', cacheKey: CACHE_KEY })
     );
     expect(result.current.state).toBe('loading');
     expect(result.current.data).toBeNull();

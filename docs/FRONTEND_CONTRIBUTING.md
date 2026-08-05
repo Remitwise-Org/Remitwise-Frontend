@@ -110,5 +110,6 @@ async function fetchRemittance(id: string) {
 
 - For architecture details, see [architecture.md](./architecture.md).
 - For SSR vs. client-only patterns, see [SSR_PATTERNS.md](./SSR_PATTERNS.md).
+- For TypeScript ambient types, module augmentation, and never-narrow patterns, see [TYPESCRIPT_CONVENTIONS.md](./TYPESCRIPT_CONVENTIONS.md).
 - For branching and general PR expectations, see [CONTRIBUTING.md](../CONTRIBUTING.md).
 - For operational and support procedures, see [OPERATIONS.md](./OPERATIONS.md).

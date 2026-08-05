@@ -4,8 +4,10 @@ Thank you for contributing! This guide covers everything you need to get started
 
 For a deeper look at how the codebase is structured, see [docs/architecture.md](docs/architecture.md).
 For component conventions (naming, ordering, and boolean-props), see [docs/PROP_CONVENTIONS.md](docs/PROP_CONVENTIONS.md).
+For ambient types, module augmentation, and `never`-narrow patterns, see [docs/TYPESCRIPT_CONVENTIONS.md](docs/TYPESCRIPT_CONVENTIONS.md).
 For standard component state implementations (default, hover, focus, disabled, error, loading), see [docs/COMPONENT_STATES.md](docs/COMPONENT_STATES.md).
 For authenticated browser data fetching, also read [docs/client-api.md](docs/client-api.md) before adding new `fetch` calls.
+For the UI PR review checklist that pairs with the PR expectations below, see [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md) (reviewers can also reference it directly).
 
 ---
 
@@ -57,6 +59,26 @@ npm install
 npx prisma migrate dev   # only needed if schema changed
 npm run dev
 ```
+
+### Mock Backend
+
+When you need a backend to develop against without running the full Next.js server,
+start the mock backend:
+
+```bash
+npm run mock:backend
+```
+
+The mock backend listens on `http://localhost:4010` by default (set `MOCK_BACKEND_PORT`
+to use a different port). It is idempotent and keeps all data in memory — stopping and
+restarting it does not create or migrate state. It serves mock responses for:
+
+- `GET /api/health`, `/api/dashboard`, `/api/remittance/quote`
+- `POST /api/auth/nonce`, `/api/auth/login`, `/api/auth/logout`
+- `GET /api/transactions`, `/api/split`, `/api/goals`, `/api/bills`
+- `GET /api/insurance`, `/api/family`
+
+All money values are returned as integer minor units.
 
 ---
 

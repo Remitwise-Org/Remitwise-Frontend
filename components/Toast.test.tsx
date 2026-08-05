@@ -566,4 +566,38 @@ describe('Toast', () => {
       expect(screen.queryByText('Timestamp:')).not.toBeInTheDocument();
     });
   });
+
+  describe('unmount safety', () => {
+    it('does not warn about a state update on an unmounted component when dismissed', () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { unmount } = render(<Toast toast={mockToast} onDismiss={mockOnDismiss} />);
+
+      // Unmount partway through the auto-dismiss timer, mirroring the
+      // pause/resume effect's cleanup running mid-countdown.
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      unmount();
+
+      const stateUpdateWarning = consoleError.mock.calls.some((args) =>
+        String(args[0]).includes('a component'),
+      );
+      expect(stateUpdateWarning).toBe(false);
+    });
+
+    it('does not fire onDismiss again after unmounting mid-countdown', () => {
+      const { unmount } = render(<Toast toast={mockToast} onDismiss={mockOnDismiss} />);
+
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      unmount();
+      mockOnDismiss.mockClear();
+
+      act(() => {
+        vi.advanceTimersByTime(10000);
+      });
+      expect(mockOnDismiss).not.toHaveBeenCalled();
+    });
+  });
 });

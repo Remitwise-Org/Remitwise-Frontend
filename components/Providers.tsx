@@ -1,8 +1,9 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, lazy, Suspense } from "react";
 import { WalletProvider, useWallet } from "stellar-wallet-kit";
 import { DensityProvider } from "@/lib/context/DensityContext";
+import { TelemetryProvider } from "@/lib/context/TelemetryContext";
 import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { ToastProvider } from "@/lib/context/ToastContext";
 import { NetworkStatusProvider } from "@/lib/context/NetworkStatusContext";
@@ -13,19 +14,8 @@ import LayoutWrapper from "@/components/LayoutWrapper";
 import ToastRegion from "@/components/ToastRegion";
 import SessionExpiryProvider from "@/components/SessionExpiryProvider";
 import CommandPalette from "@/components/CommandPalette";
-import ShortcutHelpModal from "@/components/ShortcutHelpModal";
-import { apiClient } from "@/lib/client/apiClient";
-
-/** Keeps the API client's authorization header aligned with wallet state. */
-function ApiClientAuthBridge() {
-  const { account, isConnected } = useWallet();
-
-  useEffect(() => {
-    apiClient.setAuthToken(isConnected ? account?.address : null);
-  }, [account?.address, isConnected]);
-
-  return null;
-}
+import DevRequestIdDisplay from "@/components/DevRequestIdDisplay";
+import DevResetHandler from "@/components/dev/DevResetHandler";
 
 /**
  * Client-side provider boundary for the app.
@@ -40,18 +30,20 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <WalletProvider>
       <ApiClientAuthBridge />
+      <UnhandledRejectionListener />
       <ToastProvider>
         <DensityProvider>
-          <AsyncOperationsProvider>
-            <SessionExpiryProvider>
-              <ShortcutHelpProvider>
+          <TelemetryProvider>
+            <AsyncOperationsProvider>
+              <SessionExpiryProvider>
                 <LayoutWrapper>{children}</LayoutWrapper>
                 <ToastRegion />
                 <CommandPalette />
-                <ShortcutHelpModal />
-              </ShortcutHelpProvider>
-            </SessionExpiryProvider>
-          </AsyncOperationsProvider>
+                <DevRequestIdDisplay />
+                <DevResetHandler />
+              </SessionExpiryProvider>
+            </AsyncOperationsProvider>
+          </TelemetryProvider>
         </DensityProvider>
       </ToastProvider>
     </WalletProvider>

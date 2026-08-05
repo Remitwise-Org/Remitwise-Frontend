@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FileText, MapPin, Settings as SettingsIcon, Search } from "lucide-react";
 import { getGlobalSearchResults, type GlobalSearchCategory } from "@/lib/search/globalSearchCatalog";
+import { sanitizeSearchQuery } from "@/lib/sanitize";
 
 interface SearchResultsPageProps {
   searchParams?: {
@@ -34,8 +35,8 @@ function groupResultsByCategory(results: ReturnType<typeof getGlobalSearchResult
   );
 }
 
-function SearchResultsPage({ searchParams }: SearchResultsPageProps) {
-  const query = searchParams?.q?.trim() ?? "";
+export function SearchResultsPage({ searchParams }: SearchResultsPageProps) {
+  const query = sanitizeSearchQuery(searchParams?.q ?? "");
   const results = getGlobalSearchResults(query);
   const groupedResults = groupResultsByCategory(results);
 

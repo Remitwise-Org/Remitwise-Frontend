@@ -79,6 +79,20 @@ describe("Remittance quote API", () => {
     });
   });
 
+  it("returns 400 for an amount that would overflow the on-chain i128 type", async () => {
+    const req = new NextRequest(
+      "http://localhost/api/remittance/quote?amount=9e32&currency=USD&toCurrency=PHP",
+      { method: "GET" }
+    );
+
+    const response = await quoteGET(req);
+    expect(response.status).toBe(400);
+
+    const body = await response.json();
+    expect(body.validationErrors).toBeDefined();
+    expect(body.validationErrors.some((error: any) => error.path === "amount")).toBe(true);
+  });
+
   it("still resolves via the legacy /qoute alias", async () => {
     const req = new NextRequest(
       "http://localhost/api/remittance/qoute?amount=100&currency=USD&toCurrency=PHP",

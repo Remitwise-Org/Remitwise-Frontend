@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { StrKey } from '@stellar/stellar-sdk';
 import { withAuth } from '@/lib/auth';
 import type {
   SendTransactionRequest,
@@ -39,6 +40,17 @@ async function handler(
   if (!recipient || typeof recipient !== 'string' || recipient.trim() === '') {
     return NextResponse.json<SendTransactionErrorResponse>(
       { success: false, error: 'recipient is required.' },
+      { status: 400 },
+    );
+  }
+
+  // The client-side RecipientAddressInput form already blocks invalid
+  // addresses, but that's UI, not a security boundary — a request sent
+  // directly to this route bypasses it entirely. Re-validate here, at the
+  // actual boundary that builds the payout.
+  if (!StrKey.isValidEd25519PublicKey(recipient.trim())) {
+    return NextResponse.json<SendTransactionErrorResponse>(
+      { success: false, error: 'recipient must be a valid Stellar public key (G...).' },
       { status: 400 },
     );
   }

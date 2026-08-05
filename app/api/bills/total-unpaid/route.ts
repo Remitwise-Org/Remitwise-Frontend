@@ -13,10 +13,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const owner = new URL(request.url).searchParams.get('owner') ?? token;
 
-    const [total, bills] = await Promise.all([
-      getTotalUnpaid(owner),
-      getUnpaidBills(owner),
-    ]);
+    // Fetch the unpaid bills once and derive the total from them, instead
+    // of getTotalUnpaid(owner) and getUnpaidBills(owner) each independently
+    // re-fetching the same underlying list.
+    const bills = await getUnpaidBills(owner);
+    const total = await getTotalUnpaid(owner, bills);
 
     return jsonSuccess({
       totalUnpaid: total,

@@ -71,8 +71,39 @@ export async function GET() {
   }
 
   // ── 3. Anchor ────────────────────────────────────────────────────
-  // Placeholder — swap for a real HTTP probe once an anchor URL is configured
-  const anchor: { reachable: boolean; error?: string } = { reachable: true };
+  // Issue #1518 – report a real, typed anchor status instead of the old
+  // hardcoded `{ reachable: true }` placeholder the e2e contract forbids:
+  // 'not_configured' when ANCHOR_PLATFORM_URL is unset, otherwise probe the
+  // URL and report 'ok' / 'error' with reachable reflecting the outcome.
+  let anchor: {
+    status: "ok" | "error" | "not_configured";
+    reachable: boolean;
+    error?: string;
+  };
+  const anchorUrl = process.env.ANCHOR_PLATFORM_URL;
+  if (!anchorUrl) {
+    anchor = { status: "not_configured", reachable: false };
+  } else {
+    try {
+      const res = await fetch(anchorUrl, {
+        method: "HEAD",
+        signal: AbortSignal.timeout(3000),
+      });
+      anchor = res.ok
+        ? { status: "ok", reachable: true }
+        : {
+            status: "error",
+            reachable: false,
+            error: `anchor responded ${res.status}`,
+          };
+    } catch (e) {
+      anchor = {
+        status: "error",
+        reachable: false,
+        error: e instanceof Error ? e.message : "anchor probe failed",
+      };
+    }
+  }
 
   // ── 4. Overall status ────────────────────────────────────────────
   const healthy = database.reachable && rpc.reachable;

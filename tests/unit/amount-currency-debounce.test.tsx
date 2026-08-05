@@ -169,4 +169,21 @@ describe('AmountCurrencySection — debounce & cancel-in-flight', () => {
     // Even though the fetch was "aborted", no error text should appear.
     expect(screen.queryByText(/error/i)).not.toBeInTheDocument()
   })
+
+  it('rejects amounts with more than 2 decimal places', () => {
+    render(<AmountCurrencySection />)
+    const input = screen.getByPlaceholderText('0.00')
+
+    // "5.123" has 3 decimal places — should show an error.
+    typeAmount(input, '5.123')
+    expect(screen.getByText('Amount must have at most 2 decimal places')).toBeInTheDocument()
+
+    // "5.12" has 2 decimal places — no error.
+    typeAmount(input, '5.12')
+    expect(screen.queryByText('Amount must have at most 2 decimal places')).not.toBeInTheDocument()
+
+    // "5" (integer) has no decimal places — no error.
+    typeAmount(input, '5')
+    expect(screen.queryByText('Amount must have at most 2 decimal places')).not.toBeInTheDocument()
+  })
 })

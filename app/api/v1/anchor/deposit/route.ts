@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/session';
-import { anchorClient } from '@/lib/anchor/client';
+import { anchorClient, sanitizeAnchorUrl } from '@/lib/anchor/client';
 import { createPendingAnchorFlow } from '@/lib/anchor/flow-store';
 import { recordAuditEvent } from '@/lib/admin/audit';
 
@@ -70,12 +70,9 @@ export async function POST(request: NextRequest) {
       account: auth.address,
     });
 
-    const flowUrl =
-      typeof flowResponse.url === 'string'
-        ? flowResponse.url
-        : typeof flowResponse.interactive_url === 'string'
-          ? flowResponse.interactive_url
-          : undefined;
+    const flowUrl = sanitizeAnchorUrl(
+      typeof flowResponse.url === 'string' ? flowResponse.url : flowResponse.interactive_url
+    );
     const transactionId =
       typeof flowResponse.transaction_id === 'string'
         ? flowResponse.transaction_id

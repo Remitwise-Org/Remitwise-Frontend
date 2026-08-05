@@ -4,6 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   RemittanceTrendChart,
   MOCK_TREND_DATA,
+  CHART_MARGIN,
   type TrendDataPoint,
 } from '@/components/Insights/remittanceTrendChart';
 
@@ -84,5 +85,12 @@ describe('RemittanceTrendChart', () => {
     stubMatchMedia(true);
     expect(() => render(<RemittanceTrendChart data={MOCK_TREND_DATA} />)).not.toThrow();
     stubMatchMedia(false);
+  });
+
+  it('does not use a negative left chart margin (clips the first X-axis label)', () => {
+    // A negative left margin shifts the plot area's left edge past the
+    // container's own edge, clipping the leftmost tick label. Regression
+    // guard for that -- see CHART_MARGIN's doc comment.
+    expect(CHART_MARGIN.left).toBeGreaterThanOrEqual(0);
   });
 });

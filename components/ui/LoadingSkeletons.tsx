@@ -458,7 +458,7 @@ export function GoalsLoadingSkeleton() {
           ))}
         </div>
       </main>
-    </SkeletonGroup>
+    </div>
   );
 }
 

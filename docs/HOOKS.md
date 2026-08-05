@@ -92,7 +92,35 @@ function TransactionList({ hasMore, loading, onLoadMore }) {
 ```
 
 ---
+## `useScrollRestoration`
 
+**File:** `lib/hooks/useScrollRestoration.ts`  
+**Component:** `components/ScrollRestoration.tsx` (wired in `app/layout.tsx`)
+
+Preserves the window scroll position per route when the user navigates with browser **Back** or **Forward**, and scrolls to the top on push-style navigations (`<Link>`, `router.push()`).
+
+| Scenario | Result |
+| -------- | ------ |
+| Push navigation (link click, `router.push`) | Scroll resets to `(0, 0)` |
+| History navigation (Back / Forward) | Restores `{ x, y }` saved for that URL |
+| Tab refresh | Not preserved (`sessionStorage` is per-tab) |
+
+Positions are written to `sessionStorage` under keys shaped `rw:scroll:/path?query=1`, debounced by 80 ms on scroll and flushed when the route changes.
+
+Routes that manage their own scroll can set `window.__rw_skip_scroll_restore = true` before navigation completes; the flag is consumed once.
+
+```tsx
+// Already mounted globally — no per-page wiring required.
+import ScrollRestoration from "@/components/ScrollRestoration";
+
+// Opt out for a single transition (e.g. hash/filter-only change):
+window.__rw_skip_scroll_restore = true;
+router.push("/settings#security", { scroll: false });
+```
+
+**Unit tests:** `lib/hooks/useScrollRestoration.test.ts`
+
+---
 ## `useEventListener`
 
 **File:** `lib/hooks/useEventListener.ts`
@@ -148,3 +176,47 @@ function ResponsiveWidget() {
 ```
 
 You can also pass an existing React ref or an element directly.
+
+---
+
+## `useSaveData`
+
+**File:** `lib/hooks/useSaveData.ts`
+
+Returns `true` when the browser signals that the user is on a metered or low-bandwidth connection via the `Save-Data: on` client hint (part of the [Network Information API](https://developer.mozilla.org/en-US/docs/Web/API/NetworkInformation/saveData)).
+
+When active, chart components swap their rich Recharts visualisations for lightweight static alternatives (tables, bar lists, progress bars) so that heavy library code, SVG paths, and animation timers are not downloaded or executed unnecessarily.
+
+**Behaviour:**
+- **SSR-safe:** defaults to `false` on the server so hydration never mismatches.
+- **Reactive:** updates immediately when `navigator.connection.saveData` changes at runtime (e.g. user toggles Data Saver mid-session).
+- **Graceful degradation:** returns `false` in environments that do not implement the Network Information API (Safari, Firefox, Node.js).
+
+```tsx
+import { useSaveData } from "@/lib/hooks/useSaveData";
+
+export default function MyChart({ data }) {
+  const saveData = useSaveData();
+
+  if (saveData) {
+    // Lightweight fallback — no Recharts, no animation
+    return <DataTable data={data} />;
+  }
+
+  return <FancyAnimatedChart data={data} />;
+}
+```
+
+**Where it is used:**
+
+| Component | Save-Data fallback |
+|---|---|
+| `SixMonthTrendsWidget` | Plain `<table>` of monthly figures |
+| `MoneyDistributionWidget` | `<ul>` bar list with colored progress bars |
+| `RemittanceTrendChart` | Ordered list of date / amount pairs |
+| `CategoryDonutChart` | Static progress bars (no interactive donut) |
+| `SpendingVsSavingsChart` | Plain `<table>` with spending and savings columns |
+
+**Testing in Chromium:** DevTools → Network panel → tick **"Save-Data"** under custom headers. The chart components will immediately swap to their table / list fallbacks.
+
+**Unit tests:** `tests/unit/hooks/useSaveData.test.ts`

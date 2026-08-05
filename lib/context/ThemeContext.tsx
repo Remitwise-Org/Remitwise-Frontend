@@ -11,6 +11,7 @@ import {
   THEME_STORAGE_KEY,
   ThemePreference,
   isThemePreference,
+  getDefaultThemePreference,
 } from "@/lib/config/theme";
 
 interface ThemeContextType {
@@ -51,11 +52,11 @@ function applyThemePreference(theme: ThemePreference) {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemePreference>(() => {
     if (typeof window === "undefined") {
-      return "system";
+      return getDefaultThemePreference();
     }
 
     const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-    return isThemePreference(storedTheme) ? storedTheme : "system";
+    return isThemePreference(storedTheme) ? storedTheme : getDefaultThemePreference();
   });
 
   useEffect(() => {

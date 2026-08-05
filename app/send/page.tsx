@@ -42,6 +42,13 @@ interface ReceiptData {
 }
 
 import { useSeo } from "@/lib/hooks/useSeo";
+import Stepper from "@/components/ui/Stepper";
+
+const SEND_STEPS = [
+  { id: "recipient", label: "Recipient" },
+  { id: "amount", label: "Amount" },
+  { id: "review", label: "Review" },
+];
 
 export default function SendMoney() {
   useSeo({
@@ -192,48 +199,21 @@ export default function SendMoney() {
       <SendHeader />
 
       <main className="mx-auto px-4 sm:px-6 max-w-7xl lg:px-8 py-12">
-        {/* Progress Indicator */}
-        <div className="max-w-xl mx-auto mb-12">
-          <div className="flex items-center justify-between relative">
-            {/* Background Line */}
-            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-zinc-800 -translate-y-1/2 z-0" />
-
-            {/* Step 1 */}
-            <div className="relative z-10 flex flex-col items-center gap-2">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
-                step === "recipient" ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-500"
-              } ${step !== "recipient" ? "ring-4 ring-black" : ""}`}>
-                1
-              </div>
-              <span className={`text-xs font-bold uppercase tracking-wider ${
-                step === "recipient" ? "text-red-500" : "text-zinc-500"
-              }`}>Recipient</span>
-            </div>
-
-            {/* Step 2 */}
-            <div className="relative z-10 flex flex-col items-center gap-2">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
-                step === "amount" ? "bg-red-600 text-white" : step === "review" ? "bg-red-900/40 text-red-500" : "bg-zinc-800 text-zinc-500"
-              } ring-4 ring-black`}>
-                2
-              </div>
-              <span className={`text-xs font-bold uppercase tracking-wider ${
-                step === "amount" ? "text-red-500" : "text-zinc-500"
-              }`}>Amount</span>
-            </div>
-
-            {/* Step 3 */}
-            <div className="relative z-10 flex flex-col items-center gap-2">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
-                step === "review" ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-500"
-              } ring-4 ring-black`}>
-                3
-              </div>
-              <span className={`text-xs font-bold uppercase tracking-wider ${
-                step === "review" ? "text-red-500" : "text-zinc-500"
-              }`}>Review</span>
-            </div>
-          </div>
+        {/* Step progress indicator */}
+        <div className="mx-auto mb-12 max-w-xl">
+          <Stepper
+            steps={SEND_STEPS}
+            currentStep={step}
+            onStepClick={(id) => {
+              // Only allow navigating back to a previous step
+              const target = id as Step;
+              const currentIndex = SEND_STEPS.findIndex((s) => s.id === step);
+              const targetIndex = SEND_STEPS.findIndex((s) => s.id === target);
+              if (targetIndex < currentIndex) {
+                setStep(target);
+              }
+            }}
+          />
         </div>
 
         {/* Step Content */}
