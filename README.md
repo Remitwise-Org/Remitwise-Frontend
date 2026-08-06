@@ -23,6 +23,8 @@ This is a Next.js-based frontend skeleton that provides the UI structure for all
 - [UI PR review checklist for reviewers](./docs/CODE_REVIEW.md)
 - [Period lifecycle and state machine](./docs/PERIOD_LIFECYCLE.md)
 - [Internal jargon glossary (contributors)](./docs/GLOSSARY.md)
+- [Error handling strategy for contributors](./docs/error-handling.md)
+- [Routing errors — how they surface to the user](./docs/ROUTING_ERRORS.md)
 - [Hydration mismatch patterns and fixes](./docs/HYDRATION_MISMATCH.md)
 - [Search UX: instant debounce, URL-submit, and recent results](./docs/SEARCH_UX.md)
 - [Transaction detail (receipt) page data flow for contributors](./docs/transaction-detail-receipt-page.md)

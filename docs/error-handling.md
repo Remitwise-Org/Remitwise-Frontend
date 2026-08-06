@@ -18,3 +18,7 @@ and component loading states in a single, reusable wrapper.
 
 For more details on implementing standard default, hover, focus, error, disabled, and loading states across components, see the [Frontend Component States Guide](COMPONENT_STATES.md).
 
+For a routing-specific breakdown of how each error type reaches the user (404 pages,
+route-level error.tsx, per-route fallback messages, and API 404s), see
+[docs/ROUTING_ERRORS.md](ROUTING_ERRORS.md).
+
