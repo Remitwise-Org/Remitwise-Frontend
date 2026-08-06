@@ -3,3 +3,7 @@
 # XDR it builds. See scripts/seed-invoice.mjs for details.
 seed-invoice:
     node scripts/seed-invoice.mjs
+
+# Run lint + typecheck + test (alias for `npm run check`)
+check:
+    npm run check

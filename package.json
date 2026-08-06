@@ -11,6 +11,7 @@
     "dev:reset": "node scripts/dev-reset.mjs",
     "build": "next build --webpack",
     "start": "next start",
+    "check": "npm run lint && npm run typecheck && npm test",
     "check:img-alt": "node scripts/check-img-alt.js",
     "lint": "eslint . && npm run check:img-alt",
     "test": "npm run test:unit",
