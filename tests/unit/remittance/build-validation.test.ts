@@ -12,6 +12,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
+import { validateMessage } from '@/utils/validation';
 
 vi.mock('next/server', () => ({
   NextRequest: class NextRequest {
@@ -116,5 +117,44 @@ describe('validateBuildRequest – memo byte-length validation', () => {
     const memo = '😀'.repeat(7);
     const result = validateBuildRequest({ ...VALID_BASE, memo });
     expect(result.memo).toBe(memo);
+  });
+});
+
+describe('validateMessage', () => {
+  it('returns null for undefined message', () => {
+    expect(validateMessage(undefined)).toBeNull();
+  });
+
+  it('returns null for empty string message', () => {
+    expect(validateMessage('')).toBeNull();
+  });
+
+  it('accepts message within 2000 characters', () => {
+    const msg = 'A'.repeat(2000);
+    expect(validateMessage(msg)).toBeNull();
+  });
+
+  it('rejects message exceeding 2000 characters', () => {
+    const msg = 'A'.repeat(2001);
+    const error = validateMessage(msg);
+    expect(error).not.toBeNull();
+    expect(error!.code).toBe('INVALID_MESSAGE');
+    expect(error!.message).toBe('Message must not exceed 2000 characters');
+    expect(error!.field).toBe('message');
+  });
+
+  it('accepts message exactly 2000 characters', () => {
+    const msg = 'B'.repeat(2000);
+    expect(validateMessage(msg)).toBeNull();
+  });
+
+  it('handles multi-byte characters within 2000 chars', () => {
+    const msg = 'é'.repeat(1000);
+    expect(validateMessage(msg)).toBeNull();
+  });
+
+  it('handles emoji within 2000 chars', () => {
+    const msg = '😀'.repeat(500);
+    expect(validateMessage(msg)).toBeNull();
   });
 });

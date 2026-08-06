@@ -4,6 +4,7 @@ export interface EmergencyTransferRequest {
   amount: string;              // Amount in base units (e.g., stroops for XLM)
   recipientAddress: string;    // Stellar public key (G...)
   memo?: string;               // Optional custom memo (max 28 bytes)
+  message?: string;            // Optional user-facing message (max 2000 chars)
   assetCode?: string;          // Optional asset code (default: XLM)
   assetIssuer?: string;        // Required if assetCode is not XLM
 }
@@ -95,6 +96,7 @@ export enum EmergencyTransferErrorCode {
   INVALID_RECIPIENT = 'INVALID_RECIPIENT',
   INVALID_ASSET = 'INVALID_ASSET',
   INVALID_MEMO = 'INVALID_MEMO',
+  INVALID_MESSAGE = 'INVALID_MESSAGE',
   
   // Limit errors
   AMOUNT_EXCEEDS_LIMIT = 'AMOUNT_EXCEEDS_LIMIT',
