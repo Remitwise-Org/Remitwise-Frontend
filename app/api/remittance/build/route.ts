@@ -22,6 +22,7 @@
 import { NextRequest } from 'next/server';
 import { requireAuth } from '@/lib/session';
 import { jsonSuccess, jsonError } from '@/lib/api/types';
+import { validateMessage } from '@/utils/validation';
 import {
   TransactionBuilder,
   Operation,
@@ -40,6 +41,7 @@ interface BuildRemittanceRequest {
   currency?: string;
   recipientAddress: string;
   memo?: string;
+  message?: string;
 }
 
 interface BuildRemittanceResponse {
@@ -53,7 +55,7 @@ interface BuildRemittanceResponse {
 
 // ── Validation ────────────────────────────────────────────────────────────────
 
-function validateBuildRequest(body: unknown): BuildRemittanceRequest {
+export function validateBuildRequest(body: unknown): BuildRemittanceRequest {
   if (!body || typeof body !== 'object') {
     throw new Error('Request body must be a JSON object');
   }
@@ -90,11 +92,21 @@ function validateBuildRequest(body: unknown): BuildRemittanceRequest {
     }
   }
 
+  // Validate message (optional) — cap at 2000 characters
+  const message = typeof o.message === 'string' ? o.message.trim() : undefined;
+  if (message) {
+    const msgError = validateMessage(message);
+    if (msgError) {
+      throw new Error(msgError.message);
+    }
+  }
+
   return {
     amount: o.amount,
     currency,
     recipientAddress,
     memo,
+    message,
   };
 }
 

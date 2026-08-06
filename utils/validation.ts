@@ -188,6 +188,26 @@ export function validateAssetIssuer(
 }
 
 /**
+ * Validates a user-facing message is within 2000 characters
+ */
+export function validateMessage(message?: string): ValidationError | null {
+  // Message is optional
+  if (!message) {
+    return null;
+  }
+
+  if (message.length > 2000) {
+    return {
+      code: EmergencyTransferErrorCode.INVALID_MESSAGE,
+      message: 'Message must not exceed 2000 characters',
+      field: 'message',
+    };
+  }
+
+  return null;
+}
+
+/**
  * Validates entire emergency transfer request
  */
 export function validateEmergencyTransferRequest(request: {
@@ -218,6 +238,10 @@ export function validateEmergencyTransferRequest(request: {
   // Validate memo
   const memoError = validateMemo(request.memo);
   if (memoError) errors.push(memoError);
+
+  // Validate message
+  const messageError = validateMessage(request.message);
+  if (messageError) errors.push(messageError);
 
   return errors;
 }

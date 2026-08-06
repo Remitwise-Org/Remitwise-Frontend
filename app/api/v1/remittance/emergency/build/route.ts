@@ -3,6 +3,7 @@ import { StellarTransactionBuilder } from '../../../../../../services/transactio
 import { getSession } from '../../../../../../lib/session';
 import { PolicyService } from '../../../../../../services/policy-service';
 import { EventStorageService } from '../../../../../../services/event-storage-service';
+import { validateMessage } from '../../../../../../utils/validation';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { destinationAccount, amount, assetCode, assetIssuer, memo } = body;
+    const { destinationAccount, amount, assetCode, assetIssuer, memo, message } = body;
 
     if (!destinationAccount || !amount) {
       return NextResponse.json(
@@ -40,6 +41,17 @@ export async function POST(req: NextRequest) {
         { error: 'Policy Violation', message: validationResult.errors.join(', ') },
         { status: 400 }
       );
+    }
+
+    // Validate message (optional) — cap at 2000 characters
+    if (message) {
+      const msgError = validateMessage(message);
+      if (msgError) {
+        return NextResponse.json(
+          { error: 'Bad Request', message: msgError.message },
+          { status: 400 }
+        );
+      }
     }
 
     const builder = new StellarTransactionBuilder();
