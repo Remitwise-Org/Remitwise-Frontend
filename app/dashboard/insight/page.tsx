@@ -47,6 +47,10 @@ export default function InsightPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
     const [reloadKey, setReloadKey] = useState(0);
+    // Track whether we have ever loaded data successfully.
+    // When refetching (e.g. period change) we keep the stale chart visible
+    // to avoid the flicker → skeleton → chart cycle.
+    const [hasData, setHasData] = useState(false);
 
     const handleRetry = useCallback(() => {
         setReloadKey((current) => current + 1);
@@ -54,7 +58,11 @@ export default function InsightPage() {
 
     useEffect(() => {
         const controller = new AbortController();
-        setLoading(true);
+        // Only show loading skeleton on the very first load.
+        // When refetching (period change, retry) keep the stale chart visible.
+        if (!hasData) {
+            setLoading(true);
+        }
         setError(null);
 
         runWidgetFetchWithRetry({
@@ -66,11 +74,16 @@ export default function InsightPage() {
             .then((res) => {
                 if (controller.signal.aborted) return;
                 setData(res);
+                setHasData(true);
                 setLoading(false);
             })
             .catch((err) => {
                 if (err.name === 'AbortError') return;
-                setError(err);
+                // Keep the previous data visible on a failed refetch; only
+                // surface the error state when there is nothing to show.
+                if (!hasData) {
+                    setError(err);
+                }
                 setLoading(false);
             });
 
@@ -83,7 +96,7 @@ export default function InsightPage() {
 
     let content;
 
-    if (loading) {
+    if (loading && !hasData) {
         content = (
             <div className="grid gap-6 md:grid-cols-2">
                 <SkeletonCard variant="chart" />
