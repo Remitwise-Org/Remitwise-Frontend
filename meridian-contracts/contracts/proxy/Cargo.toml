@@ -1,0 +1,29 @@
+[package]
+name = "propchain-proxy"
+version = "1.0.0"
+authors = ["PropChain Team <dev@propchain.io>"]
+edition = "2021"
+
+[dependencies]
+ink = { workspace = true, features = ["std"] }
+scale = { workspace = true, features = ["std"] }
+scale-info = { workspace = true, features = ["std"] }
+propchain-traits = { path = "../traits" }
+
+[dev-dependencies]
+proptest = { workspace = true }
+
+[lib]
+name = "propchain_proxy"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[features]
+default = ["std"]
+std = [
+    "ink/std",
+    "scale/std",
+    "scale-info/std",
+]
+ink-as-dependency = []
+verification = ["proptest"]

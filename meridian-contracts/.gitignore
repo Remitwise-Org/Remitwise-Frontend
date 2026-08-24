@@ -1,0 +1,137 @@
+# Rust
+/target/
+# Cargo.lock - commented out to allow CI to use it
+# Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+*.wasm
+*.contract
+build/
+dist/
+
+# Test coverage
+coverage/
+*.profraw
+*.profdata
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Docker
+.dockerignore
+
+# Backup files
+*.bak
+*.backup
+
+# Local development
+.local/
+cache/
+
+# Security
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+private/
+
+# Documentation build
+docs/build/
+site/
+
+# Package files
+*.tar.gz
+*.zip
+*.rar
+
+# Rust analyzer
+.rust-analyzer/
+
+# Ink! specific
+.contract/
+artifacts/
+metadata.json
+
+# Substrate/Polkadot
+chainspec.json
+keystore/
+
+# Pre-commit
+.pre-commit-hooks.yaml
+
+# Local node data
+data/
+.polkadot/
+.substrate/
+
+# IPFS
+.ipfs/
+
+# Redis/MongoDB dumps
+*.rdb
+*.bson
+
+# Gas snapshots
+gas-snapshots/
+
+# Benchmark results
+benchmarks/
+benchmark-results.json
+
+# Profiling
+perf.data*
+flamegraph.svg
+
+# Linting
+.clippy.toml.backup
+
+# Formatting
+rustfmt.toml.backup
+
+# Local configuration
+config/
+local.toml
+.codex

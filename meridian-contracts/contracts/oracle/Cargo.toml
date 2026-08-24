@@ -1,0 +1,42 @@
+[package]
+name = "oracle"
+version = "1.0.0"
+authors = ["PropChain Team <dev@propchain.io>"]
+edition = "2021"
+description = "Property Valuation Oracle smart contract"
+license = "MIT"
+homepage = "https://propchain.io"
+repository = "https://github.com/MettaChain/PropChain-contract"
+keywords = ["blockchain", "real-estate", "oracle", "valuation", "ink", "substrate"]
+categories = ["cryptography::cryptocurrencies", "web-programming::http-client"]
+readme = "../../README.md"
+publish = false
+
+[dependencies]
+ink = { version = "5.0.0", default-features = false }
+scale = { package = "parity-scale-codec", version = "3.6.9", default-features = false, features = ["derive"] }
+scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
+propchain-traits = { path = "../traits", default-features = false }
+stellar-insured-lib = { path = "../lib", default-features = false, features = ["ink"] }
+
+[dev-dependencies]
+ink_e2e = "5.0.0"
+proptest = { workspace = true }
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = ["std"]
+std = [
+    "ink/std",
+    "scale/std",
+    "scale-info/std",
+    "propchain-traits/std",
+    "stellar-insured-lib/std",
+]
+ink-as-dependency = []
+
+# Testing features
+e2e-tests = []
+verification = ["proptest"]

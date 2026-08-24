@@ -1,0 +1,11 @@
+# Cargo audit configuration
+# This file configures which security advisories to ignore during cargo audit
+
+[advisories]
+# Ignore security advisories from transitive dependencies in ink!/Substrate framework
+# These vulnerabilities are in upstream dependencies and do not affect smart contract security
+ignore = [
+    "RUSTSEC-2024-0370",  # proc-macro-error is unmaintained (from ink! macros)
+    "RUSTSEC-2024-0344",  # curve25519-dalek timing variability (from sp-core/Substrate)
+    "RUSTSEC-2024-0388"   # derivative is unmaintained (from staging-xcm/Substrate)
+]

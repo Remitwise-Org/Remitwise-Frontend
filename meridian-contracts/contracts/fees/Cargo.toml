@@ -1,0 +1,29 @@
+[package]
+name = "propchain-fees"
+version = "1.0.0"
+authors = ["PropChain Team <dev@propchain.io>"]
+edition = "2021"
+description = "Dynamic fee and market mechanism for PropChain"
+
+[dependencies]
+ink = { workspace = true }
+scale = { workspace = true }
+scale-info = { workspace = true }
+propchain-traits = { path = "../traits", default-features = false }
+
+[dev-dependencies]
+proptest = { workspace = true }
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = ["std"]
+std = [
+    "ink/std",
+    "scale/std",
+    "scale-info/std",
+    "propchain-traits/std",
+]
+ink-as-dependency = []
+verification = ["proptest"]

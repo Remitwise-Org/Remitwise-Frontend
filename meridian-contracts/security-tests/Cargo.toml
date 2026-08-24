@@ -1,0 +1,52 @@
+[workspace]
+
+[package]
+name = "propchain-security-tests"
+version = "1.0.0"
+authors = ["PropChain Team <dev@propchain.io>"]
+edition = "2021"
+description = "Property-based and fuzz testing for PropChain contract security"
+license = "MIT"
+publish = false
+
+[dependencies]
+proptest = { version = "1.4", default-features = false, features = ["std"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+stellar-insured-lib = { path = "../contracts/lib" }
+
+[dev-dependencies]
+proptest = { version = "1.4", default-features = false, features = ["std"] }
+kani = { workspace = true }
+stellar-insured-risk-pool = { path = "../contracts/risk_pool", features = ["testutils"] }
+stellar-insured-claims = { path = "../contracts/claims", features = ["testutils"] }
+stellar-insured-governance = { path = "../contracts/governance", features = ["testutils"] }
+stellar-insured-policy = { path = "../contracts/policy", features = ["testutils"] }
+stellar-insured-slashing = { path = "../contracts/slashing", features = ["testutils"] }
+propchain-escrow = { path = "../contracts/escrow", features = ["testutils"] }
+soroban-sdk = { version = "20.0.0", features = ["testutils"] }
+
+[features]
+default = ["std"]
+std = []
+verification = ["kani", "proptest"]
+
+[lib]
+name = "propchain_security_tests"
+path = "src/lib.rs"
+
+[[bin]]
+name = "property_based_tests"
+path = "src/property_based_tests.rs"
+
+[[bin]]
+name = "fuzz_tests"
+path = "src/fuzz_tests.rs"
+
+[[bin]]
+name = "security_analysis"
+path = "src/security_analysis.rs"
+
+[[bin]]
+name = "formal_verification"
+path = "src/formal_verification.rs"

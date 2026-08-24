@@ -1,0 +1,40 @@
+name: Backend Build Check
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'meridian-api/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'meridian-api/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: meridian-api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: meridian-api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build

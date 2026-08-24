@@ -1,0 +1,763 @@
+warning: struct `PortfolioPerformance` is never constructed
+  --> contracts\analytics\src\lib.rs:24:16
+   |
+24 |     pub struct PortfolioPerformance {
+   |                ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: struct `UserBehavior` is never constructed
+  --> contracts\analytics\src\lib.rs:43:16
+   |
+43 |     pub struct UserBehavior {
+   |                ^^^^^^^^^^^^
+
+warning: `propchain-analytics` (lib) generated 2 warnings
+warning: unused import: `super::*`
+ --> contracts\ipfs-metadata\src\tests.rs:4:9
+  |
+4 |     use super::*;
+  |         ^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ipfs-metadata` (lib test) generated 1 warning (run `cargo fix --lib -p ipfs-metadata --tests` to apply 1 suggestion)
+warning: `propchain-analytics` (lib test) generated 2 warnings (2 duplicates)
+warning: unused import: `super::*`
+    --> contracts\insurance\src\lib.rs:1546:9
+     |
+1546 |     use super::*;
+     |         ^^^^^^^^
+     |
+     = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+   Compiling propchain-contracts v1.0.0 (C:\Users\nwaug\Desktop\Blockchain\DripsWave\PropChain-contract\contracts\lib)
+warning: `propchain-insurance` (lib test) generated 1 warning (run `cargo fix --lib -p propchain-insurance --tests` to apply 1 suggestion)
+error: encountered ink! messages with overlapping selectors (= [76, 15, B9, 2C])
+       hint: use #[ink(selector = S:u32)] on the callable or #[ink(namespace = N:string)] on the implementation block to disambiguate overlapping selectors.
+    --> contracts\lib\src\lib.rs:2435:9
+     |
+2435 |         /// Get global analytics including property count and valuation
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: first ink! message with overlapping selector here
+    --> contracts\lib\src\lib.rs:1837:9
+     |
+1837 |         /// Analytics: Gets aggregated statistics across all properties
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0432]: unresolved import `crate::propchain_contracts`
+ --> contracts\lib\src\tests.rs:4:16
+  |
+4 |     use crate::propchain_contracts::Error;
+  |                ^^^^^^^^^^^^^^^^^^^ could not find `propchain_contracts` in the crate root
+
+error[E0432]: unresolved import `crate::propchain_contracts`
+ --> contracts\lib\src\tests.rs:5:16
+  |
+5 |     use crate::propchain_contracts::PropertyRegistry;
+  |                ^^^^^^^^^^^^^^^^^^^ could not find `propchain_contracts` in the crate root
+
+error[E0432]: unresolved import `super::propchain_contracts`
+    --> contracts\lib\src\lib.rs:2546:16
+     |
+2546 |     use super::propchain_contracts::{Error, PropertyRegistry};
+     |                ^^^^^^^^^^^^^^^^^^^ could not find `propchain_contracts` in the crate root
+
+error[E0432]: unresolved import `crate::propchain_contracts`
+    --> contracts\lib\src\tests.rs:1683:20
+     |
+1683 |         use crate::propchain_contracts::BadgeType;
+     |                    ^^^^^^^^^^^^^^^^^^^ could not find `propchain_contracts` in the crate root
+
+error[E0432]: unresolved import `crate::propchain_contracts`
+    --> contracts\lib\src\tests.rs:1708:20
+     |
+1708 |         use crate::propchain_contracts::BadgeType;
+     |                    ^^^^^^^^^^^^^^^^^^^ could not find `propchain_contracts` in the crate root
+
+error[E0432]: unresolved import `crate::propchain_contracts`
+    --> contracts\lib\src\tests.rs:1738:20
+     |
+1738 |         use crate::propchain_contracts::BadgeType;
+     |                    ^^^^^^^^^^^^^^^^^^^ could not find `propchain_contracts` in the crate root
+
+error[E0432]: unresolved import `crate::propchain_contracts`
+    --> contracts\lib\src\tests.rs:1770:20
+     |
+1770 |         use crate::propchain_contracts::BadgeType;
+     |                    ^^^^^^^^^^^^^^^^^^^ could not find `propchain_contracts` in the crate root
+
+warning: unused import: `ink::prelude::string::String`
+ --> contracts\lib\src\lib.rs:6:5
+  |
+6 | use ink::prelude::string::String;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `ink::prelude::vec::Vec`
+ --> contracts\lib\src\lib.rs:7:5
+  |
+7 | use ink::prelude::vec::Vec;
+  |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ink::storage::Mapping`
+ --> contracts\lib\src\lib.rs:8:5
+  |
+8 | use ink::storage::Mapping;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+
+error[E0782]: expected a type, found a trait
+  --> contracts\lib\src\tests.rs:53:24
+   |
+53 |         let contract = PropertyRegistry::new();
+   |                        ^^^^^^^^^^^^^^^^
+   |
+help: you can add the `dyn` keyword if you want a trait object
+   |
+53 |         let contract = <dyn PropertyRegistry>::new();
+   |                        ++++                 +
+
+error[E0782]: expected a type, found a trait
+  --> contracts\lib\src\tests.rs:65:28
+   |
+65 |         let mut contract = PropertyRegistry::new();
+   |                            ^^^^^^^^^^^^^^^^
+   |
+help: you can add the `dyn` keyword if you want a trait object
+   |
+65 |         let mut contract = <dyn PropertyRegistry>::new();
+   |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+  --> contracts\lib\src\tests.rs:87:28
+   |
+87 |         let mut contract = PropertyRegistry::new();
+   |                            ^^^^^^^^^^^^^^^^
+   |
+help: you can add the `dyn` keyword if you want a trait object
+   |
+87 |         let mut contract = <dyn PropertyRegistry>::new();
+   |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:107:28
+    |
+107 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+107 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:128:28
+    |
+128 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+128 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:149:28
+    |
+149 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+149 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:185:28
+    |
+185 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+185 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:208:28
+    |
+208 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+208 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:239:28
+    |
+239 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+239 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:262:24
+    |
+262 |         let contract = PropertyRegistry::new();
+    |                        ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+262 |         let contract = <dyn PropertyRegistry>::new();
+    |                        ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:273:28
+    |
+273 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+273 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:292:28
+    |
+292 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+292 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:323:28
+    |
+323 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+323 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:356:28
+    |
+356 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+356 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:379:28
+    |
+379 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+379 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:402:28
+    |
+402 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+402 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:417:24
+    |
+417 |         let contract = PropertyRegistry::new();
+    |                        ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+417 |         let contract = <dyn PropertyRegistry>::new();
+    |                        ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:429:28
+    |
+429 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+429 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:442:28
+    |
+442 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+442 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:467:28
+    |
+467 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+467 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:488:28
+    |
+488 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+488 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:510:28
+    |
+510 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+510 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:538:28
+    |
+538 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+538 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:560:28
+    |
+560 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+560 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:593:28
+    |
+593 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+593 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:623:28
+    |
+623 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+623 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:651:28
+    |
+651 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+651 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:686:28
+    |
+686 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+686 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:713:28
+    |
+713 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+713 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:736:28
+    |
+736 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+736 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:754:28
+    |
+754 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+754 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:785:28
+    |
+785 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+785 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:822:28
+    |
+822 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+822 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:852:24
+    |
+852 |         let contract = PropertyRegistry::default();
+    |                        ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+852 |         let contract = <dyn PropertyRegistry>::default();
+    |                        ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:861:28
+    |
+861 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+861 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:897:28
+    |
+897 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+897 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:921:28
+    |
+921 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+921 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:959:28
+    |
+959 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+959 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+   --> contracts\lib\src\tests.rs:990:28
+    |
+990 |         let mut contract = PropertyRegistry::new();
+    |                            ^^^^^^^^^^^^^^^^
+    |
+help: you can add the `dyn` keyword if you want a trait object
+    |
+990 |         let mut contract = <dyn PropertyRegistry>::new();
+    |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1026:28
+     |
+1026 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1026 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1079:28
+     |
+1079 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1079 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1129:28
+     |
+1129 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1129 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1195:28
+     |
+1195 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1195 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1258:28
+     |
+1258 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1258 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1295:28
+     |
+1295 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1295 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1345:28
+     |
+1345 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1345 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1395:28
+     |
+1395 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1395 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1448:28
+     |
+1448 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1448 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1503:28
+     |
+1503 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1503 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1531:28
+     |
+1531 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1531 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0282]: type annotations needed
+    --> contracts\lib\src\tests.rs:1555:41
+     |
+1555 |             recommendations.iter().map(|s| s.as_str()).collect();
+     |                                         ^  - type must be known at this point
+     |
+help: consider giving this closure parameter an explicit type
+     |
+1555 |             recommendations.iter().map(|s: /* Type */| s.as_str()).collect();
+     |                                          ++++++++++++
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1571:28
+     |
+1571 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1571 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1598:28
+     |
+1598 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1598 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1636:28
+     |
+1636 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1636 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1669:28
+     |
+1669 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1669 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1686:28
+     |
+1686 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1686 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1711:28
+     |
+1711 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1711 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1741:28
+     |
+1741 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1741 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+error[E0782]: expected a type, found a trait
+    --> contracts\lib\src\tests.rs:1773:28
+     |
+1773 |         let mut contract = PropertyRegistry::new();
+     |                            ^^^^^^^^^^^^^^^^
+     |
+help: you can add the `dyn` keyword if you want a trait object
+     |
+1773 |         let mut contract = <dyn PropertyRegistry>::new();
+     |                            ++++                 +
+
+Some errors have detailed explanations: E0282, E0432, E0782.
+For more information about an error, try `rustc --explain E0282`.
+warning: `propchain-contracts` (lib test) generated 3 warnings
+error: could not compile `propchain-contracts` (lib test) due to 68 previous errors; 3 warnings emitted

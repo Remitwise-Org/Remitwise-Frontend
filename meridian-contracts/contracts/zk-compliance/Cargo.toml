@@ -1,0 +1,49 @@
+[package]
+name = "zk-compliance"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ink = { version = "5.0.0", default-features = false }
+scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
+scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
+propchain-traits = { path = "../traits", default-features = false }
+ark-ff = { version = "0.4", default-features = false }
+ark-ec = { version = "0.4", default-features = false }
+ark-bn254 = { version = "0.4", default-features = false, optional = true }
+ark-groth16 = { version = "0.4", default-features = false, optional = true }
+ark-snark = { version = "0.4", default-features = false, optional = true }
+ark-serialize = { version = "0.4", default-features = false, optional = true }
+
+[dev-dependencies]
+ink_e2e = "5.0.0"
+ark-std = { version = "0.4", default-features = false, features = ["std"] }
+ark-relations = { version = "0.4", default-features = false, features = ["std"] }
+proptest = { workspace = true }
+
+[lib]
+path = "lib.rs"
+
+[features]
+default = ["std"]
+std = [
+    "ink/std",
+    "scale/std",
+    "scale-info/std",
+    "propchain-traits/std",
+    "ark-ff/std",
+    "ark-ec/std",
+    "ark-bn254/std",
+    "ark-groth16/std",
+    "ark-snark/std",
+    "ark-serialize/std",
+]
+ink-as-dependency = []
+# Enable features for ZK proof functionality
+zk = [
+    "ark-bn254",
+    "ark-groth16",
+    "ark-snark",
+    "ark-serialize",
+]
+verification = ["proptest"]

@@ -1,0 +1,37 @@
+# ink! Configuration
+# This file contains configuration for the ink! smart contracts
+
+[contracts.property-registry]
+name = "PropertyRegistry"
+description = "Property registration and ownership management contract"
+version = "1.0.0"
+authors = ["PropChain Team <dev@propchain.io>"]
+
+[contracts.escrow]
+name = "EscrowContract"
+description = "Secure escrow system for property transfers"
+version = "1.0.0"
+authors = ["PropChain Team <dev@propchain.io>"]
+
+[contracts.token]
+name = "PropertyToken"
+description = "ERC-721 compatible property token contract"
+version = "1.0.0"
+authors = ["PropChain Team <dev@propchain.io>"]
+
+# Build configuration
+[build]
+target = "wasm32-unknown-unknown"
+optimization-level = "z"
+debug = false
+
+# Development configuration
+[dev]
+gas-limit = 1000000000000
+value = 1000000000000
+
+# Test configuration
+[test]
+gas-limit = 1000000000000
+value = 1000000000000
+accounts = ["//Alice", "//Bob", "//Charlie", "//Dave", "//Eve"]

@@ -1,0 +1,45 @@
+[package]
+name = "stellar-insured-governance"
+version = "1.0.0"
+authors = ["Stellar Insured Team"]
+edition = "2021"
+description = "DAO governance contract for Stellar Insured"
+license = "MIT"
+publish = false
+
+[dependencies]
+soroban-sdk = { workspace = true }
+stellar-insured-lib = { path = "../lib" }
+
+[dependencies.kani]
+version = "0.60"
+workspace = true
+optional = true
+
+[dependencies.proptest]
+version = "1.4"
+workspace = true
+default-features = false
+features = ["std"]
+optional = true
+
+[dev-dependencies]
+# #601: cross-contract integration tests for the slashing execution pipeline.
+# `testutils` is required so these crates' ContractFunctionSet impls (used by
+# env.register_contract in tests) are compiled in, since they're built here as
+# plain dependencies rather than with --test.
+stellar-insured-slashing = { path = "../slashing", features = ["testutils"] }
+stellar-insured-risk-pool = { path = "../risk_pool", features = ["testutils"] }
+# #609: cross-contract integration tests for the policy-change execution pipeline.
+stellar-insured-policy = { path = "../policy", features = ["testutils"] }
+
+[lib]
+name = "stellar_insured_governance"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["std"]
+std = ["soroban-sdk/testutils"]
+testutils = ["soroban-sdk/testutils"]
+verification = ["kani", "proptest", "stellar-insured-lib/verification"]

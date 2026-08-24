@@ -1,0 +1,59 @@
+[workspace]
+members = [
+    "contracts/lib",
+    "contracts/policy",
+    "contracts/claims",
+    "contracts/risk_pool",
+    "contracts/governance",
+    "contracts/slashing",
+    "contracts/escrow",
+]
+exclude = [
+    "contracts/property-token",
+    "contracts/traits",
+]
+resolver = "2"
+
+[workspace.package]
+authors = ["PropChain Team "]
+edition = "2021"
+homepage = "https://propchain.io"
+license = "MIT"
+repository = "https://github.com/MettaChain/PropChain-contract"
+version = "1.0.0"
+
+[workspace.dependencies]
+soroban-sdk = "=20.0.0"
+ink = "5.1.1"
+scale = { package = "parity-scale-codec", version = "3.7.5", default-features = false, features = ["derive"] }
+scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
+# Zero-knowledge proof stack (Groth16 over Bn254) — used by the ZK compliance,
+# oracle, and AI-valuation contracts (see docs/zk-integration.md)
+ark-bn254 = { version = "0.4", default-features = false }
+ark-groth16 = { version = "0.4", default-features = false }
+ark-ff = { version = "0.4", default-features = false }
+ark-snark = { version = "0.4", default-features = false }
+ark-serialize = { version = "0.4", default-features = false }
+# Formal verification and property-based testing (workspace-level; individual crates
+# opt-in via dev-dependencies and feature flags).
+# NOTE: `kani` is only ever published to crates.io as 0.0.1 (the real 0.60+ series
+# ships in the model-checking/kani git repo and is injected by the `cargo kani`
+# toolchain). `prusti-contracts` max published version is 0.2.0. Corrected the
+# specifiers so the workspace resolves under a stable toolchain.
+kani = { version = "0.0.1" }
+prusti-contracts = { version = "0.2" }
+proptest = { version = "1.4", default-features = false, features = ["std"] }
+proptest-macro = { version = "1.4" }
+
+[profile.release]
+overflow-checks = false
+lto = "fat"
+codegen-units = 1
+opt-level = "z"
+strip = true
+panic = "abort"
+
+[profile.dev]
+overflow-checks = true
+lto = "thin"
+opt-level = 1

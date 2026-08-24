@@ -1,0 +1,45 @@
+# Coverage Configuration for PropChain Contracts
+
+[run]
+# Source files to include
+source = ["contracts"]
+
+# Source files to exclude
+omit = [
+    "*/target/*",
+    "*/tests/*",
+    "*/test_utils.rs",
+    "*/e2e_tests.rs",
+]
+
+# Branch coverage
+branch = true
+
+# Show missing lines
+show_missing = true
+
+# Precision for coverage percentage
+precision = 2
+
+[report]
+# Exclude lines from coverage
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "if False:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+# Minimum coverage percentage
+fail_under = 95
+
+[html]
+directory = "coverage/html"
+
+[xml]
+output = "coverage/coverage.xml"

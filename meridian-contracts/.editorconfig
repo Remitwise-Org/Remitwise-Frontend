@@ -1,0 +1,19 @@
+# Editor configuration
+# This file contains configuration for various editors and IDEs
+
+# Rust analyzer configuration
+[rust-analyzer]
+cargo.loadOutDirsFromCheck = true
+checkOnSave.command = "clippy"
+
+# VS Code configuration
+[vscode]
+rust-analyzer.checkOnSave.command = "clippy"
+rust-analyzer.cargo.loadOutDirsFromCheck = true
+
+# General editor settings
+[editor]
+tabSize = 4
+insertSpaces = true
+trimTrailingWhitespace = true
+insertFinalNewline = true

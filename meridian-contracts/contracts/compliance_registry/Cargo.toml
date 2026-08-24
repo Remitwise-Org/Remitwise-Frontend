@@ -1,0 +1,29 @@
+[package]
+name = "compliance_registry"
+version = "0.1.0"
+edition = "2021"
+description = "Multi-jurisdictional compliance and regulatory framework for PropChain"
+
+[dependencies]
+ink = { workspace = true }
+scale = { workspace = true }
+scale-info = { workspace = true }
+propchain-traits = { path = "../traits", default-features = false }
+
+[dev-dependencies]
+ink_e2e = "5.0.0"
+proptest = { workspace = true }
+
+[lib]
+path = "lib.rs"
+
+[features]
+default = ["std"]
+std = [
+    "ink/std",
+    "scale/std",
+    "scale-info/std",
+    "propchain-traits/std",
+]
+ink-as-dependency = []
+verification = ["proptest"]

@@ -1,0 +1,39 @@
+[package]
+name = "propchain-bridge"
+version = "1.0.0"
+authors = ["PropChain Team <dev@propchain.io>"]
+edition = "2021"
+description = "Cross-chain bridge contract for controlled property-token transfers"
+license = "MIT"
+homepage = "https://propchain.io"
+repository = "https://github.com/MettaChain/PropChain-contract"
+publish = false
+
+[dependencies]
+soroban-sdk = { workspace = true }
+stellar-insured-lib = { path = "../lib" }
+
+[dependencies.kani]
+version = "0.60"
+workspace = true
+optional = true
+
+[dependencies.proptest]
+version = "1.4"
+workspace = true
+default-features = false
+features = ["std"]
+optional = true
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
+
+[lib]
+name = "propchain_bridge"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[features]
+default = ["std"]
+std = ["soroban-sdk/testutils"]
+verification = ["kani", "proptest", "stellar-insured-lib/verification"]
