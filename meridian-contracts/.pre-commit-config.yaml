@@ -1,0 +1,140 @@
+# PropChain Pre-commit Configuration
+# This file configures pre-commit hooks for code quality and consistency
+
+repos:
+  # Rust formatting and linting
+  - repo: local
+    hooks:
+      - id: rust-fmt
+        name: rust fmt
+        entry: cargo fmt
+        language: system
+        args: [--all]
+        pass_filenames: false
+
+      - id: rust-clippy
+        name: rust clippy
+        entry: cargo clippy
+        language: system
+        args: [--all-targets, --all-features, --, -D, warnings]
+        pass_filenames: false
+
+      - id: cargo-check
+        name: cargo check
+        entry: cargo check
+        language: system
+        args: [--all-features]
+        pass_filenames: false
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-toml
+      - id: check-xml
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+
+  # Security checks
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+
+  # Markdown formatting
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.16
+    hooks:
+      - id: mdformat
+        args: [--wrap=88]
+        additional_dependencies:
+          - mdformat-gfm
+          - mdformat-tables
+
+  # Shell script formatting
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.7.0-2
+    hooks:
+      - id: shfmt
+        args: [-w, -s, -i, '4']
+
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        args: [--ignore, DL3008, --ignore, DL3009]
+
+  # Contract-specific checks
+  - repo: local
+    hooks:
+      - id: cargo-contract-build
+        name: cargo contract build
+        entry: cargo contract build
+        language: system
+        args: [--quiet]
+        pass_filenames: false
+        files: ^contracts/.*\.rs$
+
+      - id: cargo-contract-test
+        name: cargo contract test
+        entry: cargo contract test
+        language: system
+        pass_filenames: false
+        files: ^contracts/.*\.rs$
+
+      - id: cargo-test-verification
+        name: cargo test --features verification
+        entry: cargo test
+        language: system
+        args: [--features, verification, --lib, --bins]
+        pass_filenames: false
+        files: ^contracts/.*\.rs$
+
+  # Documentation checks
+  - repo: local
+    hooks:
+      - id: cargo-doc
+        name: cargo doc
+        entry: cargo doc
+        language: system
+        args: [--no-deps, --document-private-items]
+        pass_filenames: false
+
+# Configuration for specific hooks
+default_language_version:
+  python: python3
+
+# Exclude patterns
+exclude: |
+  (?x)^(
+    target/|
+    .git/|
+    deployments/|
+    coverage/|
+    \.vscode/|
+    \.idea/|
+    node_modules/
+  )$
+
+# CI configuration
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit.com hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false

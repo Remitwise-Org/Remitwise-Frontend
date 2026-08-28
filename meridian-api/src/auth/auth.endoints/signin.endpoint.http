@@ -1,0 +1,17 @@
+POST http://localhost:3000/auth/sign-in
+Content-Type: application/json
+
+{
+    "email": "testtinginterceptorfromaints@gmail.com",
+    "password": "@Password121212"
+}
+
+
+GET http://localhost:3000/auth/refresh-token
+Content-Type: application/json
+
+{
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM3LCJpYXQiOjE3MzczOTgyNjgsImV4cCI6MTc0NTE3NDI2OCwiYXVkIjoibG9jYWxob3N0OjMwMDAiLCJpc3MiOiJsb2NhbGhvc3Q6MzAwMCJ9.zQPL5uZkrsTwyc6M2xiS2HinkZ--fgrWOx3uvzIvP0w"
+}
+    
+

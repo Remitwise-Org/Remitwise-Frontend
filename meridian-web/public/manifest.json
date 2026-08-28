@@ -1,0 +1,65 @@
+{
+  "name": "MERIDIAN - Where Effort Meets Value",
+  "short_name": "MERIDIAN",
+  "description": "Earn by staying focused, stream payments in real-time, and participate in yield pools with zero loss.",
+  "id": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "orientation": "any",
+  "background_color": "#161616",
+  "theme_color": "#161616",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["productivity", "finance", "lifestyle"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start a focus session",
+      "short_name": "Focus",
+      "description": "Jump straight into the focus timer",
+      "url": "/?source=pwa#focus",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Open dashboard",
+      "short_name": "Dashboard",
+      "description": "View your streaks, XP and streams",
+      "url": "/dashboard?source=pwa",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

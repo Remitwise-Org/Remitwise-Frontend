@@ -1,0 +1,173 @@
+# name: Frontend CI — E2E, Visual Regression, A11y & Performance
+
+# on:
+#   push:
+#     branches:
+#       - main
+#       - develop
+#     paths:
+#       - 'meridian-web/**'
+#   pull_request:
+#     branches:
+#       - main
+#       - develop
+#     paths:
+#       - 'meridian-web/**'
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
+
+# jobs:
+#   lint-and-typecheck:
+#     name: Lint & TypeScript
+#     runs-on: ubuntu-latest
+#     defaults:
+#       run:
+#         working-directory: meridian-web
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - name: Install pnpm
+#         uses: pnpm/action-setup@v4
+#         with:
+#           version: 9
+
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '22'
+#           cache: 'pnpm'
+#           cache-dependency-path: meridian-web/pnpm-lock.yaml
+
+#       - name: Install dependencies
+#         run: pnpm install --frozen-lockfile
+
+#       - name: TypeScript check
+#         run: npx tsc --noEmit
+
+#       - name: Lint
+#         run: pnpm lint
+
+#   unit-tests:
+#     name: Unit & Component Tests (Vitest)
+#     runs-on: ubuntu-latest
+#     defaults:
+#       run:
+#         working-directory: meridian-web
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - name: Install pnpm
+#         uses: pnpm/action-setup@v4
+#         with:
+#           version: 9
+
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '22'
+#           cache: 'pnpm'
+#           cache-dependency-path: meridian-web/pnpm-lock.yaml
+
+#       - name: Install dependencies
+#         run: pnpm install --frozen-lockfile
+
+#       - name: Run Vitest
+#         run: npx vitest run --reporter=verbose
+
+#   e2e-and-visual:
+#     name: E2E + Visual Regression (Playwright)
+#     runs-on: ubuntu-latest
+#     defaults:
+#       run:
+#         working-directory: meridian-web
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - name: Install pnpm
+#         uses: pnpm/action-setup@v4
+#         with:
+#           version: 9
+
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '22'
+#           cache: 'pnpm'
+#           cache-dependency-path: meridian-web/pnpm-lock.yaml
+
+#       - name: Install dependencies
+#         run: pnpm install --frozen-lockfile
+
+#       - name: Install Playwright browsers
+#         run: npx playwright install chromium --with-deps
+
+#       - name: Run Playwright tests
+#         run: pnpm test:e2e
+#         env:
+#           CI: true
+
+#       - name: Upload Playwright report
+#         if: ${{ !cancelled() }}
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: playwright-report
+#           path: meridian-web/playwright-report/
+#           retention-days: 7
+
+#       - name: Upload test results
+#         if: ${{ failure() }}
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: test-results
+#           path: meridian-web/test-results/
+#           retention-days: 7
+
+#   lighthouse-audit:
+#     name: Lighthouse & Accessibility Gate
+#     runs-on: ubuntu-latest
+#     defaults:
+#       run:
+#         working-directory: meridian-web
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - name: Install pnpm
+#         uses: pnpm/action-setup@v4
+#         with:
+#           version: 9
+
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '22'
+#           cache: 'pnpm'
+#           cache-dependency-path: meridian-web/pnpm-lock.yaml
+
+#       - name: Install dependencies
+#         run: pnpm install --frozen-lockfile
+
+#       - name: Install Lighthouse CI
+#         run: pnpm add -D @lhci/cli wait-on
+
+#       - name: Build the application
+#         run: pnpm build
+
+#       - name: Start server in background
+#         run: |
+#           pnpm start -p 3100 &
+#           npx wait-on http://localhost:3100 --timeout 60000
+
+#       - name: Run Lighthouse CI audit
+#         run: |
+#           npx lhci autorun \
+#             --collect.url=http://localhost:3100 \
+#             --collect.url=http://localhost:3100/dashboard \
+#             --collect.settings.preset=desktop \
+#             --collect.settings.onlyCategories=performance,accessibility,best-practices \
+#             --assert.aggregationMethod=median \
+#             --assert.scoring='{"performance":0.8,"accessibility":0.9,"best-practices":0.8}' \
+#             --upload.target=temporary-public-storage
+#         env:
+#           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}

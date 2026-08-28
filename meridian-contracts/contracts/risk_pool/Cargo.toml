@@ -1,0 +1,35 @@
+[package]
+name = "stellar-insured-risk-pool"
+version = "1.0.0"
+authors = ["Stellar Insured Team"]
+edition = "2021"
+description = "Risk pool management contract for Stellar Insured"
+license = "MIT"
+publish = false
+
+[dependencies]
+soroban-sdk = { workspace = true }
+stellar-insured-lib = { path = "../lib" }
+
+[dependencies.kani]
+version = "0.60"
+workspace = true
+optional = true
+
+[dependencies.proptest]
+version = "1.4"
+workspace = true
+default-features = false
+features = ["std"]
+optional = true
+
+[lib]
+name = "stellar_insured_risk_pool"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["std"]
+std = ["soroban-sdk/testutils"]
+testutils = ["soroban-sdk/testutils"]
+verification = ["kani", "proptest", "stellar-insured-lib/verification"]

@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-01-22T11:43:48.595859500+00:00",
+  "score": 95,
+  "static_analysis": {
+    "clippy_warnings": 0,
+    "clippy_errors": 0,
+    "complexity_warnings": 0,
+    "unsafe_blocks": 1,
+    "todos_found": 3
+  },
+  "dependency_scan": {
+    "vulnerabilities": 0,
+    "warnings": 0
+  },
+  "code_quality": {
+    "complexity_score": 0,
+    "files_scanned": 28
+  }
+}

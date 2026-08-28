@@ -1,0 +1,43 @@
+[package]
+name = "stellar-insured-lib"
+version = "1.0.0"
+authors = ["Stellar Insured Team"]
+edition = "2021"
+description = "Shared library for Stellar Insured smart contracts"
+license = "MIT"
+publish = false
+
+[dependencies]
+soroban-sdk = { workspace = true, optional = true }
+ink = { workspace = true, optional = true }
+scale = { workspace = true, optional = true }
+scale-info = { workspace = true, optional = true }
+
+[dependencies.kani]
+version = "0.60"
+workspace = true
+optional = true
+
+[dependencies.prusti-contracts]
+version = "0.6"
+workspace = true
+optional = true
+
+[features]
+default = ["std", "soroban"]
+std = [
+    "ink?/std",
+    "scale?/std",
+    "scale-info?/std",
+]
+soroban = ["dep:soroban-sdk"]
+ink = ["dep:ink", "dep:scale", "dep:scale-info"]
+verification = ["std", "soroban", "kani", "prusti-contracts"]
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
+
+[lib]
+name = "stellar_insured_lib"
+path = "src/lib.rs"
+crate-type = ["rlib"]

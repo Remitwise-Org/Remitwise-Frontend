@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # Local Substrate node
+  substrate-node:
+    image: paritytech/substrate-node-template:latest
+    container_name: propchain-substrate
+    ports:
+      - "9944:9944"
+      - "9933:9933"
+    command: >
+      --dev
+      --unsafe-ws-external
+      --unsafe-rpc-external
+      --rpc-cors all
+      --alice
+    volumes:
+      - substrate_data:/data
+    networks:
+      - propchain-network
+
+  # IPFS node for document storage
+  ipfs:
+    image: ipfs/go-ipfs:latest
+    container_name: propchain-ipfs
+    ports:
+      - "4001:4001"
+      - "8080:8080"
+      - "5001:5001"
+    volumes:
+      - ipfs_data:/data/ipfs
+    networks:
+      - propchain-network
+
+  # PostgreSQL for off-chain data
+  postgres:
+    image: postgres:15
+    container_name: propchain-postgres
+    environment:
+      POSTGRES_DB: propchain
+      POSTGRES_USER: propchain
+      POSTGRES_PASSWORD: propchain123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - propchain-network
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: propchain-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - propchain-network
+
+volumes:
+  substrate_data:
+  ipfs_data:
+  postgres_data:
+  redis_data:
+
+networks:
+  propchain-network:
+    driver: bridge

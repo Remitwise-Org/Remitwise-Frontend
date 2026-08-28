@@ -1,0 +1,268 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/*
+ * `next-themes` applies `class="light"` or `class="dark"` to <html>.
+ * We mirror that into Tailwind via @custom-variant dark.
+ * Default (:root) = light; .dark <html> overrides with the dark palette.
+ */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* --- LIGHT MODE (default) --- */
+  --background: oklch(0.995 0 0);
+  --foreground: oklch(0.18 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0 0);
+  --primary: oklch(0.74 0.181 73.75);
+  --primary-foreground: oklch(0.18 0 0);
+  --secondary: oklch(0.96 0.005 247);
+  --secondary-foreground: oklch(0.18 0 0);
+  --muted: oklch(0.96 0.005 247);
+  --muted-foreground: oklch(0.5 0.01 247);
+  --accent: oklch(0.94 0.04 80);
+  --accent-foreground: oklch(0.18 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.92 0.005 247);
+  --input: oklch(0.92 0.005 247);
+  --ring: oklch(0.74 0.181 73.75);
+  --chart-1: oklch(0.74 0.181 73.75);
+  --chart-2: oklch(0.62 0.165 84.429);
+  --chart-3: oklch(0.54 0.14 70.08);
+  --chart-4: oklch(0.73 0.17 80);
+  --chart-5: oklch(0.68 0.155 76);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.18 0 0);
+  --sidebar-primary: oklch(0.74 0.181 73.75);
+  --sidebar-primary-foreground: oklch(0.18 0 0);
+  --sidebar-accent: oklch(0.96 0.005 247);
+  --sidebar-accent-foreground: oklch(0.18 0 0);
+  --sidebar-border: oklch(0.92 0.005 247);
+  --sidebar-ring: oklch(0.74 0.181 73.75);
+
+  /* --- PWA (light) ---
+   * These mirror `background_color` / `theme_color` in public/manifest.json.
+   * The manifest can only carry a single hex value, so it uses the dark pair;
+   * these variables let the running app tint its own chrome per theme.
+   */
+  --pwa-splash-background: #fcfcfc;
+  --pwa-theme-color: #fcfcfc;
+  --pwa-splash-foreground: oklch(0.18 0 0);
+  /* Safe-area insets, resolved once so components can use them directly. */
+  --pwa-safe-area-top: env(safe-area-inset-top, 0px);
+  --pwa-safe-area-right: env(safe-area-inset-right, 0px);
+  --pwa-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --pwa-safe-area-left: env(safe-area-inset-left, 0px);
+}
+
+.dark {
+  /* --- DARK MODE (overrides) --- */
+  --background: oklch(0.12 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.16 0 0);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.16 0 0);
+  --popover-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.74 0.181 73.75);
+  --primary-foreground: oklch(0.12 0 0);
+  --secondary: oklch(0.25 0 0);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.25 0 0);
+  --muted-foreground: oklch(0.7 0.005 247);
+  --accent: oklch(0.74 0.181 73.75);
+  --accent-foreground: oklch(0.12 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.27 0 0);
+  --input: oklch(0.27 0 0);
+  --ring: oklch(0.74 0.181 73.75);
+  --chart-1: oklch(0.74 0.181 73.75);
+  --chart-2: oklch(0.62 0.165 84.429);
+  --chart-3: oklch(0.54 0.14 70.08);
+  --chart-4: oklch(0.73 0.17 80);
+  --chart-5: oklch(0.68 0.155 76);
+  --sidebar: oklch(0.12 0 0);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.74 0.181 73.75);
+  --sidebar-primary-foreground: oklch(0.12 0 0);
+  --sidebar-accent: oklch(0.25 0 0);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.27 0 0);
+  --sidebar-ring: oklch(0.74 0.181 73.75);
+
+  /* --- PWA (dark) — matches the manifest's splash colours --- */
+  --pwa-splash-background: #161616;
+  --pwa-theme-color: #161616;
+  --pwa-splash-foreground: oklch(0.98 0 0);
+}
+
+@theme inline {
+  --font-sans: 'Geist', 'Geist Fallback';
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent;
+  }
+
+  /* Floating animation */
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Glow effect */
+  .glow {
+    box-shadow: 0 0 20px 0 var(--color-primary);
+  }
+
+  /* Subtle hover lift */
+  .hover-lift {
+    @apply transition-all duration-200 hover:shadow-xl hover:-translate-y-1;
+  }
+
+  /**
+   * hero-fade-up — CSS-only entrance animation used by the Hero RSC.
+   * Replaces framer-motion so the hero ships zero JS and improves LCP.
+   * Each element adds a custom [animation-delay:Xms] utility class.
+   */
+  @keyframes hero-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .hero-fade-up {
+    animation: hero-fade-up 0.6s ease-out both;
+  }
+
+  /* Respect the user's reduced-motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-fade-up {
+      animation: none;
+    }
+  }
+
+  /* ---------------------------------------------------------------------
+   * PWA / standalone display
+   *
+   * When launched from the home screen there is no browser chrome: the app
+   * paints under the status bar and home indicator (viewportFit: 'cover'),
+   * so it has to inset itself.
+   * ------------------------------------------------------------------ */
+  @media all and (display-mode: standalone) {
+    body {
+      background-color: var(--pwa-splash-background);
+      /* Overscroll would otherwise reveal the OS background behind the app. */
+      overscroll-behavior-y: none;
+    }
+
+    .pwa-safe-area {
+      padding-top: var(--pwa-safe-area-top);
+      padding-right: var(--pwa-safe-area-right);
+      padding-bottom: var(--pwa-safe-area-bottom);
+      padding-left: var(--pwa-safe-area-left);
+    }
+
+    /* Sticky headers/footers need the inset added to their own padding. */
+    .pwa-safe-area-top {
+      padding-top: calc(var(--pwa-safe-area-top) + 0.5rem);
+    }
+
+    .pwa-safe-area-bottom {
+      padding-bottom: calc(var(--pwa-safe-area-bottom) + 0.5rem);
+    }
+  }
+
+  /* Install banner — lifted clear of the home indicator when installed. */
+  .pwa-install-banner {
+    bottom: calc(1rem + var(--pwa-safe-area-bottom));
+    animation: pwa-banner-in 0.3s ease-out both;
+  }
+
+  @keyframes pwa-banner-in {
+    from {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pwa-install-banner {
+      animation: none;
+    }
+  }
+}

@@ -1,0 +1,53 @@
+[package]
+name = "propchain-tests"
+version = "1.0.0"
+authors = ["PropChain Team <dev@propchain.io>"]
+edition = "2021"
+publish = false
+
+[lib]
+name = "propchain_tests"
+path = "lib.rs"
+
+[dependencies]
+# Soroban dependencies
+soroban-sdk = { version = "20.0.0" }
+serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
+tokio = { version = "1.0", features = ["full"], optional = true }
+
+# Contract dependencies
+propchain-escrow = { path = "../contracts/escrow" }
+oracle = { path = "../contracts/oracle" }
+stellar-insured-lib = { path = "../contracts/lib" }
+
+# Testing dependencies
+[dev-dependencies]
+soroban-sdk = { version = "20.0.0", features = ["testutils"] }
+serde_json = { version = "1.0", default-features = false }
+property-token = { path = "../contracts/property-token", default-features = false }
+proptest = { version = "1.4", default-features = false, features = ["std"] }
+kani = { workspace = true }
+stellar-insured-risk-pool = { path = "../contracts/risk_pool", features = ["testutils"] }
+stellar-insured-claims = { path = "../contracts/claims", features = ["testutils"] }
+stellar-insured-governance = { path = "../contracts/governance", features = ["testutils"] }
+stellar-insured-policy = { path = "../contracts/policy", features = ["testutils"] }
+stellar-insured-slashing = { path = "../contracts/slashing", features = ["testutils"] }
+propchain-escrow = { path = "../contracts/escrow", features = ["testutils"] }
+propchain-fees = { path = "../contracts/fees" }
+propchain-bridge = { path = "../contracts/bridge" }
+ai-valuation = { path = "../contracts/ai-valuation" }
+ipfs-metadata = { path = "../contracts/ipfs-metadata" }
+
+# Coverage tools
+[dev-dependencies.cargo-tarpaulin]
+version = "0.27"
+
+[features]
+default = ["std"]
+std = [
+    "property-token/std",
+    "serde/std",
+    "serde_json/std",
+    "tokio",
+]
+e2e-tests = ["std"]
