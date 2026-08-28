@@ -62,6 +62,9 @@ export async function processPendingWebhooks(
       pendingEvents.map((event: any) => processEvent(event.id, event.source))
     );
 
+    // A claimed event may have been taken by another worker between the
+    // listing and processing calls. The processor intentionally treats that
+    // as a safe no-op; this endpoint reports only handler-level failures.
     const failed = results.filter((r) => r.status === 'rejected').length;
     const processed = results.length - failed;
 

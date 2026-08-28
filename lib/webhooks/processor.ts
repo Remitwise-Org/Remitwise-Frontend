@@ -96,11 +96,23 @@ export async function processWebhookEvent(
       return; // Not ready to retry yet
     }
 
-    // Update status to processing
-    await prisma.webhookEvent.update({
-      where: { id: eventId },
-      data: { status: 'processing' },
+    // Claim the event atomically. A concurrent worker can observe the same
+    // event, but only the worker that changes the current state may execute
+    // the handler. This prevents duplicate side effects and stale replays.
+    const claimed = await prisma.webhookEvent.updateMany({
+      where: {
+        id: eventId,
+        OR: [
+          { status: 'pending' },
+          { status: 'failed', nextRetryAt: { lte: new Date() } },
+        ],
+      },
+      data: { status: 'processing', updatedAt: new Date() },
     });
+
+    if (claimed.count !== 1) {
+      return;
+    }
 
     // Parse and process the payload
     const payload = JSON.parse(event.rawPayload);
@@ -142,14 +154,14 @@ export async function handleWebhookProcessingFailure(
       where: { id: eventId },
     });
 
-    if (!event) return;
+    if (!event || event.status !== 'processing') return;
 
     const nextRetryCount = event.retryCount + 1;
 
     if (nextRetryCount > event.maxRetries) {
       // Move to DLQ
-      await prisma.webhookEvent.update({
-        where: { id: eventId },
+      await prisma.webhookEvent.updateMany({
+        where: { id: eventId, status: 'processing' },
         data: {
           status: 'dlq',
           lastError: errorMessage,
@@ -173,8 +185,8 @@ export async function handleWebhookProcessingFailure(
     } else {
       // Schedule retry
       const nextRetryAt = calculateNextRetryTime(nextRetryCount);
-      await prisma.webhookEvent.update({
-        where: { id: eventId },
+      await prisma.webhookEvent.updateMany({
+        where: { id: eventId, status: 'processing' },
         data: {
           status: 'failed',
           retryCount: nextRetryCount,
@@ -257,8 +269,8 @@ export async function replayDLQEvent(eventId: string): Promise<boolean> {
       return false;
     }
 
-    await prisma.webhookEvent.update({
-      where: { id: eventId },
+    const replayed = await prisma.webhookEvent.updateMany({
+      where: { id: eventId, status: 'dlq' },
       data: {
         status: 'pending',
         retryCount: 0,
@@ -267,6 +279,10 @@ export async function replayDLQEvent(eventId: string): Promise<boolean> {
         updatedAt: new Date(),
       },
     });
+
+    if (replayed.count !== 1) {
+      return false;
+    }
 
     recordAuditEvent({
       type: 'webhook.dlq.replay',
