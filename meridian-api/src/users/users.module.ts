@@ -12,12 +12,14 @@ import { Tweet } from 'src/tweets/entities/tweet.entity';
 import { TweetModule } from 'src/tweets/tweet.module';
 import { UserAuthFacade } from './providers/user-auth.facade';
 import { CryptoModule } from 'src/crypto/crypto.module';
+import { AuditModule } from 'src/audit/audit.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Tweet]),
     forwardRef(() => AuthModule),
     CryptoModule,
+    AuditModule,
   ],
   controllers: [UsersController],
   providers: [

@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../user.entity';
@@ -14,9 +14,19 @@ import { HashingProvider } from 'src/auth/providers/hashing';
 import { Role } from 'src/auth/enums/role.enum';
 import { Permission } from 'src/auth/enums/permission.enum';
 import { ROLE_PERMISSIONS } from 'src/auth/enums/role-permissions';
+import { AuditService } from 'src/audit/audit.service';
+import { AuditAction } from 'src/audit/audit-log.entity';
+
+export interface PerformerIdentity {
+  userId: number;
+  email: string;
+  ipAddress?: string | null;
+}
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(
     @InjectRepository(User) private usersRepository: Repository<User>,
 
@@ -34,6 +44,8 @@ export class UserService {
     // one-way hashing for password writes (issue #631 keeps passwords hashed
     // while CryptoProvider handles reversible encryption).
     private readonly hashingProvider: HashingProvider,
+
+    private readonly auditService: AuditService,
   ) {}
   // repository pattern that help commiunicate with the Database
   // just by doing this we have injected a repository pattern
@@ -60,8 +72,11 @@ export class UserService {
   /**
    * Soft-deletes a user (issue #427). TypeORM will hide the row from
    * subsequent `find*` queries; use `restoreUser` to undo.
+   *
+   * Audit records capture the previous state (non-sensitive fields only)
+   * and the performer identity for traceability.
    */
-  public async deleteUser(id: number) {
+  public async deleteUser(id: number, performer?: PerformerIdentity) {
     const user = await this.usersRepository.findOneBy({ id });
     if (!user) {
       throw new HttpException(
@@ -73,15 +88,33 @@ export class UserService {
       );
     }
 
+    const previousValues = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
     await this.usersRepository.softDelete(id);
+
+    await this.safeAudit({
+      entityName: 'User',
+      entityId: String(id),
+      action: AuditAction.DELETE,
+      performedById: performer?.userId ?? null,
+      performedByEmail: performer?.email ?? null,
+      ipAddress: performer?.ipAddress ?? null,
+      previousValues,
+      newValues: { deleted: true },
+    });
 
     return { deleted: true, id };
   }
 
   /**
    * Restores a soft-deleted user, clearing its `deletedAt` value.
+   * Audit records capture the restoration event with performer identity.
    */
-  public async restoreUser(id: number) {
+  public async restoreUser(id: number, performer?: PerformerIdentity) {
     const result = await this.usersRepository.restore(id);
 
     if (!result.affected) {
@@ -93,6 +126,22 @@ export class UserService {
         HttpStatus.NOT_FOUND,
       );
     }
+
+    const restoredUser = await this.usersRepository.findOneBy({ id });
+
+    await this.safeAudit({
+      entityName: 'User',
+      entityId: String(id),
+      action: AuditAction.UPDATE,
+      performedById: performer?.userId ?? null,
+      performedByEmail: performer?.email ?? null,
+      ipAddress: performer?.ipAddress ?? null,
+      previousValues: { deleted: true },
+      newValues: {
+        restored: true,
+        role: restoredUser?.role ?? null,
+      },
+    });
 
     return { restored: true, id };
   }
@@ -158,11 +207,30 @@ export class UserService {
    * RBAC (issue #632): assign a new role to a user. Throws 404 when the user
    * does not exist. Role changes take effect on the user's next sign-in since
    * the stateless JWT keeps its original claims until then.
+   *
+   * Audit records capture previous and new role for traceability.
    */
-  public async assignRole(id: number, role: Role) {
+  public async assignRole(
+    id: number,
+    role: Role,
+    performer?: PerformerIdentity,
+  ) {
     const user = await this.findOneId(id);
+    const previousRole = user.role;
     user.role = role;
     await this.usersRepository.save(user);
+
+    await this.safeAudit({
+      entityName: 'User',
+      entityId: String(id),
+      action: AuditAction.UPDATE,
+      performedById: performer?.userId ?? null,
+      performedByEmail: performer?.email ?? null,
+      ipAddress: performer?.ipAddress ?? null,
+      previousValues: { role: previousRole },
+      newValues: { role: user.role },
+    });
+
     return {
       id: user.id,
       role: user.role,
@@ -183,5 +251,34 @@ export class UserService {
       ? permissions.filter((p) => p === permission)
       : permissions;
     return { id: user.id, role, permissions: filtered };
+  }
+
+  /**
+   * Fire-and-forget audit logging for privileged operations. Failures are
+   * caught and logged but never propagate to the caller.
+   */
+  private async safeAudit(ctx: {
+    entityName: string;
+    entityId: string;
+    action: AuditAction;
+    performedById: number | null;
+    performedByEmail: string | null;
+    ipAddress?: string | null;
+    previousValues?: Record<string, unknown> | null;
+    newValues?: Record<string, unknown> | null;
+  }): Promise<void> {
+    try {
+      await this.auditService.log(ctx);
+    } catch (err) {
+      this.logger.error(
+        JSON.stringify({
+          msg: 'audit.write_failed',
+          entityName: ctx.entityName,
+          entityId: ctx.entityId,
+          action: ctx.action,
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
+    }
   }
 }

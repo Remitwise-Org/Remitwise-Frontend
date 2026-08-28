@@ -12,10 +12,11 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   Logger,
+  Req,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { GetuserParamDto } from './dto/user-param.dto';
-import { UserService } from './providers/user.services';
+import { UserService, PerformerIdentity } from './providers/user.services';
 import { EditUserDto } from './dto/patch-user.dto';
 import {
   ApiResponse,
@@ -31,6 +32,8 @@ import { Permission } from 'src/auth/enums/permission.enum';
 import { CreateManyUsersDto } from './dto/create-many-users.dto';
 import { AssignRoleDto } from './dto/assign-role.dto';
 import { UserPermissionQueryDto } from './dto/user-permission-query.dto';
+import { REQUEST_USER_KEY } from 'src/auth/constant/auth-constant';
+import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
 
 @Controller('users')
 // line 14 is a method
@@ -88,7 +91,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, description: 'User created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 403, description: 'Forbidden — moderator or admin only' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — moderator or admin only',
+  })
   @UseInterceptors(ClassSerializerInterceptor)
   @RequireRoles(Role.MODERATOR, Role.ADMIN)
   @ApiBearerAuth()
@@ -114,8 +120,15 @@ export class UsersController {
   @ApiResponse({ status: 403, description: 'Forbidden — admin only' })
   @RequireRoles(Role.ADMIN)
   @ApiBearerAuth()
-  public deleteUsers(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.deleteUser(id);
+  public deleteUsers(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: { [REQUEST_USER_KEY]?: ActiveUserData; ip?: string },
+  ) {
+    const user = req[REQUEST_USER_KEY];
+    const performer: PerformerIdentity | undefined = user
+      ? { userId: Number(user.sub), email: user.email, ipAddress: req.ip }
+      : undefined;
+    return this.userService.deleteUser(id, performer);
   }
 
   /**
@@ -133,8 +146,13 @@ export class UsersController {
   public assignRole(
     @Param('id', ParseIntPipe) id: number,
     @Body() assignRoleDto: AssignRoleDto,
+    @Req() req: { [REQUEST_USER_KEY]?: ActiveUserData; ip?: string },
   ) {
-    return this.userService.assignRole(id, assignRoleDto.role);
+    const user = req[REQUEST_USER_KEY];
+    const performer: PerformerIdentity | undefined = user
+      ? { userId: Number(user.sub), email: user.email, ipAddress: req.ip }
+      : undefined;
+    return this.userService.assignRole(id, assignRoleDto.role, performer);
   }
 
   /**
@@ -142,7 +160,8 @@ export class UsersController {
    */
   @Get('/:id/permissions')
   @ApiOperation({
-    summary: 'Get a user\'s role and resolved permissions (admin only, issue #632)',
+    summary:
+      "Get a user's role and resolved permissions (admin only, issue #632)",
   })
   @ApiResponse({ status: 200, description: 'Role and permissions returned' })
   @ApiResponse({ status: 403, description: 'Forbidden — admin only' })
@@ -165,8 +184,15 @@ export class UsersController {
   })
   @RequirePermissions(Permission.USERS_UPDATE)
   @ApiBearerAuth()
-  public restoreUser(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.restoreUser(id);
+  public restoreUser(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: { [REQUEST_USER_KEY]?: ActiveUserData; ip?: string },
+  ) {
+    const user = req[REQUEST_USER_KEY];
+    const performer: PerformerIdentity | undefined = user
+      ? { userId: Number(user.sub), email: user.email, ipAddress: req.ip }
+      : undefined;
+    return this.userService.restoreUser(id, performer);
   }
 
   @Patch()

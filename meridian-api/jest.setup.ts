@@ -274,3 +274,106 @@ jest.mock(
 jest.mock('./dto/tweet.entity', () => ({ Tweet: class Tweet {} }), {
   virtual: true,
 });
+
+// ----- Guard & audit aliased paths (issue #1678) -----
+jest.mock(
+  'src/auth/guard/access-token/access-token.guard',
+  () => ({ AccessTokenGuard: class AccessTokenGuard {} }),
+  { virtual: true },
+);
+jest.mock(
+  'src/auth/interfaces/active-user-data.interface',
+  () => ({ ActiveUserData: class ActiveUserData {} }),
+  { virtual: true },
+);
+jest.mock(
+  'src/audit/audit.service',
+  () => ({ AuditService: class AuditService {} }),
+  { virtual: true },
+);
+jest.mock(
+  'src/audit/audit-log.entity',
+  () => ({
+    AuditAction: {
+      CREATE: 'CREATE',
+      READ: 'READ',
+      UPDATE: 'UPDATE',
+      DELETE: 'DELETE',
+      CONTRACT_EVENT: 'CONTRACT_EVENT',
+      AUTHORIZATION_GRANTED: 'AUTHORIZATION_GRANTED',
+      AUTHORIZATION_DENIED: 'AUTHORIZATION_DENIED',
+    },
+  }),
+  { virtual: true },
+);
+jest.mock(
+  'src/common/correlation/correlation-id.store',
+  () => ({ CorrelationIdStore: class CorrelationIdStore {} }),
+  { virtual: true },
+);
+jest.mock(
+  'src/common/correlation/correlation-id.constants',
+  () => ({
+    CORRELATION_ID_HEADER: 'x-correlation-id',
+    CORRELATION_ID_RESPONSE_HEADER: 'x-correlation-id',
+    REQUEST_CORRELATION_ID_KEY: 'correlationId',
+  }),
+  { virtual: true },
+);
+jest.mock(
+  'src/common/correlation/correlation-id.interceptor',
+  () => ({ CorrelationIdInterceptor: class CorrelationIdInterceptor {} }),
+  { virtual: true },
+);
+jest.mock(
+  'src/common/correlation/correlation.module',
+  () => ({ CorrelationModule: class CorrelationModule {} }),
+  { virtual: true },
+);
+jest.mock(
+  'src/crypto/providers/crypto.provider',
+  () => ({ CryptoProvider: class CryptoProvider {} }),
+  { virtual: true },
+);
+jest.mock(
+  'src/crypto/crypto.module',
+  () => ({ CryptoModule: class CryptoModule {} }),
+  { virtual: true },
+);
+jest.mock(
+  'src/auth/enums/permission.enum',
+  () => ({
+    Permission: {
+      USERS_READ: 'users:read',
+      USERS_CREATE: 'users:create',
+      USERS_UPDATE: 'users:update',
+      USERS_DELETE: 'users:delete',
+      USERS_MANAGE_ROLES: 'users:manage-roles',
+      POSTS_CREATE: 'posts:create',
+      POSTS_READ: 'posts:read',
+      POSTS_UPDATE: 'posts:update',
+      POSTS_DELETE: 'posts:delete',
+      UPLOAD_CREATE: 'upload:create',
+      LEADERBOARD_READ: 'leaderboard:read',
+      AUDIT_READ: 'audit:read',
+    },
+  }),
+  { virtual: true },
+);
+jest.mock(
+  'src/auth/enums/role.enum',
+  () => ({
+    Role: {
+      USER: 'user',
+      VERIFIED_USER: 'verified_user',
+      MODERATOR: 'moderator',
+      ADMIN: 'admin',
+    },
+  }),
+  { virtual: true },
+);
+jest.mock(
+  'src/auth/enums/role-permissions',
+  () => ({ ROLE_PERMISSIONS: {} }),
+  { virtual: true },
+);

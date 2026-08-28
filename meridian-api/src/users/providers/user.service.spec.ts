@@ -26,7 +26,8 @@ jest.mock('src/DTO/postparamdto', () => ({}), { virtual: true });
 jest.mock('src/DTO/patch-user.dto', () => ({}), { virtual: true });
 
 import { HttpException } from '@nestjs/common';
-import { UserService } from './user.services';
+import { UserService, PerformerIdentity } from './user.services';
+import { AuditAction } from '../../audit/audit-log.entity';
 
 describe('UserService', () => {
   let service: UserService;
@@ -34,6 +35,8 @@ describe('UserService', () => {
     find: jest.Mock;
     findOneBy: jest.Mock;
     save: jest.Mock;
+    softDelete: jest.Mock;
+    restore: jest.Mock;
   };
   let createuserprovider: { createUsers: jest.Mock };
   let findOneByemail: { findOneByEmail: jest.Mock };
@@ -43,6 +46,7 @@ describe('UserService', () => {
   };
   let createManyUserService: { manyUsers: jest.Mock };
   let hashingProvider: { hashPassword: jest.Mock; comparePassword: jest.Mock };
+  let auditService: { log: jest.Mock };
 
   const mockUser = {
     id: 1,
@@ -50,13 +54,22 @@ describe('UserService', () => {
     lastName: 'Doe',
     email: 'jane@example.com',
     password: 'hashed',
+    role: 'user',
+  };
+
+  const mockPerformer: PerformerIdentity = {
+    userId: 10,
+    email: 'admin@example.com',
+    ipAddress: '10.0.0.1',
   };
 
   beforeEach(() => {
     usersRepository = {
       find: jest.fn(async () => [mockUser]),
-      findOneBy: jest.fn(async () => mockUser),
+      findOneBy: jest.fn(async () => ({ ...mockUser })),
       save: jest.fn(async (u) => u),
+      softDelete: jest.fn(async () => ({ affected: 1 })),
+      restore: jest.fn(async () => ({ affected: 1 })),
     };
     createuserprovider = { createUsers: jest.fn(async () => [mockUser]) };
     findOneByemail = { findOneByEmail: jest.fn(async () => mockUser) };
@@ -69,6 +82,7 @@ describe('UserService', () => {
       hashPassword: jest.fn(async () => 'hashed-updated'),
       comparePassword: jest.fn(async () => true),
     };
+    auditService = { log: jest.fn(async () => undefined) };
 
     service = new UserService(
       usersRepository as any,
@@ -77,6 +91,7 @@ describe('UserService', () => {
       createUserWithBooks as any,
       createManyUserService as any,
       hashingProvider as any,
+      auditService as any,
     );
   });
 
@@ -184,5 +199,105 @@ describe('UserService', () => {
     usersRepository.findOneBy.mockResolvedValueOnce(null);
     const result = await service.findOneById(404);
     expect(result).toBeNull();
+  });
+
+  // ── Audit parity tests (issue #1678) ────────────────────────────────
+
+  describe('audit logging on privileged operations', () => {
+    it('deleteUser emits DELETE audit with previous state and performer', async () => {
+      const result = await service.deleteUser(1, mockPerformer);
+
+      expect(result).toEqual({ deleted: true, id: 1 });
+      expect(auditService.log).toHaveBeenCalledTimes(1);
+      const call = auditService.log.mock.calls[0][0];
+      expect(call.entityName).toBe('User');
+      expect(call.entityId).toBe('1');
+      expect(call.action).toBe(AuditAction.DELETE);
+      expect(call.performedById).toBe(10);
+      expect(call.performedByEmail).toBe('admin@example.com');
+      expect(call.ipAddress).toBe('10.0.0.1');
+      expect(call.previousValues).toEqual({
+        id: 1,
+        email: 'jane@example.com',
+        role: 'user',
+      });
+      expect(call.newValues).toEqual({ deleted: true });
+    });
+
+    it('deleteUser does not emit audit when user not found', async () => {
+      usersRepository.findOneBy.mockResolvedValueOnce(null);
+      await expect(service.deleteUser(999, mockPerformer)).rejects.toThrow(
+        HttpException,
+      );
+      expect(auditService.log).not.toHaveBeenCalled();
+    });
+
+    it('deleteUser works without performer (anonymous/system)', async () => {
+      const result = await service.deleteUser(1);
+      expect(result).toEqual({ deleted: true, id: 1 });
+      expect(auditService.log).toHaveBeenCalledTimes(1);
+      const call = auditService.log.mock.calls[0][0];
+      expect(call.performedById).toBeNull();
+      expect(call.performedByEmail).toBeNull();
+    });
+
+    it('assignRole emits UPDATE audit with previous and new role', async () => {
+      const result = await service.assignRole(1, 'admin' as any, mockPerformer);
+
+      expect(result.role).toBe('admin');
+      expect(auditService.log).toHaveBeenCalledTimes(1);
+      const call = auditService.log.mock.calls[0][0];
+      expect(call.entityName).toBe('User');
+      expect(call.entityId).toBe('1');
+      expect(call.action).toBe(AuditAction.UPDATE);
+      expect(call.performedById).toBe(10);
+      expect(call.previousValues).toEqual({ role: 'user' });
+      expect(call.newValues).toEqual({ role: 'admin' });
+    });
+
+    it('restoreUser emits UPDATE audit with restoration context', async () => {
+      usersRepository.findOneBy.mockResolvedValueOnce({
+        ...mockUser,
+        role: 'verified_user',
+      });
+      const result = await service.restoreUser(1, mockPerformer);
+
+      expect(result).toEqual({ restored: true, id: 1 });
+      expect(auditService.log).toHaveBeenCalledTimes(1);
+      const call = auditService.log.mock.calls[0][0];
+      expect(call.entityName).toBe('User');
+      expect(call.entityId).toBe('1');
+      expect(call.action).toBe(AuditAction.UPDATE);
+      expect(call.performedById).toBe(10);
+      expect(call.previousValues).toEqual({ deleted: true });
+      expect(call.newValues).toMatchObject({ restored: true });
+    });
+
+    it('restoreUser does not emit audit when user not found', async () => {
+      usersRepository.restore.mockResolvedValueOnce({ affected: 0 });
+      await expect(service.restoreUser(999, mockPerformer)).rejects.toThrow(
+        HttpException,
+      );
+      expect(auditService.log).not.toHaveBeenCalled();
+    });
+
+    it('audit failure does not block deleteUser', async () => {
+      auditService.log.mockRejectedValueOnce(new Error('DB down'));
+      const result = await service.deleteUser(1, mockPerformer);
+      expect(result).toEqual({ deleted: true, id: 1 });
+    });
+
+    it('audit failure does not block assignRole', async () => {
+      auditService.log.mockRejectedValueOnce(new Error('DB down'));
+      const result = await service.assignRole(1, 'admin' as any, mockPerformer);
+      expect(result.role).toBe('admin');
+    });
+
+    it('audit failure does not block restoreUser', async () => {
+      auditService.log.mockRejectedValueOnce(new Error('DB down'));
+      usersRepository.findOneBy.mockResolvedValueOnce({ ...mockUser });
+      const result = await service.restoreUser(1, mockPerformer);
+      expect(result).toEqual({ restored: true, id: 1 });
+    });
   });
 });
