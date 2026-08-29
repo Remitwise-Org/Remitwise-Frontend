@@ -1,0 +1,25 @@
+[package]
+name = "stellar-insured-emergency-killswitch"
+version = "1.0.0"
+authors = ["Stellar Insured Team"]
+edition = "2021"
+description = "Emergency killswitch: versioned, auditable pause, recovery, threshold approval, and admin rotation"
+license = "MIT"
+publish = false
+
+[lib]
+name = "stellar_insured_emergency_killswitch"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+soroban-sdk = { workspace = true }
+stellar-insured-lib = { path = "../lib" }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
+
+[features]
+default = ["std"]
+std = ["soroban-sdk/testutils"]
+testutils = ["soroban-sdk/testutils"]
