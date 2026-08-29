@@ -49,6 +49,17 @@ export class RefreshTokenProvider {
     private readonly auditService: AuditService,
   ) {}
 
+  /**
+   * Refresh a session's tokens using a create-before-revoke pattern.
+   *
+   * Atomicity guarantee:
+   * 1. Generate and persist the new token pair **first**.
+   * 2. Only then revoke the old refresh token.
+   * 3. If generation or save fails, the old token remains valid —
+   *    the client can retry with the same (still-valid) refresh token.
+   * 4. Audit logging is fire-and-forget: a failed audit write never
+   *    prevents the refresh from succeeding.
+   */
   public async refreshToken(
     refreshTokendto: RefreshTokenDto,
     userAgent?: string,
@@ -95,11 +106,7 @@ export class RefreshTokenProvider {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      await this.refreshTokenRepository.update(
-        { jti, userId: user.id },
-        { revokedAt: new Date() },
-      );
-
+      // -- Step 1: Generate and persist NEW tokens BEFORE revoking old ---
       const tokens = await this.generateTokenProvider.generateTokens(user);
       const newRefreshToken = await this.refreshTokenRepository.save({
         jti: tokens.jti,
@@ -113,13 +120,24 @@ export class RefreshTokenProvider {
         ...(await this.encryptRefreshToken(tokens.refresh_token, user)),
       });
 
-      await this.auditService.log({
-        entityName: 'Session',
-        entityId: newRefreshToken.id,
-        action: AuditAction.REFRESH,
-        performedById: user.id,
-        performedByEmail: user.email,
-      });
+      // -- Step 2: Only now revoke the old refresh token ------------------
+      await this.refreshTokenRepository.update(
+        { jti, userId: user.id },
+        { revokedAt: new Date() },
+      );
+
+      // -- Step 3: Audit (fire-and-forget — never blocks refresh) ---------
+      this.auditService
+        .log({
+          entityName: 'Session',
+          entityId: newRefreshToken.id,
+          action: AuditAction.REFRESH,
+          performedById: user.id,
+          performedByEmail: user.email,
+        })
+        .catch(() => {
+          /* audit failure is non-blocking */
+        });
 
       return {
         access_token: tokens.access_token,
@@ -133,6 +151,12 @@ export class RefreshTokenProvider {
     }
   }
 
+  /**
+   * Revoke a single refresh token.
+   *
+   * Audit logging is fire-and-forget: a failed audit write never
+   * prevents the logout from succeeding.
+   */
   public async logout(refreshTokendto: RefreshTokenDto) {
     try {
       const payload = await this.jwtService.verifyAsync(
@@ -158,13 +182,18 @@ export class RefreshTokenProvider {
         { revokedAt: new Date() },
       );
 
-      await this.auditService.log({
-        entityName: 'Session',
-        entityId: jti,
-        action: AuditAction.LOGOUT,
-        performedById: user.id,
-        performedByEmail: user.email,
-      });
+      // Audit is fire-and-forget — a failed audit write never blocks logout.
+      this.auditService
+        .log({
+          entityName: 'Session',
+          entityId: jti,
+          action: AuditAction.LOGOUT,
+          performedById: user.id,
+          performedByEmail: user.email,
+        })
+        .catch(() => {
+          /* audit failure is non-blocking */
+        });
 
       return { message: 'Logged out successfully' };
     } catch (error) {
@@ -174,6 +203,12 @@ export class RefreshTokenProvider {
     }
   }
 
+  /**
+   * Revoke all refresh tokens for a user.
+   *
+   * Audit logging is fire-and-forget: a failed audit write never
+   * prevents the logout-all from succeeding.
+   */
   public async logoutAll(userId: number) {
     await this.refreshTokenRepository.update(
       { userId, revokedAt: null },
@@ -188,12 +223,17 @@ export class RefreshTokenProvider {
       // ignore
     }
 
-    await this.auditService.log({
-      entityName: 'Session',
-      action: AuditAction.LOGOUT_ALL,
-      performedById: userId,
-      performedByEmail: email,
-    });
+    // Audit is fire-and-forget — a failed audit write never blocks logout-all.
+    this.auditService
+      .log({
+        entityName: 'Session',
+        action: AuditAction.LOGOUT_ALL,
+        performedById: userId,
+        performedByEmail: email,
+      })
+      .catch(() => {
+        /* audit failure is non-blocking */
+      });
 
     return { message: 'All sessions revoked successfully' };
   }

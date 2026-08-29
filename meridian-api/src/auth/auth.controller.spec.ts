@@ -168,7 +168,7 @@ describe('AuthController (integration)', () => {
     expect(authService.logoutAll).toHaveBeenCalledWith(42);
   });
 
-  it('POST /auth/logout-all returns 500 when the user payload has no numeric sub', async () => {
+  it('POST /auth/logout-all returns 400 when the user payload has no numeric sub', async () => {
     await app.close();
     const moduleRef = await Test.createTestingModule({
       controllers: [AuthController],
@@ -180,6 +180,6 @@ describe('AuthController (integration)', () => {
     app = moduleRef.createNestApplication();
     await app.init();
 
-    await request(app.getHttpServer()).post('/auth/logout-all').expect(500);
+    await request(app.getHttpServer()).post('/auth/logout-all').expect(400);
   });
 });

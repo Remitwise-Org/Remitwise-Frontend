@@ -25,4 +25,4 @@ pub mod validation;
 pub use errors::AuthError;
 pub use flows::{LoginResult, Session, Verifier};
 pub use recovery::{RecoveryRequest, RecoveryResult, RecoveryToken};
-pub use tokens::{RefreshToken, TokenPair, TokenStore, VerifyResult};
+pub use tokens::{RefreshToken, TokenPair, TokenStore, TokenStoreSnapshot, VerifyResult};
