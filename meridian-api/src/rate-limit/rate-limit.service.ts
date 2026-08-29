@@ -1,6 +1,13 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { REDIS_CLIENT, RateLimitTier } from './rate-limit.constants';
+import {
+  RATE_LIMIT_MAX_ABUSE_THRESHOLD,
+  RATE_LIMIT_MAX_LIMIT,
+  RATE_LIMIT_MAX_WINDOW_MS,
+  RATE_LIMIT_MIN_WINDOW_MS,
+  REDIS_CLIENT,
+  RateLimitTier,
+} from './rate-limit.constants';
 import {
   MemoryRateLimitStore,
   RedisRateLimitStore,
@@ -36,32 +43,93 @@ export class RateLimitService {
     }
   }
 
+  private clampInteger(
+    value: number | undefined,
+    fallback: number,
+    min: number,
+    max: number,
+  ): number {
+    const parsed = Number(value ?? fallback);
+    if (!Number.isFinite(parsed)) {
+      return fallback;
+    }
+    return Math.min(Math.max(Math.trunc(parsed), min), max);
+  }
+
+  private clampFloat(
+    value: number | undefined,
+    fallback: number,
+    min: number,
+    max: number,
+  ): number {
+    const parsed = Number(value ?? fallback);
+    if (!Number.isFinite(parsed)) {
+      return fallback;
+    }
+    return Math.min(Math.max(parsed, min), max);
+  }
+
   get windowMs(): number {
-    return Number(this.config.get('RATE_LIMIT_WINDOW_MS') ?? 60_000);
+    return this.clampInteger(
+      this.config.get('RATE_LIMIT_WINDOW_MS'),
+      60_000,
+      RATE_LIMIT_MIN_WINDOW_MS,
+      RATE_LIMIT_MAX_WINDOW_MS,
+    );
   }
 
   get readLimit(): number {
-    return Number(this.config.get('RATE_LIMIT_READ_LIMIT') ?? 100);
+    return this.clampInteger(
+      this.config.get('RATE_LIMIT_READ_LIMIT'),
+      100,
+      1,
+      RATE_LIMIT_MAX_LIMIT,
+    );
   }
 
   get writeLimit(): number {
-    return Number(this.config.get('RATE_LIMIT_WRITE_LIMIT') ?? 20);
+    return this.clampInteger(
+      this.config.get('RATE_LIMIT_WRITE_LIMIT'),
+      20,
+      1,
+      RATE_LIMIT_MAX_LIMIT,
+    );
   }
 
   get authMultiplier(): number {
-    return Number(this.config.get('RATE_LIMIT_AUTH_MULTIPLIER') ?? 3);
+    return this.clampFloat(
+      this.config.get('RATE_LIMIT_AUTH_MULTIPLIER'),
+      3,
+      1,
+      100,
+    );
   }
 
   get abuseThreshold(): number {
-    return Number(this.config.get('RATE_LIMIT_ABUSE_THRESHOLD') ?? 5);
+    return this.clampInteger(
+      this.config.get('RATE_LIMIT_ABUSE_THRESHOLD'),
+      5,
+      1,
+      RATE_LIMIT_MAX_ABUSE_THRESHOLD,
+    );
   }
 
   get abuseWindowMs(): number {
-    return Number(this.config.get('RATE_LIMIT_ABUSE_WINDOW_MS') ?? 60_000);
+    return this.clampInteger(
+      this.config.get('RATE_LIMIT_ABUSE_WINDOW_MS'),
+      60_000,
+      RATE_LIMIT_MIN_WINDOW_MS,
+      RATE_LIMIT_MAX_WINDOW_MS,
+    );
   }
 
   get abuseFactor(): number {
-    return Number(this.config.get('RATE_LIMIT_ABUSE_FACTOR') ?? 0.5);
+    return this.clampFloat(
+      this.config.get('RATE_LIMIT_ABUSE_FACTOR'),
+      0.5,
+      0.1,
+      1,
+    );
   }
 
   baseLimit(tier: RateLimitTier): number {
@@ -92,17 +160,37 @@ export class RateLimitService {
     windowMs?: number;
   }): Promise<RateLimitDecision> {
     const { subject, id } = this.resolveSubject(params.userId, params.ip);
-    const windowMs = params.windowMs ?? this.windowMs;
-    let limit = params.limit ?? this.baseLimit(params.tier);
+    const windowMs = this.clampInteger(
+      params.windowMs,
+      this.windowMs,
+      RATE_LIMIT_MIN_WINDOW_MS,
+      RATE_LIMIT_MAX_WINDOW_MS,
+    );
+    const baseLimit = this.baseLimit(params.tier);
+    const requestedLimit =
+      params.limit == null
+        ? baseLimit
+        : this.clampInteger(params.limit, baseLimit, 1, RATE_LIMIT_MAX_LIMIT);
+    let limit = requestedLimit;
 
-    if (subject === 'user' && params.limit === undefined) {
-      limit = Math.max(1, Math.floor(limit * this.authMultiplier));
+    if (subject === 'user' && params.limit == null) {
+      limit = this.clampInteger(
+        Math.floor(limit * this.authMultiplier),
+        limit,
+        1,
+        RATE_LIMIT_MAX_LIMIT,
+      );
     }
 
     const denials = await this.store.getNumber(`rl:abuse:${id}`);
     const adaptive = denials >= this.abuseThreshold;
     if (adaptive) {
-      limit = Math.max(1, Math.floor(limit * this.abuseFactor));
+      limit = this.clampInteger(
+        Math.floor(limit * this.abuseFactor),
+        1,
+        1,
+        RATE_LIMIT_MAX_LIMIT,
+      );
     }
 
     const nowMs = Date.now();

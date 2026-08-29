@@ -63,7 +63,10 @@ describe('CustomThrottlerGuard', () => {
     await expect(guard.canActivate(context)).resolves.toBe(true);
     expect(setHeader).toHaveBeenCalledWith(RATE_LIMIT_HEADERS.LIMIT, 100);
     expect(setHeader).toHaveBeenCalledWith(RATE_LIMIT_HEADERS.REMAINING, 99);
-    expect(setHeader).toHaveBeenCalledWith(RATE_LIMIT_HEADERS.RESET, 1_700_000_000);
+    expect(setHeader).toHaveBeenCalledWith(
+      RATE_LIMIT_HEADERS.RESET,
+      1_700_000_000,
+    );
   });
 
   it('throws 429 and sets Retry-After when the quota is exhausted', async () => {
@@ -79,6 +82,8 @@ describe('CustomThrottlerGuard', () => {
         subject: 'ip',
         adaptive: false,
       }),
+      baseLimit: jest.fn().mockReturnValue(20),
+      windowMs: 60_000,
     } as unknown as RateLimitService;
     const guard = new CustomThrottlerGuard(reflector, rateLimits, config());
     const { context, setHeader } = httpContext({
@@ -86,8 +91,8 @@ describe('CustomThrottlerGuard', () => {
       ip: '10.0.0.1',
     });
 
-    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(
-      ThrottlerException,
+    await expect(guard.canActivate(context)).rejects.toThrow(
+      'Rate limit exceeded for write requests',
     );
     expect(setHeader).toHaveBeenCalledWith(RATE_LIMIT_HEADERS.LIMIT, 20);
     expect(setHeader).toHaveBeenCalledWith(
@@ -124,8 +129,7 @@ describe('CustomThrottlerGuard', () => {
 
     const allowed = outcomes.filter((o) => o.status === 'fulfilled').length;
     const blocked = outcomes.filter(
-      (o) =>
-        o.status === 'rejected' && o.reason instanceof ThrottlerException,
+      (o) => o.status === 'rejected' && o.reason instanceof ThrottlerException,
     ).length;
     expect(allowed).toBe(20);
     expect(blocked).toBe(20);
@@ -133,7 +137,11 @@ describe('CustomThrottlerGuard', () => {
 
   it('is a no-op when RATE_LIMIT_ENABLED is false', async () => {
     const rateLimits = { consume: jest.fn() } as unknown as RateLimitService;
-    const guard = new CustomThrottlerGuard(reflector, rateLimits, config(false));
+    const guard = new CustomThrottlerGuard(
+      reflector,
+      rateLimits,
+      config(false),
+    );
     const { context } = httpContext({ method: 'POST' });
     await expect(guard.canActivate(context)).resolves.toBe(true);
     expect(rateLimits.consume).not.toHaveBeenCalled();
