@@ -110,6 +110,38 @@ const initialState: EmergencyTransferState = {
   events: [],
 }
 
+// ---------------------------------------------------------------------------
+// Transition matrix
+// ---------------------------------------------------------------------------
+
+/**
+ * Legal transition matrix: maps each action type to the set of phases from
+ * which it may fire.  Any dispatch that violates this matrix is silently
+ * ignored — the reducer is a pure state machine and only advances on legal
+ * transitions.
+ *
+ * Actions not listed here (RESET, APPEND_EVENT, START_REVIEW) are universal:
+ *  - RESET: always allowed (resets to initial state)
+ *  - APPEND_EVENT: always allowed (append-only audit trail)
+ *  - START_REVIEW: always allowed (resets state for a new review cycle)
+ */
+/** @internal exported for testing only */
+export const VALID_TRANSITIONS: Partial<Record<Action['type'], readonly TransferPhase[]>> = {
+  ACKNOWLEDGE_RISK:  ['reviewing'],
+  UNACKNOWLEDGE_RISK: ['reviewing'],
+  BIND_CONFIRMATION: ['reviewing'],
+  SUBMIT:            ['confirmed'],
+  SUBMIT_SUCCESS:    ['submitting'],
+  SUBMIT_FAILURE:    ['submitting'],
+  DUPLICATE_BLOCKED: ['submitting'],
+  // EXPIRE and UNAUTHORIZED can originate from idle (pre-review policy checks
+  // in startReview) as well as the active review/submit lifecycle phases.
+  EXPIRE:            ['idle', 'reviewing', 'confirmed', 'submitting'],
+  CONFIG_CHANGED:    ['reviewing', 'confirmed', 'submitting'],
+  UNAUTHORIZED:      ['idle', 'reviewing', 'confirmed', 'submitting'],
+  DISMISS:           ['reviewing', 'confirmed', 'submitting', 'failed', 'expired', 'config_changed', 'unauthorized'],
+}
+
 function appendEvent(
   state: EmergencyTransferState,
   event: EmergencyTransferEvent,
@@ -121,6 +153,12 @@ function reducer(
   state: EmergencyTransferState,
   action: Action,
 ): EmergencyTransferState {
+  // ---- Transition matrix guard ----
+  const allowed = VALID_TRANSITIONS[action.type]
+  if (allowed && !allowed.includes(state.phase)) {
+    return state // illegal transition — no-op
+  }
+
   switch (action.type) {
     case 'START_REVIEW': {
       const event = createEvent<EmergencyTransferEvent>({
@@ -216,6 +254,7 @@ function reducer(
     }
 
     case 'DUPLICATE_BLOCKED': {
+      if (state.phase !== 'submitting') return state
       const event = createEvent<EmergencyTransferEvent>({
         eventType: 'DUPLICATE_BLOCKED',
         configSnapshot: state.reviewedConfig!,
@@ -226,6 +265,7 @@ function reducer(
 
     case 'EXPIRE': {
       if (
+        state.phase !== 'idle' &&
         state.phase !== 'reviewing' &&
         state.phase !== 'confirmed' &&
         state.phase !== 'submitting'
@@ -247,7 +287,12 @@ function reducer(
     }
 
     case 'CONFIG_CHANGED': {
-      if (state.reviewedConfig === null) return state
+      if (
+        state.phase !== 'reviewing' &&
+        state.phase !== 'confirmed' &&
+        state.phase !== 'submitting'
+      )
+      return state
       const event = createEvent<EmergencyTransferEvent>({
         eventType: 'CONFIG_CHANGED',
         configSnapshot: state.reviewedConfig,
@@ -265,6 +310,13 @@ function reducer(
     }
 
     case 'UNAUTHORIZED': {
+      if (
+        state.phase !== 'idle' &&
+        state.phase !== 'reviewing' &&
+        state.phase !== 'confirmed' &&
+        state.phase !== 'submitting'
+      )
+        return state
       const event = createEvent<EmergencyTransferEvent>({
         eventType: 'UNAUTHORIZED',
         configSnapshot: state.reviewedConfig ?? ({} as EmergencyTransferConfig),
