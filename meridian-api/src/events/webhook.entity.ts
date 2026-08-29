@@ -56,4 +56,8 @@ export class Webhook {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Exclude()
+  @VersionColumn()
+  version: number;
 }
