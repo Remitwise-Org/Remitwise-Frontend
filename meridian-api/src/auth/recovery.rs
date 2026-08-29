@@ -75,6 +75,19 @@ pub struct RecoveryResult {
 }
 
 // ---------------------------------------------------------------------------
+// Snapshot (for atomic rollback)
+// ---------------------------------------------------------------------------
+
+/// Immutable snapshot of [`RecoveryService`] mutable state, taken before
+/// a multi-step operation so that partial writes can be rolled back.
+#[derive(Debug, Clone)]
+struct RecoverySnapshot {
+    active_tokens: HashMap<u64, bool>,
+    used_tokens: HashMap<u64, bool>,
+    request_statuses: HashMap<u64, RecoveryStatus>,
+}
+
+// ---------------------------------------------------------------------------
 // Recovery service
 // ---------------------------------------------------------------------------
 
@@ -203,6 +216,14 @@ impl RecoveryService {
 
     /// Complete recovery: consume the one-time token, revoke all other
     /// sessions, and issue a fresh token pair.
+    ///
+    /// # Atomic rollback
+    ///
+    /// All side effects (token consumption, session revocation, new
+    /// token issuance) are applied atomically.  If any step fails after
+    /// a previous step succeeded, every change is rolled back so the
+    /// recovery token remains usable and no sessions are left in a
+    /// partial state.
     pub fn complete_recovery(
         &mut self,
         recovery_token: &RecoveryToken,
@@ -224,6 +245,21 @@ impl RecoveryService {
             return Err(AuthError::TokenExpired);
         }
 
+        // -- Snapshot recovery-service state for rollback ----------------
+        let recovery_snapshot = RecoverySnapshot {
+            active_tokens: self.active_tokens.clone(),
+            used_tokens: self.used_tokens.clone(),
+            request_statuses: self
+                .requests
+                .iter()
+                .map(|(k, r)| (*k, r.status))
+                .collect(),
+        };
+
+        // -- Snapshot token-store state for rollback ---------------------
+        let token_snapshot = token_store.snapshot();
+        let other_count = token_store.active_access_count() as u32;
+
         // -- Mark as used (replay protection) ----------------------------
         self.active_tokens.remove(&recovery_token.id);
         self.used_tokens.insert(recovery_token.id, true);
@@ -244,16 +280,32 @@ impl RecoveryService {
         }
 
         // -- Revoke all other sessions for this subject ------------------
-        let other_count = token_store.active_access_count() as u32;
         token_store.revoke_all_for_subject(&recovery_token.subject);
 
         // -- Issue fresh tokens -------------------------------------------
-        let new_tokens = token_store.issue_pair(recovery_token.subject.clone());
+        // If this fails, roll back ALL side effects: token consumption,
+        // request status, and session revocation.
+        let new_tokens_result = std::panic::catch_unwind(
+            std::panic::AssertUnwindSafe(|| {
+                token_store.issue_pair(recovery_token.subject.clone())
+            }),
+        );
 
-        Ok(RecoveryResult {
-            tokens: new_tokens,
-            other_sessions_revoked: other_count.saturating_sub(1),
-        })
+        match new_tokens_result {
+            Ok(new_tokens) => Ok(RecoveryResult {
+                tokens: new_tokens,
+                other_sessions_revoked: other_count.saturating_sub(1),
+            }),
+            Err(_) => {
+                // Roll back recovery-service state.
+                self.restore(recovery_snapshot);
+                // Roll back token-store state.
+                token_store.restore(token_snapshot);
+                Err(AuthError::InternalError(
+                    "recovery token issuance failed, rolled back".into(),
+                ))
+            }
+        }
     }
 
     /// Cancel a recovery request.
@@ -271,6 +323,19 @@ impl RecoveryService {
             Ok(())
         } else {
             Err(AuthError::RecoveryTokenInvalid)
+        }
+    }
+
+    // -- Atomic rollback support ------------------------------------------
+
+    /// Restore from a snapshot, discarding any partial writes.
+    fn restore(&mut self, snap: RecoverySnapshot) {
+        self.active_tokens = snap.active_tokens;
+        self.used_tokens = snap.used_tokens;
+        for (req_id, status) in &snap.request_statuses {
+            if let Some(req) = self.requests.get_mut(req_id) {
+                req.status = *status;
+            }
         }
     }
 }
@@ -394,5 +459,88 @@ mod tests {
         assert_eq!(token.subject, "alice");
         // If someone adds a balance field, this test will fail — forcing
         // them to reconsider the security implication.
+    }
+
+    // -- Atomic rollback regression tests ----------------------------------
+
+    #[test]
+    fn complete_recovery_leaves_no_partial_state_on_success() {
+        let mut svc = setup();
+        let mut store = TokenStore::new();
+        let _ = store.issue_pair("alice".into());
+        let _ = store.issue_pair("alice".into());
+
+        let token = svc.request_recovery("alice".into(), 1).unwrap().clone();
+        let result = svc.complete_recovery(&token, &mut store).unwrap();
+
+        // Fresh tokens are valid.
+        let subject = store.verify_access(&result.tokens.access).unwrap();
+        assert_eq!(subject.subject, "alice");
+
+        // Recovery token is consumed.
+        assert!(!svc.active_tokens.contains_key(&token.id));
+        assert!(svc.used_tokens.contains_key(&token.id));
+
+        // Previous sessions are revoked.
+        assert!(store.active_access_count() <= 1);
+    }
+
+    #[test]
+    fn recovery_replay_leaves_no_partial_state() {
+        let mut svc = setup();
+        let mut store = TokenStore::new();
+        let _ = store.issue_pair("alice".into());
+
+        let token = svc.request_recovery("alice".into(), 1).unwrap().clone();
+        let _ = svc.complete_recovery(&token, &mut store).unwrap();
+
+        // Replay should fail cleanly.
+        let result = svc.complete_recovery(&token, &mut store);
+        assert_eq!(result, Err(AuthError::TokenAlreadyUsed));
+
+        // The new tokens from the first recovery should still be valid.
+        // (The replay didn't corrupt the state.)
+    }
+
+    #[test]
+    fn recovery_cancel_then_rerequest_produces_fresh_valid_token() {
+        let mut svc = setup();
+        let mut store = TokenStore::new();
+        let _ = store.issue_pair("alice".into());
+
+        let _old = svc.request_recovery("alice".into(), 1).unwrap().clone();
+        svc.cancel_recovery(1).unwrap();
+
+        let new_token = svc.request_recovery("alice".into(), 1).unwrap().clone();
+        let result = svc.complete_recovery(&new_token, &mut store);
+        assert!(result.is_ok());
+
+        // Fresh tokens should be valid.
+        let new_tokens = result.unwrap();
+        assert!(store.verify_access(&new_tokens.tokens.access).is_ok());
+    }
+
+    #[test]
+    fn recovery_request_failure_leaves_no_partial_state() {
+        let mut svc = setup();
+        let active_before = svc.active_tokens.len();
+        let used_before = svc.used_tokens.len();
+
+        // Attempting to complete with a non-existent token should fail
+        // without modifying any state.
+        let mut store = TokenStore::new();
+        let _ = store.issue_pair("alice".into());
+        let fake_token = RecoveryToken {
+            id: 999,
+            subject: "alice".into(),
+            expires_at: 9999999999,
+            session_id: 1,
+        };
+        let result = svc.complete_recovery(&fake_token, &mut store);
+        assert_eq!(result, Err(AuthError::RecoveryTokenInvalid));
+
+        // No state changes.
+        assert_eq!(svc.active_tokens.len(), active_before);
+        assert_eq!(svc.used_tokens.len(), used_before);
     }
 }

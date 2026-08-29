@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   HttpCode,
@@ -98,7 +99,7 @@ export class AuthController {
     const userId = Number(user?.sub);
 
     if (!Number.isFinite(userId)) {
-      throw new Error('Invalid user payload');
+      throw new BadRequestException('Invalid user payload');
     }
 
     return this.authService.logoutAll(userId);

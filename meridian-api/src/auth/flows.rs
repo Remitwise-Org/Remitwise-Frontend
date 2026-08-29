@@ -227,11 +227,24 @@ impl AuthService {
     // -- Logout ------------------------------------------------------------
 
     /// Log out a single session.  Revokes the tokens for that session.
+    ///
+    /// # Atomic rollback
+    ///
+    /// Token revocation and session supersession are applied together.
+    /// A failure in either step rolls back the other, so callers never
+    /// observe a partially-logged-out session.
     pub fn logout(&mut self, session_id: u64) -> Result<(), AuthError> {
         let session = self
             .sessions
             .get(&session_id)
             .ok_or(AuthError::SessionNotFound)?;
+
+        // Snapshot both stores so we can roll back on failure.
+        let token_snapshot = self.store.snapshot();
+        let session_superseded = self
+            .sessions
+            .get(&session_id)
+            .map(|s| s.superseded);
 
         self.store.revoke(session.tokens.access.id);
         self.store.revoke(session.tokens.refresh.id);
@@ -240,10 +253,31 @@ impl AuthService {
             s.superseded = true;
         }
 
+        // Validate that revocation succeeded — if not, roll back.
+        if !self.store.is_revoked(session.tokens.access.id)
+            || !self.store.is_revoked(session.tokens.refresh.id)
+        {
+            self.store.restore(token_snapshot);
+            if let Some(superseded) = session_superseded {
+                if let Some(s) = self.sessions.get_mut(&session_id) {
+                    s.superseded = superseded;
+                }
+            }
+            return Err(AuthError::InternalError(
+                "logout partial failure, rolled back".into(),
+            ));
+        }
+
         Ok(())
     }
 
     /// Log out all sessions for a subject (e.g. "log out everywhere").
+    ///
+    /// # Atomic rollback
+    ///
+    /// All token revocations and session supersessions are collected,
+    /// then applied.  If any step fails, every applied change is
+    /// rolled back so no session is left in a half-logged-out state.
     pub fn logout_all(&mut self, subject: &str) -> Result<u32, AuthError> {
         let ids: Vec<u64> = self
             .sessions
@@ -254,15 +288,47 @@ impl AuthService {
 
         let count = ids.len() as u32;
 
-        for id in ids {
-            if let Some(session) = self.sessions.get_mut(&id) {
+        // Snapshot before making any changes.
+        let token_snapshot = self.store.snapshot();
+        let session_snapshots: Vec<(u64, bool)> = ids
+            .iter()
+            .map(|&id| {
+                let superseded = self.sessions.get(&id).map(|s| s.superseded).unwrap_or(false);
+                (id, superseded)
+            })
+            .collect();
+
+        for id in &ids {
+            if let Some(session) = self.sessions.get(id) {
                 self.store.revoke(session.tokens.access.id);
                 self.store.revoke(session.tokens.refresh.id);
-                session.superseded = true;
+            }
+            if let Some(s) = self.sessions.get_mut(id) {
+                s.superseded = true;
             }
         }
 
         self.store.revoke_all_for_subject(subject);
+
+        // Validate that all revocations succeeded.
+        for id in &ids {
+            if let Some(session) = self.sessions.get(id) {
+                if !self.store.is_revoked(session.tokens.access.id)
+                    || !self.store.is_revoked(session.tokens.refresh.id)
+                {
+                    // Roll back everything.
+                    self.store.restore(token_snapshot);
+                    for (sid, superseded) in &session_snapshots {
+                        if let Some(s) = self.sessions.get_mut(sid) {
+                            s.superseded = *superseded;
+                        }
+                    }
+                    return Err(AuthError::InternalError(
+                        "logout_all partial failure, rolled back".into(),
+                    ));
+                }
+            }
+        }
 
         Ok(count)
     }
@@ -278,11 +344,53 @@ impl AuthService {
     // -- Refresh (via token store) ----------------------------------------
 
     /// Refresh a session's tokens.
+    ///
+    /// # Atomic rollback
+    ///
+    /// After a successful token rotation the session record is updated
+    /// to hold the new token pair.  If the session update fails after
+    /// token rotation, the token store is rolled back to its pre-refresh
+    /// snapshot so the old tokens remain valid.
     pub fn refresh_session(
         &mut self,
         refresh_token: &RefreshToken,
     ) -> Result<TokenPair, AuthError> {
-        self.store.refresh(refresh_token)
+        // Snapshot the token store before rotation.
+        let token_snapshot = self.store.snapshot();
+        let session_snapshots: Vec<(u64, TokenPair)> = self
+            .sessions
+            .values()
+            .filter(|s| s.subject == refresh_token.subject && !s.superseded)
+            .map(|s| (s.id, s.tokens.clone()))
+            .collect();
+
+        let new_pair = self.store.refresh(refresh_token)?;
+
+        // Update session records to hold the new tokens.
+        let mut updated_any = false;
+        for (session_id, _) in &session_snapshots {
+            if let Some(session) = self.sessions.get_mut(session_id) {
+                session.tokens = new_pair.clone();
+                session.last_activity_at = Self::now_secs();
+                updated_any = true;
+            }
+        }
+
+        // If the session update failed to apply to any session, roll back
+        // the token store so old tokens remain usable.
+        if !updated_any && !session_snapshots.is_empty() {
+            self.store.restore(token_snapshot);
+            for (session_id, old_tokens) in &session_snapshots {
+                if let Some(session) = self.sessions.get_mut(session_id) {
+                    session.tokens = old_tokens.clone();
+                }
+            }
+            return Err(AuthError::InternalError(
+                "refresh session update failed, rolled back".into(),
+            ));
+        }
+
+        Ok(new_pair)
     }
 
     // -- Accessors --------------------------------------------------------
@@ -491,5 +599,104 @@ mod tests {
         // Replay old refresh token.
         let result = auth.refresh_session(&lr.tokens.refresh);
         assert_eq!(result, Err(AuthError::TokenAlreadyUsed));
+    }
+
+    // -- Atomic rollback regression tests ---------------------------------
+
+    #[test]
+    fn refresh_updates_session_tokens() {
+        let mut auth = setup();
+        let lr = auth.login("alice".into(), "password", None).unwrap();
+        let session_id = lr.session.id;
+
+        let new_pair = auth.refresh_session(&lr.tokens.refresh).unwrap();
+
+        // The session should now hold the new tokens.
+        let session = auth.sessions.get(&session_id).unwrap();
+        assert_eq!(session.tokens.access.id, new_pair.access.id);
+        assert_eq!(session.tokens.refresh.id, new_pair.refresh.id);
+    }
+
+    #[test]
+    fn refresh_old_access_token_invalidated() {
+        let mut auth = setup();
+        let lr = auth.login("alice".into(), "password", None).unwrap();
+        let old_access = lr.tokens.access.clone();
+
+        let _ = auth.refresh_session(&lr.tokens.refresh).unwrap();
+
+        // Old access token should be revoked.
+        assert!(auth.store().is_revoked(old_access.id));
+    }
+
+    #[test]
+    fn refresh_new_access_token_valid() {
+        let mut auth = setup();
+        let lr = auth.login("alice".into(), "password", None).unwrap();
+
+        let new_pair = auth.refresh_session(&lr.tokens.refresh).unwrap();
+
+        // New access token should be valid.
+        let subject = auth.verify_token(&new_pair.access).unwrap();
+        assert_eq!(subject, "alice");
+    }
+
+    #[test]
+    fn logout_revokes_tokens_and_supersedes_session() {
+        let mut auth = setup();
+        let lr = auth.login("alice".into(), "password", None).unwrap();
+        let session_id = lr.session.id;
+
+        auth.logout(session_id).unwrap();
+
+        // Tokens are revoked.
+        assert!(auth.store().is_revoked(lr.tokens.access.id));
+        assert!(auth.store().is_revoked(lr.tokens.refresh.id));
+        // Session is superseded.
+        assert!(auth.sessions.get(&session_id).unwrap().superseded);
+    }
+
+    #[test]
+    fn logout_all_supersedes_all_sessions() {
+        let mut auth = setup();
+        let lr1 = auth.login("alice".into(), "password", None).unwrap();
+        let lr2 = auth.login("alice".into(), "password", None).unwrap();
+
+        let count = auth.logout_all("alice").unwrap();
+        assert_eq!(count, 2);
+
+        assert!(auth.sessions.get(&lr1.session.id).unwrap().superseded);
+        assert!(auth.sessions.get(&lr2.session.id).unwrap().superseded);
+        assert!(auth.store().is_revoked(lr1.tokens.access.id));
+        assert!(auth.store().is_revoked(lr2.tokens.access.id));
+    }
+
+    #[test]
+    fn login_failure_leaves_no_partial_state() {
+        let mut auth = setup();
+        let session_count_before = auth.session_count();
+        let token_count_before = auth.store().active_access_count();
+
+        // Failed login (empty password).
+        let _ = auth.login("alice".into(), "", None);
+
+        // No new sessions or tokens should exist.
+        assert_eq!(auth.session_count(), session_count_before);
+        assert_eq!(auth.store().active_access_count(), token_count_before);
+    }
+
+    #[test]
+    fn login_lockout_leaves_no_partial_state() {
+        let mut auth = setup();
+        let session_count_before = auth.session_count();
+
+        for _ in 0..5 {
+            let _ = auth.login("alice".into(), "", None);
+        }
+        let result = auth.login("alice".into(), "", None);
+        assert!(matches!(result, Err(AuthError::AccountLocked { .. })));
+
+        // No sessions created.
+        assert_eq!(auth.session_count(), session_count_before);
     }
 }

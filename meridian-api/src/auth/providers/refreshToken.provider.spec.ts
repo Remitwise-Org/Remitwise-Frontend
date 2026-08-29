@@ -260,4 +260,95 @@ describe('RefreshTokenProvider', () => {
       expect(result).toEqual({ message: 'All sessions revoked successfully' });
     });
   });
+
+  // -- Atomic rollback regression tests -----------------------------------
+
+  describe('atomic rollback - refreshToken', () => {
+    it('old token remains valid when new token generation fails', async () => {
+      // Simulate failure during token generation (after validation, before save).
+      generateTokenProvider.generateTokens.mockRejectedValueOnce(
+        new Error('token generation failed'),
+      );
+
+      await expect(
+        provider.refreshToken({ refreshToken: 'valid' } as any),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+
+      // The old refresh token should NOT have been revoked — the old
+      // token is still valid so the client can retry.
+      expect(refreshTokenRepository.update).not.toHaveBeenCalled();
+      // No new token should have been saved.
+      expect(refreshTokenRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('old token remains valid when new token save fails', async () => {
+      // Simulate failure during database save (after generation, before revoke).
+      refreshTokenRepository.save.mockRejectedValueOnce(
+        new Error('database write failed'),
+      );
+
+      await expect(
+        provider.refreshToken({ refreshToken: 'valid' } as any),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+
+      // The old refresh token should NOT have been revoked.
+      expect(refreshTokenRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('audit failure does not prevent refresh from succeeding', async () => {
+      // Audit service throws — but refresh should still succeed.
+      auditService.log.mockRejectedValueOnce(new Error('audit db down'));
+
+      const result = await provider.refreshToken({
+        refreshToken: 'valid',
+      } as any);
+
+      // Refresh succeeded despite audit failure.
+      expect(result.access_token).toBe('new-access');
+      expect(result.refresh_token).toBe('new-refresh');
+    });
+
+    it('revocation happens AFTER new token is persisted (create-before-revoke)', async () => {
+      const callOrder: string[] = [];
+
+      refreshTokenRepository.save.mockImplementation(async () => {
+        callOrder.push('save');
+        return { id: 'new-id' };
+      });
+
+      refreshTokenRepository.update.mockImplementation(async () => {
+        callOrder.push('revoke');
+        return undefined;
+      });
+
+      await provider.refreshToken({ refreshToken: 'valid' } as any);
+
+      // save (new token) must happen before revoke (old token).
+      expect(callOrder).toEqual(['save', 'revoke']);
+    });
+  });
+
+  describe('atomic rollback - logout', () => {
+    it('audit failure does not prevent logout from succeeding', async () => {
+      auditService.log.mockRejectedValueOnce(new Error('audit db down'));
+
+      const result = await provider.logout({ refreshToken: 'valid' } as any);
+
+      expect(result).toEqual({ message: 'Logged out successfully' });
+      // The token was still revoked despite audit failure.
+      expect(refreshTokenRepository.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('atomic rollback - logoutAll', () => {
+    it('audit failure does not prevent logout-all from succeeding', async () => {
+      auditService.log.mockRejectedValueOnce(new Error('audit db down'));
+
+      const result = await provider.logoutAll(user.id);
+
+      expect(result).toEqual({ message: 'All sessions revoked successfully' });
+      // Tokens were still revoked despite audit failure.
+      expect(refreshTokenRepository.update).toHaveBeenCalled();
+    });
+  });
 });
