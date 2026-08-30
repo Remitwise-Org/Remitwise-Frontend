@@ -1,4 +1,4 @@
-import { Module, forwardRef, Injectable, NestInterceptor, ExecutionContext, CallHandler, ConflictException, BadRequestException } from '@nestj/common';
+import { Module, forwardRef, Injectable, NestInterceptor, ExecutionContext, CallHandler, ConflictException, BadRequestException } from '@nestjs/common';
 import { AuthService } from './providers/auth.service';
 import { AuthController } from './auth.controller';
 import { UsersModule } from 'src/users/users.module';
@@ -10,7 +10,7 @@ import jwtConfig from './config/jwt.config';
 import { JwtModule } from '@nestjs/jwt';
 import { GenerateTokenProvider } from './providers/token.provider';
 import { RefreshTokenProvider } from './providers/refreshToken.provider';
-import { TypeORMModule, InjectRepository, Repository } from '@nestjs/typeorm';
+import { TypeOrmModule, InjectRepository } from '@nestjs/typeorm';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { VerifyEmailProvider } from './providers/verify-email.provider';
 import {
@@ -19,7 +19,8 @@ import {
 } from './providers/verification-token.provider';
 import { User } from 'src/users/user.entity';
 import { CryptoModule } from 'src/crypto/crypto.module';
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { AuditModule } from 'src/audit/audit.module';
+import { Column, Entity, PrimaryColumn, Repository } from 'typeorm';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Observable, mergeMap, catchError } from 'rxjs';
 
@@ -46,7 +47,7 @@ export class AuthIdempotencyKey {
 export class AuthIdempotencyInterceptor implements NestInterceptor {
   constructor(
     @InjectRepository(AuthIdempotencyKey)
-    private read only repo: Repository<AuthIdempotencyKey>,
+    private readonly repo: Repository<AuthIdempotencyKey>,
   ) {}
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
@@ -113,10 +114,9 @@ export class AuthIdempotencyInterceptor implements NestInterceptor {
 @Module({
   imports: [
     forwardRef(() => UsersModule),
-    ConfigModule.forFeature(
-wtConfig),
+    ConfigModule.forFeature(jwtConfig),
     JwtModule.registerAsync(jwtConfig.asProvider()),
-    TypeORMModule.forFeature([RefreshToken, User, AuthIdempotencyKey]),
+    TypeOrmModule.forFeature([RefreshToken, User, AuthIdempotencyKey]),
     CryptoModule,
     AuditModule,
   ],
