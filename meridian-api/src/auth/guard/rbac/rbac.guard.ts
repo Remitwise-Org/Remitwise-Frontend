@@ -21,6 +21,11 @@ import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
 import { AuditService } from 'src/audit/audit.service';
 import { AuditAction } from 'src/audit/audit-log.entity';
 import { CorrelationIdStore } from 'src/common/correlation/correlation-id.store';
+import {
+  assertWriteBackwardCompatible,
+  AuditCompatibilityError,
+  CURRENT_SCHEMA_VERSION,
+} from '../../../audit/audit-storage.compatibility';
 
 /**
  * Global RBAC guard (issue #632).
@@ -44,6 +49,15 @@ import { CorrelationIdStore } from 'src/common/correlation/correlation-id.store'
 @Injectable()
 export class RbacGuard implements CanActivate {
   private readonly logger = new Logger(RbacGuard.name);
+
+  /**
+   * Idempotency window for audit emission (issue #1679). Repeated or replayed
+   * authorization decisions that share the same identity key within this window
+   * are collapsed into a single audit record so a retried request never leaves
+   * duplicate or partial audit state.
+   */
+  private static readonly AUDIT_DEDUP_TTL_MS = 5_000;
+  private readonly recentAuditKeys = new Map<string, number>();
 
   constructor(
     private readonly reflector: Reflector,
@@ -143,6 +157,14 @@ export class RbacGuard implements CanActivate {
   /**
    * Fire-and-forget audit logging. Failures are caught and logged but never
    * propagate — the authorization decision is always the primary concern.
+   *
+   * Hardened for storage/migration compatibility (issue #1679):
+   *   - repeated/replayed identical decisions are de-duplicated so a retry
+   *     cannot leave duplicate or partial audit state;
+   *   - writes are checked against backward-compatible length bounds so a row
+   *     produced here can always be read by an older reader;
+   *   - if the audit store is unavailable, a structured `audit.degraded_mode`
+   *     marker is emitted so operators can diagnose the gap.
    */
   private async logAuditDecision(
     action: AuditAction,
@@ -152,13 +174,61 @@ export class RbacGuard implements CanActivate {
     reason: string,
     details: Record<string, unknown>,
   ): Promise<void> {
-    try {
-      const handler = context.getHandler();
-      const controllerClass = context.getClass();
-      const route = `${controllerClass.name}.${handler.name}`;
-      const method = request.method ?? 'UNKNOWN';
-      const routePath = request.route?.path ?? 'unknown';
+    const handler = context.getHandler();
+    const controllerClass = context.getClass();
+    const route = `${controllerClass.name}.${handler.name}`;
+    const method = request.method ?? 'UNKNOWN';
+    const routePath = request.route?.path ?? 'unknown';
+    const correlationId = this.correlationIdStore.get() ?? null;
 
+    // Idempotency: collapse repeated/replayed decisions within the TTL window.
+    const dedupKey = [
+      correlationId ?? 'none',
+      route,
+      action,
+      user?.sub ?? 'anon',
+      reason,
+    ].join('|');
+    const now = Date.now();
+    const lastSeen = this.recentAuditKeys.get(dedupKey);
+    if (lastSeen != null && now - lastSeen < RbacGuard.AUDIT_DEDUP_TTL_MS) {
+      return;
+    }
+
+    // Forward-compatibility gate: never emit a row that older readers can't
+    // parse. A violation is degraded (not thrown) — the decision stands.
+    try {
+      assertWriteBackwardCompatible({
+        entityName: 'authorization',
+        entityId: user?.sub != null ? String(user.sub) : null,
+        performedByEmail: user?.email ?? null,
+        ipAddress: request.ip ?? null,
+        correlationId,
+      });
+    } catch (err) {
+      if (err instanceof AuditCompatibilityError) {
+        this.logger.warn(
+          JSON.stringify({
+            msg: 'audit.write_compat_skipped',
+            field: err.field,
+            route,
+            correlationId,
+          }),
+        );
+      }
+    }
+
+    this.recentAuditKeys.set(dedupKey, now);
+    // Best-effort reclaim of stale dedup entries to bound memory.
+    if (this.recentAuditKeys.size > 1000) {
+      for (const [key, ts] of this.recentAuditKeys) {
+        if (now - ts >= RbacGuard.AUDIT_DEDUP_TTL_MS) {
+          this.recentAuditKeys.delete(key);
+        }
+      }
+    }
+
+    try {
       await this.auditService.log({
         entityName: 'authorization',
         entityId: user?.sub != null ? String(user.sub) : null,
@@ -166,6 +236,7 @@ export class RbacGuard implements CanActivate {
         performedById: user?.sub != null ? Number(user.sub) : null,
         performedByEmail: user?.email ?? null,
         ipAddress: request.ip ?? null,
+        correlationId,
         newValues: {
           route,
           method,
@@ -175,6 +246,7 @@ export class RbacGuard implements CanActivate {
           requiredPermissions: details['requiredPermissions'] ?? null,
           missingPermissions: details['missingPermissions'] ?? null,
           userRole: user?.role ?? null,
+          schemaVersion: CURRENT_SCHEMA_VERSION,
         },
       });
     } catch (err) {
@@ -182,7 +254,18 @@ export class RbacGuard implements CanActivate {
         JSON.stringify({
           msg: 'audit.write_failed',
           action,
+          route,
+          correlationId,
           error: err instanceof Error ? err.message : String(err),
+        }),
+      );
+      this.logger.warn(
+        JSON.stringify({
+          msg: 'audit.degraded_mode',
+          action,
+          route,
+          correlationId,
+          note: 'authorization decision remains authoritative; audit store unavailable',
         }),
       );
     }

@@ -89,4 +89,14 @@ export class AuditLog {
   @Column({ type: 'varchar', length: 64, nullable: true })
   @Index()
   correlationId: string | null;
+
+  /**
+   * Compatibility marker (issue #1679). Tags each row with the schema version
+   * that produced it so readers can negotiate forward/backward compatibility
+   * and migrations stay resumable. Legacy rows written before this column
+   * existed are normalized to `null` by readers and treated as readable.
+   */
+  @Column({ type: 'int', nullable: true })
+  @Index()
+  schemaVersion: number | null;
 }
