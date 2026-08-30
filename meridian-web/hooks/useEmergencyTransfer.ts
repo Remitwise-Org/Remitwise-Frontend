@@ -4,7 +4,7 @@
  * Manages the full lifecycle of an emergency-transfer operation:
  *
  *   idle → reviewing → confirmed → submitting → succeeded | failed
- *                   ↘ expired | config_changed | unauthorized | dismissed
+ *                   ↘ expired | config_changed | unauthorized | capability_revoked | dismissed
  *
  * Security guarantees
  * -------------------
@@ -16,10 +16,18 @@
  *      b. The live config still matches the reviewed config (stale-state check).
  *      c. The user is still authorised.
  *      d. No submit is already in flight (duplicate-submit guard).
+ *      e. The server-derived capability is still granted (when a
+ *         `capabilityResolver` is provided).
  * 3. An expiry timer runs while the hook is in the `reviewing` or `confirmed`
  *    state and transitions to `expired` automatically.
  * 4. If the caller replaces `config` between review and sign the hook
  *    transitions to `config_changed` and requires a fresh review.
+ * 5. Capability gating (issue #1633): authority to mutate is re-derived from
+ *    the server, never from the config claim.  `bindConfirmation` refuses to
+ *    bind without a fresh grant; `submit` re-resolves and re-verified the
+ *    capability version.  A denied / expired / version-bumped capability
+ *    transitions to `capability_revoked`, invalidating any pending
+ *    confirmation before the provider is called.
  */
 
 'use client'
@@ -50,6 +58,13 @@ import {
   type ConfirmationPayload,
 } from '@/lib/validations/emergency-transfer'
 
+import {
+  isCapabilityUsable,
+  type GrantedTransferCapability,
+  type TransferCapability,
+} from '@/models/emergency-transfer-capability'
+import type { TransferCapabilityResolver } from '@/lib/api/transfer-capability'
+
 // ---------------------------------------------------------------------------
 // State machine
 // ---------------------------------------------------------------------------
@@ -64,11 +79,15 @@ export type TransferPhase =
   | 'expired'
   | 'config_changed'
   | 'unauthorized'
+  | 'capability_revoked'
   | 'dismissed'
 
 export interface EmergencyTransferState {
   phase: TransferPhase
   riskAcknowledged: boolean
+  /** Explicit server-capability state (issue #1633). `unconfigured` when no
+   *  resolver is provided (legacy behaviour preserved). */
+  capabilityState: 'granted' | 'denied' | 'checking' | 'unconfigured'
   /** Set once `bindConfirmation` succeeds. */
   bindingKey: string | null
   /** The config that was active when review started. */
@@ -95,6 +114,9 @@ type Action =
   | { type: 'EXPIRE' }
   | { type: 'CONFIG_CHANGED'; newConfig: EmergencyTransferConfig }
   | { type: 'UNAUTHORIZED'; reason: string }
+  | { type: 'CAPABILITY_GRANTED'; capability: GrantedTransferCapability }
+  | { type: 'CAPABILITY_CHECKING' }
+  | { type: 'CAPABILITY_REVOKED'; capability: TransferCapability }
   | { type: 'DISMISS' }
   | { type: 'RESET' }
   | { type: 'APPEND_EVENT'; event: EmergencyTransferEvent }
@@ -102,6 +124,7 @@ type Action =
 const initialState: EmergencyTransferState = {
   phase: 'idle',
   riskAcknowledged: false,
+  capabilityState: 'unconfigured',
   bindingKey: null,
   reviewedConfig: null,
   txHash: null,
@@ -139,7 +162,16 @@ export const VALID_TRANSITIONS: Partial<Record<Action['type'], readonly Transfer
   EXPIRE:            ['idle', 'reviewing', 'confirmed', 'submitting'],
   CONFIG_CHANGED:    ['reviewing', 'confirmed', 'submitting'],
   UNAUTHORIZED:      ['idle', 'reviewing', 'confirmed', 'submitting'],
-  DISMISS:           ['reviewing', 'confirmed', 'submitting', 'failed', 'expired', 'config_changed', 'unauthorized'],
+  // CAPABILITY_GRANTED: server re-derived a fresh grant.  Updates the exposed
+  // capability state so the UI shows whether the confirmed action is real.
+  CAPABILITY_GRANTED: ['idle', 'reviewing', 'confirmed', 'submitting'],
+  // CAPABILITY_CHECKING: a capability resolution is in flight.
+  CAPABILITY_CHECKING: ['idle', 'reviewing', 'confirmed', 'submitting'],
+  // CAPABILITY_REVOKED: a server-derived capability is missing / stale /
+  // superseded.  Fireable from any live phase — it invalidates pending
+  // confirmations even while the submit is in flight.
+  CAPABILITY_REVOKED: ['idle', 'reviewing', 'confirmed', 'submitting'],
+  DISMISS:           ['reviewing', 'confirmed', 'submitting', 'succeeded', 'failed', 'expired', 'config_changed', 'unauthorized', 'capability_revoked'],
 }
 
 function appendEvent(
@@ -248,13 +280,18 @@ function reducer(
         bindingKey: state.bindingKey!,
       })
       return appendEvent(
-        { ...state, phase: 'failed', errorMessage: action.errorMessage },
+        { ...state, phase: 'failed', errorMessage: action.errorMessage, bindingKey: null, txHash: null },
         event,
       )
     }
 
     case 'DUPLICATE_BLOCKED': {
-      if (state.phase !== 'submitting') return state
+      // Acceptable from either the previous committed phase or the in-flight
+      // phase: a concurrent submit recorded from a stale 'confirmed' closure
+      // arrives before the SUBMIT dispatch has flushed the phase shift.
+      if (state.phase !== 'submitting' && state.phase !== 'confirmed') {
+        return state
+      }
       const event = createEvent<EmergencyTransferEvent>({
         eventType: 'DUPLICATE_BLOCKED',
         configSnapshot: state.reviewedConfig!,
@@ -279,6 +316,8 @@ function reducer(
         {
           ...state,
           phase: 'expired',
+          bindingKey: null,
+          txHash: null,
           unavailableReason:
             'This transfer configuration has expired. Please start a new review.',
         },
@@ -302,6 +341,8 @@ function reducer(
         {
           ...state,
           phase: 'config_changed',
+          bindingKey: null,
+          txHash: null,
           unavailableReason:
             'Transfer details have changed since review. Please start a new review.',
         },
@@ -330,6 +371,58 @@ function reducer(
         },
         event,
       )
+    }
+
+    case 'CAPABILITY_REVOKED': {
+      if (
+        state.phase !== 'idle' &&
+        state.phase !== 'reviewing' &&
+        state.phase !== 'confirmed' &&
+        state.phase !== 'submitting'
+      )
+        return state
+      const event = createEvent<EmergencyTransferEvent>({
+        eventType: 'UNAUTHORIZED',
+        configSnapshot: state.reviewedConfig ?? ({} as EmergencyTransferConfig),
+        reason: 'Server-derived transfer capability was not granted.',
+      })
+      return appendEvent(
+        {
+          ...state,
+          phase: 'capability_revoked',
+          capabilityState: 'denied',
+          // Never echo the server's internal deny reason to the client — the
+          // capability body may contain policy internals.  The stored message
+          // is deliberately generic.
+          unavailableReason:
+            'Emergency transfer capability is not currently granted. ' +
+            'Your session does not permit this action right now. ' +
+            'Contact your administrator if you believe this is an error.',
+        },
+        event,
+      )
+    }
+
+    case 'CAPABILITY_GRANTED': {
+      if (
+        state.phase !== 'idle' &&
+        state.phase !== 'reviewing' &&
+        state.phase !== 'confirmed' &&
+        state.phase !== 'submitting'
+      )
+        return state
+      return { ...state, capabilityState: 'granted' }
+    }
+
+    case 'CAPABILITY_CHECKING': {
+      if (
+        state.phase !== 'idle' &&
+        state.phase !== 'reviewing' &&
+        state.phase !== 'confirmed' &&
+        state.phase !== 'submitting'
+      )
+        return state
+      return { ...state, capabilityState: 'checking' }
     }
 
     case 'DISMISS': {
@@ -380,6 +473,17 @@ export interface UseEmergencyTransferOptions {
    * Defaults to `Date.now`.
    */
   getNow?: () => number
+  /**
+   * Resolver that derives the current emergency-transfer capability from
+   * server state.  When provided, the confirmation and submit boundaries
+   * become capability-gated: a pending review is invalidated the moment the
+   * server capability is denied, expired, or bumped to a new version
+   * (role removal / policy change).
+   *
+   * When omitted the hook preserves existing behaviour (authorization is
+   * derived from the config claim only) so existing consumers keep working.
+   */
+  capabilityResolver?: TransferCapabilityResolver
 }
 
 // ---------------------------------------------------------------------------
@@ -411,6 +515,12 @@ export interface UseEmergencyTransferReturn {
    * Performs all pre-submit guards before calling `provider`.
    */
   submit: () => Promise<void>
+  /**
+   * Refreshes the capability from the server.  A revoked / expired result
+   * transitions the flow to `capability_revoked` — invalidating any pending
+   * confirmation.  Safe to call at any time.
+   */
+  resolveCapability: () => Promise<void>
   /** Reset to idle. */
   dismiss: () => void
 
@@ -426,6 +536,7 @@ export function useEmergencyTransfer({
   config,
   provider,
   getNow = Date.now,
+  capabilityResolver,
 }: UseEmergencyTransferOptions): UseEmergencyTransferReturn {
   const [state, dispatch] = useReducer(reducer, initialState)
 
@@ -441,6 +552,20 @@ export function useEmergencyTransfer({
 
   /** Tracks whether a submit has already succeeded for this binding key. */
   const succeededKeysRef = useRef<Set<string>>(new Set())
+
+  /**
+   * Latest server-derived capability.  Written by `resolveCapability`;
+   * read by the bind and submit gates.  Not stored in React state because it
+   * must not re-render the tree mid-gesture.
+   */
+  const capabilityRef = useRef<GrantedTransferCapability | null>(null)
+
+  /** Capability version captured when the confirmation was bound. */
+  const boundVersionRef = useRef<number | null>(null)
+
+  /** Latest config, kept in a ref so the capability check can read it freely. */
+  const configRef = useRef(config)
+  configRef.current = config
 
   // -------------------------------------------------------------------------
   // Derived: msUntilExpiry — recomputed each render, no extra state needed
@@ -523,6 +648,43 @@ export function useEmergencyTransfer({
     !submittingRef.current
 
   // -------------------------------------------------------------------------
+  // Capability resolution — the sole authority for the mutation boundaries
+  // -------------------------------------------------------------------------
+
+  const resolveCapability = useCallback(async (): Promise<void> => {
+    if (!capabilityResolver) return
+
+    dispatch({ type: 'CAPABILITY_CHECKING' })
+    try {
+      const capability = await capabilityResolver({
+        config: configRef.current,
+        pendingPayload: payloadRef.current,
+      })
+
+      // Hard-fail closed on malformed / adversarial responses.
+      if (!isCapabilityUsable(capability, getNow())) {
+        capabilityRef.current = null
+        dispatch({ type: 'CAPABILITY_REVOKED', capability })
+        return
+      }
+
+      capabilityRef.current = capability
+      // Signal the grant so the UI can update (e.g. re-enable confirm).
+      dispatch({ type: 'CAPABILITY_GRANTED', capability })
+    } catch {
+      // A failed capability check must never unlock the action.
+      capabilityRef.current = null
+      dispatch({
+        type: 'CAPABILITY_REVOKED',
+        capability: Object.freeze({
+          effect: 'denied',
+          reason: 'POLICY_NOT_ENABLED',
+        }),
+      })
+    }
+  }, [capabilityResolver, getNow])
+
+  // -------------------------------------------------------------------------
   // Actions
   // -------------------------------------------------------------------------
 
@@ -544,6 +706,9 @@ export function useEmergencyTransfer({
 
     payloadRef.current = null
     submittingRef.current = false
+    // A new review binds against the capability already proven at open; the
+    // submit boundary re-proves it.  Only the bound version resets here.
+    boundVersionRef.current = null
     dispatch({ type: 'START_REVIEW', config })
   }, [config, getNow])
 
@@ -558,10 +723,25 @@ export function useEmergencyTransfer({
 
   const bindConfirmation = useCallback((): ConfirmationPayload | null => {
     if (!state.reviewedConfig || !state.riskAcknowledged) return null
+    // A confirmation can only be bound from the review step.
+    if (state.phase !== 'reviewing') return null
 
     if (isConfigExpired(state.reviewedConfig, getNow())) {
       dispatch({ type: 'EXPIRE' })
       return null
+    }
+
+    // ---- Capability gate: a confirmation may only be bound while a
+    // server-derived capability is present and fresh.  If it is missing or
+    // stale, request a refresh — the async result will invalidate the flow
+    // via CAPABILITY_REVOKED. ----
+    if (capabilityResolver) {
+      const capability = capabilityRef.current
+      if (!capability || !isCapabilityUsable(capability, getNow())) {
+        void resolveCapability()
+        return null
+      }
+      boundVersionRef.current = capability.version
     }
 
     const bindingKey = deriveBindingKey(state.reviewedConfig)
@@ -597,12 +777,17 @@ export function useEmergencyTransfer({
     payloadRef.current = frozen
     dispatch({ type: 'BIND_CONFIRMATION', bindingKey })
     return frozen
-  }, [state.reviewedConfig, state.riskAcknowledged, getNow])
+  }, [state.reviewedConfig, state.phase, state.riskAcknowledged, getNow, capabilityResolver, resolveCapability])
 
   const submit = useCallback(async (): Promise<void> => {
-    // ---- Duplicate-submit guard ----
+    // ---- Duplicate-submit guard (ref-based; immune to stale closures) ----
     if (submittingRef.current) {
       dispatch({ type: 'DUPLICATE_BLOCKED' })
+      return
+    }
+
+    // ---- Phase guard: only a bound confirmation may be submitted ----
+    if (state.phase !== 'confirmed') {
       return
     }
 
@@ -621,13 +806,55 @@ export function useEmergencyTransfer({
       return
     }
 
-    // ---- Re-check authorisation ----
+    // ---- Re-check authorisation (config claim) ----
     if (!config?.authorizedBy) {
       dispatch({
         type: 'UNAUTHORIZED',
         reason: 'You are no longer authorised to perform this transfer.',
       })
       return
+    }
+
+    // ---- Capability gate: re-derive from server state and verify the
+    // revision that authorised this confirmation is still current.
+    // A role removal or policy change during the modal's lifetime bumps the
+    // version and invalidates the pending confirmation. ----
+    if (capabilityResolver) {
+      let usable = true
+      try {
+        const capability = await capabilityResolver({
+          config: configRef.current,
+          pendingPayload: payload,
+        })
+        if (!isCapabilityUsable(capability, getNow())) {
+          capabilityRef.current = null
+          dispatch({ type: 'CAPABILITY_REVOKED', capability })
+          return
+        }
+        capabilityRef.current = capability
+
+        // Version drift ⇒ the authorising policy was changed since bind.
+        if (boundVersionRef.current !== null &&
+            capability.version !== boundVersionRef.current) {
+          capabilityRef.current = null
+          dispatch({ type: 'CAPABILITY_REVOKED', capability })
+          return
+        }
+      } catch {
+        // Fail closed — never dispatch SUBMIT on a failed capability check.
+        usable = false
+      }
+      if (!usable) {
+        capabilityRef.current = null
+        dispatch({
+          type: 'CAPABILITY_REVOKED',
+          capability: Object.freeze({
+            effect: 'denied',
+            reason: 'POLICY_NOT_ENABLED',
+          }),
+        })
+        return
+      }
     }
 
     // ---- Cross-field payload ↔ config binding check ----
@@ -665,11 +892,13 @@ export function useEmergencyTransfer({
     } finally {
       submittingRef.current = false
     }
-  }, [config, state.phase, state.reviewedConfig, provider, getNow])
+  }, [config, state.phase, state.reviewedConfig, provider, getNow, capabilityResolver])
 
   const dismiss = useCallback(() => {
     payloadRef.current = null
     submittingRef.current = false
+    capabilityRef.current = null
+    boundVersionRef.current = null
     dispatch({ type: 'DISMISS' })
   }, [])
 
@@ -682,6 +911,7 @@ export function useEmergencyTransfer({
     setRiskAcknowledged,
     bindConfirmation,
     submit,
+    resolveCapability,
     dismiss,
     msUntilExpiry,
   }

@@ -13,7 +13,14 @@
  *
  * Query params:
  *   scenario=success|failure|unauthorized|expired|no_config
+ *             |no_capability|capability_revoked|capability_expired
  *   Default: success
+ *
+ * Capability scenarios simulate the server boundary in-memory so the E2E
+ * suite can prove the mutation gates close without a live backend:
+ *   - no_capability        → capability resolved as DENIED at open
+ *   - capability_revoked   → granted at review/bind, DENIED at submit
+ *   - capability_expired   → granted but already past its expiresAt
  */
 
 import * as React from 'react'
@@ -22,6 +29,8 @@ import { EmergencyTransferDialog } from '@/components/emergency-transfer'
 import { createEmergencyTransferConfig } from '@/models/emergency-transfer-config'
 import type { ConfirmationPayload } from '@/lib/validations/emergency-transfer'
 import type { TransferProvider } from '@/hooks/useEmergencyTransfer'
+import type { TransferCapabilityResolver } from '@/lib/api/transfer-capability'
+import type { TransferCapability } from '@/models/emergency-transfer-capability'
 
 // Guard: this route must never be accessible in production.
 if (process.env.NODE_ENV === 'production') {
@@ -32,6 +41,64 @@ const RECIPIENT = '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF'
 const AMOUNT_RAW = '1000000000000000000'
 const AMOUNT_DISPLAY = '1.0'
 const MOCK_TX_HASH = '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+
+const POLICY_VERSION = 3
+
+/**
+ * Simulated server boundary.  Mirrors the contract of
+ * `/api/transfer-capability`: the outcome is derived purely from "server"
+ * state (the scenario) and never from the client's config claim.
+ *
+ * Defined at module scope so the "server" call counter survives React
+ * re-renders — just like a real backend.
+ */
+function buildCapabilityResolver(scenario: string): TransferCapabilityResolver {
+  // Counts how many times the "server" has been consulted.
+  let calls = 0
+  const now = Date.now()
+
+  return async (): Promise<TransferCapability> => {
+    calls += 1
+
+    switch (scenario) {
+      case 'no_capability':
+        return { effect: 'denied', reason: 'PRINCIPAL_NOT_AUTHORIZED' }
+
+      case 'capability_expired':
+        return {
+          effect: 'granted',
+          principal: 'admin@example.com',
+          version: POLICY_VERSION,
+          issuedAt: now - 60_000,
+          expiresAt: now - 1_000,
+        }
+
+      case 'capability_revoked':
+        // Granted while the user reviews / binds…
+        if (calls <= 2) {
+          return {
+            effect: 'granted',
+            principal: 'admin@example.com',
+            version: POLICY_VERSION,
+            issuedAt: now,
+            expiresAt: now + 60_000,
+          }
+        }
+        // …then the role is removed server-side before submit.
+        return { effect: 'denied', reason: 'PRINCIPAL_NOT_AUTHORIZED' }
+
+      default:
+        // success / failure / expired / unauthorized / no_config
+        return {
+          effect: 'granted',
+          principal: 'admin@example.com',
+          version: POLICY_VERSION,
+          issuedAt: now,
+          expiresAt: now + 60_000,
+        }
+    }
+  }
+}
 
 function buildConfig(scenario: string) {
   if (scenario === 'no_config') return null
@@ -75,6 +142,11 @@ export default function EmergencyTransferTestHarness({
   const scenario = searchParams?.scenario ?? 'success'
   const config = buildConfig(scenario)
   const provider = buildProvider(scenario)
+  // Stable across re-renders (the "server" call counter must not reset).
+  const capabilityResolver = React.useMemo(
+    () => buildCapabilityResolver(scenario),
+    [scenario],
+  )
   const [open, setOpen] = React.useState(false)
 
   return (
@@ -100,6 +172,7 @@ export default function EmergencyTransferTestHarness({
         onOpenChange={setOpen}
         config={config}
         provider={provider}
+        capabilityResolver={capabilityResolver}
       />
 
       {/* State dump for assertions */}
