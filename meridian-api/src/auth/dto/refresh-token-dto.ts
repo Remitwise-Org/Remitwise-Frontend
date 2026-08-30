@@ -1,5 +1,8 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+
+/** JWT tokens are typically < 2 KB; 4 KB covers RSA-4096 with generous claims. */
+const MAX_REFRESH_TOKEN_LENGTH = 4096;
 
 export class RefreshTokenDto {
   @ApiProperty({
@@ -8,5 +11,7 @@ export class RefreshTokenDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MinLength(1)
+  @MaxLength(MAX_REFRESH_TOKEN_LENGTH)
   refreshToken: string;
 }

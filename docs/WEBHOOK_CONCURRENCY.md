@@ -1,4 +1,4 @@
-# Webhook concurrency and retry contract
+# Concurrency and retry contract (webhooks and transfer flows)
 
 ## Invariants
 
@@ -20,3 +20,9 @@ No public success or error response shape changed. The implementation requires t
 ## Security and correctness
 
 Admin authorization remains enforced before replay or processing actions. Conditional state transitions prevent stale or unauthorized follow-up work from changing an event after its state has moved on. This is an at-most-once handler invocation guarantee per successful claim; delivery semantics and downstream idempotency remain the responsibility of each webhook handler.
+
+## Transfer composition and quote concurrency
+
+The same conditional-state-transition pattern applies to the transfer flow. A transfer may only be submitted when the client's displayed quote is the latest authorized quote for that transfer. During submission, the server atomically claims the transfer (`status = submitted`) only if the attached quote ID and amount still match the current authorized quote; otherwise it returns `409 Conflict` and leaves the transfer unchanged. Losing concurrent submissions receive the same `409`; the first successful claim wins.
+
+A transfer that was rejected, stale, repeated, or failed leaves no partial state: the transfer remains in its previous valid status with the previously displayed quote, and the client must refetch the quote before retrying. Retries after a `409` are safe to repeat only after refreshing the quote; retries after a transient `503` may use the same payload because the atomic claim makes duplicate commits impossible. Existing public response shapes and error codes are preserved; no migration is required because the implementation uses the current Prisma updateMany conditional updates.

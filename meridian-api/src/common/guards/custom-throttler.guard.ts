@@ -55,36 +55,83 @@ export class CustomThrottlerGuard implements CanActivate {
       return true;
     }
 
-    const routeLimit = this.reflector.getAllAndOverride<number>(
+    const routeLimitValue = this.reflector.getAllAndOverride<number>(
       THROTTLER_LIMIT + tier,
       [handler, classRef],
     );
-    const routeTtl = this.reflector.getAllAndOverride<number>(
+    const routeTtlValue = this.reflector.getAllAndOverride<number>(
       THROTTLER_TTL + tier,
       [handler, classRef],
     );
+    const baseLimit =
+      typeof this.rateLimits?.baseLimit === 'function'
+        ? this.rateLimits.baseLimit(tier)
+        : tier === 'write'
+          ? 20
+          : 100;
+    const baseWindowMs =
+      typeof this.rateLimits?.windowMs === 'number'
+        ? this.rateLimits.windowMs
+        : 60_000;
+
+    const routeLimit =
+      typeof routeLimitValue === 'number'
+        ? this.normalizeBoundedNumber(routeLimitValue, baseLimit, 1, 1000)
+        : undefined;
+    const routeTtl =
+      typeof routeTtlValue === 'number'
+        ? this.normalizeBoundedNumber(
+            routeTtlValue,
+            baseWindowMs,
+            1000,
+            60 * 60 * 1000,
+          )
+        : undefined;
 
     const userId = this.extractUserId(req);
     const decision = await this.rateLimits.consume({
       tier,
       userId,
       ip: this.extractIp(req),
-      limit: typeof routeLimit === 'number' ? routeLimit : undefined,
-      windowMs: typeof routeTtl === 'number' ? routeTtl : undefined,
+      limit: routeLimit,
+      windowMs: routeTtl,
     });
 
-    this.setRateLimitHeaders(res, decision.limit, decision.remaining, decision.resetAt);
+    this.setRateLimitHeaders(
+      res,
+      decision.limit,
+      decision.remaining,
+      decision.resetAt,
+    );
 
     if (!decision.allowed) {
-      const retryAfter = Math.max(1, decision.resetAt - Math.floor(Date.now() / 1000));
+      const retryAfter = Math.max(
+        1,
+        decision.resetAt - Math.floor(Date.now() / 1000),
+      );
       res.setHeader?.(RATE_LIMIT_HEADERS.RETRY_AFTER, retryAfter);
       this.logger.warn(
         `Rate limited ${tier} ${decision.subject} key=${decision.key} adaptive=${decision.adaptive}`,
       );
-      throw new ThrottlerException('Too Many Requests');
+      throw new ThrottlerException(
+        `Rate limit exceeded for ${tier} requests. Retry after ${retryAfter}s.`,
+      );
     }
 
     return true;
+  }
+
+  private normalizeBoundedNumber(
+    value: number | undefined,
+    fallback: number,
+    min: number,
+    max: number,
+  ): number {
+    if (!Number.isFinite(value)) {
+      return fallback;
+    }
+    const parsed = Number(value);
+    return Math.min(Math.max(Math.trunc(parsed), min), max);
   }
 
   private isSkipped(
@@ -94,10 +141,10 @@ export class CustomThrottlerGuard implements CanActivate {
   ): boolean {
     const names = ['default', tier, 'read', 'write'];
     return names.some((name) => {
-      const skip = this.reflector.getAllAndOverride<boolean>(THROTTLER_SKIP + name, [
-        handler,
-        classRef,
-      ]);
+      const skip = this.reflector.getAllAndOverride<boolean>(
+        THROTTLER_SKIP + name,
+        [handler, classRef],
+      );
       return skip === true;
     });
   }
@@ -106,7 +153,9 @@ export class CustomThrottlerGuard implements CanActivate {
     [key: string]: unknown;
     headers?: Record<string, string | string[] | undefined>;
   }): string | number | null {
-    const attached = (req[REQUEST_USER_KEY] ?? req.user) as ActiveUserData | undefined;
+    const attached = (req[REQUEST_USER_KEY] ?? req.user) as
+      | ActiveUserData
+      | undefined;
     if (attached?.sub != null) {
       return attached.sub;
     }
@@ -116,7 +165,9 @@ export class CustomThrottlerGuard implements CanActivate {
       return null;
     }
     try {
-      const payload = this.jwtService.verify<{ sub?: string | number }>(value.slice(7));
+      const payload = this.jwtService.verify<{ sub?: string | number }>(
+        value.slice(7),
+      );
       return payload?.sub ?? null;
     } catch {
       return null;

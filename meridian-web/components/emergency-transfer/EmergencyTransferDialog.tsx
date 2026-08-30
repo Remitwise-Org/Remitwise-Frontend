@@ -133,6 +133,33 @@ function BoundConfirmationPanel({
           {payload.asset.contractAddress || 'Native'}
         </dd>
 
+        {payload.quoteId && (
+          <>
+            <dt className="text-muted-foreground font-medium">Quote ID</dt>
+            <dd className="font-mono text-xs font-semibold" data-testid="et-bound-quote">
+              {payload.quoteId}
+            </dd>
+          </>
+        )}
+
+        {payload.requestKey && (
+          <>
+            <dt className="text-muted-foreground font-medium">Request Key</dt>
+            <dd className="font-mono text-xs font-semibold" data-testid="et-bound-request-key">
+              {payload.requestKey}
+            </dd>
+          </>
+        )}
+
+        {payload.nonce && (
+          <>
+            <dt className="text-muted-foreground font-medium">Nonce</dt>
+            <dd className="font-mono text-xs font-semibold" data-testid="et-bound-nonce">
+              {payload.nonce}
+            </dd>
+          </>
+        )}
+
         {payload.memo && (
           <>
             <dt className="text-muted-foreground font-medium">Memo</dt>
@@ -147,6 +174,7 @@ function BoundConfirmationPanel({
           {payload.authorizedBy ?? '—'}
         </dd>
       </dl>
+
 
       <Separator />
 

@@ -10,6 +10,9 @@ export interface WebhookEventPayload {
 export interface WebhookProcessResult {
   success: boolean;
   error?: string;
+  status?: 'not_found' | 'skipped' | 'conflict' | 'retry_later' | 'failed' | 'dlq' | 'processed';
+  retryable?: boolean;
+  retryAfterMs?: number;
 }
 
 /**
@@ -20,7 +23,21 @@ export const WEBHOOK_RETRY_CONFIG = {
   initialDelayMs: parseInt(process.env.WEBHOOK_INITIAL_DELAY_MS || '1000', 10),
   backoffMultiplier: parseFloat(process.env.WEBHOOK_BACKOFF_MULTIPLIER || '2'),
   maxDelayMs: parseInt(process.env.WEBHOOK_MAX_DELAY_MS || '60000', 10), // 1 minute max
+  leaseTimeoutMs: parseInt(process.env.WEBHOOK_LEASE_TIMEOUT_MS || '30000', 10),
 };
+
+/**
+ * Calculate the deterministic retry delay before jitter is applied.
+ */
+export function calculateRetryAfterMs(
+  retryCount: number,
+  config: typeof WEBHOOK_RETRY_CONFIG = WEBHOOK_RETRY_CONFIG
+): number {
+  return Math.min(
+    config.initialDelayMs * Math.pow(config.backoffMultiplier, retryCount),
+    config.maxDelayMs
+  );
+}
 
 /**
  * Calculate the next retry time based on retry count and backoff strategy.
@@ -30,10 +47,7 @@ export function calculateNextRetryTime(
   retryCount: number,
   config: typeof WEBHOOK_RETRY_CONFIG = WEBHOOK_RETRY_CONFIG
 ): Date {
-  const baseDelay = Math.min(
-    config.initialDelayMs * Math.pow(config.backoffMultiplier, retryCount),
-    config.maxDelayMs
-  );
+  const baseDelay = calculateRetryAfterMs(retryCount, config);
 
   // Add jitter (0-20% random variation)
   const jitter = baseDelay * 0.2 * Math.random();
@@ -75,70 +89,136 @@ export async function saveWebhookEvent(
 export async function processWebhookEvent(
   eventId: string,
   handler: (payload: Record<string, any>) => Promise<WebhookProcessResult>
-): Promise<void> {
+): Promise<WebhookProcessResult> {
+  let event: Awaited<ReturnType<typeof prisma.webhookEvent.findUnique>>;
+  let claimed = false;
+  let processingStartedAt: Date | undefined;
+
   try {
-    const event = await prisma.webhookEvent.findUnique({
+    event = await prisma.webhookEvent.findUnique({
       where: { id: eventId },
     });
 
     if (!event) {
       console.warn(`[WebhookProcessor] Event not found: ${eventId}`);
-      return;
+      return { success: false, error: 'Event not found', status: 'not_found', retryable: false };
     }
 
     // Skip if already processed or in DLQ
     if (event.status === 'processed' || event.status === 'dlq') {
-      return;
+      return { success: true, status: 'skipped' };
     }
 
+    const now = new Date();
+    const staleProcessingBefore = new Date(
+      now.getTime() - WEBHOOK_RETRY_CONFIG.leaseTimeoutMs
+    );
+
     // Check if it's time to retry
-    if (event.status === 'failed' && event.nextRetryAt && event.nextRetryAt > new Date()) {
-      return; // Not ready to retry yet
+    if (event.status === 'failed' && event.nextRetryAt && event.nextRetryAt > now) {
+      return {
+        success: false,
+        error: 'Retry not due yet',
+        status: 'retry_later',
+        retryable: true,
+        retryAfterMs: event.nextRetryAt.getTime() - now.getTime(),
+      };
     }
 
     // Claim the event atomically. A concurrent worker can observe the same
     // event, but only the worker that changes the current state may execute
     // the handler. This prevents duplicate side effects and stale replays.
-    const claimed = await prisma.webhookEvent.updateMany({
+    const claim = await prisma.webhookEvent.updateMany({
       where: {
         id: eventId,
         OR: [
           { status: 'pending' },
-          { status: 'failed', nextRetryAt: { lte: new Date() } },
+          { status: 'failed', nextRetryAt: { lte: now } },
+          { status: 'processing', updatedAt: { lte: staleProcessingBefore } },
         ],
       },
-      data: { status: 'processing', updatedAt: new Date() },
+      data: {
+        status: 'processing',
+        updatedAt: now,
+        nextRetryAt: new Date(now.getTime() + WEBHOOK_RETRY_CONFIG.leaseTimeoutMs),
+      },
     });
 
-    if (claimed.count !== 1) {
-      return;
+    if (claim.count !== 1) {
+      return {
+        success: false,
+        error: 'Event is already being processed',
+        status: 'conflict',
+        retryable: true,
+        retryAfterMs: WEBHOOK_RETRY_CONFIG.leaseTimeoutMs,
+      };
     }
+
+    claimed = true;
+
+    // Re-read after claiming so the payload and updatedAt token are fresh.
+    event = await prisma.webhookEvent.findUnique({
+      where: { id: eventId },
+    });
+
+    if (!event) {
+      return { success: false, error: 'Event disappeared after claim', status: 'not_found', retryable: false };
+    }
+
+    processingStartedAt = event.updatedAt;
 
     // Parse and process the payload
     const payload = JSON.parse(event.rawPayload);
     const result = await handler(payload);
 
     if (result.success) {
-      // Mark as processed
-      await prisma.webhookEvent.update({
-        where: { id: eventId },
+      // Mark as processed only if this worker still owns the claim.
+      const updated = await prisma.webhookEvent.updateMany({
+        where: { id: eventId, status: 'processing', updatedAt: processingStartedAt! },
         data: {
           status: 'processed',
           processedAt: new Date(),
+          nextRetryAt: null,
+          updatedAt: new Date(),
         },
       });
 
+      if (updated.count !== 1) {
+        console.warn(`[WebhookProcessor] Lost claim while finalizing event: ${eventId}`);
+        return {
+          success: false,
+          error: 'Lost claim before finalizing event',
+          status: 'conflict',
+          retryable: true,
+          retryAfterMs: WEBHOOK_RETRY_CONFIG.leaseTimeoutMs,
+        };
+      }
+
       console.log(`[WebhookProcessor] Event processed successfully: ${eventId}`);
-    } else {
-      // Handle failure with retry logic
-      await handleWebhookProcessingFailure(eventId, result.error || 'Unknown error');
+      return { success: true, status: 'processed' };
     }
-  } catch (error) {
-    console.error(`[WebhookProcessor] Error processing event ${eventId}:`, error);
-    await handleWebhookProcessingFailure(
+
+    // Handle failure with retry logic
+    return await handleWebhookProcessingFailure(
       eventId,
-      error instanceof Error ? error.message : 'Unknown error'
+      result.error || 'Unknown error',
+      processingStartedAt
     );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`[WebhookProcessor] Error processing event ${eventId}:`, error);
+
+    if (claimed && processingStartedAt) {
+      return await handleWebhookProcessingFailure(eventId, message, processingStartedAt);
+    }
+
+    return {
+      success: false,
+      error: message,
+      status: 'failed',
+      retryable: true,
+      retryAfterMs: WEBHOOK_RETRY_CONFIG.initialDelayMs,
+    };
   }
 }
 
@@ -148,26 +228,41 @@ export async function processWebhookEvent(
 export async function handleWebhookProcessingFailure(
   eventId: string,
   errorMessage: string
-): Promise<void> {
+  expectedUpdatedAt?: Date
+): Promise<WebhookProcessResult> {
   try {
     const event = await prisma.webhookEvent.findUnique({
       where: { id: eventId },
     });
 
-    if (!event || event.status !== 'processing') return;
+    if (!event || event.status !== 'processing') {
+      return { success: false, error: 'Event is not processing', status: 'conflict', retryable: false };
+    }
+
+    if (expectedUpdatedAt && event.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+      return { success: false, error: 'Lost claim before failure handling', status: 'conflict', retryable: false };
+    }
 
     const nextRetryCount = event.retryCount + 1;
 
     if (nextRetryCount > event.maxRetries) {
       // Move to DLQ
-      await prisma.webhookEvent.updateMany({
-        where: { id: eventId, status: 'processing' },
+      const updated = await prisma.webhookEvent.updateMany({
+        where: {
+          id: eventId,
+          status: 'processing',
+          ...(expectedUpdatedAt ? { updatedAt: expectedUpdatedAt } : {}),
+        },
         data: {
           status: 'dlq',
           lastError: errorMessage,
           updatedAt: new Date(),
         },
       });
+
+      if (updated.count !== 1) {
+        return { success: false, error: 'Lost claim while moving to DLQ', status: 'conflict', retryable: false };
+      }
 
       recordAuditEvent({
         type: 'webhook.dlq',
@@ -182,11 +277,16 @@ export async function handleWebhookProcessingFailure(
       });
 
       console.warn(`[WebhookProcessor] Event moved to DLQ: ${eventId}`);
+      return { success: false, error: errorMessage, status: 'dlq', retryable: false };
     } else {
       // Schedule retry
       const nextRetryAt = calculateNextRetryTime(nextRetryCount);
-      await prisma.webhookEvent.updateMany({
-        where: { id: eventId, status: 'processing' },
+      const updated = await prisma.webhookEvent.updateMany({
+        where: {
+          id: eventId,
+          status: 'processing',
+          ...(expectedUpdatedAt ? { updatedAt: expectedUpdatedAt } : {}),
+        },
         data: {
           status: 'failed',
           retryCount: nextRetryCount,
@@ -196,12 +296,30 @@ export async function handleWebhookProcessingFailure(
         },
       });
 
+      if (updated.count !== 1) {
+        return { success: false, error: 'Lost claim while scheduling retry', status: 'conflict', retryable: false };
+      }
+
       console.log(
         `[WebhookProcessor] Event scheduled for retry ${nextRetryCount}/${event.maxRetries}: ${eventId}`
       );
+      return {
+        success: false,
+        error: errorMessage,
+        status: 'failed',
+        retryable: true,
+        retryAfterMs: calculateRetryAfterMs(nextRetryCount),
+      };
     }
   } catch (error) {
     console.error(`[WebhookProcessor] Error handling failure for ${eventId}:`, error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      status: 'failed',
+      retryable: true,
+      retryAfterMs: WEBHOOK_RETRY_CONFIG.initialDelayMs,
+    };
   }
 }
 
@@ -210,6 +328,9 @@ export async function handleWebhookProcessingFailure(
  */
 export async function getPendingWebhookEvents(limit: number = 100) {
   const now = new Date();
+  const staleProcessingBefore = new Date(
+    now.getTime() - WEBHOOK_RETRY_CONFIG.leaseTimeoutMs
+  );
   return prisma.webhookEvent.findMany({
     where: {
       OR: [
@@ -217,6 +338,10 @@ export async function getPendingWebhookEvents(limit: number = 100) {
         {
           status: 'failed',
           nextRetryAt: { lte: now },
+        },
+        {
+          status: 'processing',
+          updatedAt: { lte: staleProcessingBefore },
         },
       ],
     },

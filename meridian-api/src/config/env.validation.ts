@@ -67,12 +67,24 @@ export const envValidationSchema = Joi.object({
   // in-process memory so tests and local boots still work.
   REDIS_URL: Joi.string().uri().optional().allow(''),
   RATE_LIMIT_ENABLED: Joi.boolean().default(true),
-  RATE_LIMIT_WINDOW_MS: Joi.number().integer().positive().default(60000),
-  RATE_LIMIT_READ_LIMIT: Joi.number().integer().positive().default(100),
-  RATE_LIMIT_WRITE_LIMIT: Joi.number().integer().positive().default(20),
-  RATE_LIMIT_AUTH_MULTIPLIER: Joi.number().positive().default(3),
-  RATE_LIMIT_ABUSE_THRESHOLD: Joi.number().integer().positive().default(5),
-  RATE_LIMIT_ABUSE_WINDOW_MS: Joi.number().integer().positive().default(60000),
+  RATE_LIMIT_WINDOW_MS: Joi.number()
+    .integer()
+    .min(1000)
+    .max(3600000)
+    .default(60000),
+  RATE_LIMIT_READ_LIMIT: Joi.number().integer().min(1).max(1000).default(100),
+  RATE_LIMIT_WRITE_LIMIT: Joi.number().integer().min(1).max(1000).default(20),
+  RATE_LIMIT_AUTH_MULTIPLIER: Joi.number().min(1).max(100).default(3),
+  RATE_LIMIT_ABUSE_THRESHOLD: Joi.number()
+    .integer()
+    .min(1)
+    .max(1000)
+    .default(5),
+  RATE_LIMIT_ABUSE_WINDOW_MS: Joi.number()
+    .integer()
+    .min(1000)
+    .max(3600000)
+    .default(60000),
   RATE_LIMIT_ABUSE_FACTOR: Joi.number().min(0.1).max(1).default(0.5),
 
   // Envelope encryption (issue #631): the master Key Encryption Key (KEK)
@@ -84,17 +96,14 @@ export const envValidationSchema = Joi.object({
   ENCRYPTION_KEK_BASE64: Joi.string().optional().allow(''),
   ENCRYPTION_KEK_PREVIOUS_BASE64: Joi.string().optional().allow(''),
   ENCRYPTION_KEK_URL: Joi.string().uri().optional().allow(''),
-}).custom(
-  (value, helpers) => {
-    const hasKek =
-      Boolean(value.ENCRYPTION_KEK_BASE64) || Boolean(value.ENCRYPTION_KEK_URL);
-    if (value.NODE_ENV === 'production' && !hasKek) {
-      return helpers.error('any.custom', {
-        message:
-          'ENCRYPTION_KEK_BASE64 or ENCRYPTION_KEK_URL is required in production (envelope encryption, issue #631)',
-      });
-    }
-    return value;
-  },
-  'envelope-encryption-kek-required',
-);
+}).custom((value, helpers) => {
+  const hasKek =
+    Boolean(value.ENCRYPTION_KEK_BASE64) || Boolean(value.ENCRYPTION_KEK_URL);
+  if (value.NODE_ENV === 'production' && !hasKek) {
+    return helpers.error('any.custom', {
+      message:
+        'ENCRYPTION_KEK_BASE64 or ENCRYPTION_KEK_URL is required in production (envelope encryption, issue #631)',
+    });
+  }
+  return value;
+}, 'envelope-encryption-kek-required');

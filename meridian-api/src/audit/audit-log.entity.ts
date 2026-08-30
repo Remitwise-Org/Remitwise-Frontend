@@ -14,6 +14,13 @@ export enum AuditAction {
   CONTRACT_EVENT = 'CONTRACT_EVENT',
   AUTHORIZATION_GRANTED = 'AUTHORIZATION_GRANTED',
   AUTHORIZATION_DENIED = 'AUTHORIZATION_DENIED',
+  SIGN_IN = 'SIGN_IN',
+  REFRESH = 'REFRESH',
+  LOGOUT = 'LOGOUT',
+  LOGOUT_ALL = 'LOGOUT_ALL',
+  VERIFY_EMAIL = 'VERIFY_EMAIL',
+  ISSUE_VERIFICATION_TOKEN = 'ISSUE_VERIFICATION_TOKEN',
+  RESEND_VERIFICATION = 'RESEND_VERIFICATION',
 }
 
 @Entity('audit_logs')
@@ -89,4 +96,14 @@ export class AuditLog {
   @Column({ type: 'varchar', length: 64, nullable: true })
   @Index()
   correlationId: string | null;
+
+  /**
+   * Compatibility marker (issue #1679). Tags each row with the schema version
+   * that produced it so readers can negotiate forward/backward compatibility
+   * and migrations stay resumable. Legacy rows written before this column
+   * existed are normalized to `null` by readers and treated as readable.
+   */
+  @Column({ type: 'int', nullable: true })
+  @Index()
+  schemaVersion: number | null;
 }

@@ -71,6 +71,7 @@ export class AuthController {
 
   @Post('/logout')
   @Public()
+  @Throttle({ write: { limit: 10, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Revoke the current refresh token' })
   @ApiResponse({
@@ -81,18 +82,27 @@ export class AuthController {
     status: 401,
     description: 'Unauthorized / Invalid refresh token',
   })
+  @ApiResponse({
+    status: 429,
+    description: 'Too Many Requests - Limit 10 attempts per minute',
+  })
   public async logout(@Body() logoutDto: LogoutDto) {
     return this.authService.logout(logoutDto);
   }
 
   // Authenticated via the global RbacGuard (default posture) — no @Public().
   @Post('/logout-all')
+  @Throttle({ write: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Revoke all refresh tokens for the current user' })
   @ApiBearerAuth()
   @ApiResponse({
     status: 200,
     description: 'Successfully revoked all sessions',
+  })
+  @ApiResponse({
+    status: 429,
+    description: 'Too Many Requests - Limit 5 attempts per minute',
   })
   public async logoutAll(@Req() req: Request) {
     const user = req[REQUEST_USER_KEY] as { sub?: string | number };

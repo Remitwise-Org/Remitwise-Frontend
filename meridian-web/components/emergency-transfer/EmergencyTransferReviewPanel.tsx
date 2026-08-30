@@ -216,6 +216,42 @@ export function EmergencyTransferReviewPanel({
           mono
           data-testid="et-detail-contract"
         />
+        {config.quoteId && (
+          <>
+            <Separator className="my-1" />
+            <DetailRow
+              icon={<ShieldAlert className="size-4" aria-hidden />}
+              label="Authorized Quote"
+              value={config.quoteId}
+              mono
+              data-testid="et-detail-quote"
+            />
+          </>
+        )}
+        {config.requestKey && (
+          <>
+            <Separator className="my-1" />
+            <DetailRow
+              icon={<Clock className="size-4" aria-hidden />}
+              label="Request Key"
+              value={config.requestKey}
+              mono
+              data-testid="et-detail-request-key"
+            />
+          </>
+        )}
+        {config.nonce && (
+          <>
+            <Separator className="my-1" />
+            <DetailRow
+              icon={<Clock className="size-4" aria-hidden />}
+              label="Nonce"
+              value={config.nonce}
+              mono
+              data-testid="et-detail-nonce"
+            />
+          </>
+        )}
         {config.memo && (
           <>
             <Separator className="my-1" />
@@ -228,6 +264,7 @@ export function EmergencyTransferReviewPanel({
           </>
         )}
       </div>
+
 
       <Separator />
 

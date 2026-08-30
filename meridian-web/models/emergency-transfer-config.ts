@@ -65,15 +65,26 @@ export interface EmergencyTransferConfig {
   readonly authorizedBy: string | null
   /** Optional free-text memo that will be embedded in the transaction. */
   readonly memo?: string
+  /** Authorized quote identifier tying transfer terms to policy approval. */
+  readonly quoteId?: string
+  /** Hash digest of quote terms (rate, fees, output amount). */
+  readonly quoteHash?: string
+  /** Client-side or backend-issued durable request key for idempotency. */
+  readonly requestKey?: string
+  /** One-time nonce binding for replay protection. */
+  readonly nonce?: string
 }
 
 /** Factory that creates a frozen, immutable config with a derived configId. */
 export function createEmergencyTransferConfig(
-  params: Omit<EmergencyTransferConfig, 'configId' | 'createdAt'>,
+  params: Omit<EmergencyTransferConfig, 'configId' | 'createdAt'> & {
+    configId?: string
+  },
 ): EmergencyTransferConfig {
   const now = Date.now()
-  const raw = `${params.recipient}:${params.amountRaw}:${params.asset.symbol}:${params.networkId}:${now}`
-  const configId = btoa(raw).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32)
+  const raw = `${params.quoteId ?? ''}:${params.requestKey ?? ''}:${params.nonce ?? ''}:${params.recipient}:${params.amountRaw}:${params.asset.symbol}:${params.networkId}:${now}`
+  const derivedConfigId = btoa(raw).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32)
+  const configId = params.configId ?? derivedConfigId
 
   const config: EmergencyTransferConfig = Object.freeze({
     ...params,
@@ -106,6 +117,12 @@ export function configsMatch(a: EmergencyTransferConfig, b: EmergencyTransferCon
     a.asset.contractAddress === b.asset.contractAddress &&
     a.asset.decimals === b.asset.decimals &&
     a.networkId === b.networkId &&
-    a.expiresAt === b.expiresAt
+    a.expiresAt === b.expiresAt &&
+    a.memo === b.memo &&
+    a.quoteId === b.quoteId &&
+    a.quoteHash === b.quoteHash &&
+    a.requestKey === b.requestKey &&
+    a.nonce === b.nonce
   )
 }
+

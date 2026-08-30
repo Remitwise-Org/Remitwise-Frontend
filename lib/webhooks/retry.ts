@@ -5,6 +5,10 @@ import {
 } from '@/lib/webhooks/processor';
 import { runBackgroundJob } from '@/lib/background/runtime';
 
+// Tracks event IDs currently being processed in this runtime to prevent
+// duplicate concurrent handling of the same webhook event.
+const inFlightEvents = new Set<string>();
+
 // Map of webhook source to handler functions
 const webhookHandlers: Record<
   string,
@@ -33,7 +37,23 @@ async function processEvent(eventId: string, source: string): Promise<void> {
     return;
   }
 
-  await processWebhookEvent(eventId, handler);
+  // Prevent concurrent duplicate processing within this runtime. If the same
+  // event is already being handled, treat this invocation as a safe no-op.
+  // The processor claims events atomically in the database, so in-flight
+  // duplicates that reach this point are safe to skip.
+  if (inFlightEvents.has(eventId)) {
+    console.warn(
+      `[WebhookRetry] Event ${eventId} is already being processed; skipping duplicate invocation.`
+    );
+    return;
+  }
+
+  inFlightEvents.add(eventId);
+  try {
+    await processWebhookEvent(eventId, handler);
+  } finally {
+    inFlightEvents.delete(eventId);
+  }
 }
 
 /**
@@ -65,6 +85,8 @@ export async function processPendingWebhooks(
     // A claimed event may have been taken by another worker between the
     // listing and processing calls. The processor intentionally treats that
     // as a safe no-op; this endpoint reports only handler-level failures.
+    // Additionally, inFlightEvents prevents duplicate handling within this
+    // runtime, so concurrent retry invocations cannot double-process an event.
     const failed = results.filter((r) => r.status === 'rejected').length;
     const processed = results.length - failed;
 
@@ -120,6 +142,6 @@ export function getRetryPolicyInfo() {
     initialDelayMs: WEBHOOK_RETRY_CONFIG.initialDelayMs,
     backoffMultiplier: WEBHOOK_RETRY_CONFIG.backoffMultiplier,
     maxDelayMs: WEBHOOK_RETRY_CONFIG.maxDelayMs,
-    description: `Up to ${WEBHOOK_RETRY_CONFIG.maxRetries} retries with exponential backoff (initial: ${WEBHOOK_RETRY_CONFIG.initialDelayMs}ms, multiplier: ${WEBHOOK_RETRY_CONFIG.backoffMultiplier}x, max: ${WEBHOOK_RETRY_CONFIG.maxDelayMs}ms)`,
+    description: `Up to ${WEBHOOK_RETRY_CONFIG.maxRetries} retries with exponential backoff (initial: ${WEBHOOK_RETRY_CONFIG.initialDelayMs}ms, multiplier: ${WEBHOOK_RETRY_CONFIG.backoffMultiplier}x, max: ${WEBHOOK_RETRY_CONFIG.maxDelayMs}ms). Concurrent duplicate processing is safe: events already being processed are skipped and no partial state is committed by the retry layer.`,
   };
 }

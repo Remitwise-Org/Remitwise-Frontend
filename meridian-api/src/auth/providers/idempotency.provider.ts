@@ -1,27 +1,3 @@
-/**
- * IdempotencyProvider
- *
- * Provides a deterministic idempotency boundary for authentication and recovery
- * operations. Each operation must be supplied with a durable request key (nonce).
- * Concurrent or retried requests with the same key share a single execution and
- * return the same stored result. Reuse of a key with a different request is
- * rejected with an `IdempotencyConflictError`.
- *
- * Design invariants:
- * - One committed effect per key: the provider serializes executions per key and
- *   persists the final state in the store.
- * - Deterministic success: after a completed operation, retries return the stored
- *   result without re-executing the business operation.
- * - Retriable failures: a failed operation records the error and permits a retry
- *   with the same key, re-running the business operation once.
- * - Conflict detection: the request body is hashed and bound to the key. If the
- *   hash differs, the caller receives a conflict and no state is modified.
- * - Stale state: expired records are removed and treated as absent.
- *
- * The default `InMemoryIdempotencyStore` is suitable for tests and single-process
- * deployments. For distributed deployments, supply an `IdempotencyStore` backed
- * by a durable, atomic storage system.
- */
 import { createHash } from 'crypto';
 
 export interface IdempotencyRecord<T = unknown> {
@@ -33,12 +9,15 @@ export interface IdempotencyRecord<T = unknown> {
   createdAt: number;
   updatedAt: number;
   expiresAt: number;
+  version?: number;
 }
 
 export interface IdempotencyStore {
   get<T>(key: string): Promise<IdempotencyRecord<T> | undefined>;
   put<T>(record: IdempotencyRecord<T>): Promise<void>;
   delete(key: string): Promise<void>;
+  create?<T>(record: IdempotencyRecord<T>); Promise<IdempotencyRecord<T> | undefined>;
+  update?<T>(key: string, expectedVersion: number, record: IdempotencyRecord<T>): Promise<IdempotencyRecord<T> | null | undefined>;
 }
 
 export class InMemoryIdempotencyStore implements IdempotencyStore {
@@ -55,12 +34,42 @@ export class InMemoryIdempotencyStore implements IdempotencyStore {
   async delete(key: string): Promise<void> {
     this.records.delete(key);
   }
+
+  async create<T>(record: IdempotencyRecord<T>): Promise<IdempotencyRecord<T> | undefined> {
+    const key = record.key;
+    if (this.records.has(key)) {
+      return this.records.get(key) as IdempotencyRecord<T>;
+    }
+    this.records.set(key, record as IdempotencyRecord);
+    return undefined;
+  }
+
+  async update<T>(
+    key: string,
+    expectedVersion: number,
+    record: IdempotencyRecord<T>
+  ): Promise<IdempotencyRecord<T> | null | undefined> {
+    const current = this.records.get(key) as IdempotencyRecord<T> | undefined;
+    if (!current) return null;
+    if ((current.version ?? 0) !== expectedVersion) return current;
+    this.records.set(key, record as IdempotencyRecord);
+    return undefined;
+  }
 }
 
 export class IdempotencyConflictError extends Error {
   constructor(key: string) {
     super(`Idempotency key "${key}" was already used with a different request`);
     this.name = 'IdempotencyConflictError';
+  }
+}
+
+export class IdempotencyInProgressError extends Error {
+  readonly retryAfterMs: number;
+  constructor(key: string, retryAfterMs: number) {
+    super(`Idempotency key "${key}" is already being processed; retry after ${retryAfterMs}ms`);
+    this.name = 'IdempotencyInProgressError';
+    this.retryAfterMs = retryAfterMs;
   }
 }
 
@@ -94,16 +103,6 @@ export class IdempotencyProvider {
     this.ttlMs = options.ttlMs ?? 15 * 60 * 1000;
   }
 
-  /**
-   * Executes `operation` exactly once for a given idempotency `key`.
-   *
-   * @param key - Durable request key or nonce.
-   * @param request - The request payload. Its hash is bound to the key to reject
-   *                  conflicting reuse.
-   * @param operation - The business operation to perform.
-   * @returns The result of the operation (the same value for safe retries).
-   * @throws {IdempotencyConflictError} If the key is reused with a different payload.
-   */
   async execute<T>(
     key: string,
     request: unknown,
@@ -116,71 +115,138 @@ export class IdempotencyProvider {
     const requestHash = this.hash(request);
 
     return this.getMutex(key).runExclusive(async () => {
-      const now = Date.now();
-      const existing = await this.store.get<T>(key);
+      let attempt = 0;
+      const maxAttempts = 10;
 
-      if (existing) {
-        if (existing.requestHash !== requestHash) {
-          throw new IdempotencyConflictError(key);
+      while (true) {
+        if (attempt++ >= maxAttempts) {
+          throw new IdempotencyInProgressError(key, this.ttlMs);
         }
-        if (existing.expiresAt < now) {
+
+        const now = Date.now();
+        let current = await this.store.get<T>(key);
+
+        if (current && current.expiresAt <= now) {
           await this.store.delete(key);
-        } else if (existing.status === 'completed') {
-          return existing.result as T;
-        } else if (existing.status === 'failed') {
-          // Retryable failure: reset the record and re-start the operation.
-          existing.status = 'in_progress';
-          existing.error = undefined;
-          existing.updatedAt = now;
-          await this.store.put(existing);
+          current = undefined;
         }
-      }
 
-      const record: IdempotencyRecord<T> = existing ?? {
-        key,
-        requestHash,
-        status: 'in_progress',
-        createdAt: now,
-        updatedAt: now,
-        expiresAt: now + this.ttlMs,
-      };
-      if (!existing) {
-        await this.store.put(record);
-      }
+        if (!current) {
+          const newRecord: IdempotencyRecord<T> = {
+            key,
+            requestHash,
+            status: 'in_progress',
+            createdAt: now,
+            updatedAt: now,
+            expiresAt: now + this.ttlMs,
+            version: 1,
+          };
 
-      try {
-        const result = await operation();
-        const completed: IdempotencyRecord<T> = {
-          ...record,
-          status: 'completed',
-          result,
-          error: undefined,
-          updatedAt: Date.now(),
-          expiresAt: Date.now() + this.ttlMs,
-        };
-        await this.store.put(completed);
-        return result;
-      } catch (error) {
-        const failed: IdempotencyRecord<T> = {
-          ...record,
-          status: 'failed',
-          error,
-          updatedAt: Date.now(),
-          expiresAt: Date.now() + this.ttlMs,
-        };
-        await this.store.put(failed);
-        throw error;
+          if (this.store.create) {
+            const existing = await this.store.create<T>(newRecord);
+            if (!existing) {
+              return this.runOperation(newRecord, operation, newRecord.version!);
+            }
+            current = existing;
+          } else {
+            await this.store.put(newRecord);
+            return this.runOperation(newRecord, operation, newRecord.version!);
+          }
+        }
+
+        if (current.requestHash !== requestHash) {
+          throw new IdempotencyConflictErrow(key);
+        }
+
+        if (current.status === 'completed') {
+          return current.result as T;
+        }
+
+        if (current.status === 'failed') {
+          const retryRecord: IdempotencyRecord<T> = {
+            ...current,
+            status: 'in_progress',
+            error: undefined,
+            updatedAt: now,
+            expiresAt: now + this.ttlMs,
+            version: (current.version ?? 0) + 1,
+          };
+
+          if (this.store.update) {
+            const conflict = await this.store.update<T>(key, current.version ?? 0, retryRecord);
+            if (conflict !== undefined) {
+              current = conflict ?? undefined;
+              continue;
+            }
+            return this.runOperation(retryRecord, operation, retryRecord.version!);
+          } else {
+            await this.store.put(retryRecord);
+            return this.runOperation(retryRecord, operation, retryRecord.version!);
+          }
+        }
+
+        const retryAfterMs = Math.max(1, current.expiresAt - Date.now());
+        throw new IdempotencyInProgressError(key, retryAfterMs);
       }
     });
   }
 
-  /**
-   * Removes an idempotency record (e.g. post-logout or post-recovery).
-   */
   async clear(key: string): Promise<void> {
     await this.getMutex(key).runExclusive(async () => {
       await this.store.delete(key);
     });
+  }
+
+  private async runOperation<T>(
+    record: IdempotencyRecord<T>,
+    operation: () => Promise<T>,
+    expectedVersion: number,
+  ): Promise<T> {
+    try {
+      const result = await operation();
+      const completed: IdempotencyRecord<T> = {
+        ...record,
+        status: 'completed',
+        result,
+        error: undefined,
+        updatedAt: Date.now(),
+        expiresAt: Date.now() + this.ttlMs,
+        version: expectedVersion + 1,
+      };
+
+      if (this.store.update) {
+        const conflict = await this.store.update<T>(record.key, expectedVersion, completed);
+        if (conflict !== undefined) {
+          throw new IdempotencyConflictError(record.key);
+        }
+      } else {
+        await this.store.put(completed);
+      }
+      return result;
+    } catch (error) {
+      if (error instanceof IdempotencyConflictError) {
+        throw error;
+      }
+
+      const failed: IdempotencyRecord<T> = {
+        ...record,
+        status: 'failed',
+        error,
+        updatedAt: Date.now(),
+        expiresAt: Date.now() + this.ttlMs,
+        version: expectedVersion + 1,
+      };
+
+      if (this.store.update) {
+        const conflict = await this.store.update<T>(record.key, expectedVersion, failed);
+        if (conflict !== undefined) {
+          throw new IdempotencyConflictError(record.key);
+        }
+      } else {
+        await this.store.put(failed);
+      }
+      throw error;
+    }
   }
 
   private getMutex(key: string): Mutex {
