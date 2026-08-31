@@ -149,4 +149,4 @@ export function EmergencyTransferGate({
 
 // Re-export for consumers that want to compute the reason independently.
 export { computeBlockReason }
-export type { GateBlockReason }
+

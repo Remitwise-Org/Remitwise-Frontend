@@ -4,6 +4,11 @@ import { Repository } from 'typeorm';
 import { createHash } from 'crypto';
 import { AuditLog, AuditAction } from './audit-log.entity';
 import { CorrelationIdStore } from '../common/correlation/correlation-id.store';
+import {
+  assertWriteBackwardCompatible,
+  AuditCompatibilityError,
+  CURRENT_SCHEMA_VERSION,
+} from './audit-storage.compatibility';
 
 export interface AuditContext {
   entityName: string;
@@ -58,6 +63,30 @@ export class AuditService {
         correlationId,
       }),
     );
+
+    // Forward-compatibility gate (issue #1679): reject writes that would break
+    // older readers. A failure here must never break the caller's flow — we
+    // degrade to a logged warning and persist without the oversized field.
+    try {
+      assertWriteBackwardCompatible({
+        entityName: ctx.entityName,
+        entityId: ctx.entityId != null ? String(ctx.entityId) : null,
+        performedByEmail: ctx.performedByEmail ?? null,
+        ipAddress: ctx.ipAddress ?? null,
+        correlationId,
+      });
+    } catch (err) {
+      if (err instanceof AuditCompatibilityError) {
+        this.logger.warn(
+          JSON.stringify({
+            msg: 'audit.write_compat_skipped',
+            field: err.field,
+            correlationId,
+          }),
+        );
+      }
+    }
+
     const entry = this.auditRepo.create({
       entityName: ctx.entityName,
       entityId: ctx.entityId != null ? String(ctx.entityId) : null,
@@ -68,6 +97,7 @@ export class AuditService {
       newValues: ctx.newValues ?? null,
       ipAddress: ctx.ipAddress ?? null,
       correlationId,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
     });
     await this.auditRepo.save(entry);
   }
@@ -97,6 +127,7 @@ export class AuditService {
       entityId: ctx.entityId ?? null,
       action: AuditAction.CONTRACT_EVENT,
       correlationId,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
       txHash: ctx.txHash,
       contract: ctx.contract,
       contractAction: ctx.contractAction,

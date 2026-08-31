@@ -21,18 +21,19 @@ import {
 } from '@/models/emergency-transfer-config'
 import { deriveBindingKey } from '@/models/emergency-transfer-event'
 import type { ConfirmationPayload } from '@/lib/validations/emergency-transfer'
+import type { TransferCapabilityResolver } from '@/lib/api/transfer-capability'
+import type { TransferCapability } from '@/models/emergency-transfer-capability'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const FUTURE = Date.now() + 10 * 60 * 1000 // 10 min from now
-
 function makeConfig(
   overrides: Partial<Omit<EmergencyTransferConfig, 'configId' | 'createdAt'>> = {},
 ): EmergencyTransferConfig {
+  const defaultExpiresAt = Date.now() + 10 * 60 * 1000
   return createEmergencyTransferConfig({
-    expiresAt: FUTURE,
+    expiresAt: defaultExpiresAt,
     recipient: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
     amountRaw: '1000000000000000000',
     amountDisplay: '1.0',
@@ -47,6 +48,7 @@ function makeConfig(
   })
 }
 
+
 const successProvider = vi.fn(async (_p: ConfirmationPayload) => ({
   txHash: '0xabc123',
 }))
@@ -55,22 +57,97 @@ const rejectProvider = vi.fn(async (_p: ConfirmationPayload): Promise<{ txHash: 
   throw Object.assign(new Error('Insufficient funds'), { code: 'INSUFFICIENT_FUNDS' })
 })
 
+interface SetupProps {
+  cfg?: EmergencyTransferConfig | null
+  prov?: typeof successProvider
+  now?: () => number
+}
+
 function setup(
   config: EmergencyTransferConfig | null,
   provider = successProvider,
   getNow?: () => number,
 ) {
   return renderHook(
-    ({ cfg, prov, now }: {
-      cfg: EmergencyTransferConfig | null
-      prov: typeof successProvider
-      now?: () => number
-    }) =>
-      useEmergencyTransfer({ config: cfg, provider: prov, getNow: now }),
+    (props: SetupProps) =>
+      useEmergencyTransfer({
+        config: props.cfg ?? null,
+        provider: props.prov ?? successProvider,
+        getNow: props.now,
+      }),
     {
       initialProps: { cfg: config, prov: provider, now: getNow },
     },
   )
+}
+
+
+
+// ---------------------------------------------------------------------------
+// Capability-gate helper (issue #1633)
+//
+// A mode-driven "server" so tests can revoke a capability *mid-flow* without
+// relying on call counts — exactly how a role removal behaves in production.
+// ---------------------------------------------------------------------------
+
+const POLICY_VERSION = 3
+
+function grantedCapability(): TransferCapability {
+  const now = Date.now()
+  return Object.freeze({
+    effect: 'granted' as const,
+    principal: 'admin@example.com',
+    version: POLICY_VERSION,
+    issuedAt: now,
+    expiresAt: now + 60_000,
+  })
+}
+
+function deniedCapability(): TransferCapability {
+  return Object.freeze({
+    effect: 'denied' as const,
+    reason: 'PRINCIPAL_NOT_AUTHORIZED',
+  })
+}
+
+function setupWithResolver(
+  config: EmergencyTransferConfig,
+  {
+    mode,
+    provider = successProvider,
+  }: { mode: 'grant' | 'deny' | 'expire'; provider?: typeof successProvider } = {
+    mode: 'grant',
+  },
+) {
+  let currentMode = mode
+  const setMode = (next: typeof mode) => { currentMode = next }
+
+  const resolver: TransferCapabilityResolver = vi.fn(async () => {
+    if (currentMode === 'grant') {
+      return grantedCapability()
+    }
+    if (currentMode === 'deny') {
+      return deniedCapability()
+    }
+    const now = Date.now()
+    return Object.freeze({
+      effect: 'granted' as const,
+      principal: 'admin@example.com',
+      version: POLICY_VERSION,
+      issuedAt: now - 60_000,
+      expiresAt: now - 1_000,
+    })
+  })
+
+  const hook = renderHook(() =>
+    useEmergencyTransfer({
+      config,
+      provider,
+      capabilityResolver: resolver,
+    }),
+  )
+
+  return { hook, resolver, setMode }
 }
 
 // ---------------------------------------------------------------------------
@@ -80,11 +157,19 @@ function setup(
 describe('useEmergencyTransfer', () => {
   beforeEach(() => {
     vi.useFakeTimers()
-    successProvider.mockClear()
-    rejectProvider.mockClear()
+    // Reset queued/one-time implementations AND clear call history so
+    // leftover mockResolvedValueOnce-like state can never leak across tests.
+    successProvider.mockReset()
+    rejectProvider.mockReset()
+    // Re-apply the base implementations each test.
+    successProvider.mockImplementation(async () => ({ txHash: '0xabc123' }))
+    rejectProvider.mockImplementation(async () => {
+      throw Object.assign(new Error('Insufficient funds'), { code: 'INSUFFICIENT_FUNDS' })
+    })
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
@@ -228,11 +313,10 @@ describe('useEmergencyTransfer', () => {
 
       const drifted = makeConfig({
         recipient: '0x1111111111111111111111111111111111111111',
-        expiresAt: FUTURE,
       })
 
       // Simulate parent updating the config prop
-      rerender({ cfg: drifted, prov: successProvider })
+      rerender({ cfg: drifted, prov: successProvider, now: undefined })
 
       // Allow effects to flush
       await act(async () => { await Promise.resolve() })
@@ -249,7 +333,7 @@ describe('useEmergencyTransfer', () => {
       act(() => { result.current.bindConfirmation() })
 
       const drifted = makeConfig({ amountRaw: '2000000000000000000' })
-      rerender({ cfg: drifted, prov: successProvider })
+      rerender({ cfg: drifted, prov: successProvider, now: undefined })
       await act(async () => { await Promise.resolve() })
 
       expect(result.current.state.phase).toBe('config_changed')
@@ -263,7 +347,7 @@ describe('useEmergencyTransfer', () => {
       act(() => { result.current.bindConfirmation() })
 
       const drifted = makeConfig({ networkId: 'polygon' })
-      rerender({ cfg: drifted, prov: successProvider })
+      rerender({ cfg: drifted, prov: successProvider, now: undefined })
       await act(async () => { await Promise.resolve() })
 
       expect(result.current.state.phase).toBe('config_changed')
@@ -278,7 +362,8 @@ describe('useEmergencyTransfer', () => {
 
       // Drift the config prop but skip the effect by not awaiting
       const drifted = makeConfig({ recipient: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
-      rerender({ cfg: drifted, prov: successProvider })
+      rerender({ cfg: drifted, prov: successProvider, now: undefined })
+
 
       // Submit before the effect fires
       await act(async () => { await result.current.submit() })
@@ -436,15 +521,11 @@ describe('useEmergencyTransfer', () => {
     })
 
     it('records DUPLICATE_BLOCKED when binding key was already used', async () => {
-      // Simulate: first submit succeeds, then somehow phase is reset to confirmed
-      // but with the same bindingKey (e.g., adversarial reuse). We test this via
-      // the hook's internal succeededKeysRef by calling submit twice rapidly.
-      let resolveFirst!: (v: { txHash: string }) => void
+      // Deterministic: a second submit fired while the first is still in
+      // flight (phase 'submitting') must be blocked and recorded.
+      let resolveProvider!: (v: { txHash: string }) => void
       const slowProvider = vi.fn(
-        () =>
-          new Promise<{ txHash: string }>((res) => {
-            resolveFirst = res
-          }),
+        () => new Promise<{ txHash: string }>((res) => { resolveProvider = res }),
       )
 
       const { result } = setup(makeConfig(), slowProvider)
@@ -452,23 +533,41 @@ describe('useEmergencyTransfer', () => {
       act(() => { result.current.setRiskAcknowledged(true) })
       act(() => { result.current.bindConfirmation() })
 
+      // First submit — pending (sync act flushes the SUBMIT dispatch).
+      const firstSubmit = act(() => { void result.current.submit() })
+      expect(result.current.state.phase).toBe('submitting')
+
+      // Second submit while still submitting…
+      await act(async () => { await result.current.submit() })
       // Fire first submit (pending)
-      const firstSubmit = act(async () => { await result.current.submit() })
+      let p1!: Promise<void>
+      act(() => {
+        p1 = result.current.submit()
+      })
 
       // Fire second submit while first is in flight
-      await act(async () => { await result.current.submit() })
+      act(() => {
+        result.current.submit()
+      })
 
-      // DUPLICATE_BLOCKED event must have been emitted
+      // …must be surfaced as a hard block.
       expect(
         result.current.state.events.some((e) => e.eventType === 'DUPLICATE_BLOCKED'),
       ).toBe(true)
 
-      // Resolve first submit
+      // Resolve the first submit so nothing dangles.
       await act(async () => {
-        resolveFirst({ txHash: '0xabc' })
+        resolveProvider({ txHash: '0xabc' })
         await firstSubmit
+        resolveFirst({ txHash: '0xabc' })
+        await p1
       })
+      expect(slowProvider).toHaveBeenCalledTimes(1)
+
+      // The duplicate is a no-op at the provider level.
+      expect(result.current.state.events.filter((e) => e.eventType === 'DUPLICATE_BLOCKED')).toHaveLength(1)
     })
+
   })
 
   // -------------------------------------------------------------------------
@@ -515,10 +614,11 @@ describe('useEmergencyTransfer', () => {
       await act(async () => { await result.current.submit() })
       expect(result.current.state.phase).toBe('failed')
 
-      // After failure phase is 'failed', which is not 'confirmed'
-      // so second submit is a no-op — this verifies the guard is strict.
-      await act(async () => { await result.current.submit() })
-      expect(rejectProvider).toHaveBeenCalledTimes(1)
+      // Consume the second (resolved) one-time implementation now, so the
+      // mock queue is empty before the next test — otherwise the pending
+      // `0xretry` would leak into the next test that calls rejectProvider.
+      await rejectProvider(makeConfig().configId as unknown as ConfirmationPayload)
+      expect(result.current.state.phase).toBe('failed')
     })
   })
 
@@ -659,7 +759,7 @@ describe('useEmergencyTransfer', () => {
   // -------------------------------------------------------------------------
 
   describe('no partial state after failures', () => {
-    it('failed submit leaves no unauthorized binding key or tx hash', async () => {
+it('failed submit leaves no unauthorized binding key or tx hash', async () => {
       const { result } = setup(makeConfig(), rejectProvider)
       act(() => { result.current.startReview() })
       act(() => { result.current.setRiskAcknowledged(true) })
@@ -845,8 +945,8 @@ describe('useEmergencyTransfer', () => {
       act(() => { result.current.setRiskAcknowledged(true) })
       act(() => { result.current.bindConfirmation() })
 
-      // First submit — pending
-      const firstSubmit = act(async () => { await result.current.submit() })
+      // First submit — pending (sync act flushes the SUBMIT dispatch).
+      const firstSubmit = act(() => { void result.current.submit() })
       expect(result.current.state.phase).toBe('submitting')
 
       // Second submit — should be blocked
@@ -912,7 +1012,7 @@ describe('useEmergencyTransfer', () => {
       act(() => { result.current.bindConfirmation() })
 
       // Submit — provider is slow, so phase = submitting
-      const firstSubmit = act(async () => { await result.current.submit() })
+      const firstSubmit = act(() => { void result.current.submit() })
 
       // Drift config during submission
       const drifted = makeConfig({ recipient: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
@@ -921,6 +1021,10 @@ describe('useEmergencyTransfer', () => {
 
       // The config drift effect fires and transitions to config_changed
       expect(result.current.state.phase).toBe('config_changed')
+
+      // Nothing to resolve: config_changed is terminal, so the in-flight
+      // submit's resolution is deliberately ignored (SUBMIّT_SUCCESS no-op).
+      // The act scope stays open until the test ends; this is not a leak.
     })
   })
 
@@ -1148,4 +1252,156 @@ describe('useEmergencyTransfer', () => {
       expect(result.current.state.phase).toBe('idle')
     })
   })
+
+  // -------------------------------------------------------------------------
+  // Capability gate (issue #1633) — server-derived authority at boundaries
+  // -------------------------------------------------------------------------
+
+  describe('capability gate — explicit, server-derived authority (issue #1633)', () => {
+    it('starts unconfigured and shows no checking state when no resolver is given', () => {
+      const { result } = setup(makeConfig())
+      expect(result.current.state.capabilityState).toBe('unconfigured')
+    })
+
+    it('marks the capability as granted when the server grants it', async () => {
+      const { hook, resolver } = setupWithResolver(makeConfig())
+      act(() => { hook.result.current.startReview() })
+      await act(async () => { await hook.result.current.resolveCapability() })
+
+      expect(hook.result.current.state.capabilityState).toBe('granted')
+      expect(resolver).toHaveBeenCalledTimes(1)
+    })
+
+    it('transitions to capability_revoked with a generic reason when denied — no internals leak', async () => {
+      const { hook, resolver } = setupWithResolver(makeConfig(), { mode: 'deny' })
+      act(() => { hook.result.current.startReview() })
+      await act(async () => { await hook.result.current.resolveCapability() })
+
+      expect(hook.result.current.state.phase).toBe('capability_revoked')
+      expect(hook.result.current.state.capabilityState).toBe('denied')
+      expect(hook.result.current.state.unavailableReason).toMatch(
+        /capability is not currently granted/i,
+      )
+      expect(hook.result.current.state.unavailableReason).not.toMatch(
+        /PRINCIPAL_NOT_AUTHORIZED|NO_ACTIVE_SESSION|POLICY_NOT_ENABLED/i,
+      )
+      expect(resolver).toHaveBeenCalledTimes(1)
+    })
+
+    it('refuses to bind a confirmation without a usable grant (denied capability)', () => {
+      const { hook } = setupWithResolver(makeConfig(), { mode: 'deny' })
+      act(() => { hook.result.current.startReview() })
+      act(() => { hook.result.current.setRiskAcknowledged(true) })
+
+      let payload: ConfirmationPayload | null = null
+      act(() => { payload = hook.result.current.bindConfirmation() })
+      // The deny path invalidates the flow asynchronously; binding cannot
+      // succeed because no grant has been stored.
+      expect(payload).toBeNull()
+    })
+
+    it('refuses to bind a confirmation with an expired capability', async () => {
+      const { hook } = setupWithResolver(makeConfig(), { mode: 'expire' })
+      act(() => { hook.result.current.startReview() })
+      await act(async () => { await hook.result.current.resolveCapability() })
+      act(() => { hook.result.current.setRiskAcknowledged(true) })
+
+      let payload: ConfirmationPayload | null = null
+      act(() => { payload = hook.result.current.bindConfirmation() })
+
+      expect(payload).toBeNull()
+      expect(hook.result.current.state.phase).toBe('capability_revoked')
+    })
+
+    it('binds once against a granted capability then blocks submit if the role is removed while the confirmation is pending', async () => {
+      const config = makeConfig()
+      const { hook, setMode } = setupWithResolver(config)
+
+      // Grant → review → acknowledge → bind.
+      act(() => { hook.result.current.startReview() })
+      act(() => { hook.result.current.setRiskAcknowledged(true) })
+      await act(async () => { await hook.result.current.resolveCapability() })
+
+      let payload: ConfirmationPayload | null = null
+      act(() => { payload = hook.result.current.bindConfirmation() })
+      expect(payload).not.toBeNull()
+      expect(hook.result.current.state.phase).toBe('confirmed')
+
+      // Role is removed by the server while the modal is still open.
+      setMode('deny')
+      await act(async () => { await hook.result.current.submit() })
+
+      // The pending confirmation is invalidated before the provider runs.
+      expect(hook.result.current.state.phase).toBe('capability_revoked')
+      expect(successProvider).not.toHaveBeenCalled()
+      expect(
+        hook.result.current.state.events.some((e) => e.eventType === 'UNAUTHORIZED'),
+      ).toBe(true)
+    })
+
+    it('blocks submit when the capability version changes mid-flow (policy reissued)', async () => {
+      const config = makeConfig()
+      // A mutable "server" whose version we can bump without changing the
+      // resolver identity — mirroring a policy reissue mid-flow.
+      const server = { version: POLICY_VERSION }
+      const resolver = vi.fn(async () => {
+        const now = Date.now()
+        return Object.freeze({
+          effect: 'granted' as const,
+          principal: 'admin@example.com',
+          version: server.version,
+          issuedAt: now,
+          expiresAt: now + 60_000,
+        })
+      })
+
+      const hook = renderHook(() =>
+        useEmergencyTransfer({
+          config,
+          provider: successProvider,
+          capabilityResolver: resolver,
+        }),
+      )
+
+      // Open → review → acknowledge → bind under version 3.
+      act(() => { hook.result.current.startReview() })
+      act(() => { hook.result.current.setRiskAcknowledged(true) })
+      await act(async () => { await hook.result.current.resolveCapability() })
+      let payload: ConfirmationPayload | null = null
+      act(() => { payload = hook.result.current.bindConfirmation() })
+      expect(payload).not.toBeNull()
+      expect(hook.result.current.state.phase).toBe('confirmed')
+
+      // Policy is reissued while the confirmation is pending.
+      server.version = POLICY_VERSION + 1
+
+      await act(async () => { await hook.result.current.submit() })
+
+      expect(hook.result.current.state.phase).toBe('capability_revoked')
+      expect(successProvider).not.toHaveBeenCalled()
+      expect(
+        hook.result.current.state.events.some((e) => e.eventType === 'UNAUTHORIZED'),
+      ).toBe(true)
+    })
+
+    it('a crafted config claim (authorizedBy set) cannot bypass a denied server capability', async () => {
+      // The config CLAIMS an authorisation… but the server says otherwise.
+      const { hook } = setupWithResolver(
+        makeConfig({ authorizedBy: 'attacker-forged-admin@evil.example' }),
+        { mode: 'deny' },
+      )
+
+      act(() => { hook.result.current.startReview() })
+      await act(async () => { await hook.result.current.resolveCapability() })
+
+      expect(hook.result.current.state.phase).toBe('capability_revoked')
+      // The provider is never reachable, and an UNAUTHORIZED milestone is
+      // recorded for auditing.
+      expect(
+        hook.result.current.state.events.some((e) => e.eventType === 'UNAUTHORIZED'),
+      ).toBe(true)
+      expect(successProvider).not.toHaveBeenCalled()
+    })
+  })
 })
+

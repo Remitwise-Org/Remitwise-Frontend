@@ -37,6 +37,7 @@ export interface RpcProvider {
 export class EventsService implements OnModuleInit {
   private readonly logger = new Logger(EventsService.name);
   private lastPolledBlock: number = 0;
+  private pollingInProgress = false;
   private provider: RpcProvider | null = null;
   private pollingInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -84,8 +85,20 @@ export class EventsService implements OnModuleInit {
       return;
     }
 
+    // Serialize concurrent polls so overlapping interval/manual invocations
+    // cannot process the same block range twice. If a poll is already running,
+    // this call returns immediately; the in-flight poll is the only one that
+    // advances the cursor. On failure the cursor is left unchanged, so the
+    // next poll retries the same range.
+    if (this.pollingInProgress) {
+      this.logger.warn('Polling already in progress; skipping concurrent poll');
+      return;
+    }
+
+    this.pollingInProgress = true;
     try {
-      const latestBlock = await this.provider.getLatestBlockNumber();
+      const provider = this.provider;
+      const latestBlock = await provider.getLatestBlockNumber();
       if (latestBlock <= this.lastPolledBlock) return;
 
       const fromBlock = this.lastPolledBlock + 1;
@@ -93,7 +106,7 @@ export class EventsService implements OnModuleInit {
         `Polling events from block ${fromBlock} to ${latestBlock}`,
       );
 
-      const events = await this.provider.getEvents(fromBlock, latestBlock);
+      const events = await provider.getEvents(fromBlock, latestBlock);
       for (const event of events) {
         try {
           const contribution = this.leaderboardProofService.extractContribution(event);
@@ -119,11 +132,14 @@ export class EventsService implements OnModuleInit {
         }
       }
 
-      this.lastPolledBlock = latestBlock;
+      // Advance the cursor only after the whole range has been ingested.
+      this.lastPolledBlock = Math.max(this.lastPolledBlock, latestBlock);
     } catch (err) {
       this.logger.error(
         `Polling failed: ${err instanceof Error ? err.message : String(err)}`,
       );
+    } finally {
+      this.pollingInProgress = false;
     }
   }
 

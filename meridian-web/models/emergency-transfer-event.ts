@@ -22,6 +22,7 @@ export type EmergencyTransferEventType =
   | 'SUBMIT_SUCCEEDED'     // Provider accepted the transaction
   | 'SUBMIT_FAILED'        // Provider rejected the transaction
   | 'DUPLICATE_BLOCKED'    // Duplicate submit attempt was blocked
+  | 'CONFLICTING_KEY_REUSED' // Request key reused with conflicting terms
   | 'EXPIRED'              // Config expired before confirmation
   | 'CONFIG_CHANGED'       // Underlying config changed, review invalidated
   | 'UNAUTHORIZED'         // Policy / auth check failed
@@ -85,6 +86,12 @@ export interface DuplicateBlockedEvent extends BaseEvent {
   readonly bindingKey: string
 }
 
+export interface ConflictingKeyReusedEvent extends BaseEvent {
+  readonly eventType: 'CONFLICTING_KEY_REUSED'
+  readonly bindingKey: string
+  readonly reason: string
+}
+
 export interface ExpiredEvent extends BaseEvent {
   readonly eventType: 'EXPIRED'
 }
@@ -117,6 +124,7 @@ export type EmergencyTransferEvent =
   | SubmitSucceededEvent
   | SubmitFailedEvent
   | DuplicateBlockedEvent
+  | ConflictingKeyReusedEvent
   | ExpiredEvent
   | ConfigChangedEvent
   | UnauthorizedEvent
@@ -151,6 +159,10 @@ export function createEvent<T extends EmergencyTransferEvent>(
 export function deriveBindingKey(config: EmergencyTransferConfig): string {
   const payload = [
     config.configId,
+    config.requestKey ?? '',
+    config.nonce ?? '',
+    config.quoteId ?? '',
+    config.quoteHash ?? '',
     config.recipient,
     config.amountRaw,
     config.asset.symbol,
@@ -166,3 +178,4 @@ export function deriveBindingKey(config: EmergencyTransferConfig): string {
   }
   return `bk_${(h >>> 0).toString(16).padStart(8, '0')}`
 }
+

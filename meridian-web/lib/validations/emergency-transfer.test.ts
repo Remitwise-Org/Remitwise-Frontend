@@ -396,4 +396,41 @@ describe('assertPayloadMatchesConfig', () => {
     expect(message).toMatch(/amountRaw/)
     expect(message).toMatch(/networkId/)
   })
+
+  it('throws when quoteId differs', () => {
+    const payloadWithQuote = ConfirmationPayloadSchema.parse({
+      ...basePayload,
+      quoteId: 'quote-100',
+    })
+    expect(() =>
+      assertPayloadMatchesConfig(payloadWithQuote, {
+        ...baseConfig,
+        quoteId: 'quote-200',
+      }),
+    ).toThrow(/quoteId/)
+  })
+
+  it('throws when requestKey or nonce differs', () => {
+    const payloadWithKeys = ConfirmationPayloadSchema.parse({
+      ...basePayload,
+      requestKey: 'req-key-1',
+      nonce: 'nonce-1',
+    })
+    expect(() =>
+      assertPayloadMatchesConfig(payloadWithKeys, {
+        ...baseConfig,
+        requestKey: 'req-key-2',
+        nonce: 'nonce-1',
+      }),
+    ).toThrow(/requestKey/)
+
+    expect(() =>
+      assertPayloadMatchesConfig(payloadWithKeys, {
+        ...baseConfig,
+        requestKey: 'req-key-1',
+        nonce: 'nonce-2',
+      }),
+    ).toThrow(/nonce/)
+  })
 })
+

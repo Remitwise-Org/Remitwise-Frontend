@@ -113,6 +113,10 @@ export interface EmergencyTransferReviewPanelProps {
   onDismiss: () => void
   /** Disable the confirm button externally (e.g. during parent async work). */
   confirmDisabled?: boolean
+  /** True while the server capability is being re-derived. */
+  capabilityChecking?: boolean
+  /** True when the server denied capability (confirmation is not allowed). */
+  capabilityDenied?: boolean
   className?: string
 }
 
@@ -124,6 +128,8 @@ export function EmergencyTransferReviewPanel({
   onConfirm,
   onDismiss,
   confirmDisabled = false,
+  capabilityChecking = false,
+  capabilityDenied = false,
   className,
 }: EmergencyTransferReviewPanelProps) {
   const isExpired = msUntilExpiry <= 0
@@ -210,6 +216,42 @@ export function EmergencyTransferReviewPanel({
           mono
           data-testid="et-detail-contract"
         />
+        {config.quoteId && (
+          <>
+            <Separator className="my-1" />
+            <DetailRow
+              icon={<ShieldAlert className="size-4" aria-hidden />}
+              label="Authorized Quote"
+              value={config.quoteId}
+              mono
+              data-testid="et-detail-quote"
+            />
+          </>
+        )}
+        {config.requestKey && (
+          <>
+            <Separator className="my-1" />
+            <DetailRow
+              icon={<Clock className="size-4" aria-hidden />}
+              label="Request Key"
+              value={config.requestKey}
+              mono
+              data-testid="et-detail-request-key"
+            />
+          </>
+        )}
+        {config.nonce && (
+          <>
+            <Separator className="my-1" />
+            <DetailRow
+              icon={<Clock className="size-4" aria-hidden />}
+              label="Nonce"
+              value={config.nonce}
+              mono
+              data-testid="et-detail-nonce"
+            />
+          </>
+        )}
         {config.memo && (
           <>
             <Separator className="my-1" />
@@ -222,6 +264,7 @@ export function EmergencyTransferReviewPanel({
           </>
         )}
       </div>
+
 
       <Separator />
 
@@ -284,6 +327,31 @@ export function EmergencyTransferReviewPanel({
         </Alert>
       )}
 
+      {/* Server-capability overrides (issue #1633) */}
+      {capabilityChecking && (
+        <Alert
+          variant="default"
+          className="bg-muted"
+          data-testid="et-capability-checking"
+        >
+          <ShieldAlert className="size-4 animate-pulse" aria-hidden />
+          <AlertTitle>Verifying authorisation</AlertTitle>
+          <AlertDescription>
+            Re-checking emergency-transfer capability against the server…
+          </AlertDescription>
+        </Alert>
+      )}
+      {capabilityDenied && (
+        <Alert variant="destructive" data-testid="et-capability-denied">
+          <ShieldAlert className="size-4" aria-hidden />
+          <AlertTitle>Authorisation not granted</AlertTitle>
+          <AlertDescription>
+            The server no longer grants emergency-transfer capability to this
+            session. The confirmation cannot proceed.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Action buttons */}
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button
@@ -296,8 +364,12 @@ export function EmergencyTransferReviewPanel({
         <Button
           variant="destructive"
           onClick={onConfirm}
-          disabled={!riskAcknowledged || isExpired || confirmDisabled}
-          aria-disabled={!riskAcknowledged || isExpired || confirmDisabled}
+          disabled={
+            !riskAcknowledged || isExpired || confirmDisabled || capabilityChecking
+          }
+          aria-disabled={
+            !riskAcknowledged || isExpired || confirmDisabled || capabilityChecking
+          }
           data-testid="et-confirm-btn"
         >
           <ShieldAlert className="size-4" aria-hidden />

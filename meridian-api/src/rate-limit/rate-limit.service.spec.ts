@@ -46,6 +46,30 @@ describe('RateLimitService', () => {
     expect(lastAllowed?.limit).toBe(20);
   });
 
+  it('bounds invalid or oversized limits and windows to safe values', async () => {
+    const service = new RateLimitService(
+      config({
+        RATE_LIMIT_WINDOW_MS: 9_999_999,
+        RATE_LIMIT_READ_LIMIT: 10_000,
+        RATE_LIMIT_WRITE_LIMIT: 20_000,
+        RATE_LIMIT_ABUSE_FACTOR: 2,
+        RATE_LIMIT_AUTH_MULTIPLIER: 1000,
+      }),
+      null,
+    );
+
+    const result = await service.consume({
+      tier: 'write',
+      ip: '203.0.113.77',
+      limit: Number.MAX_SAFE_INTEGER,
+      windowMs: Number.MAX_SAFE_INTEGER,
+    });
+
+    expect(result.limit).toBeLessThanOrEqual(1000);
+    expect(result.limit).toBeGreaterThan(0);
+    expect(result.resetAt).toBeGreaterThan(Math.floor(Date.now() / 1000));
+  });
+
   it('gives authenticated users a higher read quota than the same IP', async () => {
     const service = new RateLimitService(config(), null);
     const anon = await Promise.all(

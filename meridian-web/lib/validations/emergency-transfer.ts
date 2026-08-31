@@ -29,7 +29,7 @@ const nonEmptyString = z.string().trim().min(1, 'Required')
  * Allows both EVM (0x…) and non-EVM (Solana, Stellar) formats.
  */
 const recipientAddress = nonEmptyString
-  .min(26, 'Recipient address is too short')
+  .min(26, 'Invalid recipient address format')
   .max(128, 'Recipient address is too long')
   .refine(
     (v) =>
@@ -45,7 +45,18 @@ const recipientAddress = nonEmptyString
  */
 const rawAmountString = nonEmptyString
   .regex(/^\d+$/, 'Amount must be a non-negative integer string (smallest unit)')
-  .refine((v) => BigInt(v) > 0n, 'Amount must be greater than zero')
+  .refine(
+    (v) => {
+      try {
+        return BigInt(v) > BigInt(0)
+      } catch {
+        return false
+      }
+    },
+    'Amount must be greater than zero',
+  )
+
+
 
 /** Token symbol — letters, digits, hyphens, max 20 chars. */
 const tokenSymbol = nonEmptyString
@@ -117,6 +128,10 @@ export const EmergencyTransferConfigSchema = z
       .min(1, 'authorizedBy must identify the authorising principal')
       .nullable(),
     memo: z.string().max(256, 'Memo exceeds 256 characters').optional(),
+    quoteId: z.string().max(128, 'quoteId is too long').optional(),
+    quoteHash: z.string().max(128, 'quoteHash is too long').optional(),
+    requestKey: z.string().max(128, 'requestKey is too long').optional(),
+    nonce: z.string().max(128, 'nonce is too long').optional(),
   })
   .strict()
 
@@ -157,6 +172,10 @@ export const ConfirmationPayloadSchema = z
     networkId,
     authorizedBy: z.string().min(1).nullable(),
     memo: z.string().max(256).optional(),
+    quoteId: z.string().max(128).optional(),
+    quoteHash: z.string().max(128).optional(),
+    requestKey: z.string().max(128).optional(),
+    nonce: z.string().max(128).optional(),
     /** Must be true — the user must have ticked the risk acknowledgement. */
     riskAcknowledged: z.literal(true, {
       errorMap: () => ({ message: 'Risk acknowledgement is required' }),
@@ -215,6 +234,11 @@ export function assertPayloadMatchesConfig(
     asset: { symbol: string; contractAddress: string; decimals: number }
     networkId: string
     expiresAt: number
+    memo?: string
+    quoteId?: string
+    quoteHash?: string
+    requestKey?: string
+    nonce?: string
   },
 ): void {
   const mismatches: string[] = []
@@ -235,6 +259,16 @@ export function assertPayloadMatchesConfig(
     mismatches.push('networkId')
   if (payload.expiresAt !== config.expiresAt)
     mismatches.push('expiresAt')
+  if (payload.memo !== config.memo)
+    mismatches.push('memo')
+  if (payload.quoteId !== config.quoteId)
+    mismatches.push('quoteId')
+  if (payload.quoteHash !== config.quoteHash)
+    mismatches.push('quoteHash')
+  if (payload.requestKey !== config.requestKey)
+    mismatches.push('requestKey')
+  if (payload.nonce !== config.nonce)
+    mismatches.push('nonce')
 
   if (mismatches.length > 0) {
     throw new Error(
@@ -244,3 +278,4 @@ export function assertPayloadMatchesConfig(
     )
   }
 }
+

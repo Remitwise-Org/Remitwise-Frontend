@@ -66,6 +66,35 @@ jest.mock(
   { virtual: true },
 );
 
+// ----- Auth metadata decorators (aliased path style) -----
+// Controllers import these via `src/...`; replicate their real SetMetadata
+// behavior so Reflector-based metadata assertions (protected-endpoints.spec)
+// resolve and work without a global `src/` moduleNameMapper.
+const rbacSetMetadata = jest.requireActual('@nestjs/common').SetMetadata;
+jest.mock(
+  'src/auth/decorators/roles/roles.decorator',
+  () => ({
+    RequireRoles: (...roles: unknown[]) =>
+      rbacSetMetadata('requiredRoles', roles),
+  }),
+  { virtual: true },
+);
+jest.mock(
+  'src/auth/decorators/permissions/permissions.decorator',
+  () => ({
+    RequirePermissions: (...permissions: unknown[]) =>
+      rbacSetMetadata('requiredPermissions', permissions),
+  }),
+  { virtual: true },
+);
+jest.mock(
+  'src/auth/decorators/public/public.decorator',
+  () => ({
+    Public: () => rbacSetMetadata('isPublic', true),
+  }),
+  { virtual: true },
+);
+
 // ----- Auth providers (idempotent stubs; per-spec files override as needed) -----
 jest.mock(
   'src/auth/providers/hashing',

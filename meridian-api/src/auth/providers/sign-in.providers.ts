@@ -1,6 +1,9 @@
 import {
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
+  Logger,
   RequestTimeoutException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -13,9 +16,12 @@ import { ConfigType } from '@nestjs/config';
 import { GenerateTokenProvider } from './token.provider';
 import { AuditService } from '../../audit/audit.service';
 import { AuditAction } from '../../audit/audit-log.entity';
+import { AccountLockoutService } from './account-lockout.service';
 
 @Injectable()
 export class SignInProviders {
+  private readonly logger = new Logger(SignInProviders.name);
+
   constructor(
     private readonly userAuthFacade: UserAuthFacade,
 
@@ -26,9 +32,22 @@ export class SignInProviders {
     private readonly generateTokenProvider: GenerateTokenProvider,
 
     private readonly auditService: AuditService,
+
+    /** Account lockout: tracks failed sign-in attempts per email. */
+    private readonly lockoutService: AccountLockoutService,
   ) {}
 
   public async SignIn(signInDto: SignInDto) {
+    // -- Account lockout check (issue #1651) ----------------------------
+    const retryAfterMs = this.lockoutService.isLocked(signInDto.email);
+    if (retryAfterMs !== null) {
+      const retryAfterSec = Math.ceil(retryAfterMs / 1000);
+      throw new HttpException(
+        `Account temporarily locked due to too many failed attempts. Retry after ${retryAfterSec}s.`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
     // find user by email
     const user = await this.userAuthFacade.findUserByEmail(signInDto.email);
 
@@ -47,6 +66,18 @@ export class SignInProviders {
 
     //send a confirmation
     if (!isEqual) {
+      // Record the failed attempt (issue #1651).
+      const lockedMs = this.lockoutService.recordFailure(signInDto.email);
+      if (lockedMs !== null) {
+        const retryAfterSec = Math.ceil(lockedMs / 1000);
+        this.logger.warn(
+          `Account locked after failed sign-in: ${signInDto.email} — retry after ${retryAfterSec}s`,
+        );
+        throw new HttpException(
+          `Account temporarily locked due to too many failed attempts. Retry after ${retryAfterSec}s.`,
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
       throw new UnauthorizedException('password/email is wrong');
     }
 
@@ -59,6 +90,9 @@ export class SignInProviders {
         'Please verify your email before signing in.',
       );
     }
+
+    // -- Successful sign-in: reset lockout counter (issue #1651) ---------
+    this.lockoutService.recordSuccess(signInDto.email);
 
     const token = await this.generateTokenProvider.generateTokens(user);
 

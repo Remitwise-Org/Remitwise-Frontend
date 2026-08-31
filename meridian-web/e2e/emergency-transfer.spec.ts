@@ -89,7 +89,60 @@ test.describe('Risk Gate — unavailable states', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 2. Happy path — full review → sign → success flow
+// 2. Capability gate (issue #1633) — server-derived authority at boundaries
+// ---------------------------------------------------------------------------
+
+test.describe('Capability gate — server-derived authority (issue #1633)', () => {
+  test('no_capability blocks the action and explains why without leaking internals', async ({ page }) => {
+    // Server resolves the capability as DENIED (fresh session, wrong role).
+    await openDialog(page, 'no_capability')
+
+    // The review flow must never appear.
+    await expect(page.getByTestId('et-review-panel')).not.toBeVisible()
+    await expect(page.getByTestId('et-blocked-panel')).toBeVisible()
+    await expect(
+      page.getByText('Emergency transfer capability is not currently granted')
+    ).toBeVisible()
+
+    // The server's internal deny reason must NOT be leaked to the user.
+    await expect(page.getByText('PRINCIPAL_NOT_AUTHORIZED')).not.toBeVisible()
+
+    await page.screenshot({ path: 'test-results/et-capability-gate-denied.png' })
+  })
+
+  test('role removed while confirmation is pending invalidates the action before the provider', async ({ page }) => {
+    // Granted at open → granted at bind → DENIED at submit (role removed
+    // server-side while the modal was open).
+    await openDialog(page, 'capability_revoked')
+    await proceedToSign(page)
+    await expect(page.getByTestId('et-bound-panel')).toBeVisible()
+
+    // Submit — the submit boundary re-resolves the capability and now sees a
+    // denied result. The provider must never be called.
+    await page.getByTestId('et-submit-btn').click()
+
+    // The flow is invalidated: blocked panel replaces the sign panel and no
+    // success is ever reached.
+    await expect(page.getByTestId('et-blocked-panel')).toBeVisible({
+      timeout: 5000,
+    })
+    await expect(page.getByTestId('et-success-panel')).not.toBeVisible()
+
+    await page.screenshot({ path: 'test-results/et-capability-revoked.png' })
+  })
+
+  test('expired capability cannot reach the confirmation step', async ({ page }) => {
+    await openDialog(page, 'capability_expired')
+    // Bind is refused — the flow never signs.
+    await expect(page.getByTestId('et-bound-panel')).not.toBeVisible({
+      timeout: 3000,
+    })
+    await page.screenshot({ path: 'test-results/et-capability-expired.png' })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 3. Happy path — full review → sign → success flow
 // ---------------------------------------------------------------------------
 
 test.describe('Happy path — review → sign → success', () => {
