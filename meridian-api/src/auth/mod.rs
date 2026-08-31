@@ -19,10 +19,15 @@
 pub mod errors;
 pub mod flows;
 pub mod recovery;
+pub mod state_machine;
 pub mod tokens;
 pub mod validation;
 
 pub use errors::AuthError;
 pub use flows::{LoginResult, Session, Verifier};
 pub use recovery::{RecoveryRequest, RecoveryResult, RecoveryToken};
+pub use state_machine::{
+    RecoveryEvent, RecoveryRequestState, SessionEvent, SessionState, TokenEvent, TokenState,
+    TransitionLog,
+};
 pub use tokens::{RefreshToken, TokenPair, TokenStore, TokenStoreSnapshot, VerifyResult};

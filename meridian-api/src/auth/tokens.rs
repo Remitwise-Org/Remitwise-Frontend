@@ -312,7 +312,6 @@ impl TokenStore {
         self.active_refresh.iter().copied().collect()
     }
 
-
     /// Check if a token id has been revoked.
     pub fn is_revoked(&self, id: TokenId) -> bool {
         self.revoked.contains(&id)

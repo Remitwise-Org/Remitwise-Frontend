@@ -249,11 +249,7 @@ impl RecoveryService {
         let recovery_snapshot = RecoverySnapshot {
             active_tokens: self.active_tokens.clone(),
             used_tokens: self.used_tokens.clone(),
-            request_statuses: self
-                .requests
-                .iter()
-                .map(|(k, r)| (*k, r.status))
-                .collect(),
+            request_statuses: self.requests.iter().map(|(k, r)| (*k, r.status)).collect(),
         };
 
         // -- Snapshot token-store state for rollback ---------------------
@@ -285,11 +281,9 @@ impl RecoveryService {
         // -- Issue fresh tokens -------------------------------------------
         // If this fails, roll back ALL side effects: token consumption,
         // request status, and session revocation.
-        let new_tokens_result = std::panic::catch_unwind(
-            std::panic::AssertUnwindSafe(|| {
-                token_store.issue_pair(recovery_token.subject.clone())
-            }),
-        );
+        let new_tokens_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            token_store.issue_pair(recovery_token.subject.clone())
+        }));
 
         match new_tokens_result {
             Ok(new_tokens) => Ok(RecoveryResult {

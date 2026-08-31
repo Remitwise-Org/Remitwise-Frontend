@@ -234,34 +234,34 @@ impl AuthService {
     /// A failure in either step rolls back the other, so callers never
     /// observe a partially-logged-out session.
     pub fn logout(&mut self, session_id: u64) -> Result<(), AuthError> {
-        let session = self
-            .sessions
-            .get(&session_id)
-            .ok_or(AuthError::SessionNotFound)?;
+        // Snapshot the access and refresh token ids before borrowing session.
+        let (access_id, refresh_id, was_superseded) = {
+            let session = self
+                .sessions
+                .get(&session_id)
+                .ok_or(AuthError::SessionNotFound)?;
+            (
+                session.tokens.access.id,
+                session.tokens.refresh.id,
+                session.superseded,
+            )
+        };
 
-        // Snapshot both stores so we can roll back on failure.
+        // Snapshot the token store so we can roll back on failure.
         let token_snapshot = self.store.snapshot();
-        let session_superseded = self
-            .sessions
-            .get(&session_id)
-            .map(|s| s.superseded);
 
-        self.store.revoke(session.tokens.access.id);
-        self.store.revoke(session.tokens.refresh.id);
+        self.store.revoke(access_id);
+        self.store.revoke(refresh_id);
 
         if let Some(s) = self.sessions.get_mut(&session_id) {
             s.superseded = true;
         }
 
         // Validate that revocation succeeded — if not, roll back.
-        if !self.store.is_revoked(session.tokens.access.id)
-            || !self.store.is_revoked(session.tokens.refresh.id)
-        {
+        if !self.store.is_revoked(access_id) || !self.store.is_revoked(refresh_id) {
             self.store.restore(token_snapshot);
-            if let Some(superseded) = session_superseded {
-                if let Some(s) = self.sessions.get_mut(&session_id) {
-                    s.superseded = superseded;
-                }
+            if let Some(s) = self.sessions.get_mut(&session_id) {
+                s.superseded = was_superseded;
             }
             return Err(AuthError::InternalError(
                 "logout partial failure, rolled back".into(),
@@ -293,7 +293,11 @@ impl AuthService {
         let session_snapshots: Vec<(u64, bool)> = ids
             .iter()
             .map(|&id| {
-                let superseded = self.sessions.get(&id).map(|s| s.superseded).unwrap_or(false);
+                let superseded = self
+                    .sessions
+                    .get(&id)
+                    .map(|s| s.superseded)
+                    .unwrap_or(false);
                 (id, superseded)
             })
             .collect();

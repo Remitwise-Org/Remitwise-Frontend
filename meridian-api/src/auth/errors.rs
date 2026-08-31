@@ -51,6 +51,10 @@ pub enum AuthError {
     /// A required field is missing or malformed.
     ValidationError(String),
 
+    // -- State transition --------------------------------------------------
+    /// A state transition was not in the legal transition matrix.
+    InvalidStateTransition(String),
+
     // -- Internal ----------------------------------------------------------
     /// An internal invariant was violated.  Should never surface to callers.
     InternalError(String),
@@ -77,6 +81,7 @@ impl fmt::Display for AuthError {
             Self::ConcurrencyConflict => write!(f, "concurrent modification conflict"),
             Self::AmountValidationFailed(msg) => write!(f, "amount validation: {msg}"),
             Self::ValidationError(msg) => write!(f, "validation: {msg}"),
+            Self::InvalidStateTransition(msg) => write!(f, "invalid state transition: {msg}"),
             Self::InternalError(msg) => write!(f, "internal error: {msg}"),
         }
     }
