@@ -10,6 +10,7 @@ jest.mock('../config/jwt.config', () => ({ default: { KEY: 'jwt' } }), {
 });
 
 import { GenerateTokenProvider } from './token.provider';
+import { RefreshToken } from '../entities/refresh-token.entity';
 
 describe('GenerateTokenProvider', () => {
   let provider: GenerateTokenProvider;
@@ -77,7 +78,7 @@ describe('GenerateTokenProvider', () => {
     it('mints access + refresh tokens and stores the refresh token', async () => {
       const user = { id: 5, email: 'a@b.com' } as any;
 
-      const result = await provider.generateTokens(user);
+      await provider.generateTokens(user);
 
       expect(jwtService.signAsync).toHaveBeenCalledTimes(2);
       expect(hashingProvider.hashPassword).toHaveBeenCalled();
@@ -98,10 +99,9 @@ describe('GenerateTokenProvider', () => {
 
       await provider.generateTokens({ id: 5, email: 'a@b.com' } as any);
 
-      expect(cryptoProvider.encrypt).toHaveBeenCalledWith(
-        expect.any(String),
-        { dekId: undefined },
-      );
+      expect(cryptoProvider.encrypt).toHaveBeenCalledWith(expect.any(String), {
+        dekId: undefined,
+      });
       expect(refreshTokenRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
           encryptedData: 'envelope',
@@ -109,11 +109,47 @@ describe('GenerateTokenProvider', () => {
         }),
       );
     });
+
+    // Regression (issue #1689): the orphaned assertion block below had lost
+    // its `it(...)` header in a merge and made the whole suite fail to
+    // compile. Restored as a real test: generateTokens must surface the token
+    // pair plus the persisted row id so callers can reference the session.
+    it('returns the token pair shape and the persisted refresh-token row id', async () => {
+      refreshTokenRepository.save.mockImplementationOnce(async (entity) => ({
+        id: 'row-1',
+        ...entity,
+      }));
+
+      const result = await provider.generateTokens({
+        id: 5,
+        email: 'a@b.com',
+      } as any);
+
       expect(result).toMatchObject({
         access_token: expect.stringContaining(':5'),
         refresh_token: expect.stringContaining(':5'),
         jti: expect.any(String),
+        refreshTokenId: 'row-1',
       });
+    });
+
+    it('writes through the caller transaction manager when one is provided (issue #1689)', async () => {
+      const managerSave = jest.fn(async (entity) => ({
+        id: 'txn-row',
+        ...entity,
+      }));
+      const manager = {
+        getRepository: jest.fn(() => ({ save: managerSave })),
+      };
+
+      const result = await provider.generateTokens({ id: 5 } as any, {
+        manager: manager as any,
+      });
+
+      expect(manager.getRepository).toHaveBeenCalledWith(RefreshToken);
+      expect(managerSave).toHaveBeenCalledTimes(1);
+      expect(refreshTokenRepository.save).not.toHaveBeenCalled();
+      expect(result.refreshTokenId).toBe('txn-row');
     });
   });
 });

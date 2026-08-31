@@ -1,11 +1,14 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, MoreThan, Not, Repository } from 'typeorm';
+import { FindOptionsWhere, IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { User } from 'src/users/user.entity';
 import { VerificationTokenProvider } from './verification-token.provider';
 import { MailProvider } from 'src/mail/providers/mail.provider';
 import { VERIFICATION_TTL_MS } from './verification-token.constants';
-import { CryptoProvider, constantTimeEqual } from 'src/crypto/providers/crypto.provider';
+import {
+  CryptoProvider,
+  constantTimeEqual,
+} from 'src/crypto/providers/crypto.provider';
 import { Role } from '../enums/role.enum';
 import { AuditService } from '../../audit/audit.service';
 import { AuditAction } from '../../audit/audit-log.entity';
@@ -44,6 +47,12 @@ export class VerifyEmailProvider {
   /**
    * Generate a verification token for a freshly-created (or unverified)
    * user, persist its hash, and email the raw token.
+   *
+   * Concurrency (issue #1689): the persist is a compare-and-set on
+   * `emailVerified = false`. If the user becomes verified concurrently (e.g.
+   * they click the verification link while a resend is in flight), the UPDATE
+   * matches zero rows, no token is armed, and no mail is sent — a verified
+   * account can never be left holding a live verification token.
    */
   public async issueVerificationToken(user: User): Promise<void> {
     const raw = this.tokenProvider.generate();
@@ -59,13 +68,27 @@ export class VerifyEmailProvider {
       ? await this.encryptUserData(user, { verificationToken: raw })
       : null;
 
-    await this.usersRepository.update(user.id, {
-      emailVerificationToken: hashed,
-      emailVerificationExpires: expires,
-      emailVerified: false,
-      dataEncryptionKeyId: encrypted?.dataEncryptionKeyId ?? user.dataEncryptionKeyId ?? null,
-      encryptedData: encrypted?.encryptedData ?? null,
-    });
+    const armed = await this.usersRepository.update(
+      // Compare-and-set: only arm the token while the account is still
+      // unverified (see docblock).
+      { id: user.id, emailVerified: false },
+      {
+        emailVerificationToken: hashed,
+        emailVerificationExpires: expires,
+        emailVerified: false,
+        dataEncryptionKeyId:
+          encrypted?.dataEncryptionKeyId ?? user.dataEncryptionKeyId ?? null,
+        encryptedData: encrypted?.encryptedData ?? null,
+      },
+    );
+
+    if (!armed || !armed.affected) {
+      // The account was verified concurrently — no token, no mail, no audit.
+      this.logger.warn(
+        `Skipped arming a verification token for user ${user.id}: account is already verified`,
+      );
+      return;
+    }
 
     await this.auditService.log({
       entityName: 'VerificationToken',
@@ -125,7 +148,10 @@ export class VerifyEmailProvider {
       if (!matches && user.encryptedData) {
         try {
           const decrypted = await this.decryptUserData(user.encryptedData);
-          matches = constantTimeEqual(decrypted.verificationToken ?? '', rawToken);
+          matches = constantTimeEqual(
+            decrypted.verificationToken ?? '',
+            rawToken,
+          );
         } catch (error) {
           this.logger.warn(
             `Failed to decrypt verification token for user ${user.id}: ${
@@ -145,13 +171,49 @@ export class VerifyEmailProvider {
       const nextRole =
         (user.role ?? Role.USER) === Role.USER ? Role.VERIFIED_USER : user.role;
 
-      await this.usersRepository.update(user.id, {
+      // Compare-and-set consume (issue #1689): the flip to verified only
+      // succeeds while the row still carries exactly the token material we
+      // matched above. This makes a concurrent double-submit of the same
+      // token, or a resend that replaced the token between our read and our
+      // write, deterministic:
+      //  - exactly one request performs the state change;
+      //  - a request that lost the race but held a genuinely matching token
+      //    observes the already-verified row and returns it (idempotent
+      //    success — the caller's intent is satisfied);
+      //  - a request whose token was superseded by a resend gets a 401
+      //    instead of consuming a token that is no longer current.
+      const criteria: FindOptionsWhere<User> = {
+        id: user.id,
+        emailVerified: false,
+      };
+      if (user.emailVerificationToken) {
+        criteria.emailVerificationToken = user.emailVerificationToken;
+      }
+      if (user.encryptedData) {
+        criteria.encryptedData = user.encryptedData;
+      }
+
+      const consumed = await this.usersRepository.update(criteria, {
         emailVerified: true,
         role: nextRole,
         emailVerificationToken: null,
         emailVerificationExpires: null,
         encryptedData: null,
       });
+
+      if (!consumed || !consumed.affected) {
+        const current = await this.usersRepository.findOne({
+          where: { id: user.id },
+        });
+        if (current?.emailVerified) {
+          // Another request already verified this account: idempotent
+          // success, no second state change, no duplicate audit entry.
+          return current;
+        }
+        throw new UnauthorizedException(
+          'Invalid or expired verification token',
+        );
+      }
 
       await this.auditService.log({
         entityName: 'User',

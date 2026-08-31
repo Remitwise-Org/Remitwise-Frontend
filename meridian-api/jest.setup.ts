@@ -14,6 +14,7 @@ jest.mock('@nestjs/swagger', () => {
   const actual = jest.requireActual('@nestjs/swagger');
   return {
     ...actual,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     IntersectionType: (..._classes: unknown[]) => class IntersectionType {},
   };
 });
@@ -39,13 +40,14 @@ jest.mock(
   'src/auth/decorators/auth/auth.decorator',
   () => ({
     Auth:
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       (..._args: unknown[]) =>
-      (
-        target: unknown,
-        _key?: string | symbol,
-        descriptor?: PropertyDescriptor,
-      ) =>
-        descriptor ?? target,
+        (
+          target: unknown,
+          _key?: string | symbol,
+          descriptor?: PropertyDescriptor,
+        ) =>
+          descriptor ?? target,
   }),
   { virtual: true },
 );
@@ -104,51 +106,33 @@ jest.mock(
 );
 
 // ----- Entities (aliased paths) -----
-jest.mock(
-  'src/users/user.entity',
-  () => ({ User: class User {} }),
-  { virtual: true },
-);
-jest.mock(
-  'src/post/post.entity',
-  () => ({ Post: class Post {} }),
-  { virtual: true },
-);
-jest.mock(
-  'src/tweets/dto/tweet.entity',
-  () => ({ Tweet: class Tweet {} }),
-  { virtual: true },
-);
+jest.mock('src/users/user.entity', () => ({ User: class User {} }), {
+  virtual: true,
+});
+jest.mock('src/post/post.entity', () => ({ Post: class Post {} }), {
+  virtual: true,
+});
+jest.mock('src/tweets/dto/tweet.entity', () => ({ Tweet: class Tweet {} }), {
+  virtual: true,
+});
 jest.mock(
   'src/tweets/entities/tweet.entity',
   () => ({ Tweet: class Tweet {} }),
   { virtual: true },
 );
-jest.mock(
-  'src/tag/tag.entity',
-  () => ({ Tag: class Tag {} }),
-  { virtual: true },
-);
-jest.mock(
-  'src/metaoption/metaoption.entity',
-  () => ({}),
-  { virtual: true },
-);
-jest.mock(
-  'src/metaoption/dto/create-post-meta-options.dto',
-  () => ({}),
-  { virtual: true },
-);
-jest.mock(
-  'src/metaoption/dto/update-post-meta-options.dto',
-  () => ({}),
-  { virtual: true },
-);
-jest.mock(
-  'src/metaoption/metaoption.controller',
-  () => ({}),
-  { virtual: true },
-);
+jest.mock('src/tag/tag.entity', () => ({ Tag: class Tag {} }), {
+  virtual: true,
+});
+jest.mock('src/metaoption/metaoption.entity', () => ({}), { virtual: true });
+jest.mock('src/metaoption/dto/create-post-meta-options.dto', () => ({}), {
+  virtual: true,
+});
+jest.mock('src/metaoption/dto/update-post-meta-options.dto', () => ({}), {
+  virtual: true,
+});
+jest.mock('src/metaoption/metaoption.controller', () => ({}), {
+  virtual: true,
+});
 
 // ----- Services referenced through aliased paths -----
 jest.mock(
@@ -202,19 +186,15 @@ jest.mock(
   () => ({ PatchPostDto: class PatchPostDto {} }),
   { virtual: true },
 );
-jest.mock(
-  'src/DTO/getPostdto',
-  () => ({ GetPostsDto: class GetPostsDto {} }),
-  { virtual: true },
-);
+jest.mock('src/DTO/getPostdto', () => ({ GetPostsDto: class GetPostsDto {} }), {
+  virtual: true,
+});
 jest.mock('src/DTO/signin-dto', () => ({}), { virtual: true });
 
 // ----- Relative paths used by the spec files -----
-jest.mock(
-  '../users/user.entity',
-  () => ({ User: class User {} }),
-  { virtual: true },
-);
+jest.mock('../users/user.entity', () => ({ User: class User {} }), {
+  virtual: true,
+});
 jest.mock(
   '../users/providers/user.services',
   () => ({ UserService: class UserService {} }),
@@ -230,11 +210,9 @@ jest.mock(
   () => ({ AuthService: class AuthService {} }),
   { virtual: true },
 );
-jest.mock(
-  '../post/post.entity',
-  () => ({ Post: class Post {} }),
-  { virtual: true },
-);
+jest.mock('../post/post.entity', () => ({ Post: class Post {} }), {
+  virtual: true,
+});
 jest.mock(
   '../post/provider/post.service',
   () => ({ PostsService: class PostsService {} }),
@@ -266,11 +244,7 @@ jest.mock(
   () => ({ UserService: class UserService {} }),
   { virtual: true },
 );
-jest.mock(
-  './dtos/createManyUserdto',
-  () => ({}),
-  { virtual: true },
-);
+jest.mock('./dtos/createManyUserdto', () => ({}), { virtual: true });
 jest.mock('./dto/tweet.entity', () => ({ Tweet: class Tweet {} }), {
   virtual: true,
 });
@@ -302,6 +276,13 @@ jest.mock(
       CONTRACT_EVENT: 'CONTRACT_EVENT',
       AUTHORIZATION_GRANTED: 'AUTHORIZATION_GRANTED',
       AUTHORIZATION_DENIED: 'AUTHORIZATION_DENIED',
+      SIGN_IN: 'SIGN_IN',
+      REFRESH: 'REFRESH',
+      LOGOUT: 'LOGOUT',
+      LOGOUT_ALL: 'LOGOUT_ALL',
+      VERIFY_EMAIL: 'VERIFY_EMAIL',
+      RESEND_VERIFICATION: 'RESEND_VERIFICATION',
+      ISSUE_VERIFICATION_TOKEN: 'ISSUE_VERIFICATION_TOKEN',
     },
   }),
   { virtual: true },
@@ -332,7 +313,12 @@ jest.mock(
 );
 jest.mock(
   'src/crypto/providers/crypto.provider',
-  () => ({ CryptoProvider: class CryptoProvider {} }),
+  () => ({
+    CryptoProvider: class CryptoProvider {},
+    // Real implementation parity: auth providers also import this helper
+    // from the aliased path (issue #631 decrypt-verify path).
+    constantTimeEqual: (a: string, b: string) => a === b,
+  }),
   { virtual: true },
 );
 jest.mock(
@@ -372,8 +358,30 @@ jest.mock(
   }),
   { virtual: true },
 );
+jest.mock('src/auth/enums/role-permissions', () => ({ ROLE_PERMISSIONS: {} }), {
+  virtual: true,
+});
+
+// ----- Auth decorators referenced through aliased paths (issue #1689) -----
+// Real users/post/upload controllers import these decorators via the
+// `src/auth/...` alias, which jest cannot resolve with rootDir=src. The
+// factories re-export the REAL implementations so route metadata (RBAC
+// roles/permissions, @Public) behaves exactly as in production.
 jest.mock(
-  'src/auth/enums/role-permissions',
-  () => ({ ROLE_PERMISSIONS: {} }),
+  'src/auth/decorators/roles/roles.decorator',
+  () => jest.requireActual('./src/auth/decorators/roles/roles.decorator'),
+  { virtual: true },
+);
+jest.mock(
+  'src/auth/decorators/permissions/permissions.decorator',
+  () =>
+    jest.requireActual(
+      './src/auth/decorators/permissions/permissions.decorator',
+    ),
+  { virtual: true },
+);
+jest.mock(
+  'src/auth/decorators/public/public.decorator',
+  () => jest.requireActual('./src/auth/decorators/public/public.decorator'),
   { virtual: true },
 );

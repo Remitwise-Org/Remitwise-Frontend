@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import jwtConfig from '../config/jwt.config';
 import { ConfigType } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { User } from 'src/users/user.entity';
 import { RefreshToken } from '../entities/refresh-token.entity';
 import { HashingProvider } from './hashing';
@@ -53,7 +53,21 @@ export class GenerateTokenProvider {
     );
   }
 
-  public async generateTokens(user: User) {
+  /**
+   * Mint an access + refresh token pair for `user` and persist the refresh
+   * token row.
+   *
+   * Concurrency (issue #1689): when `options.manager` is supplied the refresh
+   * token row is written through that `EntityManager`, i.e. inside the
+   * caller's transaction. `RefreshTokenProvider.refreshToken` relies on this
+   * so that "insert new token" and "revoke old token" commit atomically — a
+   * failed rotation rolls back and never leaves an orphaned live token or a
+   * revoked-but-unusable session behind.
+   */
+  public async generateTokens(
+    user: User,
+    options: { manager?: EntityManager; userAgent?: string | null } = {},
+  ) {
     const jti = randomUUID();
 
     // Role-aware claims (issue #632): embed the user's role and the resolved
@@ -82,17 +96,28 @@ export class GenerateTokenProvider {
         })
       : null;
 
-    await this.refreshTokenRepository.save({
+    // Write through the caller's transaction when provided (see docblock);
+    // otherwise persist through the module-scoped repository as before.
+    const repository = options.manager
+      ? options.manager.getRepository(RefreshToken)
+      : this.refreshTokenRepository;
+
+    const persisted = await repository.save({
       jti,
       userId: user.id,
       tokenHash: await this.hashingProvider.hashPassword(refresh_token),
       expiresAt: new Date(Date.now() + this.jwtconfiguration.Rttl * 1000),
       revokedAt: null,
-      userAgent: null,
+      userAgent: options.userAgent ?? null,
       encryptedData: encrypted?.ciphertext ?? null,
       dataEncryptionKeyId: encrypted?.dekId ?? null,
     });
 
-    return { access_token, refresh_token, jti };
+    return {
+      access_token,
+      refresh_token,
+      jti,
+      refreshTokenId: (persisted as { id?: string })?.id,
+    };
   }
 }

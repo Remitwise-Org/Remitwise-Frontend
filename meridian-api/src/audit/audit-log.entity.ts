@@ -14,6 +14,18 @@ export enum AuditAction {
   CONTRACT_EVENT = 'CONTRACT_EVENT',
   AUTHORIZATION_GRANTED = 'AUTHORIZATION_GRANTED',
   AUTHORIZATION_DENIED = 'AUTHORIZATION_DENIED',
+  // Auth session lifecycle (issue #1689): emitted by the sign-in / refresh /
+  // logout flows. Values must be kept in sync with migration
+  // 1787400000000-add-auth-audit-actions.ts which extends the backing
+  // PostgreSQL enum type.
+  SIGN_IN = 'SIGN_IN',
+  REFRESH = 'REFRESH',
+  LOGOUT = 'LOGOUT',
+  LOGOUT_ALL = 'LOGOUT_ALL',
+  // Email-verification lifecycle (issue #435 / #1689).
+  VERIFY_EMAIL = 'VERIFY_EMAIL',
+  RESEND_VERIFICATION = 'RESEND_VERIFICATION',
+  ISSUE_VERIFICATION_TOKEN = 'ISSUE_VERIFICATION_TOKEN',
 }
 
 @Entity('audit_logs')

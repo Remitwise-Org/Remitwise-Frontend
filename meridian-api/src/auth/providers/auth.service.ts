@@ -1,4 +1,9 @@
-import { Injectable, Logger, ConflictException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createHash } from 'crypto';
@@ -7,32 +12,23 @@ import { SignInProviders } from './sign-in.providers';
 import { RefreshTokenDto } from '../dto/refresh-token-dto';
 import { RefreshTokenProvider } from './refreshToken.provider';
 import { VerifyEmailProvider } from './verify-email.provider';
+import {
+  IdempotencyConflictError,
+  IdempotencyProvider,
+} from './idempotency.provider';
 import { User } from 'src/users/user.entity';
 import { AuditService } from '../../audit/audit.service';
 import { AuditAction } from '../../audit/audit-log.entity';
 
+/**
+ * Maximum accepted length for a caller-supplied idempotency key. Mirrors the
+ * controller-side validation so both layers agree on the contract.
+ */
+export const MAX_IDEMPOTENCY_KEY_LENGTH = 255;
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-
-  /**
-   * In-memory idempotency store.
-   *
-   * Binds each sensitive auth operation to a caller-supplied idempotency key.
-   * When a key is provided:
-   * - concurrent requests with the same key and same request hash share a single
-   *   in-flight operation promise;
-   * - retries after a success return the same response for a bounded TTl;
-   * - reusing a key with a different request payload is rejected with a conflict.
-   *
-   * This is an in-process store. For horizontally scaled deployments it must be
-   * replaced with a shared durable store (e.g. Redis) with equivalent semantics.
-   */
-  private readonly idempotencyStore = new Map<
-    string,
-    { requestHash: string; promise: Promise<unknown> }
-  >();
-  private readonly IDEMPOTENCY_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
   constructor(
     //intra dependency injection of sigin Providers
@@ -48,55 +44,85 @@ export class AuthService {
     private readonly usersRepository: Repository<User>,
 
     private readonly auditService: AuditService,
+
+    /**
+     * Deterministic idempotency boundary for every sensitive auth operation
+     * (issue #1689). Replaces the previous ad-hoc in-memory Map:
+     *  - concurrent requests with the same key are serialized per key and
+     *    share a single execution;
+     *  - retries after success replay the stored response for the TTL;
+     *  - a key reused with a different payload is rejected with a 409
+     *    ConflictException and zero state change;
+     *  - failed operations are recorded as retryable — the next request with
+     *    the same key re-runs the business operation exactly once.
+     */
+    private readonly idempotency: IdempotencyProvider,
   ) {}
 
-  private hashRequest(value: string): string {
-    return createHash('sha256').update(value).digest('hex');
-  }
-
   /**
-   * Wraps an operation with idempotency key handling.
+   * Execute an operation under the caller's idempotency key (issue #1689).
    *
-   * When `ckey` is undefined or empty, the operation is executed directly.
-   * Otherwise the key is bound to `requestHash`; conflicting reuse throws a
-   * ConflictException and concurrent identical requests are deduplicated.
+   * When `key` is undefined or empty, the operation is executed directly —
+   * pre-existing behavior for callers that send no header. Otherwise the
+   * key is validated, namespaced per operation, and bound to a hash of
+   * `request`, so:
+   *  - identical retries replay the stored result;
+   *  - conflicting reuse (same key, different payload) fails with
+   *    ConflictException (HTTP 409) and executes nothing;
+   *  - malformed keys fail with 400 before anything executes.
    */
   private async withIdempotency<T>(
+    operationName: string,
     key: string | undefined,
-    requestHash: string,
+    request: unknown,
     operation: () => Promise<T>,
   ): Promise<T> {
-    if (!key) return operation();
+    if (!key) {
+      return operation();
+    }
 
-    const existing = this.idempotencyStore.get(key);
+    if (key.length > MAX_IDEMPOTENCY_KEY_LENGTH) {
+      throw new BadRequestException(
+        `Idempotency-Key must be at most ${MAX_IDEMPOTENCY_KEY_LENGTH} characters`,
+      );
+    }
 
-    if (existing) {
-      if (existing.requestHash !== requestHash) {
+    // Namespaced so one client key cannot alias two different flows.
+    return await this.executeKeyed(
+      `${operationName}:${key}`,
+      request,
+      operation,
+    );
+  }
+
+  /** Run an operation under a pre-built key with conflict mapping. */
+  private async executeKeyed<T>(
+    key: string,
+    request: unknown,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await this.idempotency.execute(key, request, operation);
+    } catch (error) {
+      if (error instanceof IdempotencyConflictError) {
         throw new ConflictException(
           'Idempotency key used with a different request payload',
         );
       }
-      return existing.promise as Promise<T>;
+      throw error;
     }
+  }
 
-    const promise = operation()
-      .then((result) => {
-        setTimeout(() => this.idempotencyStore.delete(key), this.IDEMPOTENCY_TTL_MS);
-        return result;
-      })
-      .catch((error) => {
-        this.idempotencyStore.delete(key);
-        throw error;
-      });
-
-    this.idempotencyStore.set(key, { requestHash, promise });
-    return promise;
+  /** SHA-256 of a value, used so raw secrets never become map keys. */
+  private sha256(value: string): string {
+    return createHash('sha256').update(value).digest('hex');
   }
 
   public async SignIn(signInDto: SignInDto, idempotencyKey?: string) {
     return await this.withIdempotency(
+      'sign-in',
       idempotencyKey,
-      this.hashRequest(JSON.stringify(signInDto)),
+      { dto: signInDto },
       () => this.signInProviders.SignIn(signInDto),
     );
   }
@@ -106,13 +132,21 @@ export class AuthService {
    * the signup mail. Delegates to VerifyEmailProvider for the heavy lifting
    * (lookup / match / cleanup).
    *
-   * The verification token is used as an implicit idempotency key, so a replay
-   * or concurrent submission of the same token is deduplicated for the TTL.
+   * Concurrency (issue #1689): two layers of protection —
+   *  1. the token itself is an implicit idempotency key (hashed, never stored
+   *     raw): concurrent or replayed submissions of the same token share one
+   *     execution and get the same response;
+   *  2. the provider consumes the token with a compare-and-set UPDATE, so
+   *     even requests that arrive through different processes (where the
+   *     in-process store cannot dedupe them) can flip the row exactly once —
+   *     the loser deterministically observes the verified row or a 401.
    */
   public async verifyEmail(token: string) {
-    return await this.withIdempotency(
-      `verifyEmail:${token}`,
-      this.hashRequest(token),
+    // Implicit key: the SHA-256 of the token itself — concurrent or
+    // replayed submissions share one execution. No caller header involved.
+    return await this.executeKeyed(
+      `verify-email:${this.sha256(token)}`,
+      { token: this.sha256(token) },
       () => this.verifyEmailProvider.verifyEmail(token),
     );
   }
@@ -129,8 +163,9 @@ export class AuthService {
    */
   public async resendVerification(email: string, idempotencyKey?: string) {
     return await this.withIdempotency(
+      'resend-verification',
       idempotencyKey,
-      this.hashRequest(email),
+      { email },
       () => this.resendVerificationInternal(email),
     );
   }
@@ -168,30 +203,53 @@ export class AuthService {
     };
   }
 
+  /**
+   * Rotate a session's token pair (see RefreshTokenProvider for the
+   * serialization invariants). The optional idempotency key defines the
+   * client retry contract: retrying the same request body with the same key
+   * replays the winning response instead of racing the rotation a second
+   * time.
+   */
   public async RefreshToken(
     refreshTokendto: RefreshTokenDto,
     userAgent?: string,
     idempotencyKey?: string,
   ) {
     return await this.withIdempotency(
+      'refresh-token',
       idempotencyKey,
-      this.hashRequest(JSON.stringify({ dto: refreshTokendto, userAgent })),
+      { dto: refreshTokendto, userAgent },
       () => this.refreshTokenProvider.refreshToken(refreshTokendto, userAgent),
     );
   }
 
-  public async logout(refreshTokendto: RefreshTokenDto, idempotencyKey?: string) {
+  /**
+   * Revoke a single refresh token. Idempotent by construction (revoking a
+   * revoked token is a no-op that still succeeds); the optional idempotency
+   * key additionally replays the stored acknowledgement for retried logouts.
+   */
+  public async logout(
+    refreshTokendto: RefreshTokenDto,
+    idempotencyKey?: string,
+  ) {
     return await this.withIdempotency(
+      'logout',
       idempotencyKey,
-      this.hashRequest(JSON.stringify(refreshTokendto)),
+      { dto: refreshTokendto },
       () => this.refreshTokenProvider.logout(refreshTokendto),
     );
   }
 
+  /**
+   * Revoke every refresh token for a user (all devices / tabs). Serialized
+   * against in-flight rotations via the per-user advisory lock inside
+   * RefreshTokenProvider.logoutAll.
+   */
   public async logoutAll(userId: number, idempotencyKey?: string) {
     return await this.withIdempotency(
+      'logout-all',
       idempotencyKey,
-      this.hashRequest(JSON.stringify({ userId })),
+      { userId },
       () => this.refreshTokenProvider.logoutAll(userId),
     );
   }
