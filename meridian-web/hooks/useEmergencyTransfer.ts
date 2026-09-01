@@ -320,10 +320,10 @@ function reducer(
         state.phase !== 'reviewing' &&
         state.phase !== 'confirmed' &&
         state.phase !== 'submitting'
-      )
-    }
+      ) {
+        return state
+      }
 
-    case 'EXPIRE': {
       const event = createEvent<ExpiredEvent>({
         eventType: 'EXPIRED',
         configSnapshot: state.reviewedConfig ?? ({} as EmergencyTransferConfig),
@@ -810,7 +810,6 @@ export function useEmergencyTransfer({
     dispatch({ type: 'BIND_CONFIRMATION', bindingKey })
     return frozen
   }, [state.reviewedConfig, state.phase, state.riskAcknowledged, getNow, capabilityResolver, resolveCapability])
-  }, [state.phase, state.reviewedConfig, state.riskAcknowledged, getNow])
 
 
 

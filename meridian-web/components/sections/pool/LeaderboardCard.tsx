@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import { Award, BadgeCheck, RefreshCw, ShieldCheck, Trophy } from 'lucide-react';
-import { containerVariants, itemVariantsLeft } from '@/lib/animations/variants';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Empty,

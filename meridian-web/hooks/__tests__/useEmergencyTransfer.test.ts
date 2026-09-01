@@ -537,14 +537,6 @@ describe('useEmergencyTransfer', () => {
       const firstSubmit = act(() => { void result.current.submit() })
       expect(result.current.state.phase).toBe('submitting')
 
-      // Second submit while still submitting…
-      await act(async () => { await result.current.submit() })
-      // Fire first submit (pending)
-      let p1!: Promise<void>
-      act(() => {
-        p1 = result.current.submit()
-      })
-
       // Fire second submit while first is in flight
       act(() => {
         result.current.submit()
@@ -559,8 +551,6 @@ describe('useEmergencyTransfer', () => {
       await act(async () => {
         resolveProvider({ txHash: '0xabc' })
         await firstSubmit
-        resolveFirst({ txHash: '0xabc' })
-        await p1
       })
       expect(slowProvider).toHaveBeenCalledTimes(1)
 

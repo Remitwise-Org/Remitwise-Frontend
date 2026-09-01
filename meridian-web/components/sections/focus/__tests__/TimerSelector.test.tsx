@@ -17,7 +17,9 @@ vi.mock('framer-motion', async () => {
 });
 
 // Define a named mock function so we can reconfigure its return value per test block
-const mockUseFocusSession = vi.fn();
+const { mockUseFocusSession } = vi.hoisted(() => {
+  return { mockUseFocusSession: vi.fn() };
+});
 
 vi.mock('@/hooks/useFocusSession', () => ({
   useFocusSession: mockUseFocusSession,
@@ -56,7 +58,7 @@ describe('TimerSelector — idle state', () => {
     render(<TimerSelector />);
 
     const defaultBtn = screen.getByText('25 min');
-    expect(defaultBtn.className).toContain('bg-primary');
+    expect(defaultBtn.className).toContain('text-primary-foreground');
   });
 
   it('switches the selected duration when a different option is clicked', () => {
@@ -67,8 +69,8 @@ describe('TimerSelector — idle state', () => {
     const btn45 = screen.getByText('45 min');
     const btn25 = screen.getByText('25 min');
 
-    expect(btn45.className).toContain('bg-primary');
-    expect(btn25.className).not.toContain('bg-primary');
+    expect(btn45.className).toContain('text-primary-foreground');
+    expect(btn25.className).not.toContain('text-primary-foreground');
   });
 
   it('calls startSession with the selected duration on button press', () => {
