@@ -13,6 +13,7 @@ export default defineConfig({
       'components/**/*.{test,spec}.{ts,tsx}',
       'lib/**/*.{test,spec}.{ts,tsx}',
       'models/**/*.{test,spec}.{ts,tsx}',
+      'app/**/*.{test,spec}.{ts,tsx}',
     ],
   },
   resolve: {
