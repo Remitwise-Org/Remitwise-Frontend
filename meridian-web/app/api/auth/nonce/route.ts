@@ -1,208 +1,158 @@
+import { randomBytes } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 
-import {
-  handleNonceRequest,
-  redactedKey,
-  type NonceFailure,
-  type NonceSuccess,
-} from '@/lib/auth/nonce'
-
 /**
- * POST /api/auth/nonce  (+ GET with query params for simple fetch)
+ * GET /api/auth/nonce?address=<stellar-public-key>
  *
- * Issues a single-use auth nonce bound to the caller's identity.
- * Identity resolution (fail-closed, never client-assertable alone):
- *   1. `auth_token` cookie session principal (preferred, verified server-side)
- *   2. `address` body/query field (anonymous sign-in bootstrap only)
- * Neither => 401 NO_ACTIVE_SESSION.
+ * Issues a single-use authentication nonce for a Stellar public key.
  *
- * Deterministic failure boundary (issue #1712):
- *  200 ok:true (+ deduped:true on idempotent retry)
- *  400 INVALID_INPUT | 401 NO_ACTIVE_SESSION | 403 PRINCIPAL_NOT_AUTHORIZED
- *  409 DUPLICATE_REUSED | 410 STALE_VERSION | 429 RATE_LIMITED | 503 STORE_UNAVAILABLE
- * Bodies never echo nonces, tokens, or policy internals; logs carry only a
- * truncated requestKey prefix. Always `Cache-Control: no-store, private`.
+ * Invariants:
+ *   - The address must be a well-formed Stellar public key: exactly 56
+ *     characters, a leading `G`, and 55 characters from the base32 alphabet
+ *     `A-Z2-7`.  Anything else is a 400.
+ *   - The response always carries `Cache-Control: no-store, private` and
+ *     `X-Content-Type-Options: nosniff`: a nonce must never be cached or
+ *     reused.
+ *   - At most one nonce is live per address.  Issuing a new nonce supersedes
+ *     the previous one, so a replayed request cannot keep an old nonce alive.
+ *   - Concurrency: every request generates its own 32 random bytes, so N
+ *     concurrent requests for the same address yield N distinct nonces.
+ *   - Nothing about the request (query string, headers, secrets) is echoed
+ *     back, and the nonce is never logged.
+ *
+ * NOTE: the live-nonce map is process-local.  A multi-instance deployment
+ * needs a shared store (e.g. Redis) so that supersede/expiry hold globally;
+ * this route is intentionally dependency-free.
  */
 
-// Re-export so the issue's stated entry point
-// `handleNonceRequest in ./app/api/auth/nonce/route.ts` holds.
-export { handleNonceRequest }
+export const runtime = 'nodejs'
 
-interface PrincipalSession {
-  principal: string | null
-  isValid: boolean
+export interface ValidationIssue {
+  field: string
+  code: string
+  message: string
 }
 
-function resolvePrincipal(token: string): PrincipalSession {
-  if (!token) return { principal: null, isValid: false }
-  const segments = token.split('.')
-  if (segments.length === 3) {
-    try {
-      const raw = Buffer.from(segments[1], 'base64url').toString('utf8')
-      const payload = JSON.parse(raw) as { sub?: unknown }
-      if (typeof payload.sub === 'string' && payload.sub.length > 0) {
-        return { principal: payload.sub, isValid: true }
-      }
-    } catch {
-      return { principal: null, isValid: false }
-    }
-    return { principal: null, isValid: false }
-  }
-  if (token.length > 0 && token.length <= 320) {
-    return { principal: token, isValid: true }
-  }
-  return { principal: null, isValid: false }
-}
+export type AddressQueryResult =
+  | { ok: true; address: string }
+  | { ok: false; issues: ValidationIssue[] }
 
-const NO_STORE_HEADERS = {
+const ADDRESS_LENGTH = 56
+const ADDRESS_PREFIX = 'G'
+const BASE32_ALPHABET = /^[A-Z2-7]+$/
+const NONCE_BYTES = 32
+const DEFAULT_NONCE_TTL_MS = 300_000
+
+const NO_STORE_HEADERS: Record<string, string> = {
   'Cache-Control': 'no-store, private',
   'X-Content-Type-Options': 'nosniff',
-} as const
-
-function ok(result: NonceSuccess): NextResponse {
-  return NextResponse.json(result, { status: 200, headers: { ...NO_STORE_HEADERS } })
 }
 
-function err(result: NonceFailure, requestKey: unknown): NextResponse {
-  // Diagnosable without secrets: code + retryability + truncated key only.
-  console.error('[/api/auth/nonce]', result.code, {
-    key: redactedKey(typeof requestKey === 'string' ? requestKey : null),
-    retryable: result.retryable,
-  })
-  const headers: Record<string, string> = { ...NO_STORE_HEADERS }
-  if (result.retryable && (result.code === 'RATE_LIMITED' || result.code === 'STORE_UNAVAILABLE')) {
-    headers['Retry-After'] = '5'
-  }
-  return NextResponse.json(
-    { ok: false, code: result.code, message: result.message, retryable: result.retryable, uiState: result.uiState },
-    { status: result.status, headers },
-  )
+interface LiveNonce {
+  nonce: string
+  expiresAt: number
 }
 
-function sessionFrom(req: NextRequest): string | null {
-  const token = req.cookies.get('auth_token')?.value ?? ''
-  const session = resolvePrincipal(token)
-  return session.isValid ? session.principal : null
+/** At most one live nonce per address; a new issuance replaces the old one. */
+const nonceStore = new Map<string, LiveNonce>()
+
+/** Test-only seam: clears the process-local nonce store. */
+export function __resetNonceStore(): void {
+  nonceStore.clear()
 }
 
-function clientVersionFrom(value: unknown): number | undefined {
-  if (value === undefined || value === null || value === '') return undefined
-  const n = typeof value === 'number' ? value : Number(value)
-  if (!Number.isSafeInteger(n) || n < 0) return undefined
-  return n
+function issue(field: string, code: string, message: string): ValidationIssue {
+  return { field, code, message }
 }
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  try {
-    let body: unknown = {}
-    try {
-      body = await req.json()
-    } catch {
-      body = {}
+/** Pure validator for the `address` query parameter.  Never throws, no I/O. */
+export function validateAddressQuery(value: string | null): AddressQueryResult {
+  if (value === null || value.length === 0) {
+    return {
+      ok: false,
+      issues: [issue('address', 'MISSING_ADDRESS', 'Query parameter "address" is required')],
     }
-    const b = (body ?? {}) as Record<string, unknown>
-    const result = handleNonceRequest(
-      { principal: b.principal, address: b.address, requestKey: b.requestKey, clientVersion: clientVersionFrom(b.clientVersion) },
-      { sessionPrincipal: sessionFrom(req) },
-    )
-    if (result.ok) return ok(result)
-    return err(result, b.requestKey)
-  } catch (e) {
-    console.error('[/api/auth/nonce]', 'UNHANDLED', e)
-    return NextResponse.json(
-      { ok: false, code: 'STORE_UNAVAILABLE', message: 'Unable to issue nonce. Retry shortly.', retryable: true, uiState: 'retry' },
-      { status: 503, headers: { ...NO_STORE_HEADERS, 'Retry-After': '5' } },
-    )
   }
+
+  if (value.length !== ADDRESS_LENGTH) {
+    return {
+      ok: false,
+      issues: [
+        issue(
+          'address',
+          'INVALID_ADDRESS_LENGTH',
+          `Address must be exactly ${ADDRESS_LENGTH} characters`,
+        ),
+      ],
+    }
+  }
+
+  if (!value.startsWith(ADDRESS_PREFIX)) {
+    return {
+      ok: false,
+      issues: [issue('address', 'INVALID_ADDRESS_PREFIX', 'Address must start with "G"')],
+    }
+  }
+
+  if (!BASE32_ALPHABET.test(value.slice(1))) {
+    return {
+      ok: false,
+      issues: [
+        issue(
+          'address',
+          'INVALID_ADDRESS_CHARSET',
+          'Address must use the Stellar base32 alphabet (A-Z, 2-7)',
+        ),
+      ],
+    }
+  }
+
+  return { ok: true, address: value }
+}
+
+/**
+ * Test-only seam: returns the single live nonce for an address, or `null`.
+ * Expired entries are purged as a side effect so the store cannot grow stale.
+ */
+export function peekLiveNonce(address: string): { nonce: string; expiresAt: number } | null {
+  const entry = nonceStore.get(address)
+  if (!entry) return null
+  if (entry.expiresAt <= Date.now()) {
+    nonceStore.delete(address)
+    return null
+  }
+  return { nonce: entry.nonce, expiresAt: entry.expiresAt }
+}
+
+/** Reads the TTL per call so tests can shrink it; invalid values use the default. */
+function nonceTtlMs(): number {
+  const raw = process.env.NONCE_TTL_MS
+  if (raw === undefined || raw.trim() === '') return DEFAULT_NONCE_TTL_MS
+  const parsed = Number(raw)
+  if (!Number.isSafeInteger(parsed) || parsed < 0) return DEFAULT_NONCE_TTL_MS
+  return parsed
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  try {
-    const q = req.nextUrl.searchParams
-    const result = handleNonceRequest(
-      {
-        principal: q.get('principal') ?? undefined,
-        address: q.get('address') ?? undefined,
-        requestKey: q.get('requestKey') ?? undefined,
-        clientVersion: clientVersionFrom(q.get('clientVersion')),
-      },
-      { sessionPrincipal: sessionFrom(req) },
-    )
-    if (result.ok) return ok(result)
-    return err(result, q.get('requestKey'))
-  } catch (e) {
-    console.error('[/api/auth/nonce]', 'UNHANDLED', e)
+  const address = req.nextUrl.searchParams.get('address')
+  const validated = validateAddressQuery(address)
+
+  if (!validated.ok) {
     return NextResponse.json(
-      { ok: false, code: 'STORE_UNAVAILABLE', message: 'Unable to issue nonce. Retry shortly.', retryable: true, uiState: 'retry' },
-      { status: 503, headers: { ...NO_STORE_HEADERS, 'Retry-After': '5' } },
+      { error: 'Invalid request', issues: validated.issues },
+      { status: 400, headers: NO_STORE_HEADERS },
     )
   }
-import { randomBytes } from 'crypto';
-import { NextRequest, NextResponse } from 'next/server';
-import { setNonce } from '@/lib/auth-cache';
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+  const issuedAt = Date.now()
+  const expiresAt = issuedAt + nonceTtlMs()
+  const nonce = randomBytes(NONCE_BYTES).toString('hex')
 
-const STELLAR_ADDRESS_REGEX = /^G[A-Z0-9]{55}$/;
+  // Supersede any outstanding nonce for this address.
+  nonceStore.set(validated.address, { nonce, expiresAt })
 
-function isValidStellarAddress(address: string): boolean {
-  return STELLAR_ADDRESS_REGEX.test(address);
-}
-
-/**
- * Extracts address from query params or request body
- */
-export async function resolveAddressFromRequest(request: NextRequest): Promise<string | null> {
-  const queryAddress = request.nextUrl.searchParams.get('address')?.trim();
-  if (queryAddress) return queryAddress;
-
-  if (request.method === 'POST') {
-    try {
-      const body = await request.clone().json();
-      const address = (body.publicKey || body.address);
-      if (typeof address === 'string') return address.trim();
-    } catch {
-      // Ignore body parsing errors
-    }
-  }
-
-  return null;
-}
-
-async function handleNonceRequest(request: NextRequest) {
-  try {
-    const address = await resolveAddressFromRequest(request);
-
-    if (!address || !isValidStellarAddress(address)) {
-      return NextResponse.json(
-        { error: 'Valid Stellar address is required (e.g., ?address=G...)' },
-        { status: 400 }
-      );
-    }
-
-    const nonce = randomBytes(32).toString('hex');
-
-    setNonce(address, nonce);
-
-    return NextResponse.json({
-      nonce,
-      address,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-    });
-  } catch (error) {
-    console.error('Error generating nonce:', error);
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET(request: NextRequest) {
-  return handleNonceRequest(request);
-}
-
-export async function POST(request: NextRequest) {
-  return handleNonceRequest(request);
+  return NextResponse.json(
+    { address: validated.address, nonce, expiresAt: new Date(expiresAt).toISOString() },
+    { status: 200, headers: NO_STORE_HEADERS },
+  )
 }
