@@ -1,6 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { isAdminAuthorized } from '@/lib/admin/auth';
-import { checkIdempotency, storeIdempotentResponse } from '@/lib/idempotency/middleware';
+import { NextRequest, NextResponse } from "next/server";
+import { isAdminAuthorized } from "@/lib/admin/auth";
+import {
+  checkIdempotency,
+  storeIdempotentResponse,
+} from "@/lib/idempotency/middleware";
 import {
   invalidate,
   invalidatePattern,
@@ -9,7 +12,7 @@ import {
   getCacheKeys,
   CacheError,
   CacheErrorCode,
-} from '@/lib/cache/contract-cache';
+} from "@/lib/cache/contract-cache";
 
 // Maximum request body size (prevent DoS)
 const MAX_BODY_SIZE = 10240; // 10KB
@@ -20,27 +23,29 @@ const MAX_BODY_SIZE = 10240; // 10KB
  */
 async function validateRequestBody(request: NextRequest): Promise<unknown> {
   const text = await request.text();
-  
+
   if (text.length > MAX_BODY_SIZE) {
-    throw new Error(`Request body exceeds maximum size of ${MAX_BODY_SIZE} bytes`);
+    throw new Error(
+      `Request body exceeds maximum size of ${MAX_BODY_SIZE} bytes`,
+    );
   }
 
   if (!text.trim()) {
-    throw new Error('Request body is empty');
+    throw new Error("Request body is empty");
   }
 
   try {
     return JSON.parse(text);
   } catch (error) {
-    throw new Error('Invalid JSON in request body');
+    throw new Error("Invalid JSON in request body");
   }
 }
 
 /**
  * POST /api/cache/invalidate
- * 
+ *
  * Allows manual cache invalidation for testing and debugging.
- * 
+ *
  * @security Protected with admin authentication
  * @security Idempotency check for safe retries
  */
@@ -48,8 +53,8 @@ export async function POST(request: NextRequest) {
   // Authorization: Only admins can invalidate cache
   if (!isAdminAuthorized(request)) {
     return NextResponse.json(
-      { success: false, error: 'Unauthorized' },
-      { status: 401 }
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
     );
   }
 
@@ -64,13 +69,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Type guard for body
-    if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Request body must be a JSON object',
+          error: "Request body must be a JSON object",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -82,13 +87,13 @@ export async function POST(request: NextRequest) {
       clearCache();
       response = NextResponse.json({
         success: true,
-        message: 'Cache cleared completely',
+        message: "Cache cleared completely",
         stats: getCacheStats(),
       });
     }
 
     // Pattern-based invalidation
-    else if (typeof typedBody.pattern === 'string') {
+    else if (typeof typedBody.pattern === "string") {
       try {
         const count = invalidatePattern(typedBody.pattern);
         response = NextResponse.json({
@@ -106,7 +111,7 @@ export async function POST(request: NextRequest) {
               error: error.message,
               code: error.code,
             },
-            { status: 400 }
+            { status: 400 },
           );
         }
         throw error;
@@ -114,19 +119,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Specific invalidation
-    else if (typeof typedBody.contractId === 'string') {
+    else if (typeof typedBody.contractId === "string") {
       try {
-        if (typeof typedBody.method === 'string') {
+        if (typeof typedBody.method === "string") {
           // Validate args if provided
-          const args = typedBody.args && typeof typedBody.args === 'object' && !Array.isArray(typedBody.args)
-            ? (typedBody.args as Record<string, unknown>)
-            : {};
+          const args =
+            typedBody.args &&
+            typeof typedBody.args === "object" &&
+            !Array.isArray(typedBody.args)
+              ? (typedBody.args as Record<string, unknown>)
+              : {};
 
           // Invalidate specific method call
-          const existed = invalidate(typedBody.contractId, typedBody.method, args);
+          const existed = invalidate(
+            typedBody.contractId,
+            typedBody.method,
+            args,
+          );
           response = NextResponse.json({
             success: true,
-            message: existed ? 'Cache entry invalidated' : 'Cache entry not found',
+            message: existed
+              ? "Cache entry invalidated"
+              : "Cache entry not found",
             contractId: typedBody.contractId,
             method: typedBody.method,
             args,
@@ -153,7 +167,7 @@ export async function POST(request: NextRequest) {
               code: error.code,
               details: error.details,
             },
-            { status: 400 }
+            { status: 400 },
           );
         }
         throw error;
@@ -165,14 +179,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Invalid request. Provide clearAll, pattern, or contractId',
+          error: "Invalid request. Provide clearAll, pattern, or contractId",
           validOperations: {
-            clearAll: 'boolean - Clear entire cache',
-            pattern: 'string - Invalidate entries matching pattern',
-            contractId: 'string - Invalidate entries for contract (optionally with method and args)',
+            clearAll: "boolean - Clear entire cache",
+            pattern: "string - Invalidate entries matching pattern",
+            contractId:
+              "string - Invalidate entries for contract (optionally with method and args)",
           },
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -185,16 +200,15 @@ export async function POST(request: NextRequest) {
     }
 
     return response;
-
   } catch (error) {
     // Handle validation errors
-    if (error instanceof Error && error.message.includes('Request body')) {
+    if (error instanceof Error && error.message.includes("Request body")) {
       return NextResponse.json(
         {
           success: false,
           error: error.message,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -203,44 +217,47 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: 'Internal server error',
+        error: "Internal server error",
         // Only include details in development
-        ...(process.env.NODE_ENV === 'development' && {
-          details: error instanceof Error ? error.message : 'Unknown error',
+        ...(process.env.NODE_ENV === "development" && {
+          details: error instanceof Error ? error.message : "Unknown error",
         }),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 /**
  * GET /api/cache/invalidate
- * 
+ *
  * Returns cache statistics and keys for debugging.
- * 
+ *
  * @security Protected with admin authentication
  */
 export async function GET(request: NextRequest) {
-  // Authorization: Only admins can view cache stats
-  if (!isAdminAuthorized(request)) {
-    return NextResponse.json(
-      { success: false, error: 'Unauthorized' },
-      { status: 401 }
-    );
-  }
-
   try {
+    // Authorization: Only admins can view cache stats. Keep the authorization
+    // check inside the failure boundary so unexpected auth errors are returned
+    // as a controlled 500 rather than escaping the route handler.
+    if (!isAdminAuthorized(request)) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const stats = getCacheStats();
-    
+
     // Check if keys should be included (query param)
     const { searchParams } = new URL(request.url);
-    const includeKeys = searchParams.get('includeKeys') === 'true';
+    const includeKeys = searchParams.get("includeKeys") === "true";
 
     // In production, consider restricting key listing
-    const keys = includeKeys && process.env.NODE_ENV === 'development'
-      ? getCacheKeys()
-      : undefined;
+    const keys =
+      includeKeys && process.env.NODE_ENV === "development"
+        ? getCacheKeys()
+        : undefined;
 
     return NextResponse.json({
       success: true,
@@ -256,13 +273,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to get cache stats',
+        error: "Failed to get cache stats",
         // Only include details in development
-        ...(process.env.NODE_ENV === 'development' && {
-          details: error instanceof Error ? error.message : 'Unknown error',
+        ...(process.env.NODE_ENV === "development" && {
+          details: error instanceof Error ? error.message : "Unknown error",
         }),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
