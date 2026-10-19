@@ -114,7 +114,7 @@ export function migrateSession(raw: Record<string, unknown>): MigrationResult {
   const toVersion = detectVersion(current);
 
   return {
-    data: current as SessionDataV2,
+    data: current as unknown as SessionDataV2,
     migrated: fromVersion !== toVersion,
     fromVersion,
     toVersion,

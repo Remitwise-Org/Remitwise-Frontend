@@ -1,0 +1,16 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Simplified icon for favicon at 32x32 -->
+  <circle cx="16" cy="16" r="16" fill="url(#faviconGradient)"/>
+  <path d="M10 9V23" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <path d="M10 9C10 7 11.25 6 13.75 6C16.25 6 17.5 7.25 17.5 9.75C17.5 12.25 16.25 13.5 13.75 13.5H10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M13.75 13.5L19.5 23" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <path d="M20.75 20.25L23 18L20.75 15.75" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <defs>
+    <linearGradient id="faviconGradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#DC2626"/>
+      <stop offset="0.5" stop-color="#B91C1C"/>
+      <stop offset="1" stop-color="#991B1B"/>
+    </linearGradient>
+  </defs>
+</svg>

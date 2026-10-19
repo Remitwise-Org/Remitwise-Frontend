@@ -227,7 +227,7 @@ export async function processWebhookEvent(
  */
 export async function handleWebhookProcessingFailure(
   eventId: string,
-  errorMessage: string
+  errorMessage: string,
   expectedUpdatedAt?: Date
 ): Promise<WebhookProcessResult> {
   try {

@@ -1,0 +1,455 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Remitwise API",
+    "description": "Standardized API for the Remitwise financial management platform",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/goals": {
+      "get": {
+        "summary": "Get paginated list of savings goals",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of items to return (default: 20, max: 100)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Cursor for pagination (optional)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of savings goals with pagination metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedGoals"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new savings goal",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Goal"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created a new savings goal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/bills": {
+      "get": {
+        "summary": "Get paginated list of bills",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of items to return (default: 20, max: 100)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Cursor for pagination (optional)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of bills with pagination metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedBills"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new bill",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Bill"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created a new bill",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bill"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/remittance/history": {
+      "get": {
+        "summary": "Get paginated list of transaction history",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of items to return (default: 20, max: 100)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Cursor for pagination (optional)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of transactions with pagination metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedTransactions"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new transaction",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Transaction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created a new transaction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PaginationParams": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20,
+            "description": "Maximum number of items to return (default: 20, max: 100)"
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Cursor for pagination (optional)"
+          }
+        }
+      },
+      "PaginatedResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {}
+          },
+          "nextCursor": {
+            "type": "string",
+            "description": "Cursor for the next page (if available)"
+          },
+          "hasMore": {
+            "type": "boolean",
+            "default": false,
+            "description": "Indicates if more items are available"
+          }
+        }
+      },
+      "Goal": {
+        "type": "object",
+        "required": ["id", "title", "targetAmount", "currentAmount", "deadline"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the goal"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the savings goal"
+          },
+          "targetAmount": {
+            "type": "number",
+            "description": "Target amount to save"
+          },
+          "currentAmount": {
+            "type": "number",
+            "description": "Current amount saved"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date",
+            "description": "Deadline for reaching the goal"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        }
+      },
+      "PaginatedGoals": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PaginatedResponse"
+          },
+          {
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Bill": {
+        "type": "object",
+        "required": ["id", "title", "amount", "dueDate", "status"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the bill"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the bill"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Amount to be paid"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Due date for payment"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["paid", "unpaid", "overdue"],
+            "description": "Current status of the bill"
+          },
+          "category": {
+            "type": "string",
+            "description": "Category of the bill"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Service provider for the bill"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        }
+      },
+      "PaginatedBills": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PaginatedResponse"
+          },
+          {
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Bill"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Transaction": {
+        "type": "object",
+        "required": ["id", "senderId", "recipientId", "amount", "currency", "status", "type", "timestamp"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the transaction"
+          },
+          "senderId": {
+            "type": "string",
+            "description": "Identifier of the sender"
+          },
+          "recipientId": {
+            "type": "string",
+            "description": "Identifier of the recipient"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Amount transferred"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code (e.g., USD, EUR)"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["completed", "pending", "failed", "cancelled"],
+            "description": "Current status of the transaction"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["remittance", "payment", "transfer", "withdrawal"],
+            "description": "Type of transaction"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the transaction"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the transaction"
+          },
+          "fees": {
+            "type": "number",
+            "description": "Transaction fees (if applicable)"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "description": "Exchange rate used (if applicable)"
+          }
+        }
+      },
+      "PaginatedTransactions": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PaginatedResponse"
+          },
+          {
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
