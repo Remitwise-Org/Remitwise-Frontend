@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Buffer } from 'node:buffer'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 
 export const runtime = 'nodejs'
 
@@ -27,6 +27,9 @@ const MAX_DUE_DATE_WINDOW_MS = 365 * 24 * 60 * 60 * 1000
 const MAX_DESCRIPTION_LENGTH = 280
 const MAX_EMAIL_LENGTH = 320
 const MAX_IDEMPOTENCY_KEY_LENGTH = 128
+const IDEMPOTENCY_KEY_REGEX = /^[A-Za-z0-9_:.-]{1,128}$/
+const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000
+const MAX_LEDGER_ENTRIES = 10_000
 const PERSIST_TIMEOUT_MS = 5_000
 
 const SUPPORTED_CURRENCIES = ['XLM', 'USDC', 'MXN'] as const
@@ -335,18 +338,47 @@ export function __setBillPersisterForTests(next: BillPersister | null): void {
 }
 
 /**
+ * Canonical JSON serialization: sorts object keys deterministically.
+ */
+export function canonicalJSON(val: unknown): string {
+  if (val === null || typeof val !== 'object') {
+    return JSON.stringify(val)
+  }
+  if (Array.isArray(val)) {
+    return '[' + val.map(canonicalJSON).join(',') + ']'
+  }
+  const keys = Object.keys(val as Record<string, unknown>).sort()
+  const entries = keys.map(
+    (k) => JSON.stringify(k) + ':' + canonicalJSON((val as Record<string, unknown>)[k]),
+  )
+  return '{' + entries.join(',') + '}'
+}
+
+export function sha256(input: string): string {
+  return createHash('sha256').update(input).digest('hex')
+}
+
+export interface IdempotencyEntry {
+  fingerprint: string
+  task: Promise<Record<string, unknown>>
+  settledAt?: number
+}
+
+/**
  * Process-local idempotency ledger.
  *
- * The key maps to the in-flight (or settled) persistence promise, so a retry
- * that arrives while the first write is still running, or after it finished,
- * replays the stored outcome with `replayed: true` and performs no second
- * write.  It is process-local: a multi-instance deployment needs a shared
- * store (Redis/Postgres) for exactly-once semantics across instances.
+ * Scoped per-principal via sha256(principal + '\n' + key) and fingerprinted
+ * against canonicalJSON(validatedBody) to eliminate cross-tenant data leaks
+ * and reject mismatched body replays with 409.
  */
-const idempotencyLedger = new Map<string, Promise<Record<string, unknown>>>()
+const idempotencyLedger = new Map<string, IdempotencyEntry>()
 
 export function __resetBillIdempotencyLedger(): void {
   idempotencyLedger.clear()
+}
+
+export function __getBillIdempotencyLedgerSize(): number {
+  return idempotencyLedger.size
 }
 
 // ---------------------------------------------------------------------------
@@ -380,29 +412,13 @@ export async function postHandler(req: NextRequest): Promise<NextResponse> {
     const rawKey = req.headers.get('idempotency-key')
     let idempotencyKey: string | null = null
     if (rawKey !== null) {
-      if (rawKey.length < 1 || rawKey.length > MAX_IDEMPOTENCY_KEY_LENGTH) {
+      if (!IDEMPOTENCY_KEY_REGEX.test(rawKey)) {
         return jsonResponse(
           { error: 'Invalid Idempotency-Key header', reason: 'INVALID_IDEMPOTENCY_KEY' },
           400,
         )
       }
       idempotencyKey = rawKey
-    }
-
-    // A replay short-circuits before parsing/validating/persisting again.
-    if (idempotencyKey) {
-      const inFlightOrSettled = idempotencyLedger.get(idempotencyKey)
-      if (inFlightOrSettled) {
-        try {
-          const stored = await inFlightOrSettled
-          return jsonResponse({ ...stored, replayed: true }, 200)
-        } catch {
-          return jsonResponse(
-            { error: 'Failed to persist bill', reason: 'PERSIST_FAILED' },
-            502,
-          )
-        }
-      }
     }
 
     let rawBody: unknown
@@ -424,6 +440,42 @@ export async function postHandler(req: NextRequest): Promise<NextResponse> {
       return jsonResponse({ error: 'Invalid bill request', issues: validation.issues }, 400)
     }
 
+    let ledgerKey: string | null = null
+    let bodyFingerprint: string | null = null
+
+    if (idempotencyKey) {
+      ledgerKey = sha256(`${principal}\n${idempotencyKey}`)
+      bodyFingerprint = sha256(canonicalJSON(validation.value))
+
+      const existing = idempotencyLedger.get(ledgerKey)
+      if (existing) {
+        if (
+          existing.settledAt !== undefined &&
+          Date.now() - existing.settledAt > IDEMPOTENCY_TTL_MS
+        ) {
+          idempotencyLedger.delete(ledgerKey)
+        } else if (existing.fingerprint !== bodyFingerprint) {
+          return jsonResponse(
+            {
+              error: 'Idempotency key reused with different request payload',
+              reason: 'IDEMPOTENCY_KEY_REUSED',
+            },
+            409,
+          )
+        } else {
+          try {
+            const stored = await existing.task
+            return jsonResponse({ ...stored, replayed: true }, 200)
+          } catch {
+            return jsonResponse(
+              { error: 'Failed to persist bill', reason: 'PERSIST_FAILED' },
+              502,
+            )
+          }
+        }
+      }
+    }
+
     // SECURITY INVARIANT: the bill always belongs to the authenticated
     // principal.  Any `userId` supplied in the body was dropped by
     // validateBillRequest and never reaches this record.
@@ -434,7 +486,7 @@ export async function postHandler(req: NextRequest): Promise<NextResponse> {
       createdAt: new Date().toISOString(),
     }
 
-    if (!idempotencyKey) {
+    if (!idempotencyKey || !ledgerKey || !bodyFingerprint) {
       try {
         await persister(record)
         return jsonResponse({ bill: record, replayed: false }, 201)
@@ -444,19 +496,33 @@ export async function postHandler(req: NextRequest): Promise<NextResponse> {
       }
     }
 
+    // Capacity bound: evict oldest entry if limit reached
+    if (idempotencyLedger.size >= MAX_LEDGER_ENTRIES) {
+      const oldestKey = idempotencyLedger.keys().next().value
+      if (oldestKey !== undefined) {
+        idempotencyLedger.delete(oldestKey)
+      }
+    }
+
     const task = (async (): Promise<Record<string, unknown>> => {
       await persister(record)
       return { bill: record }
     })()
-    idempotencyLedger.set(idempotencyKey, task)
+
+    const entry: IdempotencyEntry = {
+      fingerprint: bodyFingerprint,
+      task,
+    }
+    idempotencyLedger.set(ledgerKey, entry)
 
     try {
       const stored = await task
+      entry.settledAt = Date.now()
       return jsonResponse({ ...stored, replayed: false }, 201)
     } catch (err) {
       // Release the key so a genuine retry runs the write again rather than
       // replaying a failure; a failed write must never look like success.
-      idempotencyLedger.delete(idempotencyKey)
+      idempotencyLedger.delete(ledgerKey)
       console.error('[api/bills]', err)
       return jsonResponse({ error: 'Failed to persist bill', reason: 'PERSIST_FAILED' }, 502)
     }
