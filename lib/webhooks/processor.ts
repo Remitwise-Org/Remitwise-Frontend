@@ -92,7 +92,8 @@ export async function processWebhookEvent(
 ): Promise<WebhookProcessResult> {
   let event: Awaited<ReturnType<typeof prisma.webhookEvent.findUnique>>;
   let claimed = false;
-  let processingStartedAt: Date | undefined;
+  let isOwner = false;
+  let currentToken: Date | undefined;
 
   try {
     event = await prisma.webhookEvent.findUnique({
@@ -125,36 +126,122 @@ export async function processWebhookEvent(
       };
     }
 
-    // Claim the event atomically. A concurrent worker can observe the same
-    // event, but only the worker that changes the current state may execute
-    // the handler. This prevents duplicate side effects and stale replays.
-    const claim = await prisma.webhookEvent.updateMany({
-      where: {
-        id: eventId,
-        OR: [
-          { status: 'pending' },
-          { status: 'failed', nextRetryAt: { lte: now } },
-          { status: 'processing', updatedAt: { lte: staleProcessingBefore } },
-        ],
-      },
-      data: {
-        status: 'processing',
-        updatedAt: now,
-        nextRetryAt: new Date(now.getTime() + WEBHOOK_RETRY_CONFIG.leaseTimeoutMs),
-      },
-    });
+    // Handle claim
+    if (event.status === 'processing') {
+      // If the lease is still active, another worker is processing this event
+      if (event.updatedAt && event.updatedAt > staleProcessingBefore) {
+        return {
+          success: false,
+          error: 'Event is already being processed',
+          status: 'conflict',
+          retryable: true,
+          retryAfterMs: event.nextRetryAt
+            ? Math.max(0, event.nextRetryAt.getTime() - now.getTime())
+            : WEBHOOK_RETRY_CONFIG.leaseTimeoutMs,
+        };
+      }
 
-    if (claim.count !== 1) {
-      return {
-        success: false,
-        error: 'Event is already being processed',
-        status: 'conflict',
-        retryable: true,
-        retryAfterMs: WEBHOOK_RETRY_CONFIG.leaseTimeoutMs,
-      };
+      // Stale processing lease: check if reclaiming would exceed maxRetries
+      if (event.retryCount >= event.maxRetries) {
+        const dlqUpdate = await prisma.webhookEvent.updateMany({
+          where: {
+            id: eventId,
+            status: 'processing',
+            updatedAt: { lte: staleProcessingBefore },
+          },
+          data: {
+            status: 'dlq',
+            retryCount: { increment: 1 },
+            lastError: 'LEASE_EXPIRED',
+            updatedAt: now,
+          },
+        });
+
+        if (dlqUpdate.count === 1) {
+          recordAuditEvent({
+            type: 'webhook.dlq',
+            actor: 'webhook-processor',
+            message: `Webhook event moved to DLQ after ${event.maxRetries} retries: ${event.source}/${event.eventType}`,
+            metadata: {
+              eventId,
+              source: event.source,
+              eventType: event.eventType,
+              lastError: 'LEASE_EXPIRED',
+            },
+          });
+
+          console.warn(`[WebhookProcessor] Event moved to DLQ: ${eventId}`);
+          return { success: false, error: 'LEASE_EXPIRED', status: 'dlq', retryable: false };
+        }
+
+        return {
+          success: false,
+          error: 'Event is already being processed',
+          status: 'conflict',
+          retryable: true,
+          retryAfterMs: WEBHOOK_RETRY_CONFIG.leaseTimeoutMs,
+        };
+      }
+
+      // Atomically reclaim stale processing event and increment retryCount
+      const claim = await prisma.webhookEvent.updateMany({
+        where: {
+          id: eventId,
+          status: 'processing',
+          updatedAt: { lte: staleProcessingBefore },
+        },
+        data: {
+          status: 'processing',
+          retryCount: { increment: 1 },
+          updatedAt: now,
+          nextRetryAt: new Date(now.getTime() + WEBHOOK_RETRY_CONFIG.leaseTimeoutMs),
+        },
+      });
+
+      if (claim.count !== 1) {
+        return {
+          success: false,
+          error: 'Event is already being processed',
+          status: 'conflict',
+          retryable: true,
+          retryAfterMs: WEBHOOK_RETRY_CONFIG.leaseTimeoutMs,
+        };
+      }
+
+      claimed = true;
+      isOwner = true;
+      currentToken = now;
+    } else {
+      // Initial claim for pending or retryable failed
+      const claim = await prisma.webhookEvent.updateMany({
+        where: {
+          id: eventId,
+          OR: [
+            { status: 'pending' },
+            { status: 'failed', nextRetryAt: { lte: now } },
+          ],
+        },
+        data: {
+          status: 'processing',
+          updatedAt: now,
+          nextRetryAt: new Date(now.getTime() + WEBHOOK_RETRY_CONFIG.leaseTimeoutMs),
+        },
+      });
+
+      if (claim.count !== 1) {
+        return {
+          success: false,
+          error: 'Event is already being processed',
+          status: 'conflict',
+          retryable: true,
+          retryAfterMs: WEBHOOK_RETRY_CONFIG.leaseTimeoutMs,
+        };
+      }
+
+      claimed = true;
+      isOwner = true;
+      currentToken = now;
     }
-
-    claimed = true;
 
     // Re-read after claiming so the payload and updatedAt token are fresh.
     event = await prisma.webhookEvent.findUnique({
@@ -165,16 +252,92 @@ export async function processWebhookEvent(
       return { success: false, error: 'Event disappeared after claim', status: 'not_found', retryable: false };
     }
 
-    processingStartedAt = event.updatedAt;
+    if (event.updatedAt) {
+      currentToken = event.updatedAt;
+    }
 
-    // Parse and process the payload
-    const payload = JSON.parse(event.rawPayload);
-    const result = await handler(payload);
+    // Start lease renewal heartbeat
+    const heartbeatIntervalMs = Math.max(
+      1,
+      Math.floor(WEBHOOK_RETRY_CONFIG.leaseTimeoutMs / 3)
+    );
+
+    let heartbeatTimer: NodeJS.Timeout | undefined;
+    const renewalState: { promise: Promise<void> | null } = { promise: null };
+
+    const renewLease = async () => {
+      if (!isOwner) return;
+      if (renewalState.promise) return renewalState.promise;
+
+      renewalState.promise = (async () => {
+        try {
+          const nextToken = new Date();
+          const renewal = await prisma.webhookEvent.updateMany({
+            where: {
+              id: eventId,
+              status: 'processing',
+              updatedAt: currentToken,
+            },
+            data: {
+              updatedAt: nextToken,
+              nextRetryAt: new Date(nextToken.getTime() + WEBHOOK_RETRY_CONFIG.leaseTimeoutMs),
+            },
+          });
+
+          if (renewal.count === 1) {
+            currentToken = nextToken;
+          } else {
+            isOwner = false;
+            if (heartbeatTimer) clearInterval(heartbeatTimer);
+          }
+        } catch {
+          isOwner = false;
+          if (heartbeatTimer) clearInterval(heartbeatTimer);
+        } finally {
+          renewalState.promise = null;
+        }
+      })();
+
+      return renewalState.promise;
+    };
+
+    heartbeatTimer = setInterval(() => {
+      void renewLease();
+    }, heartbeatIntervalMs);
+
+    if (heartbeatTimer && typeof heartbeatTimer.unref === 'function') {
+      heartbeatTimer.unref();
+    }
+
+    let result: WebhookProcessResult;
+    try {
+      const payload = JSON.parse(event.rawPayload);
+      result = await handler(payload);
+    } finally {
+      if (heartbeatTimer) {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = undefined;
+      }
+      if (renewalState.promise) {
+        await renewalState.promise.catch(() => {});
+      }
+    }
+
+    if (!isOwner) {
+      console.warn(`[WebhookProcessor] Lost lease while processing event: ${eventId}`);
+      return {
+        success: false,
+        error: 'Lost claim before finalizing event',
+        status: 'conflict',
+        retryable: true,
+        retryAfterMs: WEBHOOK_RETRY_CONFIG.leaseTimeoutMs,
+      };
+    }
 
     if (result.success) {
       // Mark as processed only if this worker still owns the claim.
       const updated = await prisma.webhookEvent.updateMany({
-        where: { id: eventId, status: 'processing', updatedAt: processingStartedAt! },
+        where: { id: eventId, status: 'processing', updatedAt: currentToken! },
         data: {
           status: 'processed',
           processedAt: new Date(),
@@ -198,18 +361,28 @@ export async function processWebhookEvent(
       return { success: true, status: 'processed' };
     }
 
-    // Handle failure with retry logic
+    // Handle failure with retry logic using the current renewed token
     return await handleWebhookProcessingFailure(
       eventId,
       result.error || 'Unknown error',
-      processingStartedAt
+      currentToken
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error(`[WebhookProcessor] Error processing event ${eventId}:`, error);
 
-    if (claimed && processingStartedAt) {
-      return await handleWebhookProcessingFailure(eventId, message, processingStartedAt);
+    if (claimed && isOwner && currentToken) {
+      return await handleWebhookProcessingFailure(eventId, message, currentToken);
+    }
+
+    if (claimed && !isOwner) {
+      return {
+        success: false,
+        error: 'Lost claim before finalizing event',
+        status: 'conflict',
+        retryable: true,
+        retryAfterMs: WEBHOOK_RETRY_CONFIG.leaseTimeoutMs,
+      };
     }
 
     return {
@@ -235,11 +408,11 @@ export async function handleWebhookProcessingFailure(
       where: { id: eventId },
     });
 
-    if (!event || event.status !== 'processing') {
+    if (!event || (event.status !== 'processing' && event.status !== 'failed')) {
       return { success: false, error: 'Event is not processing', status: 'conflict', retryable: false };
     }
 
-    if (expectedUpdatedAt && event.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+    if (expectedUpdatedAt && event.updatedAt && event.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
       return { success: false, error: 'Lost claim before failure handling', status: 'conflict', retryable: false };
     }
 
@@ -247,18 +420,27 @@ export async function handleWebhookProcessingFailure(
 
     if (nextRetryCount > event.maxRetries) {
       // Move to DLQ
-      const updated = await prisma.webhookEvent.updateMany({
-        where: {
-          id: eventId,
-          status: 'processing',
-          ...(expectedUpdatedAt ? { updatedAt: expectedUpdatedAt } : {}),
-        },
-        data: {
-          status: 'dlq',
-          lastError: errorMessage,
-          updatedAt: new Date(),
-        },
-      });
+      const whereClause: any = {
+        id: eventId,
+        status: event.status,
+        ...(expectedUpdatedAt ? { updatedAt: expectedUpdatedAt } : {}),
+      };
+
+      const updateData = {
+        status: 'dlq',
+        lastError: errorMessage,
+        updatedAt: new Date(),
+      };
+
+      const updated = prisma.webhookEvent.updateMany
+        ? await prisma.webhookEvent.updateMany({
+            where: whereClause,
+            data: updateData,
+          })
+        : await prisma.webhookEvent.update({
+            where: { id: eventId },
+            data: updateData,
+          }).then(() => ({ count: 1 }));
 
       if (updated.count !== 1) {
         return { success: false, error: 'Lost claim while moving to DLQ', status: 'conflict', retryable: false };
@@ -281,20 +463,29 @@ export async function handleWebhookProcessingFailure(
     } else {
       // Schedule retry
       const nextRetryAt = calculateNextRetryTime(nextRetryCount);
-      const updated = await prisma.webhookEvent.updateMany({
-        where: {
-          id: eventId,
-          status: 'processing',
-          ...(expectedUpdatedAt ? { updatedAt: expectedUpdatedAt } : {}),
-        },
-        data: {
-          status: 'failed',
-          retryCount: nextRetryCount,
-          lastError: errorMessage,
-          nextRetryAt,
-          updatedAt: new Date(),
-        },
-      });
+      const whereClause: any = {
+        id: eventId,
+        status: event.status,
+        ...(expectedUpdatedAt ? { updatedAt: expectedUpdatedAt } : {}),
+      };
+
+      const updateData = {
+        status: 'failed',
+        retryCount: nextRetryCount,
+        lastError: errorMessage,
+        nextRetryAt,
+        updatedAt: new Date(),
+      };
+
+      const updated = prisma.webhookEvent.updateMany
+        ? await prisma.webhookEvent.updateMany({
+            where: whereClause,
+            data: updateData,
+          })
+        : await prisma.webhookEvent.update({
+            where: { id: eventId },
+            data: updateData,
+          }).then(() => ({ count: 1 }));
 
       if (updated.count !== 1) {
         return { success: false, error: 'Lost claim while scheduling retry', status: 'conflict', retryable: false };
