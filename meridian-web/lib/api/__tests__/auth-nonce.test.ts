@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest, NextResponse } from 'next/server'
 
 import {
@@ -105,7 +105,8 @@ describe('GET /api/auth/nonce', () => {
   })
 
   it('issues a 64-hex nonce with an ISO expiry and private no-store', async () => {
-    process.env.NONCE_TTL_MS = '12345'
+    // Use a TTL within the valid range (30s-10min) to avoid clamping
+    process.env.NONCE_TTL_MS = '60000'
     const before = Date.now()
     const res = await GET(nonceRequest(VALID_ADDRESS))
     const after = Date.now()
@@ -119,8 +120,8 @@ describe('GET /api/auth/nonce', () => {
 
     const expiresAt = new Date(body.expiresAt as string).getTime()
     expect(Number.isNaN(expiresAt)).toBe(false)
-    expect(expiresAt).toBeGreaterThanOrEqual(before + 12_345 - 1_000)
-    expect(expiresAt).toBeLessThanOrEqual(after + 12_345 + 1_000)
+    expect(expiresAt).toBeGreaterThanOrEqual(before + 60_000 - 1_000)
+    expect(expiresAt).toBeLessThanOrEqual(after + 60_000 + 1_000)
 
     expect(res.headers.get('cache-control')).toBe('no-store, private')
     expect(res.headers.get('x-content-type-options')).toBe('nosniff')
@@ -153,12 +154,49 @@ describe('GET /api/auth/nonce', () => {
     expect(peekLiveNonce(VALID_ADDRESS)).not.toBeNull()
   })
 
-  it('purges an expired nonce from the live store', async () => {
-    process.env.NONCE_TTL_MS = '1'
+  it('purges an expired nonce from the live store (uses fake timers for clamped TTL)', async () => {
+    // TTL is clamped to 30s minimum, so use fake timers to advance past expiry
+    vi.useFakeTimers()
+    const fixedNow = Date.now()
+    vi.setSystemTime(new Date(fixedNow))
+
+    process.env.NONCE_TTL_MS = '1' // Will be clamped to 30000ms
     const res = await GET(nonceRequest(VALID_ADDRESS))
     expect(res.status).toBe(200)
+    expect(peekLiveNonce(VALID_ADDRESS)).not.toBeNull()
 
-    await new Promise((resolve) => setTimeout(resolve, 25))
+    // Advance past the clamped TTL (30s + 1ms)
+    vi.setSystemTime(new Date(fixedNow + 30_001))
     expect(peekLiveNonce(VALID_ADDRESS)).toBeNull()
+
+    vi.useRealTimers()
+  })
+
+  it('clamps TTL to 30s minimum when NONCE_TTL_MS=0', async () => {
+    process.env.NONCE_TTL_MS = '0'
+    const before = Date.now()
+    const res = await GET(nonceRequest(VALID_ADDRESS))
+    const after = Date.now()
+
+    expect(res.status).toBe(200)
+    const body = await readJson(res)
+    const expiresAt = new Date(body.expiresAt as string).getTime()
+    // Should be clamped to 30000ms (30s)
+    expect(expiresAt).toBeGreaterThanOrEqual(before + 30_000 - 1_000)
+    expect(expiresAt).toBeLessThanOrEqual(after + 30_000 + 1_000)
+  })
+
+  it('clamps TTL to 10min maximum when NONCE_TTL_MS is very large', async () => {
+    process.env.NONCE_TTL_MS = '99999999'
+    const before = Date.now()
+    const res = await GET(nonceRequest(VALID_ADDRESS))
+    const after = Date.now()
+
+    expect(res.status).toBe(200)
+    const body = await readJson(res)
+    const expiresAt = new Date(body.expiresAt as string).getTime()
+    // Should be clamped to 600000ms (10min)
+    expect(expiresAt).toBeGreaterThanOrEqual(before + 600_000 - 1_000)
+    expect(expiresAt).toBeLessThanOrEqual(after + 600_000 + 1_000)
   })
 })

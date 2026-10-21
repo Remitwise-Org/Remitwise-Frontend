@@ -238,6 +238,89 @@ describe('consumeNonce — single-use state transition', () => {
     expect(expired.ok).toBe(false)
     if (!expired.ok) expect(expired.code).toBe('STALE_VERSION')
   })
+
+  it('supersede: issuing a new nonce for the same address invalidates the old one', () => {
+    const deps = setup({ nonces: ['nonce-0000000000000001', 'nonce-0000000000000002'] })
+    // Issue first nonce
+    const first = handleNonceRequest({ address: 'a@x.com' }, deps)
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    const nonce1 = first.nonce
+
+    // Issue second nonce for same address (supersedes)
+    const second = handleNonceRequest({ address: 'a@x.com' }, deps)
+    expect(second.ok).toBe(true)
+    if (!second.ok) return
+    const nonce2 = second.nonce
+
+    // First nonce should no longer be consumable
+    const consume1 = consumeNonce(nonce1, { store: deps.store, now: deps.now })
+    expect(consume1.ok).toBe(false)
+    if (!consume1.ok) expect(consume1.code).toBe('INVALID_INPUT')
+
+    // Second nonce should be consumable
+    const consume2 = consumeNonce(nonce2, { store: deps.store, now: deps.now })
+    expect(consume2.ok).toBe(true)
+  })
+
+  it('expiry: fake timers, advance TTL + 1ms → consume fails with STALE_VERSION, entry gone from store', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(FIXED_NOW))
+
+    const store = createInMemoryNonceStore()
+    // Set TTL to 1ms (will be clamped to 30s minimum)
+    const deps = { store, now: () => Date.now(), generateNonce: () => 'test-nonce-fixed-0000000000000001', env: { NONCE_TTL_MS: '1' } }
+
+    const issued = handleNonceRequest({ address: 'a@x.com' }, deps)
+    expect(issued.ok).toBe(true)
+    if (!issued.ok) return
+    const nonce = issued.nonce
+
+    // Advance past clamped TTL (30s + 1ms)
+    vi.setSystemTime(new Date(FIXED_NOW + 30_001))
+
+    // Consume should fail with STALE_VERSION
+    const expired = consumeNonce(nonce, { store, now: () => Date.now() })
+    expect(expired.ok).toBe(false)
+    if (!expired.ok) expect(expired.code).toBe('STALE_VERSION')
+
+    // Entry should be gone from store
+    const peek = store.get('a@x.com')
+    expect(peek).toBeUndefined()
+
+    vi.useRealTimers()
+  })
+
+  it('bounded store: NONCE_STORE_MAX=1000, issue for 1500 distinct addresses → size ≤ 1000, first 500 nonces no longer consume', () => {
+    const now = FIXED_NOW
+    const store = createInMemoryNonceStore(1000, () => now)
+    let nonceCounter = 0
+    const generateNonce = () => `test-nonce-${String(nonceCounter++).padStart(16, '0')}`
+
+    // Issue nonces for 1500 distinct addresses
+    for (let i = 0; i < 1500; i++) {
+      const address = `addr${i}@example.com`
+      handleNonceRequest({ address }, { store, now: () => now, generateNonce, env: {} })
+    }
+
+    // Store size should be capped at 1000
+    expect(store.size()).toBeLessThanOrEqual(1000)
+
+    // First 500 addresses should have been evicted (oldest first)
+    // Their nonces should no longer be consumable (INVALID_INPUT)
+    for (let i = 0; i < 500; i++) {
+      const address = `addr${i}@example.com`
+      const entry = store.get(address)
+      expect(entry).toBeUndefined()
+    }
+
+    // Last 1000 addresses should still be in store
+    for (let i = 500; i < 1500; i++) {
+      const address = `addr${i}@example.com`
+      const entry = store.get(address)
+      expect(entry).toBeDefined()
+    }
+  })
 })
 
 describe('nonceFailureToUiState', () => {
