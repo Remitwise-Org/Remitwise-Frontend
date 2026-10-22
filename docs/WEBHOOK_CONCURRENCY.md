@@ -4,14 +4,16 @@
 
 - An event is processed only after an atomic conditional claim changes it from `pending` or retryable `failed` to `processing`.
 - Exactly one concurrent worker can claim an event. Losing workers return without invoking the handler, so external side effects are not duplicated by this boundary.
-- Completion and failure transitions are conditional on `processing`; a stale worker cannot overwrite a newer state.
+- While a handler is executing, the worker maintains and renews its lease via a periodic heartbeat (`leaseTimeoutMs / 3`). The renewal updates `updatedAt` and extends `nextRetryAt` conditionally based on the current claim token. If lease renewal fails, the worker forfeits ownership and its handler result is discarded without writing a completion or failure transition.
+- Every claim, including the reclaim of a stale or abandoned `processing` lease, counts towards the event's attempt limit. Stale reclaims atomically increment `retryCount`. If reclaiming would exceed `maxRetries`, the event moves directly to `dlq` with `lastError = 'LEASE_EXPIRED'` and an audit log (`webhook.dlq`), preventing crash loops from executing repeatedly.
+- Completion and failure transitions are conditional on `processing` and the worker's active claim token; a stale worker cannot overwrite a newer state.
 - A DLQ replay is conditional on `status = dlq`, resets retry state, and returns `false` when another request already replayed or processed the event.
 
 ## Failure and client behavior
 
 The admin replay endpoint preserves its existing response shapes: `200` means the event was atomically moved to `pending`, `404` means it was absent or no longer in the DLQ, and `500` means the persistence operation failed. Clients should treat `404` as a stale/repeated operation and refresh the DLQ; they may retry `500` with the same request, preferably using a bounded backoff. A successful replay is safe to repeat because subsequent attempts return `404` without changing state.
 
-The processing endpoint remains parallel by event. Contention is resolved in the database rather than with process-local locks, so the guarantee also applies across multiple application instances. A worker that loses a claim performs no handler work.
+The processing endpoint remains parallel by event. Contention is resolved in the database rather than with process-local locks, so the guarantee also applies across multiple application instances. A worker that loses a claim performs no handler work. Handlers executing longer than the lease duration are continuously protected by the heartbeat timer; should a worker lose its lease or crash mid-execution, subsequent reclaim attempts count towards `maxRetries`, ensuring eventual DLQ exhaustion without infinite crash loops.
 
 ## Compatibility and operations
 
