@@ -4,7 +4,8 @@
  * Provides forward and backward compatibility for session data across
  * deployments. Each session carries a `schemaVersion` field; the
  * deserializer transparently migrates older formats so existing
- * records are preserved and never silently discarded.
+ * records are preserved and never silently discarded. Legacy means version
+ * 0 (no schemaVersion) or explicit schema version 1; both migrate to V2.
  *
  * ## Invariants
  * - `SESSION_CURRENT_VERSION` is bumped on every breaking schema change.
@@ -25,7 +26,7 @@ export const SESSION_MIN_SUPPORTED_VERSION = 1;
 
 // ── Types ──────────────────────────────────────────────────────────────
 
-/** V1 session format (legacy — no schemaVersion field). */
+/** V1 session format (legacy — schemaVersion 1 or no schemaVersion field). */
 export interface SessionDataV1 {
   address: string;
   createdAt: number;
@@ -41,16 +42,22 @@ export interface SessionDataV2 extends SessionDataV1 {
 export type SessionData = SessionDataV1 | SessionDataV2;
 
 /** Migration result with observability metadata. */
-export interface MigrationResult {
-  /** The migrated session data (or original if no migration needed). */
-  data: SessionDataV2;
-  /** Whether any migration was applied. */
-  migrated: boolean;
-  /** The version before migration (0 means no version field — V1). */
-  fromVersion: number;
-  /** The version after migration. */
-  toVersion: number;
-}
+export type MigrationResult =
+  | {
+      ok: true;
+      data: SessionDataV2;
+      migrated: boolean;
+      fromVersion: number;
+      toVersion: number;
+    }
+  | {
+      ok: false;
+      reason:
+        | "INVALID_SHAPE"
+        | "UNSUPPORTED_FUTURE_VERSION"
+        | "UNSUPPORTED_LEGACY_VERSION";
+      fromVersion: number;
+    };
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -72,8 +79,12 @@ export function detectVersion(raw: Record<string, unknown>): number {
 export function isValidSessionShape(raw: Record<string, unknown>): boolean {
   return (
     typeof raw.address === "string" &&
+    /^G[A-Z2-7]{55}$/.test(raw.address) &&
     typeof raw.createdAt === "number" &&
-    typeof raw.expiresAt === "number"
+    Number.isSafeInteger(raw.createdAt) &&
+    typeof raw.expiresAt === "number" &&
+    Number.isSafeInteger(raw.expiresAt) &&
+    raw.expiresAt > raw.createdAt
   );
 }
 
@@ -90,23 +101,38 @@ export function isValidSessionShape(raw: Record<string, unknown>): boolean {
  * re-run (idempotent) so partial progress is recoverable.
  */
 export function migrateSession(raw: Record<string, unknown>): MigrationResult {
-  // Validate shape first
-  if (!isValidSessionShape(raw)) {
-    return {
-      data: raw as unknown as SessionDataV2,
-      migrated: false,
-      fromVersion: detectVersion(raw),
-      toVersion: detectVersion(raw),
-    };
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    const result: MigrationResult = { ok: false, reason: "INVALID_SHAPE", fromVersion: 0 };
+    recordMigrationAttempt(0, 0, false);
+    return result;
   }
 
   const fromVersion = detectVersion(raw);
-  let current = { ...raw } as Record<string, unknown>;
-
-  // ── Step 1: V0/V1 → V2 (add schemaVersion) ────────────────────────
-  if (fromVersion < 2) {
-    current = migrateV1ToV2(current);
+  let result: MigrationResult;
+  const hasValidVersion =
+    raw.schemaVersion === undefined ||
+    (typeof raw.schemaVersion === "number" &&
+      Number.isInteger(raw.schemaVersion) &&
+      raw.schemaVersion >= 0);
+  if (!hasValidVersion || !isValidSessionShape(raw)) {
+    result = { ok: false, reason: "INVALID_SHAPE", fromVersion };
+  } else if (fromVersion > SESSION_CURRENT_VERSION) {
+    result = { ok: false, reason: "UNSUPPORTED_FUTURE_VERSION", fromVersion };
+  } else if (fromVersion < 0 || fromVersion < SESSION_MIN_SUPPORTED_VERSION && fromVersion !== 0) {
+    result = { ok: false, reason: "UNSUPPORTED_LEGACY_VERSION", fromVersion };
+  } else {
+    const current = fromVersion < SESSION_CURRENT_VERSION
+      ? migrateV1ToV2({ ...raw })
+      : { ...raw };
+    result = {
+      ok: true,
+      data: current as unknown as SessionDataV2,
+      migrated: fromVersion < SESSION_CURRENT_VERSION,
+      fromVersion,
+      toVersion: SESSION_CURRENT_VERSION,
+    };
   }
+  recordMigrationAttempt(
 
   // ── Future steps go here as: ───────────────────────────────────────
   // if (detectVersion(current) < 3) { current = migrateV2ToV3(current); }
@@ -117,21 +143,21 @@ export function migrateSession(raw: Record<string, unknown>): MigrationResult {
     data: current as unknown as SessionDataV2,
     migrated: fromVersion !== toVersion,
     fromVersion,
-    toVersion,
-  };
+    result.ok ? result.toVersion : fromVersion,
+    result.ok,
+  );
+  return result;
 }
 
 /**
  * Migration step: V1 (no schemaVersion) → V2 (with schemaVersion).
  *
  * Adds `schemaVersion: 2` to the session data. This is idempotent —
- * if `schemaVersion` already exists, it's preserved.
+ * Explicit V1 and unversioned sessions are upgraded to V2.
  */
 function migrateV1ToV2(raw: Record<string, unknown>): Record<string, unknown> {
   const result = { ...raw };
-  if (typeof result.schemaVersion !== "number") {
-    result.schemaVersion = SESSION_CURRENT_VERSION;
-  }
+  result.schemaVersion = SESSION_CURRENT_VERSION;
   return result;
 }
 
