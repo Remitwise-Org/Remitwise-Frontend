@@ -16,6 +16,7 @@ import {
   postHandler,
   validateBillRequest,
   __resetBillIdempotencyLedger,
+  __getBillIdempotencyLedgerSize,
   __setBillPersisterForTests,
   type BillRecord,
 } from '@/app/api/bills/route'
@@ -336,11 +337,12 @@ describe('postHandler / POST', () => {
 
   it('replays a duplicate Idempotency-Key without a second write', async () => {
     const key = 'idem-1'
+    const body = validBodyText()
     const first = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText(), idempotencyKey: key }),
+      makeRequest({ cookie: AUTH_COOKIE, body, idempotencyKey: key }),
     )
     const second = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText(), idempotencyKey: key }),
+      makeRequest({ cookie: AUTH_COOKIE, body, idempotencyKey: key }),
     )
 
     expect(first.status).toBe(201)
@@ -369,12 +371,13 @@ describe('postHandler / POST', () => {
     })
 
     const key = 'idem-inflight'
+    const body = validBodyText()
     const first = postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText(), idempotencyKey: key }),
+      makeRequest({ cookie: AUTH_COOKIE, body, idempotencyKey: key }),
     )
     await started
     const second = postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText(), idempotencyKey: key }),
+      makeRequest({ cookie: AUTH_COOKIE, body, idempotencyKey: key }),
     )
     releaseGate()
 
@@ -429,4 +432,121 @@ describe('postHandler / POST', () => {
     expect(second.status).toBe(201)
     expect(persisted).toHaveLength(2)
   })
+
+  it('keys are scoped per principal', async () => {
+    const key = 'k-1'
+    const body = validBodyText()
+    const aliceRes = await postHandler(
+      makeRequest({ cookie: 'auth_token=alice', body, idempotencyKey: key }),
+    )
+    const bobRes = await postHandler(
+      makeRequest({ cookie: 'auth_token=bob', body, idempotencyKey: key }),
+    )
+
+    expect(aliceRes.status).toBe(201)
+    expect(bobRes.status).toBe(201)
+
+    const aliceBody = (await aliceRes.json()) as { bill: BillRecord; replayed: boolean }
+    const bobBody = (await bobRes.json()) as { bill: BillRecord; replayed: boolean }
+
+    expect(aliceBody.replayed).toBe(false)
+    expect(bobBody.replayed).toBe(false)
+    expect(aliceBody.bill.userId).toBe('alice')
+    expect(bobBody.bill.userId).toBe('bob')
+    expect(persisted).toHaveLength(2)
+  })
+
+  it('same key, different body -> 409', async () => {
+    const key = 'k-reused'
+    const first = await postHandler(
+      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText({ amount: 1000 }), idempotencyKey: key }),
+    )
+    expect(first.status).toBe(201)
+    expect(persisted).toHaveLength(1)
+
+    const second = await postHandler(
+      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText({ amount: 2000 }), idempotencyKey: key }),
+    )
+    expect(second.status).toBe(409)
+    const secondBody = await second.json()
+    expect(reasonOf(secondBody)).toBe('IDEMPOTENCY_KEY_REUSED')
+    expect(persisted).toHaveLength(1)
+  })
+
+  it('same key, same body (key order differs) -> replay', async () => {
+    const key = 'k-order'
+    const due = new Date(Date.now() + DAY_MS).toISOString()
+    const body1 = JSON.stringify({
+      amount: 1500,
+      currency: 'USDC',
+      dueDate: due,
+      recipient: STELLAR_KEY,
+    })
+    const body2 = JSON.stringify({
+      recipient: STELLAR_KEY,
+      dueDate: due,
+      currency: 'USDC',
+      amount: 1500,
+    })
+
+    const first = await postHandler(
+      makeRequest({ cookie: AUTH_COOKIE, body: body1, idempotencyKey: key }),
+    )
+    expect(first.status).toBe(201)
+
+    const second = await postHandler(
+      makeRequest({ cookie: AUTH_COOKIE, body: body2, idempotencyKey: key }),
+    )
+    expect(second.status).toBe(200)
+    const secondBody = (await second.json()) as { replayed: boolean }
+    expect(secondBody.replayed).toBe(true)
+    expect(persisted).toHaveLength(1)
+  })
+
+  it('header charset: k 1 and k\\u0001 -> 400 INVALID_IDEMPOTENCY_KEY', async () => {
+    for (const badKey of ['k 1', 'k\u0001', 'k@bad', 'k#bad']) {
+      const res = await postHandler(
+        makeRequest({ cookie: AUTH_COOKIE, body: validBodyText(), idempotencyKey: badKey }),
+      )
+      expect(res.status).toBe(400)
+      expect(reasonOf(await res.json())).toBe('INVALID_IDEMPOTENCY_KEY')
+    }
+  })
+
+  it('eviction: with fake timers, an entry older than 24 h is no longer replayed', async () => {
+    vi.useFakeTimers()
+    try {
+      const now = Date.now()
+      vi.setSystemTime(now)
+
+      const key = 'idem-expire'
+      const body = validBodyText({ dueDate: new Date(now + 7 * DAY_MS).toISOString() })
+      const first = await postHandler(
+        makeRequest({ cookie: AUTH_COOKIE, body, idempotencyKey: key }),
+      )
+      expect(first.status).toBe(201)
+      expect(persisted).toHaveLength(1)
+
+      // Advance by 24h + 1ms
+      vi.setSystemTime(now + 24 * 60 * 60 * 1000 + 1)
+
+      const second = await postHandler(
+        makeRequest({ cookie: AUTH_COOKIE, body, idempotencyKey: key }),
+      )
+      expect(second.status).toBe(201)
+      expect(persisted).toHaveLength(2)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('eviction: after 10,001 distinct keys the ledger size is <= 10,000', async () => {
+    for (let i = 0; i <= 10_000; i++) {
+      const res = await postHandler(
+        makeRequest({ cookie: AUTH_COOKIE, body: validBodyText(), idempotencyKey: `k-${i}` }),
+      )
+      expect(res.status).toBe(201)
+    }
+    expect(__getBillIdempotencyLedgerSize()).toBeLessThanOrEqual(10_000)
+  }, 30000)
 })
