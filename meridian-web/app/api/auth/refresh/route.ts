@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Buffer } from 'node:buffer'
-import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
+import {
+  signRefreshToken,
+  signToken,
+  verifyRefreshToken,
+  type AccessClaims,
+  type RefreshClaims,
+  type RefreshVerification,
+} from '@/lib/auth/session'
 
 export const runtime = 'nodejs'
 
@@ -32,122 +39,8 @@ const REFRESH_COOKIE = 'refresh_token'
 const DEFAULT_REFRESH_TTL_SECONDS = 604800
 const DEFAULT_ACCESS_TTL_SECONDS = 900
 
-export interface RefreshClaims {
-  sub: string
-  familyId: string
-  jti: string
-  exp: number
-}
-
-export interface AccessClaims {
-  sub: string
-  familyId: string
-  jti: string
-  exp: number
-}
-
-export type RefreshVerification =
-  | { ok: true; claims: RefreshClaims }
-  | { ok: false; reason: 'malformed' | 'bad_signature' | 'expired' }
-
-// ---------------------------------------------------------------------------
-// Token codec (dependency-free HMAC-SHA256)
-// ---------------------------------------------------------------------------
-
-function encodeBase64Url(value: string): string {
-  return Buffer.from(value, 'utf8').toString('base64url')
-}
-
-function signHmacBase64Url(payload: string, secret: string): string {
-  return createHmac('sha256', secret).update(payload).digest('base64url')
-}
-
-/**
- * Constant-time string comparison.  `timingSafeEqual` throws on length
- * mismatch, so a mismatched length is folded into a same-length self-compare
- * before returning false — the comparison cost does not reveal where the two
- * values first differ.
- */
-function constantTimeEqual(a: string, b: string): boolean {
-  const left = Buffer.from(a, 'utf8')
-  const right = Buffer.from(b, 'utf8')
-  if (left.length !== right.length) {
-    timingSafeEqual(left, left)
-    return false
-  }
-  return timingSafeEqual(left, right)
-}
-
-function signToken(claims: object, secret: string): string {
-  const payload = encodeBase64Url(JSON.stringify(claims))
-  return `${payload}.${signHmacBase64Url(payload, secret)}`
-}
-
-export function signRefreshToken(claims: RefreshClaims, secret: string): string {
-  return signToken(claims, secret)
-}
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === 'string' && value.length > 0
-}
-
-export function verifyRefreshToken(
-  token: string,
-  secret: string,
-  now: number,
-): RefreshVerification {
-  if (typeof token !== 'string' || token.length === 0) {
-    return { ok: false, reason: 'malformed' }
-  }
-
-  const parts = token.split('.')
-  if (parts.length !== 2) return { ok: false, reason: 'malformed' }
-
-  const payload = parts[0]
-  const signature = parts[1]
-  if (!payload || !signature) return { ok: false, reason: 'malformed' }
-
-  const expected = signHmacBase64Url(payload, secret)
-  if (!constantTimeEqual(signature, expected)) {
-    // The reason is deliberately coarse: it never echoes the expected
-    // signature or any part of the secret.
-    return { ok: false, reason: 'bad_signature' }
-  }
-
-  let decoded: unknown
-  try {
-    decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'))
-  } catch {
-    return { ok: false, reason: 'malformed' }
-  }
-
-  if (typeof decoded !== 'object' || decoded === null) {
-    return { ok: false, reason: 'malformed' }
-  }
-
-  const claims = decoded as Partial<RefreshClaims>
-  if (
-    !isNonEmptyString(claims.sub) ||
-    !isNonEmptyString(claims.familyId) ||
-    !isNonEmptyString(claims.jti) ||
-    typeof claims.exp !== 'number' ||
-    !Number.isFinite(claims.exp)
-  ) {
-    return { ok: false, reason: 'malformed' }
-  }
-
-  if (claims.exp <= now) return { ok: false, reason: 'expired' }
-
-  return {
-    ok: true,
-    claims: {
-      sub: claims.sub,
-      familyId: claims.familyId,
-      jti: claims.jti,
-      exp: claims.exp,
-    },
-  }
-}
+export { signRefreshToken, verifyRefreshToken }
+export type { AccessClaims, RefreshClaims, RefreshVerification }
 
 // ---------------------------------------------------------------------------
 // Rotation / revocation ledger (process-local)

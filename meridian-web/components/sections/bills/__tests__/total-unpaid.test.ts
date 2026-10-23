@@ -14,6 +14,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { signAccessToken } from '@/lib/auth/session'
+
+const ACCESS_SECRET = 'total-unpaid-test-access-secret'
 
 // ---------------------------------------------------------------------------
 // Module setup - import once and reuse
@@ -27,6 +30,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   vi.useFakeTimers()
+  process.env.JWT_ACCESS_SECRET = ACCESS_SECRET
 
   // Default: authorized principals get total=0
   vi.spyOn(routeModule, 'isPrincipalAuthorized').mockImplementation((principal: string) => true)
@@ -37,17 +41,27 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
   vi.restoreAllMocks()
+  delete process.env.JWT_ACCESS_SECRET
 })
 
 // ---------------------------------------------------------------------------
 // Helper to create a minimal NextRequest-like object
 // ---------------------------------------------------------------------------
 
-function createReq(authToken: string = 'valid-jwt-token') {
+function createReq(authToken?: string) {
+  const token = authToken ?? signAccessToken(
+    {
+      sub: 'total-unpaid-user',
+      familyId: 'total-unpaid-family',
+      jti: 'total-unpaid-jti',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    },
+    ACCESS_SECRET,
+  )
   return {
     cookies: {
       get: (name: string) => {
-        if (name === 'auth_token') return { value: authToken }
+        if (name === 'auth_token') return { value: token }
         return { value: '' }
       },
     },

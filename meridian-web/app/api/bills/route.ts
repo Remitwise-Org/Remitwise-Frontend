@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Buffer } from 'node:buffer'
 import { createHash, randomUUID } from 'node:crypto'
+import { resolveSessionPrincipal } from '@/lib/auth/session'
 
 export const runtime = 'nodejs'
 
@@ -74,46 +74,6 @@ export interface ValidationIssue {
 export type ValidationResult =
   | { ok: true; value: NewBillRequest }
   | { ok: false; issues: ValidationIssue[] }
-
-// ---------------------------------------------------------------------------
-// Session principal (house style: `auth_token` cookie, fail closed)
-// ---------------------------------------------------------------------------
-
-interface PrincipalSession {
-  principal: string | null
-  isValid: boolean
-}
-
-/**
- * Parses the bearer token the client sends.  The token is either a plain
- * e-mail style principal (dev/test) or a JWT-style payload carrying a `sub`
- * claim.  Any failure is treated as "no session" — the route fails closed.
- * No token data is ever echoed back to the client.
- */
-function resolvePrincipal(token: string): PrincipalSession {
-  if (!token) return { principal: null, isValid: false }
-
-  const segments = token.split('.')
-  if (segments.length === 3) {
-    try {
-      const raw = Buffer.from(segments[1], 'base64url').toString('utf8')
-      const payload = JSON.parse(raw) as { sub?: unknown }
-      if (typeof payload.sub === 'string' && payload.sub.length > 0) {
-        return { principal: payload.sub, isValid: true }
-      }
-    } catch {
-      return { principal: null, isValid: false }
-    }
-    return { principal: null, isValid: false }
-  }
-
-  // Plain principal (dev/test sign-in).  Reject obvious garbage.
-  if (typeof token === 'string' && token.length > 0 && token.length <= 320) {
-    return { principal: token, isValid: true }
-  }
-
-  return { principal: null, isValid: false }
-}
 
 // ---------------------------------------------------------------------------
 // Validation (pure, injectable clock)
@@ -402,9 +362,8 @@ export async function postHandler(req: NextRequest): Promise<NextResponse> {
   try {
     // Authorization is evaluated before any body handling: an unauthenticated
     // caller must never learn whether its payload would have been accepted.
-    const token = req.cookies.get('auth_token')?.value ?? ''
-    const session = resolvePrincipal(token)
-    if (!session.isValid || !session.principal) {
+    const session = resolveSessionPrincipal(req)
+    if (!session.ok) {
       return jsonResponse({ error: 'No active session', reason: 'NO_ACTIVE_SESSION' }, 401)
     }
     const principal = session.principal

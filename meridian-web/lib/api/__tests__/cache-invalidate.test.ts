@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest, NextResponse } from 'next/server'
+import { signAccessToken } from '@/lib/auth/session'
 
 import {
   POST,
@@ -12,6 +13,14 @@ import {
 } from '@/app/api/cache/invalidate/route'
 
 const ALLOWED_PRINCIPALS = 'alice@example.com,bob@example.com'
+const ACCESS_SECRET = 'test-access-secret'
+
+function signedToken(principal: string): string {
+  return signAccessToken(
+    { sub: principal, familyId: 'test-family', jti: 'test-jti', exp: Math.floor(Date.now() / 1000) + 3600 },
+    ACCESS_SECRET,
+  )
+}
 
 interface RequestOptions {
   token?: string | null
@@ -22,7 +31,7 @@ interface RequestOptions {
 function baseHeaders(options: RequestOptions): Record<string, string> {
   const headers: Record<string, string> = { 'content-type': 'application/json' }
   if (options.token !== null) {
-    headers.cookie = `auth_token=${options.token ?? 'alice@example.com'}`
+    headers.cookie = `auth_token=${options.token ?? signedToken('alice@example.com')}`
   }
   if (options.idempotencyKey !== undefined) {
     headers['idempotency-key'] = options.idempotencyKey
@@ -69,6 +78,7 @@ const paths = (count: number): string[] => Array.from({ length: count }, (_, i) 
 const keys = (count: number): string[] => Array.from({ length: count }, (_, i) => `k${i}`)
 
 beforeEach(() => {
+  process.env.JWT_ACCESS_SECRET = ACCESS_SECRET
   process.env.CACHE_INVALIDATION_ALLOWED_PRINCIPALS = ALLOWED_PRINCIPALS
   delete process.env.MERIDIAN_CACHE_PURGE_URL
   __resetCacheInvalidationLedger()
@@ -79,6 +89,8 @@ afterEach(() => {
   delete process.env.MERIDIAN_CACHE_PURGE_URL
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+  vi.unstubAllEnvs()
+  delete process.env.JWT_ACCESS_SECRET
 })
 
 describe('validateRequestBody', () => {
@@ -245,6 +257,16 @@ describe('POST /api/cache/invalidate', () => {
     expect(body).not.toHaveProperty('invalidated')
     expect(res.headers.get('cache-control')).toContain('no-store')
     expect(res.headers.get('x-content-type-options')).toBe('nosniff')
+  })
+
+  it('rejects a forged allow-listed plain principal in production', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    const forged = await POST(makeRequest({ tags: ['pool:stats'] }, { token: 'alice@example.com' }))
+    expect(forged.status).toBe(401)
+    expect((await readJson(forged)).reason).toBe('NO_ACTIVE_SESSION')
+
+    const signed = await POST(makeRequest({ tags: ['pool:stats'] }))
+    expect(signed.status).toBe(200)
   })
 
   it('returns 403 for a principal outside the allow-list', async () => {
