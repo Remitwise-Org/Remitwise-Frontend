@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { resolveSessionPrincipal } from '@/lib/auth/session'
 
 /**
  * POST /api/cache/invalidate
@@ -325,41 +326,6 @@ export function __resetCacheInvalidationLedger(): void {
   activePurger = runCachePurge
 }
 
-interface PrincipalSession {
-  principal: string | null
-  isValid: boolean
-}
-
-/**
- * Resolves the session principal from the `auth_token` cookie.  Mirrors the
- * contract of `app/api/transfer-capability/route.ts`: a JWT-style token is
- * decoded only for its `sub` claim, a plain principal is accepted as-is, and
- * anything else fails closed.  No token data is ever returned to the caller.
- */
-function resolvePrincipal(token: string): PrincipalSession {
-  if (!token) return { principal: null, isValid: false }
-
-  const segments = token.split('.')
-  if (segments.length === 3) {
-    try {
-      const raw = Buffer.from(segments[1], 'base64url').toString('utf8')
-      const payload = JSON.parse(raw) as { sub?: unknown }
-      if (typeof payload.sub === 'string' && payload.sub.length > 0) {
-        return { principal: payload.sub, isValid: true }
-      }
-    } catch {
-      return { principal: null, isValid: false }
-    }
-    return { principal: null, isValid: false }
-  }
-
-  if (token.length > 0 && token.length <= 320) {
-    return { principal: token, isValid: true }
-  }
-
-  return { principal: null, isValid: false }
-}
-
 /** Principal allow-list from server-side policy.  Empty means deny-all. */
 function allowedPrincipals(): ReadonlySet<string> {
   const raw = process.env.CACHE_INVALIDATION_ALLOWED_PRINCIPALS ?? ''
@@ -376,10 +342,14 @@ function respond(status: number, payload: unknown): NextResponse {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const token = req.cookies.get('auth_token')?.value ?? ''
-  const session = resolvePrincipal(token)
+  let session
+  try {
+    session = resolveSessionPrincipal(req)
+  } catch {
+    return respond(500, { error: 'Internal server error' })
+  }
 
-  if (!session.isValid || !session.principal) {
+  if (!session.ok) {
     return respond(401, { error: 'Unauthorized', reason: 'NO_ACTIVE_SESSION' })
   }
 

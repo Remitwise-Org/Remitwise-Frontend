@@ -9,6 +9,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
+import { signAccessToken } from '@/lib/auth/session'
 
 import {
   POST,
@@ -23,7 +24,15 @@ import {
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const NOW = Date.UTC(2026, 0, 15, 12, 0, 0)
-const AUTH_COOKIE = 'auth_token=user-1'
+const ACCESS_SECRET = 'test-access-secret'
+
+function authCookie(principal = 'user-1'): string {
+  const token = signAccessToken(
+    { sub: principal, familyId: 'test-family', jti: 'test-jti', exp: Math.floor(Date.now() / 1000) + 3600 },
+    ACCESS_SECRET,
+  )
+  return `auth_token=${token}`
+}
 
 // 56-char base32 public key: 'G' + 55 base32 characters.
 const STELLAR_KEY = `G${'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'.repeat(2).slice(0, 55)}`
@@ -102,6 +111,7 @@ function sampleRecord(): BillRecord {
 
 beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {})
+  process.env.JWT_ACCESS_SECRET = ACCESS_SECRET
   __resetBillIdempotencyLedger()
   __setBillPersisterForTests(null)
   delete process.env.MERIDIAN_BILLS_ENDPOINT
@@ -110,9 +120,11 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks()
+  vi.unstubAllEnvs()
   vi.unstubAllGlobals()
   __resetBillIdempotencyLedger()
   __setBillPersisterForTests(null)
+  delete process.env.JWT_ACCESS_SECRET
 })
 
 describe('validateBillRequest', () => {
@@ -269,8 +281,17 @@ describe('postHandler / POST', () => {
     expect(reasonOf(await res.json())).toBe('NO_ACTIVE_SESSION')
   })
 
+  it('rejects a forged plain principal in production', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    const res = await postHandler(
+      makeRequest({ cookie: 'auth_token=user-1', body: validBodyText() }),
+    )
+    expect(res.status).toBe(401)
+    expect(reasonOf(await res.json())).toBe('NO_ACTIVE_SESSION')
+  })
+
   it('returns 400 INVALID_JSON for an unparsable body', async () => {
-    const res = await postHandler(makeRequest({ cookie: AUTH_COOKIE, body: '{ not json' }))
+    const res = await postHandler(makeRequest({ cookie: authCookie(), body: '{ not json' }))
     expect(res.status).toBe(400)
     expect(reasonOf(await res.json())).toBe('INVALID_JSON')
     expect(persisted).toHaveLength(0)
@@ -278,7 +299,7 @@ describe('postHandler / POST', () => {
 
   it('returns 400 INVALID_BODY for a non-object payload', async () => {
     const res = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: JSON.stringify(['nope']) }),
+      makeRequest({ cookie: authCookie(), body: JSON.stringify(['nope']) }),
     )
     expect(res.status).toBe(400)
     expect(reasonOf(await res.json())).toBe('INVALID_BODY')
@@ -286,7 +307,7 @@ describe('postHandler / POST', () => {
 
   it('returns 400 with issues for a validation failure', async () => {
     const res = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText({ amount: -1 }) }),
+      makeRequest({ cookie: authCookie(), body: validBodyText({ amount: -1 }) }),
     )
     expect(res.status).toBe(400)
     const body = (await res.json()) as { issues?: Array<{ code: string }> }
@@ -295,7 +316,7 @@ describe('postHandler / POST', () => {
   })
 
   it('creates the bill for the session principal on the happy path', async () => {
-    const res = await postHandler(makeRequest({ cookie: AUTH_COOKIE, body: validBodyText() }))
+    const res = await postHandler(makeRequest({ cookie: authCookie(), body: validBodyText() }))
     expect(res.status).toBe(201)
 
     const body = (await res.json()) as { bill: Record<string, unknown>; replayed: boolean }
@@ -315,7 +336,7 @@ describe('postHandler / POST', () => {
 
   it('ignores a spoofed userId in the body', async () => {
     const res = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText({ userId: 'attacker' }) }),
+      makeRequest({ cookie: authCookie(), body: validBodyText({ userId: 'attacker' }) }),
     )
     expect(res.status).toBe(201)
     const body = (await res.json()) as { bill: { userId: string } }
@@ -325,7 +346,7 @@ describe('postHandler / POST', () => {
   it('rejects an Idempotency-Key outside 1..128 characters', async () => {
     const res = await postHandler(
       makeRequest({
-        cookie: AUTH_COOKIE,
+        cookie: authCookie(),
         body: validBodyText(),
         idempotencyKey: 'k'.repeat(129),
       }),
@@ -339,10 +360,10 @@ describe('postHandler / POST', () => {
     const key = 'idem-1'
     const body = validBodyText()
     const first = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body, idempotencyKey: key }),
+      makeRequest({ cookie: authCookie(), body, idempotencyKey: key }),
     )
     const second = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body, idempotencyKey: key }),
+      makeRequest({ cookie: authCookie(), body, idempotencyKey: key }),
     )
 
     expect(first.status).toBe(201)
@@ -373,11 +394,11 @@ describe('postHandler / POST', () => {
     const key = 'idem-inflight'
     const body = validBodyText()
     const first = postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body, idempotencyKey: key }),
+      makeRequest({ cookie: authCookie(), body, idempotencyKey: key }),
     )
     await started
     const second = postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body, idempotencyKey: key }),
+      makeRequest({ cookie: authCookie(), body, idempotencyKey: key }),
     )
     releaseGate()
 
@@ -397,13 +418,13 @@ describe('postHandler / POST', () => {
 
     const key = 'idem-retry'
     const failed = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText(), idempotencyKey: key }),
+      makeRequest({ cookie: authCookie(), body: validBodyText(), idempotencyKey: key }),
     )
     expect(failed.status).toBe(502)
     expect(reasonOf(await failed.json())).toBe('PERSIST_FAILED')
 
     const retried = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText(), idempotencyKey: key }),
+      makeRequest({ cookie: authCookie(), body: validBodyText(), idempotencyKey: key }),
     )
     expect(retried.status).toBe(201)
     expect(attempts).toBe(2)
@@ -416,18 +437,18 @@ describe('postHandler / POST', () => {
 
     const key = 'idem-broken'
     const first = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText(), idempotencyKey: key }),
+      makeRequest({ cookie: authCookie(), body: validBodyText(), idempotencyKey: key }),
     )
     const second = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText(), idempotencyKey: key }),
+      makeRequest({ cookie: authCookie(), body: validBodyText(), idempotencyKey: key }),
     )
     expect(first.status).toBe(502)
     expect(second.status).toBe(502)
   })
 
   it('writes again when no Idempotency-Key is supplied', async () => {
-    const first = await postHandler(makeRequest({ cookie: AUTH_COOKIE, body: validBodyText() }))
-    const second = await postHandler(makeRequest({ cookie: AUTH_COOKIE, body: validBodyText() }))
+    const first = await postHandler(makeRequest({ cookie: authCookie(), body: validBodyText() }))
+    const second = await postHandler(makeRequest({ cookie: authCookie(), body: validBodyText() }))
     expect(first.status).toBe(201)
     expect(second.status).toBe(201)
     expect(persisted).toHaveLength(2)
@@ -437,10 +458,10 @@ describe('postHandler / POST', () => {
     const key = 'k-1'
     const body = validBodyText()
     const aliceRes = await postHandler(
-      makeRequest({ cookie: 'auth_token=alice', body, idempotencyKey: key }),
+      makeRequest({ cookie: authCookie('alice'), body, idempotencyKey: key }),
     )
     const bobRes = await postHandler(
-      makeRequest({ cookie: 'auth_token=bob', body, idempotencyKey: key }),
+      makeRequest({ cookie: authCookie('bob'), body, idempotencyKey: key }),
     )
 
     expect(aliceRes.status).toBe(201)
@@ -459,13 +480,13 @@ describe('postHandler / POST', () => {
   it('same key, different body -> 409', async () => {
     const key = 'k-reused'
     const first = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText({ amount: 1000 }), idempotencyKey: key }),
+      makeRequest({ cookie: authCookie(), body: validBodyText({ amount: 1000 }), idempotencyKey: key }),
     )
     expect(first.status).toBe(201)
     expect(persisted).toHaveLength(1)
 
     const second = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: validBodyText({ amount: 2000 }), idempotencyKey: key }),
+      makeRequest({ cookie: authCookie(), body: validBodyText({ amount: 2000 }), idempotencyKey: key }),
     )
     expect(second.status).toBe(409)
     const secondBody = await second.json()
@@ -490,12 +511,12 @@ describe('postHandler / POST', () => {
     })
 
     const first = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: body1, idempotencyKey: key }),
+      makeRequest({ cookie: authCookie(), body: body1, idempotencyKey: key }),
     )
     expect(first.status).toBe(201)
 
     const second = await postHandler(
-      makeRequest({ cookie: AUTH_COOKIE, body: body2, idempotencyKey: key }),
+      makeRequest({ cookie: authCookie(), body: body2, idempotencyKey: key }),
     )
     expect(second.status).toBe(200)
     const secondBody = (await second.json()) as { replayed: boolean }
@@ -506,7 +527,7 @@ describe('postHandler / POST', () => {
   it('header charset: k 1 and k\\u0001 -> 400 INVALID_IDEMPOTENCY_KEY', async () => {
     for (const badKey of ['k 1', 'k\u0001', 'k@bad', 'k#bad']) {
       const res = await postHandler(
-        makeRequest({ cookie: AUTH_COOKIE, body: validBodyText(), idempotencyKey: badKey }),
+        makeRequest({ cookie: authCookie(), body: validBodyText(), idempotencyKey: badKey }),
       )
       expect(res.status).toBe(400)
       expect(reasonOf(await res.json())).toBe('INVALID_IDEMPOTENCY_KEY')
@@ -522,7 +543,7 @@ describe('postHandler / POST', () => {
       const key = 'idem-expire'
       const body = validBodyText({ dueDate: new Date(now + 7 * DAY_MS).toISOString() })
       const first = await postHandler(
-        makeRequest({ cookie: AUTH_COOKIE, body, idempotencyKey: key }),
+        makeRequest({ cookie: authCookie(), body, idempotencyKey: key }),
       )
       expect(first.status).toBe(201)
       expect(persisted).toHaveLength(1)
@@ -531,7 +552,7 @@ describe('postHandler / POST', () => {
       vi.setSystemTime(now + 24 * 60 * 60 * 1000 + 1)
 
       const second = await postHandler(
-        makeRequest({ cookie: AUTH_COOKIE, body, idempotencyKey: key }),
+        makeRequest({ cookie: authCookie(), body, idempotencyKey: key }),
       )
       expect(second.status).toBe(201)
       expect(persisted).toHaveLength(2)
@@ -543,7 +564,7 @@ describe('postHandler / POST', () => {
   it('eviction: after 10,001 distinct keys the ledger size is <= 10,000', async () => {
     for (let i = 0; i <= 10_000; i++) {
       const res = await postHandler(
-        makeRequest({ cookie: AUTH_COOKIE, body: validBodyText(), idempotencyKey: `k-${i}` }),
+        makeRequest({ cookie: authCookie(), body: validBodyText(), idempotencyKey: `k-${i}` }),
       )
       expect(res.status).toBe(201)
     }
