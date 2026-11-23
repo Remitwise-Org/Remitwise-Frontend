@@ -104,16 +104,29 @@ describe('GET /api/v1/remittance/history/export', () => {
     expect(fetchTransactionHistory).not.toHaveBeenCalled();
   });
 
-  it('caps exports at 10,000 rows and marks the response as truncated', async () => {
-    vi.mocked(fetchTransactionHistory).mockResolvedValue({
-      transactions: Array.from({ length: 10_001 }, (_, index) => transaction('tx-' + index)),
-      nextCursor: undefined,
+  it('caps paginated exports at 10,000 rows and marks the response as truncated', async () => {
+    for (let page = 0; page < 50; page += 1) {
+      vi.mocked(fetchTransactionHistory).mockResolvedValueOnce({
+        transactions: Array.from({ length: 200 }, (_, index) =>
+          transaction('tx-' + (page * 200 + index))
+        ),
+        nextCursor: 'cursor-' + page,
+      });
+    }
+    vi.mocked(fetchTransactionHistory).mockResolvedValueOnce({
+      transactions: [transaction('tx-10000')],
+      nextCursor: 'cursor-50',
     });
 
     const response = await GET(request('format=json'));
     expect(response.headers.get('x-export-truncated')).toBe('true');
     const rows = await response.json();
     expect(rows).toHaveLength(10_000);
+    expect(fetchTransactionHistory).toHaveBeenCalledTimes(51);
+    expect(fetchTransactionHistory).toHaveBeenLastCalledWith(walletAddress, {
+      limit: 200,
+      cursor: 'cursor-49',
+    });
   });
 
   it('paginates until the full history has been collected', async () => {
