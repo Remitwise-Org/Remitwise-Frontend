@@ -60,7 +60,7 @@ model RecurringRemittance {
   id               String    @id @default(cuid())
   userAddress      String
   recipientAddress String
-  amount           Float
+  amountStroops    BigInt
   currency         String
   frequency        String    // weekly | biweekly | monthly
   nextRunAt        DateTime
