@@ -41,6 +41,14 @@ const CONTRACT_ENV_CANDIDATES: Record<ContractName, string[]> = {
   ],
 };
 
+// Environment variables read by this module (see .env.example):
+//   SOROBAN_NETWORK            - "testnet" | "mainnet" (default: "testnet")
+//   STELLAR_NETWORK            - fallback for SOROBAN_NETWORK (optional)
+//   NEXT_PUBLIC_STELLAR_NETWORK - fallback for STELLAR_NETWORK (optional)
+//   CONTRACT_IDS_JSON          - JSON map of network -> contract IDs (optional)
+//   <CONTRACT>_CONTRACT_ID[_TESTNET|_MAINNET] - per-contract IDs (optional)
+//   NODE_ENV                   - framework-provided; not required
+
 const deprecatedAliasesWarned = new Set<string>();
 
 function warnDeprecatedAlias(alias: string, contract: ContractName): void {
