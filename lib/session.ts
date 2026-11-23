@@ -51,6 +51,8 @@ export interface SessionData {
   address: string;
   createdAt: number;
   expiresAt: number;
+  /** Session version — must match the DB value. Legacy cookies without this field are treated as version 0. */
+  sessionVersion?: number;
 }
 
 /**
@@ -335,7 +337,34 @@ export async function requireAuth(): Promise<{ address: string }> {
         }
       );
     }
-    
+
+    // --- Server-side session revocation check ---
+    // Legacy cookies without sessionVersion are treated as version 0.
+    const cookieVersion = data.sessionVersion ?? 0;
+    try {
+      const { prisma } = await import('@/lib/prisma');
+      const user = await (prisma as any).user?.findUnique({
+        where: { stellar_address: data.address },
+        select: { sessionVersion: true },
+      });
+      const dbVersion = user?.sessionVersion ?? 0;
+      if (cookieVersion < dbVersion) {
+        throw new Response(
+          JSON.stringify({ error: 'Unauthorized', message: 'Session has been revoked' }),
+          {
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json',
+              'Set-Cookie': clearSessionCookie(),
+            },
+          },
+        );
+      }
+    } catch (versionError) {
+      if (versionError instanceof Response) throw versionError;
+      // DB unavailable — fail open to avoid locking out users during outages
+    }
+
     return { address: data.address };
   } catch (error) {
     // If error is already a Response, re-throw it
@@ -361,11 +390,17 @@ export async function createSession(address: string): Promise<{ sealed: string; 
   const now = Date.now();
   const sessionMaxAge = getSessionMaxAge();
   const expiresAt = now + sessionMaxAge * 1000;
-  const session: SessionData = { address, createdAt: now, expiresAt };
-  const sealed = await sealData(session, {
-    password: getPassword(),
-    ttl: sessionMaxAge,
-  });
+
+  // Fetch current session version from DB (default 0 if not found)
+  let sessionVersion = 0;
+  try {
+    const { prisma } = await import('@/lib/prisma');
+    const user = await (prisma as any).user?.findUnique({ where: { stellar_address: address }, select: { sessionVersion: true } });
+    sessionVersion = user?.sessionVersion ?? 0;
+  } catch { /* DB unavailable — default to 0 */ }
+
+  const session: SessionData = { address, createdAt: now, expiresAt, sessionVersion };
+  const sealed = await sealData(session, { password: getPassword(), ttl: sessionMaxAge });
   return { sealed, session };
 }
 
