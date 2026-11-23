@@ -29,11 +29,7 @@ function getRpc() {
 // ─────────────────────────────────────────────
 
 const getContractId = (): string => {
-  try {
-    return resolveContractId("REMITTANCE_SPLIT");
-  } catch {
-    throw new Error("contract not found");
-  }
+  return resolveContractId("REMITTANCE_SPLIT");
 };
 
 async function loadAccount(userAddress: string): Promise<Account> {

@@ -9,6 +9,14 @@ export type ContractName =
   | "INSURANCE"
   | "FAMILY_WALLET";
 
+const CANONICAL_CONTRACT_ENV: Record<ContractName, string> = {
+  REMITTANCE_SPLIT: "REMITTANCE_SPLIT_CONTRACT_ID",
+  SAVINGS_GOALS: "SAVINGS_GOALS_CONTRACT_ID",
+  BILL_PAYMENTS: "BILL_PAYMENTS_CONTRACT_ID",
+  INSURANCE: "INSURANCE_CONTRACT_ID",
+  FAMILY_WALLET: "FAMILY_WALLET_CONTRACT_ID",
+};
+
 const CONTRACT_ENV_CANDIDATES: Record<ContractName, string[]> = {
   REMITTANCE_SPLIT: [
     "REMITTANCE_SPLIT_CONTRACT_ID",
@@ -32,6 +40,17 @@ const CONTRACT_ENV_CANDIDATES: Record<ContractName, string[]> = {
     "NEXT_PUBLIC_FAMILY_WALLET_CONTRACT_ID",
   ],
 };
+
+const deprecatedAliasesWarned = new Set<string>();
+
+function warnDeprecatedAlias(alias: string, contract: ContractName): void {
+  if (deprecatedAliasesWarned.has(alias)) return;
+
+  deprecatedAliasesWarned.add(alias);
+  console.warn(
+    `[contracts] ${alias} is deprecated; use ${CANONICAL_CONTRACT_ENV[contract]} instead.`
+  );
+}
 
 const JSON_KEY_CANDIDATES: Record<ContractName, string[]> = {
   REMITTANCE_SPLIT: [
@@ -92,17 +111,22 @@ function parseContractIdsJson(): unknown {
   }
 }
 
-function getFromContractIdsJson(contract: ContractName): string | null {
+function getFromContractIdsJson(
+  contract: ContractName,
+  network: SorobanNetwork
+): string | null {
   const parsed = parseContractIdsJson();
   if (!parsed || typeof parsed !== "object") return null;
 
-  const network = getSorobanNetwork();
   const networkConfig = (parsed as Record<string, unknown>)[network];
   if (!networkConfig || typeof networkConfig !== "object") return null;
 
   for (const key of JSON_KEY_CANDIDATES[contract]) {
     const value = (networkConfig as Record<string, unknown>)[key];
     if (typeof value === "string" && value.trim()) {
+      if (key !== CANONICAL_CONTRACT_ENV[contract]) {
+        warnDeprecatedAlias(key, contract);
+      }
       return value;
     }
   }
@@ -110,34 +134,70 @@ function getFromContractIdsJson(contract: ContractName): string | null {
   return null;
 }
 
-function getFromEnv(contract: ContractName): string | null {
-  const networkSuffix = getSorobanNetwork().toUpperCase();
+function getFromEnv(
+  contract: ContractName,
+  network: SorobanNetwork
+): string | null {
+  const networkSuffix = network.toUpperCase();
+  const candidates = CONTRACT_ENV_CANDIDATES[contract];
+  const serverCandidates = candidates.filter(
+    (key) => !key.startsWith("NEXT_PUBLIC_")
+  );
+  const publicCandidates = candidates.filter((key) =>
+    key.startsWith("NEXT_PUBLIC_")
+  );
 
-  for (const envKey of CONTRACT_ENV_CANDIDATES[contract]) {
+  for (const envKey of serverCandidates) {
     const networkScoped = process.env[`${envKey}_${networkSuffix}`];
     if (typeof networkScoped === "string" && networkScoped.trim()) {
+      if (envKey !== CANONICAL_CONTRACT_ENV[contract]) {
+        warnDeprecatedAlias(envKey, contract);
+      }
       return networkScoped;
     }
   }
 
-  for (const envKey of CONTRACT_ENV_CANDIDATES[contract]) {
+  for (const envKey of serverCandidates) {
     const value = process.env[envKey];
     if (typeof value === "string" && value.trim()) {
+      if (envKey !== CANONICAL_CONTRACT_ENV[contract]) {
+        warnDeprecatedAlias(envKey, contract);
+      }
       return value;
+    }
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    for (const envKey of publicCandidates) {
+      const networkScoped = process.env[`${envKey}_${networkSuffix}`];
+      if (typeof networkScoped === "string" && networkScoped.trim()) {
+        warnDeprecatedAlias(envKey, contract);
+        return networkScoped;
+      }
+    }
+
+    for (const envKey of publicCandidates) {
+      const value = process.env[envKey];
+      if (typeof value === "string" && value.trim()) {
+        warnDeprecatedAlias(envKey, contract);
+        return value;
+      }
     }
   }
 
   return null;
 }
 
-export function resolveContractId(contract: ContractName): string {
-  const fromJson = getFromContractIdsJson(contract);
+export function resolveContractId(
+  contract: ContractName,
+  network: SorobanNetwork = getSorobanNetwork()
+): string {
+  const fromJson = getFromContractIdsJson(contract, network);
   if (fromJson) return fromJson;
 
-  const fromEnv = getFromEnv(contract);
+  const fromEnv = getFromEnv(contract, network);
   if (fromEnv) return fromEnv;
 
-  const network = getSorobanNetwork();
   throw new Error(
     `Missing contract ID for ${contract} on ${network}. Set CONTRACT_IDS_JSON or network-specific env vars.`
   );

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Networks } from "@stellar/stellar-sdk";
 import {
   getSorobanNetwork,
@@ -11,6 +11,7 @@ import {
 // Env vars touched by the module under test. We snapshot/restore process.env
 // around every test so ordering and leakage can't affect assertions.
 const ENV_KEYS = [
+  "NODE_ENV",
   "SOROBAN_NETWORK",
   "STELLAR_NETWORK",
   "NEXT_PUBLIC_STELLAR_NETWORK",
@@ -24,6 +25,8 @@ const ENV_KEYS = [
   "REMITTANCE_SPLIT_CONTRACT_ID_MAINNET",
   // other contracts' first candidate
   "SAVINGS_GOALS_CONTRACT_ID",
+  "SAVINGS_CONTRACT_ID",
+  "NEXT_PUBLIC_SAVINGS_GOALS_CONTRACT_ID",
   "BILL_PAYMENTS_CONTRACT_ID",
   "INSURANCE_CONTRACT_ID",
   "FAMILY_WALLET_CONTRACT_ID",
@@ -35,7 +38,7 @@ beforeEach(() => {
   snapshot = {};
   for (const key of ENV_KEYS) {
     snapshot[key] = process.env[key];
-    delete process.env[key];
+    if (key !== "NODE_ENV") delete process.env[key];
   }
 });
 
@@ -107,6 +110,30 @@ describe("resolveContractId - candidate precedence", () => {
     process.env.REMITTANCE_SPLIT_CONTRACT_ID = "BARE";
     process.env.REMITTANCE_SPLIT_CONTRACT_ID_TESTNET = "SCOPED";
     expect(resolveContractId("REMITTANCE_SPLIT")).toBe("SCOPED");
+  });
+
+  it("uses server IDs first and ignores public aliases in production", () => {
+    process.env.NODE_ENV = "production";
+    process.env.REMITTANCE_SPLIT_CONTRACT_ID = "SERVER";
+    process.env.NEXT_PUBLIC_SPLIT_CONTRACT_ID = "PUBLIC";
+    expect(resolveContractId("REMITTANCE_SPLIT")).toBe("SERVER");
+
+    delete process.env.REMITTANCE_SPLIT_CONTRACT_ID;
+    expect(() => resolveContractId("REMITTANCE_SPLIT")).toThrow(
+      /Missing contract ID for REMITTANCE_SPLIT on testnet/
+    );
+  });
+
+  it("warns once when a deprecated environment alias is used", () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    process.env.SAVINGS_CONTRACT_ID = "LEGACY";
+    expect(resolveContractId("SAVINGS_GOALS")).toBe("LEGACY");
+    expect(resolveContractId("SAVINGS_GOALS")).toBe("LEGACY");
+    expect(warning).toHaveBeenCalledTimes(1);
+    expect(warning).toHaveBeenCalledWith(
+      expect.stringContaining("SAVINGS_CONTRACT_ID is deprecated")
+    );
+    warning.mockRestore();
   });
 
   it("resolves each contract from its first candidate", () => {

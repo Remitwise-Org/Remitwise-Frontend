@@ -41,11 +41,11 @@ describe('remittance-split helper', () => {
         validPublicKey = StellarSdk.Keypair.random().publicKey()
     })
 
-    it('throws error if contract not found', async () => {
+    it('throws the resolver error if no remittance contract ID is configured', async () => {
         delete process.env.NEXT_PUBLIC_SPLIT_CONTRACT_ID
         await expect(
             getSplit(validPublicKey)
-        ).rejects.toThrow('contract not found')
+        ).rejects.toThrow(/Missing contract ID for REMITTANCE_SPLIT on (testnet|mainnet)/)
     })
 
     describe('getSplit', () => {

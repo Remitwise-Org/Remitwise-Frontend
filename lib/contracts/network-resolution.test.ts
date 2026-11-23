@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { Networks } from '@stellar/stellar-sdk'
 import {
   getSorobanNetwork,
@@ -360,6 +360,32 @@ describe('network-resolution', () => {
 
         delete process.env.NEXT_PUBLIC_REMITTANCE_SPLIT_CONTRACT_ID
         expect(resolveContractId('REMITTANCE_SPLIT')).toBe('un-4')
+      })
+
+      it('does not let public aliases override server IDs and ignores them in production', () => {
+        process.env.NODE_ENV = 'production'
+        process.env.REMITTANCE_SPLIT_CONTRACT_ID = 'server-id'
+        process.env.NEXT_PUBLIC_SPLIT_CONTRACT_ID_TESTNET = 'public-id'
+
+        expect(resolveContractId('REMITTANCE_SPLIT')).toBe('server-id')
+
+        delete process.env.REMITTANCE_SPLIT_CONTRACT_ID
+        expect(() => resolveContractId('REMITTANCE_SPLIT')).toThrow(
+          'Missing contract ID for REMITTANCE_SPLIT on testnet.'
+        )
+      })
+
+      it('warns once when a deprecated environment alias is used', () => {
+        const warning = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        process.env.SAVINGS_CONTRACT_ID = 'legacy-savings-id'
+
+        expect(resolveContractId('SAVINGS_GOALS')).toBe('legacy-savings-id')
+        expect(resolveContractId('SAVINGS_GOALS')).toBe('legacy-savings-id')
+        expect(warning).toHaveBeenCalledTimes(1)
+        expect(warning).toHaveBeenCalledWith(
+          expect.stringContaining('SAVINGS_CONTRACT_ID is deprecated')
+        )
+        warning.mockRestore()
       })
 
       it('asserts that mainnet scoped variables are not used on testnet and vice versa', () => {

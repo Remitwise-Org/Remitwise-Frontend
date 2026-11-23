@@ -43,11 +43,11 @@ describe('savings-goals helper', () => {
         validPublicKey = StellarSdk.Keypair.random().publicKey()
     })
 
-    it('throws error if NEXT_PUBLIC_SAVINGS_GOALS_CONTRACT_ID is missing', async () => {
+    it('throws the resolver error if no savings contract ID is configured', async () => {
         delete process.env.NEXT_PUBLIC_SAVINGS_GOALS_CONTRACT_ID
         await expect(
             buildCreateGoalTx(validPublicKey, 'House', 10000, new Date().toISOString())
-        ).rejects.toThrow('NEXT_PUBLIC_SAVINGS_GOALS_CONTRACT_ID is not configured')
+        ).rejects.toThrow(/Missing contract ID for SAVINGS_GOALS on (testnet|mainnet)/)
     })
 
     describe('buildCreateGoalTx', () => {
