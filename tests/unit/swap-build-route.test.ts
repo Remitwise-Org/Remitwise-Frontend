@@ -74,6 +74,37 @@ describe('POST /api/swap/build', () => {
     expect(response.status).toBe(401);
   });
 
+  it('rejects slippage above five percent', async () => {
+    const request = new NextRequest('http://localhost/api/swap/build', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sourceAsset: { code: 'XLM' },
+        destinationAsset: { code: 'USDC', issuer },
+        amount: '1',
+        slippage: 5.1,
+      }),
+    });
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+    expect(findBestSwapPath).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid destination issuer', async () => {
+    const request = new NextRequest('http://localhost/api/swap/build', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sourceAsset: { code: 'XLM' },
+        destinationAsset: { code: 'USDC', issuer: 'not-a-stellar-key' },
+        amount: '1',
+        slippage: 1,
+      }),
+    });
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+  });
+
   it('rejects malformed JSON', async () => {
     const request = new NextRequest('http://localhost/api/swap/build', {
       method: 'POST',
