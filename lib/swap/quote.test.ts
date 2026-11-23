@@ -54,11 +54,10 @@ describe('findBestSwapPath', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     call.mockResolvedValue({
-      records: [{
-        source_amount: '10',
-        destination_amount: '24.5',
-        path: [],
-      }],
+      records: [
+        { source_amount: '10', destination_amount: '23.9', path: [] },
+        { source_amount: '10', destination_amount: '24.5', path: [] },
+      ],
     });
     vi.mocked(getHorizonServer).mockReturnValue({
       strictSendPaths: vi.fn().mockReturnValue({ call }),
