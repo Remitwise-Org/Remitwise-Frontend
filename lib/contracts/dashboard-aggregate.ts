@@ -13,9 +13,9 @@
  *
  * Env vars:
  *  STELLAR_RPC_URL            — e.g. https://soroban-testnet.stellar.org
- *  REMITTANCE_CONTRACT_ID     — Soroban contract address for remittance
- *  SAVINGS_CONTRACT_ID        — Soroban contract address for savings goals
- *  BILLS_CONTRACT_ID          — Soroban contract address for bill payments
+ *  REMITTANCE_SPLIT_CONTRACT_ID — Soroban contract address for remittance
+ *  SAVINGS_GOALS_CONTRACT_ID  — Soroban contract address for savings goals
+ *  BILL_PAYMENTS_CONTRACT_ID  — Soroban contract address for bill payments
  *  INSURANCE_CONTRACT_ID      — Soroban contract address for insurance
  */
 

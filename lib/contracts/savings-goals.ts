@@ -2,23 +2,14 @@
 
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { BuildTxResult } from '@/lib/types/savings-goals';
-import { parseContractError, createSystemError } from '@/lib/errors/contract-errors';
+import { parseContractError } from '@/lib/errors/contract-errors';
 import {
   getSorobanNetwork,
   getSorobanNetworkPassphrase,
   resolveContractId,
 } from '@/lib/contracts/network-resolution';
 
-// Get contract ID from environment
-const getContractId = (): string => {
-  try {
-    return resolveContractId('SAVINGS_GOALS');
-  } catch {
-    throw createSystemError('NEXT_PUBLIC_SAVINGS_GOALS_CONTRACT_ID is not configured', {
-      contractId: 'savings-goals'
-    }, false);
-  }
-};
+const getContractId = (): string => resolveContractId('SAVINGS_GOALS');
 
 // Get network configuration
 const getNetworkConfig = () => {
