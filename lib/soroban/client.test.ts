@@ -14,6 +14,9 @@
  * • getServer: returns cached singleton
  * • getNetworkPassphrase: delegates to getSorobanNetworkPassphrase
  * • SOROBAN_RPC_URL validation
+ * • circuit breaker: opens after threshold consecutive failures and
+ *   rejects fast with SorobanCircuitOpenError while open
+ * • circuit breaker: half-opens after cool-down and closes on a successful probe
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -50,6 +53,7 @@ import {
   getNetworkPassphrase,
   getRpcUrl,
   SorobanClientError,
+  SorobanCircuitOpenError,
 } from "./client";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -247,5 +251,62 @@ describe("getLedgerSequence()", () => {
     mockGetLatestLedger.mockRejectedValue(err);
 
     await expect(getLedgerSequence()).rejects.toBeInstanceOf(SorobanClientError);
+  });
+});
+
+// ── Circuit breaker behaviour (exercised via getLatestLedger) ─────────────────
+
+describe("circuit breaker (via getLatestLedger)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    mockGetLatestLedger.mockReset();
+    vi.stubEnv("SOROBAN_BREAKER_THRESHOLD", "2");
+    vi.stubEnv("SOROBAN_BREAKER_COOLDOWN_MS", "5000");
+  });
+
+  afterEach(async () => {
+    await vi.runAllTimersAsync();
+    vi.useRealTimers();
+    vi.unstubAllEnvs();
+  });
+
+  it("opens after threshold consecutive failures and rejects fast", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    mockGetLatestLedger.mockRejectedValue(new Error("node down"));
+
+    const first = getLatestLedger().catch((e) => e);
+    await vi.runAllTimersAsync();
+    await first;
+
+    const callsAfterFirst = mockGetLatestLedger.mock.calls.length;
+
+    // Breaker should now be open: next call must not hit the RPC at all
+    const second = await getLatestLedger().catch((e) => e);
+    expect(second).toBeInstanceOf(SorobanCircuitOpenError);
+    expect(mockGetLatestLedger.mock.calls.length).toBe(callsAfterFirst);
+
+    warnSpy.mockRestore();
+  });
+
+  it("half-opens after cool-down and closes on a successful probe", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    mockGetLatestLedger.mockRejectedValue(new Error("node down"));
+
+    const first = getLatestLedger().catch((e) => e);
+    await vi.runAllTimersAsync();
+    await first;
+
+    // Still within cool-down: fast reject
+    const blocked = await getLatestLedger().catch((e) => e);
+    expect(blocked).toBeInstanceOf(SorobanCircuitOpenError);
+
+    // Advance past cool-down; the node has recovered
+    vi.advanceTimersByTime(5000);
+    mockGetLatestLedger.mockResolvedValueOnce(FAKE_LEDGER);
+
+    const probe = await getLatestLedger();
+    expect(probe).toEqual(FAKE_LEDGER);
+
+    warnSpy.mockRestore();
   });
 });
