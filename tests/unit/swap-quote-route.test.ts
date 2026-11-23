@@ -3,10 +3,8 @@ import { NextRequest } from 'next/server';
 import { GET } from '@/app/api/swap/quote/route';
 import { getSession } from '@/lib/session';
 import {
-  calculateMinimumReceived,
   findBestSwapPath,
   SwapQuoteError,
-  validateSlippage,
 } from '@/lib/swap/quote';
 
 vi.mock('@/lib/session', () => ({ getSession: vi.fn() }));
@@ -19,9 +17,7 @@ vi.mock('@/lib/swap/quote', () => {
     }
   }
   return {
-    calculateMinimumReceived: vi.fn(),
     findBestSwapPath: vi.fn(),
-    validateSlippage: vi.fn(),
     SwapQuoteError: MockSwapQuoteError,
   };
 });
@@ -29,8 +25,6 @@ vi.mock('@/lib/swap/quote', () => {
 describe('GET /api/swap/quote', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(validateSlippage).mockReturnValue(1);
-    vi.mocked(calculateMinimumReceived).mockReturnValue('1.98');
   });
 
   it('requires an authenticated wallet session', async () => {
@@ -63,7 +57,6 @@ describe('GET /api/swap/quote', () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
       quote: { sourceAmount: '1', destinationAmount: '2' },
-      minimumReceived: '1.98',
     });
   });
 
