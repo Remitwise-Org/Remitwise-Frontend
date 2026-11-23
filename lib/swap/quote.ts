@@ -119,7 +119,11 @@ export async function findBestSwapPath(input: SwapQuoteInput) {
     .strictSendPaths(sourceAsset, amount, [destinationAsset])
     .call();
 
-  const bestPath = response.records[0];
+  const bestPath = response.records.reduce((best, candidate) =>
+    !best || toStroops(candidate.destination_amount) > toStroops(best.destination_amount)
+      ? candidate
+      : best,
+  undefined as (typeof response.records)[number] | undefined);
   if (!bestPath) {
     throw new SwapQuoteError('No payment path is currently available for this asset pair.', 404);
   }
