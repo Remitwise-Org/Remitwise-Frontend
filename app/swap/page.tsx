@@ -69,7 +69,7 @@ export default function SwapPage() {
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Unable to retrieve quote.");
-        return data.quote as QuoteResponse;
+        return { ...data.quote, minimumReceived: data.minimumReceived } as QuoteResponse;
       })
       .then(setQuote)
       .catch((error: unknown) => {
