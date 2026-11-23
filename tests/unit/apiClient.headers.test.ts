@@ -76,4 +76,34 @@ describe('apiClient shared headers', () => {
     expect(requestIds).toEqual(['generated-request-id', 'generated-request-id', 'generated-request-id']);
     expect(generateRequestId).toHaveBeenCalledTimes(1);
   });
+
+  it('generates and reuses an idempotency key across session refresh replay', async () => {
+    (fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ status: 401, headers: { get: () => null } })
+      .mockResolvedValueOnce({ status: 200, headers: { get: () => null } });
+    (sessionHandler.isSessionExpired as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false);
+    (sessionHandler.refreshSession as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+
+    await apiClient.post('/api/send', {
+      body: JSON.stringify({ amount: 10 }),
+    });
+
+    const keys = (fetch as ReturnType<typeof vi.fn>).mock.calls.map(([, options]) =>
+      new Headers((options as RequestInit).headers).get('idempotency-key')
+    );
+    expect(keys[0]).toBeTruthy();
+    expect(keys[1]).toBe(keys[0]);
+  });
+
+  it('uses an explicitly supplied idempotency key', async () => {
+    await apiClient.post('/api/send', {
+      body: JSON.stringify({ amount: 10 }),
+      idempotencyKey: 'user-action-key',
+    });
+
+    const options = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
+    expect(new Headers(options.headers).get('idempotency-key')).toBe('user-action-key');
+  });
 });

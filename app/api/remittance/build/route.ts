@@ -32,6 +32,7 @@ import {
   Account,
 } from '@stellar/stellar-sdk';
 import { getServer, getNetworkPassphrase } from '@/lib/soroban/client';
+import { withIdempotency } from '@/lib/idempotency';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -209,24 +210,22 @@ async function simulateTransaction(xdr: string): Promise<{
 // ── Route Handler ─────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
-  // Authenticate user
-  let address: string;
-  try {
-    const auth = await requireAuth();
-    address = auth.address;
-  } catch {
-    return jsonError('UNAUTHORIZED', 'Not authenticated');
-  }
+  return withIdempotency(request, async (body) => {
+    let address: string;
+    try {
+      const auth = await requireAuth();
+      address = auth.address;
+    } catch {
+      return jsonError('UNAUTHORIZED', 'Not authenticated');
+    }
 
-  // Validate request body
-  let buildRequest: BuildRemittanceRequest;
-  try {
-    const body = await request.json();
-    buildRequest = validateBuildRequest(body);
-  } catch (e) {
-    const message = e instanceof Error ? e.message : 'Invalid request body';
-    return jsonError('VALIDATION_ERROR', message);
-  }
+    let buildRequest: BuildRemittanceRequest;
+    try {
+      buildRequest = validateBuildRequest(body);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Invalid request body';
+      return jsonError('VALIDATION_ERROR', message);
+    }
 
   // Build transaction
   let xdr: string;
@@ -271,4 +270,5 @@ export async function POST(request: NextRequest) {
   };
 
   return jsonSuccess(response);
+  });
 }

@@ -3,11 +3,13 @@ import { StellarTransactionBuilder } from '../../../../../../services/transactio
 import { getSession } from '../../../../../../lib/session';
 import { PolicyService } from '../../../../../../services/policy-service';
 import { EventStorageService } from '../../../../../../services/event-storage-service';
+import { withIdempotency } from '@/lib/idempotency';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  try {
+  return withIdempotency(req, async (body) => {
+    try {
     const session = await getSession();
     if (!session?.address) {
       return NextResponse.json(
@@ -16,7 +18,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
     const { destinationAccount, amount, assetCode, assetIssuer, memo } = body;
 
     if (!destinationAccount || !amount) {
@@ -61,4 +62,5 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+  });
 }

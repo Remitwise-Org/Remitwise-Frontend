@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/session';
 import { anchorClient, sanitizeAnchorUrl } from '@/lib/anchor/client';
 import { createPendingAnchorFlow } from '@/lib/anchor/flow-store';
 import { recordAuditEvent } from '@/lib/admin/audit';
+import { withIdempotency } from '@/lib/idempotency';
 
 interface WithdrawBody {
   amount: string | number;
@@ -41,29 +42,30 @@ function parseWithdrawBody(body: unknown): { amount: string; currency: string; d
 }
 
 export async function POST(request: NextRequest) {
-  let auth;
-  try {
-    auth = await requireAuth();
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  return withIdempotency(request, async (body) => {
+    let auth;
+    try {
+      auth = await requireAuth();
+    } catch {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  if (!anchorClient.isConfigured()) {
-    return NextResponse.json(
-      { error: 'Anchor integration is not configured' },
-      { status: 501 }
-    );
-  }
+    if (!anchorClient.isConfigured()) {
+      return NextResponse.json(
+        { error: 'Anchor integration is not configured' },
+        { status: 501 }
+      );
+    }
 
-  let parsedBody: { amount: string; currency: string; destinationAccount?: string };
-  try {
-    parsedBody = parseWithdrawBody(await request.json());
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Invalid request body';
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
+    let parsedBody: { amount: string; currency: string; destinationAccount?: string };
+    try {
+      parsedBody = parseWithdrawBody(body);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid request body';
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
 
-  try {
+    try {
     const flowResponse = await anchorClient.startWithdrawFlow({
       amount: parsedBody.amount,
       currency: parsedBody.currency,
@@ -111,12 +113,13 @@ export async function POST(request: NextRequest) {
       steps: Array.isArray(flowResponse.steps) ? flowResponse.steps : undefined,
       raw: flowResponse,
     });
-  } catch (error) {
-    console.error('[POST /api/v1/anchor/withdraw] Anchor request failed:', error);
-    return NextResponse.json(
-      { error: 'Failed to start anchor withdrawal flow' },
-      { status: 502 }
-    );
-  }
+    } catch (error) {
+      console.error('[POST /api/v1/anchor/withdraw] Anchor request failed:', error);
+      return NextResponse.json(
+        { error: 'Failed to start anchor withdrawal flow' },
+        { status: 502 }
+      );
+    }
+  }, { required: true });
 }
 
