@@ -28,8 +28,8 @@ describe('Recurring Remittance API Integration Tests', () => {
 
     await recurringStore.clear();
 
-    sessionA = await createSession(userA);
-    sessionB = await createSession(userB);
+    sessionA = (await createSession(userA)).sealed;
+    sessionB = (await createSession(userB)).sealed;
   });
 
   afterEach(() => {

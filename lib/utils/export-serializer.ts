@@ -2,11 +2,11 @@ export interface ExportRow {
   id: string;
   type: string;
   status: string;
-  amount: number;
+  amount: number | string;
   currency: string;
   counterparty: string;
   date: string;
-  fee: number;
+  fee: number | string;
 }
 
 /**
@@ -20,7 +20,9 @@ export function escapeCsvField(value: any): string {
   if (value === null || value === undefined) {
     return "";
   }
-  const str = String(value);
+  const raw = String(value);
+  // Prevent spreadsheet formula injection when CSV files are opened in spreadsheet apps.
+  const str = /^[=+@-]/.test(raw) ? "'" + raw : raw;
   const needsQuotes =
     str.includes(",") ||
     str.includes('"') ||

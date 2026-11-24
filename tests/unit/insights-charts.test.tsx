@@ -70,7 +70,9 @@ describe('Insights Charts Smoke Tests', () => {
     })
 
     it('renders with empty data array', () => {
-      expect(() => render(<SpendingVsSavingsChart data={[]} />)).not.toThrow()
+      render(<SpendingVsSavingsChart data={[]} />)
+      expect(screen.getByText(/Historical savings activity is unavailable/)).toBeInTheDocument()
+      expect(screen.queryByText('NaN%')).not.toBeInTheDocument()
     })
 
     it('renders with a single data point', () => {
@@ -80,8 +82,23 @@ describe('Insights Charts Smoke Tests', () => {
   })
 
   describe('TopCategoriesWidget', () => {
-    it('renders without throwing', () => {
-      expect(() => render(<TopCategoriesWidget />)).not.toThrow()
+    it('renders only the categories supplied by the API', () => {
+      render(
+        <TopCategoriesWidget
+          categories={[{ name: 'Groceries', amount: 120, percentage: 100 }]}
+        />,
+      )
+
+      expect(screen.getByText('Groceries')).toBeInTheDocument()
+      expect(screen.getByText('$120')).toBeInTheDocument()
+      expect(screen.queryByText('Family Support')).not.toBeInTheDocument()
+    })
+
+    it('shows an empty state without placeholder categories', () => {
+      render(<TopCategoriesWidget />)
+
+      expect(screen.getByText('No category activity for this period.')).toBeInTheDocument()
+      expect(screen.queryByText('Family Support')).not.toBeInTheDocument()
     })
   })
 })

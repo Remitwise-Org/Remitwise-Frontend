@@ -36,6 +36,12 @@ export interface AnchorFlowResponse {
     [key: string]: unknown;
 }
 
+export interface AnchorTransactionResponse {
+    id?: string;
+    status: string;
+    [key: string]: unknown;
+}
+
 const ALLOWED_ANCHOR_URL_PROTOCOLS = new Set(['http:', 'https:']);
 
 /**
@@ -75,21 +81,51 @@ function isTransientHttpStatus(status: number): boolean {
 }
 
 export class AnchorClient {
-    private baseUrl: string;
-    private apiKey: string;
-    private depositPath: string;
-    private withdrawPath: string;
+    private _baseUrl: string;
+    private _apiKey: string;
+    private _depositPath: string;
+    private _withdrawPath: string;
+    private _transactionPath: string;
     private maxRetryAttempts: number;
 
-    constructor(options?: { maxRetryAttempts?: number }) {
-        this.baseUrl = process.env.ANCHOR_API_BASE_URL || '';
-        this.apiKey = process.env.ANCHOR_API_KEY || '';
-        this.depositPath = process.env.ANCHOR_DEPOSIT_PATH || '/transactions/deposit/interactive';
-        this.withdrawPath = process.env.ANCHOR_WITHDRAW_PATH || '/transactions/withdraw/interactive';
+    constructor(options?: { maxRetryAttempts?: number; baseUrl?: string; apiKey?: string }) {
+        this._baseUrl = options?.baseUrl ?? process.env.ANCHOR_API_BASE_URL ?? '';
+        this._apiKey = options?.apiKey ?? process.env.ANCHOR_API_KEY ?? '';
+        this._depositPath = process.env.ANCHOR_DEPOSIT_PATH || '/transactions/deposit/interactive';
+        this._withdrawPath = process.env.ANCHOR_WITHDRAW_PATH || '/transactions/withdraw/interactive';
+        this._transactionPath = process.env.ANCHOR_TRANSACTION_PATH || '/transaction';
         this.maxRetryAttempts = options?.maxRetryAttempts ?? MAX_RETRY_ATTEMPTS;
         if (!this.baseUrl) {
             console.warn('ANCHOR_API_BASE_URL is not set. Anchor API calls may fail.');
         }
+    }
+
+    get baseUrl(): string {
+        return process.env.ANCHOR_API_BASE_URL || this._baseUrl || '';
+    }
+
+    set baseUrl(value: string) {
+        this._baseUrl = value;
+    }
+
+    get apiKey(): string {
+        return process.env.ANCHOR_API_KEY || this._apiKey || '';
+    }
+
+    set apiKey(value: string) {
+        this._apiKey = value;
+    }
+
+    get depositPath(): string {
+        return process.env.ANCHOR_DEPOSIT_PATH || this._depositPath || '/transactions/deposit/interactive';
+    }
+
+    get withdrawPath(): string {
+        return process.env.ANCHOR_WITHDRAW_PATH || this._withdrawPath || '/transactions/withdraw/interactive';
+    }
+
+    get transactionPath(): string {
+        return process.env.ANCHOR_TRANSACTION_PATH || this._transactionPath || '/transaction';
     }
 
     isConfigured(): boolean {
@@ -102,7 +138,7 @@ export class AnchorClient {
      * per-endpoint policy table when none is supplied explicitly.
      */
     private async fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs?: number): Promise<Response> {
-        return fetchWithTimeout(url, options, timeoutMs);
+        return fetchWithTimeout(url, options, timeoutMs ?? DEFAULT_TIMEOUT_MS);
     }
 
     private async sleep(ms: number): Promise<void> {
@@ -228,6 +264,55 @@ export class AnchorClient {
     async startWithdrawFlow(payload: AnchorFlowRequest): Promise<AnchorFlowResponse> {
         return this.startFlow(this.withdrawPath, payload);
     }
+
+    /**
+     * Fetches the transaction status by ID from the Anchor API with retry/backoff.
+     */
+    async getAnchorTransactionStatus(id: string): Promise<AnchorTransactionResponse | null> {
+        if (!id) {
+            throw new Error('Transaction ID is required');
+        }
+        if (!this.baseUrl) {
+            throw new Error('Anchor Base URL not configured');
+        }
+
+        const path = this.transactionPath || '/transaction';
+        const url = new URL(path.startsWith('/') ? path : `/${path}`, this.baseUrl);
+        url.searchParams.set('id', id);
+
+        const headers: Record<string, string> = {
+            Accept: 'application/json',
+        };
+        if (this.apiKey) {
+            headers.Authorization = `Bearer ${this.apiKey}`;
+        }
+
+        const response = await this.fetchWithRetry(url.toString(), {
+            method: 'GET',
+            headers,
+        });
+
+        if (response.status === 404) {
+            return null;
+        }
+
+        if (!response.ok) {
+            let detail = '';
+            try {
+                detail = await response.text();
+            } catch {
+                // ignore body parse issues
+            }
+            throw new Error(`Failed to fetch transaction status: HTTP ${response.status}${detail ? ` - ${detail}` : ''}`);
+        }
+
+        const data = await response.json();
+        return (data && (data.transaction || data)) || null;
+    }
 }
 
 export const anchorClient = new AnchorClient();
+
+export async function getAnchorTransactionStatus(id: string): Promise<AnchorTransactionResponse | null> {
+    return anchorClient.getAnchorTransactionStatus(id);
+}

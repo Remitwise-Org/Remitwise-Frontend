@@ -13,11 +13,19 @@ export interface PaginatedResult<T> {
   hasMore: boolean;
 }
 
+export function isValidPaginationCursor<T>(
+  data: T[],
+  cursor: string | undefined,
+  getId: (item: T) => string | number
+): boolean {
+  return cursor === undefined || data.some((item) => String(getId(item)) === cursor);
+}
+
 /**
  * Validates pagination parameters
  */
 export function validatePaginationParams(params: PaginationParams): { limit: number; cursor?: string } {
-  let limit = params.limit !== undefined ? Math.min(Math.max(1, params.limit), 100) : 20;
+  const limit = params.limit !== undefined ? Math.min(Math.max(1, params.limit), 100) : 20;
   const cursor = params.cursor;
 
   return { limit, cursor };

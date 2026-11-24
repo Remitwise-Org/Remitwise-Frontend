@@ -36,7 +36,7 @@ export const FEATURE_FLAGS: FeatureFlagDefinition[] = [
   {
     key: 'SWAP_PAGE',
     label: 'Swap Page',
-    description: 'Enable the new currency swap page mock',
+    description: 'Enable the Stellar path-payment swap page',
     routes: ['/swap'],
     envVar: 'NEXT_PUBLIC_SWAP_PAGE_ENABLED',
   },

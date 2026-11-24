@@ -1,7 +1,15 @@
 import { generateRequestId } from '@/lib/requestId';
-import { API_AUTHORIZATION_HEADER, API_REQUEST_ID_HEADER } from '@/lib/api/headers';
+import {
+  API_AUTHORIZATION_HEADER,
+  API_REQUEST_ID_HEADER,
+  API_IDEMPOTENCY_KEY_HEADER,
+} from '@/lib/api/headers';
 
-export { API_AUTHORIZATION_HEADER, API_REQUEST_ID_HEADER } from '@/lib/api/headers';
+export {
+  API_AUTHORIZATION_HEADER,
+  API_REQUEST_ID_HEADER,
+  API_IDEMPOTENCY_KEY_HEADER,
+} from '@/lib/api/headers';
 
 let authToken: string | null = null;
 
@@ -25,7 +33,10 @@ function toBearerValue(token: string): string {
  * integrations backwards-compatible and allows support tooling to forward an
  * existing request ID.
  */
-export function createApiRequestHeaders(headersInit?: HeadersInit): Headers {
+export function createApiRequestHeaders(
+  headersInit?: HeadersInit,
+  method: string = 'GET',
+): Headers {
   const headers = new Headers(headersInit);
 
   if (authToken && !headers.has(API_AUTHORIZATION_HEADER)) {
@@ -34,6 +45,14 @@ export function createApiRequestHeaders(headersInit?: HeadersInit): Headers {
 
   if (!headers.has(API_REQUEST_ID_HEADER)) {
     headers.set(API_REQUEST_ID_HEADER, generateRequestId());
+  }
+
+  const normalizedMethod = method.toUpperCase();
+  if (
+    ['POST', 'PUT', 'PATCH', 'DELETE'].includes(normalizedMethod) &&
+    !headers.has(API_IDEMPOTENCY_KEY_HEADER)
+  ) {
+    headers.set(API_IDEMPOTENCY_KEY_HEADER, generateRequestId());
   }
 
   return headers;

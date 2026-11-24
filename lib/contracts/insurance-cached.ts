@@ -3,6 +3,8 @@
  * 
  * Production-grade wrapper with comprehensive error handling and type safety.
  * All write operations (buildXxxTx) are NOT cached.
+ * Reads support stale-if-error: when the circuit breaker is open or RPC fails,
+ * the last good cached value is served flagged as stale.
  * 
  * @module lib/contracts/insurance-cached
  * @security Input validation, error boundaries, type safety
@@ -57,7 +59,7 @@ function validatePolicyId(id: string): void {
  * @returns Policy object
  * @throws Error with code 'NOT_FOUND' if policy doesn't exist
  * @throws CacheError for validation failures
- * @throws Error for RPC failures
+ * @throws Error for RPC failures (served from stale cache when available)
  * 
  * TTL: 45 seconds - Individual policy data is relatively stable
  */
@@ -71,7 +73,8 @@ export async function getPolicy(id: string): Promise<originalContract.Policy> {
       'getPolicy',
       { id },
       CACHE_TTL.getPolicy,
-      async () => await originalContract.getPolicy(id)
+      async () => await originalContract.getPolicy(id),
+      { staleIfError: true }
     );
   } catch (error) {
     // Preserve NOT_FOUND errors from original contract
@@ -97,7 +100,7 @@ export async function getPolicy(id: string): Promise<originalContract.Policy> {
  * @returns Array of active policies (empty array if none found)
  * @throws Error for invalid Stellar address
  * @throws CacheError for validation failures
- * @throws Error for RPC failures
+ * @throws Error for RPC failures (served from stale cache when available)
  * 
  * TTL: 45 seconds - Insurance policies are relatively stable
  */
@@ -111,7 +114,8 @@ export async function getActivePolicies(owner: string): Promise<originalContract
       'getActivePolicies',
       { owner },
       CACHE_TTL.getActivePolicies,
-      async () => await originalContract.getActivePolicies(owner)
+      async () => await originalContract.getActivePolicies(owner),
+      { staleIfError: true }
     );
   } catch (error) {
     // Preserve INVALID_ADDRESS errors from original contract
@@ -137,7 +141,7 @@ export async function getActivePolicies(owner: string): Promise<originalContract
  * @returns Total monthly premium as a number
  * @throws Error for invalid Stellar address
  * @throws CacheError for validation failures
- * @throws Error for RPC failures
+ * @throws Error for RPC failures (served from stale cache when available)
  * 
  * TTL: 45 seconds - Derived from policies, relatively stable
  */
@@ -151,7 +155,8 @@ export async function getTotalMonthlyPremium(owner: string): Promise<number> {
       'getTotalMonthlyPremium',
       { owner },
       CACHE_TTL.getTotalMonthlyPremium,
-      async () => await originalContract.getTotalMonthlyPremium(owner)
+      async () => await originalContract.getTotalMonthlyPremium(owner),
+      { staleIfError: true }
     );
 
     // Validate result is a valid number

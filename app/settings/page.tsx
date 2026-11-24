@@ -14,6 +14,73 @@ import PageHeadingLink from "@/components/PageHeadingLink";
 import { useSeo } from "@/lib/hooks/useSeo";
 import { useRovingTabIndex } from "@/lib/hooks/useRovingTabIndex";
 
+// ---------------------------------------------------------------------------
+// Sign-out-all-devices section
+// ---------------------------------------------------------------------------
+
+function SignOutAllDevicesSection() {
+  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+
+  async function handleSignOutAll() {
+    setStatus("loading");
+    try {
+      const res = await fetch("/api/auth/logout-all", { method: "POST" });
+      if (res.ok) {
+        setStatus("done");
+        // Redirect to login after a short delay so the user sees the confirmation
+        setTimeout(() => { window.location.href = "/auth/login"; }, 1500);
+      } else {
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  return (
+    <section
+      id="sign-out-all"
+      aria-labelledby="sign-out-all-heading"
+      className="rounded-xl border border-red-200 dark:border-red-900/40 bg-white dark:bg-gray-900 p-6 space-y-4"
+    >
+      <div>
+        <h2
+          id="sign-out-all-heading"
+          className="text-base font-semibold text-gray-900 dark:text-white"
+        >
+          Sign out of all devices
+        </h2>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          This immediately invalidates every active session for your account,
+          including sessions on other browsers and devices. You will be signed
+          out here too.
+        </p>
+      </div>
+
+      {status === "done" && (
+        <p role="status" className="text-sm text-green-600 dark:text-green-400">
+          All sessions revoked. Redirecting to login…
+        </p>
+      )}
+      {status === "error" && (
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          Something went wrong. Please try again.
+        </p>
+      )}
+
+      <button
+        type="button"
+        onClick={handleSignOutAll}
+        disabled={status === "loading" || status === "done"}
+        className="inline-flex items-center gap-2 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/30 px-4 py-2 text-sm font-medium text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-busy={status === "loading"}
+      >
+        {status === "loading" ? "Signing out…" : "Sign out of all devices"}
+      </button>
+    </section>
+  );
+}
+
 const SECTIONS = [
   { id: "profile",        labelKey: "settings.sections.profile",         icon: User    },
   { id: "notifications",  labelKey: "settings.sections.notifications",   icon: Bell    },
@@ -189,6 +256,7 @@ export default function SettingsPage() {
           <WalletSection />
           <FamilySection />
           <PreferencesSection />
+          <SignOutAllDevicesSection />
         </main>
       </div>
     </div>

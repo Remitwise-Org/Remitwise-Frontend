@@ -66,8 +66,90 @@ if (loaded) {
     const signature = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');
     const header = `t=${timestamp},v1=${signature}`;
 
-    assert.equal(verifySignature(payload, header, secret, 'stripe-v1'), true);
-    assert.equal(verifySignature(payload, `t=${timestamp},v1=deadbeef`, secret, 'stripe-v1'), false);
+    const options = { now: () => 1700000000 };
+    assert.equal(verifySignature(payload, header, secret, 'stripe-v1', options), true);
+    assert.equal(verifySignature(payload, `t=${timestamp},v1=deadbeef`, secret, 'stripe-v1', options), false);
+  });
+
+  test('stripe-v1 rejects stale and far-future timestamps', () => {
+    const payload = 'payload';
+    const secret = 'stripe-secret';
+    const now = 1700000000;
+
+    function headerFor(timestamp) {
+      const signedPayload = `${timestamp}.${payload}`;
+      const signature = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');
+      return `t=${timestamp},v1=${signature}`;
+    }
+
+    assert.equal(
+      verifySignature(payload, headerFor(String(now - 301)), secret, 'stripe-v1', {
+        now: () => now,
+      }),
+      false
+    );
+    assert.equal(
+      verifySignature(payload, headerFor(String(now + 301)), secret, 'stripe-v1', {
+        now: () => now,
+      }),
+      false
+    );
+  });
+
+  test('stripe-v1 allows timestamps within tolerance and rejects non-numeric timestamps', () => {
+    const payload = 'payload';
+    const secret = 'stripe-secret';
+    const now = 1700000000;
+
+    function headerFor(timestamp) {
+      const signedPayload = `${timestamp}.${payload}`;
+      const signature = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');
+      return `t=${timestamp},v1=${signature}`;
+    }
+
+    assert.equal(
+      verifySignature(payload, headerFor(String(now - 300)), secret, 'stripe-v1', {
+        now: () => now,
+      }),
+      true
+    );
+    assert.equal(
+      verifySignature(payload, headerFor(String(now + 300)), secret, 'stripe-v1', {
+        now: () => now,
+      }),
+      true
+    );
+    assert.equal(
+      verifySignature(payload, headerFor('not-a-timestamp'), secret, 'stripe-v1', {
+        now: () => now,
+      }),
+      false
+    );
+  });
+
+  test('stripe-v1 honors a custom timestamp tolerance', () => {
+    const payload = 'payload';
+    const secret = 'stripe-secret';
+    const now = 1700000000;
+    const timestamp = now - 61;
+    const signedPayload = `${timestamp}.${payload}`;
+    const signature = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');
+    const header = `t=${timestamp},v1=${signature}`;
+
+    assert.equal(
+      verifySignature(payload, header, secret, 'stripe-v1', {
+        now: () => now,
+        toleranceSeconds: 60,
+      }),
+      false
+    );
+    assert.equal(
+      verifySignature(payload, header, secret, 'stripe-v1', {
+        now: () => now,
+        toleranceSeconds: 61,
+      }),
+      true
+    );
   });
 
   test('ed25519 verifies signature', () => {

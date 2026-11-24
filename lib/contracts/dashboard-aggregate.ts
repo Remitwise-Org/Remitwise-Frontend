@@ -30,19 +30,17 @@ import {
 // import { Server as SorobanServer, assembleTransaction } from "@stellar/stellar-sdk/rpc";
 import { Server as SorobanServer } from "@stellar/stellar-sdk/lib/soroban";
 import { BillsSummary, InsuranceSummary, RemittanceSummary, SavingsSummary } from "../types/dashboard";
-import {
-  getSorobanNetworkPassphrase,
-  resolveContractId,
-} from "./network-resolution";
+import { resolveContractId } from "./network-resolution";
+import { getServer, getNetworkPassphrase } from "@/lib/soroban/client";
+import { ContractReadError } from "./savings-goals";
 
 // ─── RPC client (singleton) ────────────────────────────────────────────────
 
 function getRpcServer(): SorobanServer {
-  const url = process.env.STELLAR_RPC_URL ?? "https://soroban-testnet.stellar.org";
-  return new SorobanServer(url);
+  return getServer() as unknown as SorobanServer;
 }
 
-const NETWORK_PASSPHRASE = getSorobanNetworkPassphrase();
+const NETWORK_PASSPHRASE = getNetworkPassphrase();
 
 // Dummy source account used only for read simulations (no signing needed).
 // Any funded account works; we use a well-known testnet faucet address.
@@ -89,20 +87,7 @@ async function simulateRead(
 
 // ─── Typed error ───────────────────────────────────────────────────────────
 
-export class ContractReadError extends Error {
-  constructor(
-    public readonly contractId: string,
-    public readonly method: string,
-    public readonly cause: unknown
-  ) {
-    super(
-      `Contract read failed — ${contractId}::${method}: ${
-        cause instanceof Error ? cause.message : String(cause)
-      }`
-    );
-    this.name = "ContractReadError";
-  }
-}
+export { ContractReadError };
 
 // ─── Return shapes ─────────────────────────────────────────────────────────
 

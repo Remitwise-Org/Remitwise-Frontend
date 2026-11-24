@@ -16,11 +16,14 @@ example so the next person can migrate in minutes, not hours.
 
 - **Deprecated file:** `app/api/remittance/qoute/route.ts`
 - **Replacement:** `app/api/remittance/quote/route.ts`
+- **Sunset date:** `Tue, 01 Jun 2027 00:00:00 GMT`
 
 The original endpoint was registered with the misspelling `qoute`. The
-canonical route is `/api/remittance/quote`. The old file re-exports from
-the canonical handler so neither breaks, but new callers must use the
-correct spelling.
+canonical route is `/api/remittance/quote`. The alias wraps the canonical
+handler so responses remain identical in status and body, while emitting
+`Deprecation: true`, `Sunset`, and
+`Link: </api/remittance/quote>; rel="successor-version"` headers so callers
+receive a runtime signal to migrate.
 
 **Before:**
 
@@ -86,9 +89,9 @@ represents — the primary trend/change text.
 
 ---
 
-### `lib/soroban-client.ts`
+### Deprecated Soroban client
 
-- **Deprecated file:** `lib/soroban-client.ts`
+- **Deprecated file:** `lib/soroban-client.ts` (removed)
 - **Replacement:** `lib/soroban/client.ts`
 
 The old module used `NEXT_PUBLIC_SOROBAN_RPC_URL` (browser-exposed) and
@@ -107,7 +110,7 @@ continues to compile. It will be removed in a future cleanup commit.
 
 ```ts
 // ❌ Browser-exposed URL, hardcoded TESTNET
-import { getSorobanClient } from "@/lib/soroban-client";
+import { getServer, getNetworkPassphrase } from "@/lib/soroban/client";
 ```
 
 **After:**

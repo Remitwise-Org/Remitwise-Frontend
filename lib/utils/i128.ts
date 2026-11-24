@@ -19,3 +19,21 @@ export const MAX_I128_MAJOR_UNITS = Number(I128_MAX / 10n ** BigInt(STELLAR_DECI
 export function fitsInI128(amount: number): boolean {
   return Number.isFinite(amount) && Math.abs(amount) <= MAX_I128_MAJOR_UNITS;
 }
+
+export const STROOPS_PER_UNIT = 10_000_000n;
+
+export function toStroops(decimalString: string): bigint {
+  if (typeof decimalString !== "string" || decimalString.trim() === "") throw new Error("toStroops: input must be a non-empty string");
+  const trimmed = decimalString.trim();
+  if (!/^\d+(\.\d+)?$/.test(trimmed)) throw new Error(`toStroops: invalid decimal string "${decimalString}"`);
+  const [whole, frac = ""] = trimmed.split(".");
+  if (frac.length > 7) throw new Error(`toStroops: too many decimal places (${frac.length}), max 7`);
+  return BigInt(whole) * STROOPS_PER_UNIT + BigInt(frac.padEnd(7, "0"));
+}
+
+export function fromStroops(stroops: bigint): string {
+  if (stroops < 0n) throw new Error("fromStroops: negative stroops not allowed");
+  const whole = stroops / STROOPS_PER_UNIT;
+  const frac = (stroops % STROOPS_PER_UNIT).toString().padStart(7, "0");
+  return `${whole}.${frac}`;
+}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth';
 import { getAllBills, getBill } from '@/lib/contracts/bill-payments';
 import { jsonSuccess, jsonError } from '@/lib/api/types';
+import { isValidPaginationCursor, paginateData, validatePaginationParams } from '@/lib/utils/pagination';
 
 async function getHandler(request: NextRequest, session: string) {
   try {
@@ -26,6 +27,35 @@ async function getHandler(request: NextRequest, session: string) {
     // GET /api/bills — return all or unpaid bills
     const bills = await getAllBills(owner);
     const result = unpaidOnly ? bills.filter((b) => b.status !== 'paid') : bills;
+    const limitParam = searchParams.get('limit');
+    const cursorParam = searchParams.get('cursor') || undefined;
+
+    if (limitParam !== null || searchParams.has('cursor')) {
+      const parsedLimit = limitParam === null ? undefined : Number(limitParam);
+      if (parsedLimit !== undefined && !Number.isInteger(parsedLimit)) {
+        return jsonError('VALIDATION_ERROR', 'Invalid pagination limit');
+      }
+
+      const { limit, cursor } = validatePaginationParams({
+        limit: parsedLimit,
+        cursor: cursorParam,
+      });
+      if (!isValidPaginationCursor(result, cursor, (bill) => bill.id)) {
+        return jsonError('VALIDATION_ERROR', 'Invalid pagination cursor');
+      }
+
+      return NextResponse.json(
+        paginateData(
+          [...result].sort(
+            (a, b) => Date.parse(a.dueDate) - Date.parse(b.dueDate) || a.id.localeCompare(b.id)
+          ),
+          limit,
+          (bill) => bill.id,
+          cursor
+        )
+      );
+    }
+
     return jsonSuccess({ bills: result });
   } catch (err) {
     console.error('[GET /api/bills]', err);

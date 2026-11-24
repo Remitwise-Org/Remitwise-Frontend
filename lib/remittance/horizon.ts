@@ -126,7 +126,19 @@ export async function fetchTransactionHistory(
     query = query.cursor(options.cursor);
   }
 
-  const response = await query.call();
+  let response;
+  try {
+    response = await query.call();
+  } catch (error: any) {
+    if (
+      error?.response?.status === 404 ||
+      error?.status === 404
+    ) {
+      return { transactions: [], nextCursor: undefined };
+    }
+    throw error;
+  }
+
   let transactions = response.records
     .filter(
       (record): record is PaymentOp =>

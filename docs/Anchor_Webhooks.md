@@ -17,6 +17,14 @@ Signature verification is handled by `lib/webhooks/verify.ts`. See `docs/api/web
 ANCHOR_WEBHOOK_SECRET="your_shared_secret_here"
 \`\`\`
 
+For Stripe-v1 style signatures (`t=<timestamp>,v1=<signature>`), timestamps must be within the configured tolerance of the server clock:
+
+\`\`\`env
+WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS=300
+\`\`\`
+
+The default tolerance is 300 seconds. Timestamps outside this window, both stale and too far in the future, are rejected.
+
 **Required Header:**
 `x-anchor-signature`: `<hmac-sha256-hex>`
 

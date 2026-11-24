@@ -11,19 +11,14 @@ This directory contains integration modules for Stellar smart contracts.
 import { getServer, getNetworkPassphrase } from "@/lib/soroban/client";
 
 // ❌ never use the deprecated public client
-import { getSorobanClient } from "@/lib/soroban-client";
+import { getServer, getNetworkPassphrase } from "@/lib/soroban/client";
 ```
 
 ### Why one client?
 
-| Concern | `lib/soroban-client.ts` (old, deprecated) | `lib/soroban/client.ts` (canonical) |
-|---|---|---|
-| Env var | `NEXT_PUBLIC_SOROBAN_RPC_URL` — **bundled into browser** | `SOROBAN_RPC_URL` — server-only |
-| Network | Hardcoded `Networks.TESTNET` | Resolved via `getSorobanNetworkPassphrase()` |
-| Retry/timeout | None | `withRetry()` + per-attempt timeout |
-
-Using the public client leaks the RPC URL to the browser and pins testnet, so
-transactions would build against the wrong network in production.
+The canonical client reads `SOROBAN_RPC_URL` server-side and resolves the
+network passphrase through `getNetworkPassphrase()`, keeping RPC access
+consistent across contract modules.
 
 ### Server-only enforcement
 

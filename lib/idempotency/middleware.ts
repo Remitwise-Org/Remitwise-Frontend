@@ -6,7 +6,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
-import { checkIdempotencyKey, storeIdempotencyRecord } from './store';
+import {
+    checkIdempotencyKey,
+    storeIdempotencyRecord,
+    reserveIdempotencyKey,
+    releaseIdempotencyKey,
+} from './store';
+import { IDEMPOTENCY_CONFIG } from './config';
 
 const IDEMPOTENCY_HEADER = 'idempotency-key';
 
@@ -41,25 +47,36 @@ export async function checkIdempotency(
     }
 
     const requestHash = hashRequestBody(body);
-    const result = checkIdempotencyKey(idempotencyKey, requestHash);
+    const result = await checkIdempotencyKey(idempotencyKey, requestHash);
 
     if (!result.exists) {
         return null; // First time seeing this key
     }
 
     if (result.conflict) {
-        // Same key, different body - conflict
+        // Same key, different body
         return NextResponse.json(
             {
                 error: 'Idempotency Key Conflict',
                 message: 'The provided idempotency key was already used with a different request body.',
+            },
+            { status: 422 }
+        );
+    }
+
+    if (result.inFlight) {
+        return NextResponse.json(
+            {
+                error: 'Idempotency Key In Progress',
+                message: 'A request with this idempotency key is currently in progress.',
             },
             { status: 409 }
         );
     }
 
     // Return cached response
-    const { response } = result.record!;
+    const response = result.record?.response;
+    if (!response) return null;
     return NextResponse.json(response.body, {
         status: response.status,
         headers: {
@@ -103,8 +120,30 @@ export function storeIdempotentResponse(
  */
 export async function withIdempotency(
     request: NextRequest,
-    handler: (body: any) => Promise<NextResponse>
+    handler: (body: any) => Promise<NextResponse>,
+    options?: { required?: boolean; ttlMs?: number }
 ): Promise<NextResponse> {
+    const idempotencyKey = getIdempotencyKey(request);
+    if (options?.required && !idempotencyKey) {
+        return NextResponse.json(
+            { error: 'Idempotency-Key header is required' },
+            { status: 400 }
+        );
+    }
+
+    if (
+        idempotencyKey &&
+        (
+            idempotencyKey.length < IDEMPOTENCY_CONFIG.MIN_KEY_LENGTH ||
+            idempotencyKey.length > IDEMPOTENCY_CONFIG.MAX_KEY_LENGTH
+        )
+    ) {
+        return NextResponse.json(
+            { error: 'Invalid Idempotency-Key header' },
+            { status: 400 }
+        );
+    }
+
     // Parse request body
     let body: any;
     try {
@@ -122,8 +161,43 @@ export async function withIdempotency(
         return cachedResponse;
     }
 
+    if (idempotencyKey) {
+        const reservation = reserveIdempotencyKey(
+            idempotencyKey,
+            hashRequestBody(body),
+            options?.ttlMs
+        );
+        if (reservation.conflict) {
+            return NextResponse.json(
+                {
+                    error: 'Idempotency Key Conflict',
+                    message: 'The provided idempotency key was already used with a different request body.',
+                },
+                { status: 422 }
+            );
+        }
+        if (reservation.inFlight) {
+            return NextResponse.json(
+                {
+                    error: 'Idempotency Key In Progress',
+                    message: 'A request with this idempotency key is currently in progress.',
+                },
+                { status: 409 }
+            );
+        }
+        if (!reservation.reserved) {
+            return await checkIdempotency(request, body);
+        }
+    }
+
     // Execute handler
-    const response = await handler(body);
+    let response: NextResponse;
+    try {
+        response = await handler(body);
+    } catch (error) {
+        if (idempotencyKey) releaseIdempotencyKey(idempotencyKey);
+        throw error;
+    }
 
     // Store response for future idempotency checks (only for successful responses)
     if (response.status >= 200 && response.status < 300) {
@@ -132,6 +206,8 @@ export async function withIdempotency(
             status: response.status,
             body: responseBody,
         });
+    } else if (idempotencyKey) {
+        releaseIdempotencyKey(idempotencyKey);
     }
 
     return response;

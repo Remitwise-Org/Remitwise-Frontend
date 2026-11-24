@@ -3,6 +3,7 @@ import { z } from "zod";
 import { validatedRoute } from "@/lib/auth/middleware";
 import { getTranslator } from "@/lib/i18n";
 import { getActivePolicies } from "@/lib/contracts/insurance-cached";
+import { isValidPaginationCursor, paginateData, validatePaginationParams } from "@/lib/utils/pagination";
 
 const billSchema = z.object({
   policyName: z.string().min(4, "Name is too short"),
@@ -43,6 +44,33 @@ const getInsuranceHandler = async (request: NextRequest) => {
 
   try {
     const policies = await getActivePolicies(owner);
+    const limitParam = searchParams.get("limit");
+    const cursorParam = searchParams.get("cursor") || undefined;
+
+    if (limitParam !== null || searchParams.has("cursor")) {
+      const parsedLimit = limitParam === null ? undefined : Number(limitParam);
+      if (parsedLimit !== undefined && !Number.isInteger(parsedLimit)) {
+        return NextResponse.json({ error: "Invalid pagination limit" }, { status: 400 });
+      }
+
+      const { limit, cursor } = validatePaginationParams({
+        limit: parsedLimit,
+        cursor: cursorParam,
+      });
+      if (!isValidPaginationCursor(policies, cursor, (policy) => policy.id)) {
+        return NextResponse.json({ error: "Invalid pagination cursor" }, { status: 400 });
+      }
+
+      const orderedPolicies = [...policies].sort(
+        (a, b) =>
+          Date.parse(a.nextPaymentDate) - Date.parse(b.nextPaymentDate) ||
+          a.id.localeCompare(b.id)
+      );
+      return NextResponse.json(
+        paginateData(orderedPolicies, limit, (policy) => policy.id, cursor)
+      );
+    }
+
     return NextResponse.json({ policies });
   } catch (error: unknown) {
     const err = error as { code?: string };

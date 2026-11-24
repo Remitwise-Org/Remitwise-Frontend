@@ -15,7 +15,10 @@
  */
 
 import { SorobanRpc } from "@stellar/stellar-sdk";
-import { getSorobanNetworkPassphrase } from "@/lib/contracts/network-resolution";
+import {
+  getSorobanNetwork,
+  getSorobanNetworkPassphrase,
+} from "@/lib/contracts/network-resolution";
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 
@@ -28,15 +31,18 @@ import { getSorobanNetworkPassphrase } from "@/lib/contracts/network-resolution"
  * `NEXT_PUBLIC_SOROBAN_RPC_URL` and shipped transactions built against
  * whatever RPC URL happened to be baked into that particular build's client
  * bundle, rather than the deployment's actual configured endpoint -- see
- * `lib/soroban-client.ts`'s deprecation notice for the incident this fixed.
+ * the deprecated client incident this fixed.
  */
 export function getRpcUrl(): string {
   const url = process.env.SOROBAN_RPC_URL;
   if (!url) {
+    const network = getSorobanNetwork();
     if (process.env.NODE_ENV === "production") {
-      console.warn("SOROBAN_RPC_URL is not set; falling back to testnet URL.");
+      console.warn(`SOROBAN_RPC_URL is not set; falling back to ${network} URL.`);
     }
-    return "https://soroban-testnet.stellar.org";
+    return network === "mainnet"
+      ? "https://soroban.stellar.org"
+      : "https://soroban-testnet.stellar.org";
   }
   return url;
 }
@@ -46,6 +52,122 @@ const TIMEOUT_MS = 10_000;
 
 /** Number of additional attempts after the first failure. */
 const MAX_RETRIES = 1;
+
+// ── Circuit breaker ───────────────────────────────────────────────────────────
+
+/** Consecutive failures before the circuit opens. */
+const BREAKER_THRESHOLD = (() => {
+  const raw = Number(process.env.SOROBAN_BREAKER_THRESHOLD);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 5;
+})();
+
+/** How long (ms) the circuit stays open before allowing a half-open probe. */
+const BREAKER_COOLDOWN_MS = (() => {
+  const raw = Number(process.env.SOROBAN_BREAKER_COOLDOWN_MS);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 30_000;
+})();
+
+type BreakerState = "closed" | "open" | "half-open";
+
+let _breakerState: BreakerState = "closed";
+let _consecutiveFailures = 0;
+let _openedAt = 0;
+let _halfOpenProbeInFlight = false;
+
+/** Error thrown when the circuit is open and calls are short-circuited. */
+export class SorobanCircuitOpenError extends Error {
+  public readonly retryAfterSeconds: number;
+
+  constructor(retryAfterSeconds: number) {
+    super("Soroban RPC circuit is open; requests are temporarily suspended");
+    this.name = "SorobanCircuitOpenError";
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
+/** Circuit state as consumed by callers (health route, cached wrappers). */
+export type CircuitState = {
+  state: "closed" | "open" | "half_open";
+  retryAfterMs?: number;
+};
+
+/**
+ * Returns the breaker state in the shape expected by consumers.
+ * Mirrors `getCircuitBreakerState()` with normalised naming.
+ */
+export function getSorobanBreakerState(): CircuitState {
+  const snapshot = getCircuitBreakerState();
+  const normalised: CircuitState["state"] =
+    snapshot.state === "half-open" ? "half_open" : snapshot.state;
+  return {
+    state: normalised,
+    retryAfterMs: normalised === "open" ? snapshot.retryAfterSeconds * 1000 : undefined,
+  };
+}
+
+/** Returns a snapshot of the breaker state for health reporting. */
+export function getCircuitBreakerState(): {
+  state: BreakerState;
+  consecutiveFailures: number;
+  threshold: number;
+  cooldownMs: number;
+  retryAfterSeconds: number;
+} {
+  const remaining =
+    _breakerState === "open"
+      ? Math.max(0, BREAKER_COOLDOWN_MS - (Date.now() - _openedAt))
+      : 0;
+  return {
+    state: _breakerState,
+    consecutiveFailures: _consecutiveFailures,
+    threshold: BREAKER_THRESHOLD,
+    cooldownMs: BREAKER_COOLDOWN_MS,
+    retryAfterSeconds: Math.ceil(remaining / 1000),
+  };
+}
+
+/** Resets breaker to closed. Intended for tests. */
+export function resetCircuitBreaker(): void {
+  _breakerState = "closed";
+  _consecutiveFailures = 0;
+  _openedAt = 0;
+  _halfOpenProbeInFlight = false;
+}
+
+/** Throws if the circuit forbids a call; transitions open -> half-open after cool-down. */
+function acquireBreakerPermit(): void {
+  if (_breakerState === "open") {
+    const elapsed = Date.now() - _openedAt;
+    if (elapsed < BREAKER_COOLDOWN_MS) {
+      throw new SorobanCircuitOpenError(
+        Math.ceil((BREAKER_COOLDOWN_MS - elapsed) / 1000)
+      );
+    }
+    _breakerState = "half-open";
+    _halfOpenProbeInFlight = false;
+  }
+  if (_breakerState === "half-open") {
+    if (_halfOpenProbeInFlight) {
+      throw new SorobanCircuitOpenError(Math.ceil(BREAKER_COOLDOWN_MS / 1000));
+    }
+    _halfOpenProbeInFlight = true;
+  }
+}
+
+function recordBreakerSuccess(): void {
+  _breakerState = "closed";
+  _consecutiveFailures = 0;
+  _halfOpenProbeInFlight = false;
+}
+
+function recordBreakerFailure(): void {
+  _consecutiveFailures += 1;
+  if (_breakerState === "half-open" || _consecutiveFailures >= BREAKER_THRESHOLD) {
+    _breakerState = "open";
+    _openedAt = Date.now();
+  }
+  _halfOpenProbeInFlight = false;
+}
 
 // ── Singleton server instance ─────────────────────────────────────────────────
 
@@ -89,6 +211,7 @@ async function withRetry<T>(
   label: string,
   fn: () => Promise<T>
 ): Promise<T> {
+  acquireBreakerPermit();
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -105,6 +228,7 @@ async function withRetry<T>(
           )
         ),
       ]);
+      recordBreakerSuccess();
       return result;
     } catch (err) {
       lastError = err;
@@ -119,6 +243,7 @@ async function withRetry<T>(
     }
   }
 
+  recordBreakerFailure();
   throw new SorobanClientError(
     `RPC call "${label}" failed after ${MAX_RETRIES + 1} attempt(s)`,
     lastError

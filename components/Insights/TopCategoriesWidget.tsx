@@ -10,17 +10,12 @@ interface CategoryData {
   percentage: number;
 }
 
-const categories: CategoryData[] = [
-  { name: "Family Support", amount: 1800, percentage: 56 },
-  { name: "Education", amount: 850, percentage: 26 },
-  { name: "Medical", amount: 390, percentage: 12 },
-  { name: "Emergency", amount: 200, percentage: 6 },
-];
+export const TopCategoriesWidget: React.FC<{ categories?: CategoryData[] }> = ({
+  categories = [],
+}) => {
+  const progressColors = INSIGHTS_PALETTE.slice(0, categories.length);
+  const topCategory = categories[0];
 
-// Use palette colors for progress bars (first N colors)
-const progressColors = INSIGHTS_PALETTE.slice(0, categories.length);
-
-export const TopCategoriesWidget: React.FC = () => {
   return (
     <div className="bg-black/40 border border-white/10 rounded-3xl p-6 w-full max-w-md backdrop-blur-sm">
       {/* Header */}
@@ -30,13 +25,15 @@ export const TopCategoriesWidget: React.FC = () => {
         </div>
         <div>
           <h2 className="text-white text-xl font-semibold">Top Categories</h2>
-          <p className="text-gray-500 text-sm">Remittance breakdown</p>
+          <p className="text-gray-500 text-sm">Spending and paid bill breakdown</p>
         </div>
       </div>
 
       {/* Categories */}
       <div className="space-y-6">
-        {categories.map((category, idx) => (
+        {categories.length === 0 ? (
+          <p className="text-gray-400 text-sm">No category activity for this period.</p>
+        ) : categories.map((category, idx) => (
           <div key={category.name} className="space-y-2">
             <div className="flex justify-between items-end">
               <span className="text-white font-medium">{category.name}</span>
@@ -61,14 +58,16 @@ export const TopCategoriesWidget: React.FC = () => {
       </div>
 
       {/* Alert Box */}
-      <div className="mt-10 p-4 bg-red-950/20 border border-red-900/40 rounded-2xl flex gap-3 items-start">
-        <div className="mt-0.5">
-          <Info className="w-4 h-4 text-red-500" />
+      {topCategory && (
+        <div className="mt-10 p-4 bg-red-950/20 border border-red-900/40 rounded-2xl flex gap-3 items-start">
+          <div className="mt-0.5">
+            <Info className="w-4 h-4 text-red-500" />
+          </div>
+          <p className="text-gray-300 text-sm leading-relaxed">
+            <span className="text-red-500 font-semibold">{topCategory.percentage}%</span> of your recorded activity is {topCategory.name.toLowerCase()}.
+          </p>
         </div>
-        <p className="text-gray-300 text-sm leading-relaxed">
-          <span className="text-red-500 font-semibold">{categories[0].percentage}%</span> of your remittances go to {categories[0].name.toLowerCase()}. Consider setting up automatic transfers!
-        </p>
-      </div>
+      )}
 
       {/* Screen‑reader summary */}
       <p className="sr-only" aria-live="polite">

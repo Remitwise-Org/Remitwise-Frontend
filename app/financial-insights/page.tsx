@@ -1,17 +1,18 @@
 'use client'
 
-import { Suspense, useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Send, PiggyBank, FileText, Shield } from 'lucide-react'
 import FinancialInsightsHeader from '@/components/FinancialInsightsHeader'
 import type { DateRangeOption, ExportFormat } from '@/components/FinancialInsightsHeader'
-import { MOCK_SPENDING_VS_SAVINGS } from '@/components/Insights/spendingVsSavingChart'
-import { MOCK_TREND_DATA } from '@/components/Insights/remittanceTrendChart'
 import StatCard from '@/components/Dashboard/StatCard'
 import { TopCategoriesWidget } from '@/components/Insights/TopCategoriesWidget'
 import { SkeletonChart } from '@/components/ui/Skeleton'
 import { useSeo } from '@/lib/hooks/useSeo'
 import { useToast } from '@/lib/context/ToastContext'
+import { useInsightsData } from '@/lib/client/useInsightsData'
+import { formatCurrency } from '@/lib/utils/format-currency'
+import { WidgetErrorState } from '@/components/ui/WidgetStates'
 
 const SpendingVsSavingsChart = dynamic(
   () => import('@/components/Insights/spendingVsSavingChart').then(m => ({ default: m.SpendingVsSavingsChart })),
@@ -26,29 +27,43 @@ const CategoryDonutChart = dynamic(
   { ssr: false },
 )
 
-function getRangeLabel(range: DateRangeOption): string {
+type SupportedDateRange = 'This Month' | 'Last 3 Months' | 'Last Year'
+
+function getRangeLabel(range: SupportedDateRange): string {
   switch (range) {
     case 'This Month': return 'this month'
-    case 'Last Month': return 'last month'
     case 'Last 3 Months': return 'last 3 months'
-    case 'Last 6 Months': return 'last 6 months'
-    case 'This Year': return 'this year'
-    case 'Custom Range': return 'selected period'
+    case 'Last Year': return 'last year'
   }
 }
 
-// ── Summary stats (dynamic value + change based on range) ───────────────────
-
-function getSummaryStats(rangeLabel: string) {
+function getSummaryStats(rangeLabel: string, data: ReturnType<typeof useInsightsData>['data']) {
   return [
-    { title: 'Total Remittances', value: '$3,240', change: '+18%', neutral: false, icon: <Send className="w-5 h-5" /> },
-    { title: 'Total Saved',       value: '$1,580', change: '+24%', neutral: false, icon: <PiggyBank className="w-5 h-5" /> },
-    { title: 'Bills Paid',        value: '$685',   change: '+5%',  neutral: false, icon: <FileText className="w-5 h-5" /> },
-    { title: 'Insurance Premiums',value: '$125',   change: '0%',   neutral: true,  icon: <Shield className="w-5 h-5" /> },
-  ].map(stat => ({
-    ...stat,
-    detail2: `vs ${rangeLabel}`,
-  }))
+    {
+      title: 'Total Remittances',
+      value: data ? formatCurrency(data.spendingTotal, 'USD') : '—',
+      detail: data ? `${data.counts.payments} payments` : 'No data available',
+      icon: <Send className="w-5 h-5" />,
+    },
+    {
+      title: 'Savings Goal Balance',
+      value: data ? formatCurrency(data.savingsTotal, 'USD') : '—',
+      detail: data ? `${data.counts.savingsGoals} goals` : 'No data available',
+      icon: <PiggyBank className="w-5 h-5" />,
+    },
+    {
+      title: 'Bills Paid',
+      value: data ? formatCurrency(data.billsTotal, 'USD') : '—',
+      detail: data ? `${data.counts.paidBills} bills in ${rangeLabel}` : 'No data available',
+      icon: <FileText className="w-5 h-5" />,
+    },
+    {
+      title: 'Monthly Insurance Premiums',
+      value: data ? formatCurrency(data.insuranceTotal, 'USD') : '—',
+      detail: data ? `${data.counts.activePolicies} active policies` : 'No data available',
+      icon: <Shield className="w-5 h-5" />,
+    },
+  ]
 }
 
 // ── Simulated export ─────────────────────────────────────────────────────────
@@ -65,29 +80,22 @@ export default function FinancialInsightsPage() {
   })
 
   const { toast, dismiss } = useToast()
-  const [selectedRange, setSelectedRange] = useState<DateRangeOption>('This Month')
-  const [customStart, setCustomStart] = useState('')
-  const [customEnd, setCustomEnd] = useState('')
+  const [selectedRange, setSelectedRange] = useState<SupportedDateRange>('This Month')
+  const period = selectedRange === 'This Month'
+    ? 'current_month'
+    : selectedRange === 'Last 3 Months'
+      ? 'last_3_months'
+      : 'last_year'
+  const { data, status, error, refetch } = useInsightsData(period)
 
   const rangeLabel = useMemo(() => getRangeLabel(selectedRange), [selectedRange])
-  const summaryStats = useMemo(() => getSummaryStats(rangeLabel), [rangeLabel])
+  const summaryStats = useMemo(
+    () => getSummaryStats(rangeLabel, data),
+    [data, rangeLabel],
+  )
 
-  // Filter charts data based on selected range
-  const spendingSavingsData = useMemo(() => {
-    if (selectedRange === 'This Month') return MOCK_SPENDING_VS_SAVINGS.slice(-1)
-    if (selectedRange === 'Last Month') return MOCK_SPENDING_VS_SAVINGS.slice(-2, -1)
-    if (selectedRange === 'Last 3 Months') return MOCK_SPENDING_VS_SAVINGS.slice(-3)
-    if (selectedRange === 'Last 6 Months' || selectedRange === 'This Year') return MOCK_SPENDING_VS_SAVINGS
-    return MOCK_SPENDING_VS_SAVINGS // custom range fallback
-  }, [selectedRange])
-
-  const trendData = useMemo(() => {
-    if (selectedRange === 'This Month') return MOCK_TREND_DATA.slice(-4)
-    if (selectedRange === 'Last Month') return MOCK_TREND_DATA.slice(-8, -4)
-    if (selectedRange === 'Last 3 Months') return MOCK_TREND_DATA.slice(-10)
-    if (selectedRange === 'Last 6 Months' || selectedRange === 'This Year') return MOCK_TREND_DATA
-    return MOCK_TREND_DATA
-  }, [selectedRange])
+  const trendData = data?.trend ?? []
+  const categoryData = data?.categories ?? []
 
   const handleExport = useCallback(async (format: ExportFormat) => {
     const toastId = toast({
@@ -118,10 +126,6 @@ export default function FinancialInsightsPage() {
 
   const handleDateRangeChange = useCallback((range: DateRangeOption) => {
     setSelectedRange(range)
-    if (range !== 'Custom Range') {
-      setCustomStart('')
-      setCustomEnd('')
-    }
     toast({
       variant: 'info',
       title: `Showing data for ${getRangeLabel(range)}`,
@@ -129,17 +133,11 @@ export default function FinancialInsightsPage() {
     })
   }, [toast])
 
-  const handleCustomDateChange = useCallback((start: string, end: string) => {
-    setCustomStart(start)
-    setCustomEnd(end)
-  }, [])
-
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
       <FinancialInsightsHeader
         onExport={handleExport}
         onDateRangeChange={handleDateRangeChange}
-        onCustomDateChange={handleCustomDateChange}
       />
 
       <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -148,49 +146,61 @@ export default function FinancialInsightsPage() {
         <div className="flex items-center gap-2 mb-4 sm:mb-6">
           <h2 className="text-lg sm:text-xl font-semibold text-gray-400">Summary Overview</h2>
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#D72323]/10 border border-[#D72323]/20 text-[#D72323] text-xs font-medium">
-            {selectedRange === 'Custom Range' && customStart && customEnd
-              ? `${customStart} – ${customEnd}`
-              : selectedRange}
+            {selectedRange}
           </span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          {summaryStats.map(({ title, value, change, neutral, icon, detail2 }) => (
+          {summaryStats.map(({ title, value, detail, icon }) => (
             <StatCard
               key={title}
               title={title}
               value={value}
               icon={icon}
-              showTrend={!neutral}
-              detail1={change}
-              detail1Color={neutral ? 'text-gray-400' : 'text-emerald-400'}
-              detail2={detail2}
+              showTrend={false}
+              detail1={detail}
+              detail1Color="text-gray-400"
+              detail2={`For ${rangeLabel}`}
             />
           ))}
         </div>
+
+        {status === 'error' && (
+          <WidgetErrorState
+            title="Failed to load insights"
+            message={error ?? 'Unable to load financial insights.'}
+            onRetry={refetch}
+          />
+        )}
+        {status === 'success' && data?.partial && (
+          <p role="status" className="mb-6 text-sm text-amber-300">
+            Some financial data sources are unavailable ({data.failedSources.join(', ')}).
+            The displayed totals may be incomplete.
+          </p>
+        )}
 
         {/* Charts grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
 
           {/* Spending vs Savings — full width on mobile, half on desktop */}
           <div className="lg:col-span-2">
-            <Suspense fallback={<SkeletonChart type="bar" />}>
-              <SpendingVsSavingsChart data={spendingSavingsData} />
-            </Suspense>
+            {status === 'loading'
+              ? <SkeletonChart type="bar" />
+              : <SpendingVsSavingsChart data={data?.spendingVsSavings ?? []} />}
           </div>
 
           {/* Trend line */}
-          <Suspense fallback={<SkeletonChart type="line" />}>
-            <RemittanceTrendChart data={trendData} />
-          </Suspense>
+          {status === 'loading'
+            ? <SkeletonChart type="line" />
+            : <RemittanceTrendChart data={trendData} />}
 
           {/* Category donut */}
-          <Suspense fallback={<SkeletonChart type="donut" />}>
-            <CategoryDonutChart />
-          </Suspense>
+          {status === 'loading'
+            ? <SkeletonChart type="donut" />
+            : <CategoryDonutChart data={categoryData} />}
 
           {/* Top categories breakdown (migrated from the former /insights route) */}
           <div className="lg:col-span-2 flex justify-center">
-            <TopCategoriesWidget />
+            <TopCategoriesWidget categories={categoryData} />
           </div>
 
         </div>

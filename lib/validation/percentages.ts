@@ -35,6 +35,16 @@ export function validatePercentages(percentages: SplitPercentages): void {
     );
   }
 
+  // Check for NaN values
+  if (
+    Number.isNaN(spending) ||
+    Number.isNaN(savings) ||
+    Number.isNaN(bills) ||
+    Number.isNaN(insurance)
+  ) {
+    throw new ValidationError('All percentages must be valid numbers');
+  }
+
   // Check for negative values
   if (spending < 0 || savings < 0 || bills < 0 || insurance < 0) {
     throw new ValidationError('All percentages must be non-negative');

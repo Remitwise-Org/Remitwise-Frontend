@@ -314,6 +314,73 @@ describe('AnchorClient', () => {
             expect(result).toEqual(flowData);
         });
     });
+
+    describe('getAnchorTransactionStatus', () => {
+        it('returns transaction status on 200 when response is wrapped in transaction object', async () => {
+            const txData = { id: 'tx-123', status: 'completed' };
+            fetchSpy.mockResolvedValueOnce(makeResponse(200, { transaction: txData }));
+
+            const result = await makeClient().getAnchorTransactionStatus('tx-123');
+
+            expect(result).toEqual(txData);
+            expect(fetchSpy).toHaveBeenCalledTimes(1);
+            expect(fetchSpy.mock.calls[0][0]).toContain('/transaction?id=tx-123');
+        });
+
+        it('returns transaction status on 200 when response is flat', async () => {
+            const txData = { id: 'tx-456', status: 'pending' };
+            fetchSpy.mockResolvedValueOnce(makeResponse(200, txData));
+
+            const result = await makeClient().getAnchorTransactionStatus('tx-456');
+
+            expect(result).toEqual(txData);
+        });
+
+        it('returns null on 404 not found', async () => {
+            fetchSpy.mockResolvedValueOnce(makeResponse(404, { error: 'Transaction not found' }));
+
+            const result = await makeClient().getAnchorTransactionStatus('unknown-tx');
+
+            expect(result).toBeNull();
+            expect(fetchSpy).toHaveBeenCalledTimes(1);
+        });
+
+        it('retries on 500 transient error and succeeds', async () => {
+            const txData = { id: 'tx-789', status: 'completed' };
+            fetchSpy
+                .mockResolvedValueOnce(makeResponse(500, { error: 'temporary outage' }))
+                .mockResolvedValueOnce(makeResponse(200, { transaction: txData }));
+
+            const promise = makeClient({ maxRetryAttempts: 3 }).getAnchorTransactionStatus('tx-789');
+            await vi.runAllTimersAsync();
+            const result = await promise;
+
+            expect(result).toEqual(txData);
+            expect(fetchSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('throws when transaction ID is empty', async () => {
+            const client = makeClient();
+            await expect(client.getAnchorTransactionStatus('')).rejects.toThrow('Transaction ID is required');
+        });
+
+        it('throws when base URL is not configured', async () => {
+            delete process.env.ANCHOR_API_BASE_URL;
+            const client = new AnchorClient();
+            await expect(client.getAnchorTransactionStatus('tx-1')).rejects.toThrow('Anchor Base URL not configured');
+        });
+
+        it('includes Authorization header when API key is set', async () => {
+            process.env.ANCHOR_API_KEY = 'test-api-key';
+            fetchSpy.mockResolvedValueOnce(makeResponse(200, { id: 'tx-key', status: 'completed' }));
+
+            await makeClient().getAnchorTransactionStatus('tx-key');
+
+            const headers = fetchSpy.mock.calls[0][1]?.headers as Record<string, string>;
+            expect(headers?.Authorization).toBe('Bearer test-api-key');
+            delete process.env.ANCHOR_API_KEY;
+        });
+    });
 });
 
 describe('AnchorRatesCache', () => {
