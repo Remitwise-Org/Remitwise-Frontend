@@ -3,6 +3,7 @@
  * 
  * Production-grade wrapper with comprehensive error handling and type safety.
  * All write operations (buildXxxTx) are NOT cached.
+ * Reads fall back to stale-on-error values while the Soroban circuit is open.
  * 
  * @module lib/contracts/remittance-split-cached
  * @security Input validation, error boundaries, type safety
@@ -33,11 +34,16 @@ export async function getSplit(env: 'testnet' | 'mainnet' = 'testnet'): Promise<
       'getSplit',
       { env },
       CACHE_TTL.getSplit,
-      async () => await originalContract.getSplit(env)
+      async () => await originalContract.getSplit(env),
+      { staleIfError: true }
     );
   } catch (error) {
     // Re-throw CacheError as-is for proper error handling upstream
     if (error instanceof CacheError) {
+      throw error;
+    }
+    // Circuit-breaker errors are forwarded unchanged so the API layer can map them to 503 + Retry-After
+    if (error instanceof Error && error.name === 'SorobanCircuitOpenError') {
       throw error;
     }
     // Wrap other errors with context
@@ -70,7 +76,8 @@ export async function getConfig(env: 'testnet' | 'mainnet' = 'testnet'): Promise
       'getConfig',
       { env },
       CACHE_TTL.getConfig,
-      async () => await originalContract.getConfig(env)
+      async () => await originalContract.getConfig(env),
+      { staleIfError: true }
     );
   } catch (error) {
     if (error instanceof CacheError) {
@@ -126,7 +133,8 @@ export async function calculateSplit(
       'calculateSplit',
       { amount, env },
       CACHE_TTL.getSplit, // Use same TTL as getSplit
-      async () => await originalContract.calculateSplit(amount, env)
+      async () => await originalContract.calculateSplit(amount, env),
+      { staleIfError: true }
     );
   } catch (error) {
     if (error instanceof CacheError) {

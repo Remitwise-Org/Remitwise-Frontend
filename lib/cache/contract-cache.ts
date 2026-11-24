@@ -9,6 +9,7 @@
  * @performance LRU eviction, TTL-based expiration, O(1) lookups
  */
 
+import type { Entry } from 'lru-cache';
 import { LRUCache } from 'lru-cache';
 
 // ============================================================================
@@ -406,6 +407,62 @@ export async function cachedContractCall<T>(
     // Clear the in-flight entry on BOTH resolve and reject so the map never
     // retains a settled/dangling promise. On rejection the next call retries.
     inFlight.delete(cacheKey);
+  }
+}
+
+/**
+ * Stale-if-error variant of {@link cachedContractCall}.
+ *
+ * Keeps the last successfully fetched value for `staleTtlSeconds` past its
+ * fresh TTL. If `fetchFn` fails (e.g. the circuit breaker is open) and a stale
+ * value exists, the stale value is returned flagged `stale: true` instead of
+ * propagating the error. Returns `null` only when there is no usable value.
+ */
+export async function cachedContractCallWithStale<T>(
+  contractId: string,
+  method: string,
+  args: Record<string, unknown>,
+  ttlSeconds: number,
+  staleTtlSeconds: number,
+  fetchFn: () => Promise<T>
+): Promise<{ data: T; stale: boolean } | null> {
+  validateContractId(contractId);
+  validateMethod(method);
+  validateArgs(args);
+  validateTTL(ttlSeconds);
+
+  const cacheKey = generateCacheKey(contractId, method, args);
+  const cached = cache.get(cacheKey) as CacheEntry<T> | undefined;
+  const age = cached ? Date.now() - cached.timestamp : Infinity;
+
+  if (cached && age < ttlSeconds * 1000 && cached.ttl === ttlSeconds) {
+    cacheHits++;
+    return { data: cached.data, stale: false };
+  }
+
+  cacheMisses++;
+  try {
+    const data = await fetchFn();
+    if (data === undefined || data === null) {
+      throw new CacheError(
+        'fetchFn returned null or undefined - cannot cache',
+        CacheErrorCode.INVALID_INPUT,
+        { contractId, method }
+      );
+    }
+    cache.set(cacheKey, {
+      data,
+      timestamp: Date.now(),
+      ttl: ttlSeconds,
+      contractId,
+      method,
+    } as CacheEntry<unknown>);
+    return { data, stale: false };
+  } catch (error) {
+    if (cached && age < (ttlSeconds + staleTtlSeconds) * 1000) {
+      return { data: cached.data, stale: true };
+    }
+    throw error;
   }
 }
 
