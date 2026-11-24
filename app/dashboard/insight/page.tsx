@@ -34,6 +34,9 @@ interface InsightsResponse {
     insuranceTotal: number;
     breakdown: Record<string, number>;
     trend: Record<string, number>;
+    trendCounts: Record<string, number>;
+    partial: boolean;
+    failedSources: string[];
 }
 
 export default function InsightPage() {
@@ -101,7 +104,10 @@ export default function InsightPage() {
     } else if (!data) {
         content = <WidgetEmptyState title="No data available" message="Try selecting a different period." />;
     } else {
-        const totalAmount = data.spendingTotal + data.savingsTotal + data.billsTotal + data.insuranceTotal;
+        const totalAmount = Object.values(data.breakdown || {}).reduce(
+            (sum, amount) => sum + Number(amount),
+            0,
+        );
         
         if (totalAmount === 0) {
             content = <WidgetEmptyState title="No activity" message="You have no transactions in this period." />;
@@ -121,12 +127,18 @@ export default function InsightPage() {
                 .map(([date, amount]) => ({
                     date,
                     amount: Number(amount),
-                    transactions: 1 // API does not provide transaction counts yet
+                    transactions: data.trendCounts?.[date] ?? 0
                 }))
                 .sort((a, b) => a.date.localeCompare(b.date));
 
             content = (
                 <div className="space-y-6">
+                    {data.partial && (
+                        <p role="status" className="text-sm text-amber-300">
+                            Some financial data sources are unavailable ({data.failedSources?.join(', ') || 'unknown'}).
+                            The displayed totals may be incomplete.
+                        </p>
+                    )}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         {[
                             { label: 'Spending', value: data.spendingTotal },
