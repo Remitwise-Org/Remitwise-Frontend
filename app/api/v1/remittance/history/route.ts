@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '../../../../../lib/session';
+import { NextRequest } from 'next/server';
+import { requireAuth } from '../../../../../lib/session';
 import { fetchTransactionHistory } from '../../../../../lib/remittance/horizon';
+import { validatePaginationParams } from '../../../../../lib/utils/pagination';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,34 +16,49 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(req: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session?.address) {
-      return NextResponse.json(
+    const { address } = await requireAuth();
+
+    const { searchParams } = new URL(req.url);
+    const limitParam = searchParams.get('limit');
+    const parsedLimit = limitParam ? parseInt(limitParam, 10) : undefined;
+    const { limit, cursor } = validatePaginationParams({
+      limit: parsedLimit,
+      cursor: searchParams.get('cursor') || undefined,
+    });
+    const status = searchParams.get('status') as 'completed' | 'failed' | 'pending' | null;
+
+    const history = await fetchTransactionHistory(address, {
+      limit,
+      cursor,
+      status: status || undefined,
+    });
+
+    return Response.json({
+      ...history,
+      hasMore: !!history.nextCursor,
+      userAddress: address,
+    });
+  } catch (error: any) {
+    if (error instanceof Response && error.status === 401) {
+      return Response.json(
         { error: 'Unauthorized', message: 'Not authenticated' },
         { status: 401 }
       );
     }
 
-    const { searchParams } = new URL(req.url);
-    const limitParam = searchParams.get('limit');
-    const limit = limitParam ? parseInt(limitParam, 10) : 10;
-    const cursor = searchParams.get('cursor') || undefined;
-    const status = searchParams.get('status') as 'completed' | 'failed' | 'pending' | null;
+    const horizonStatus =
+      error?.response?.status ??
+      error?.status;
+    if (typeof horizonStatus === 'number' && horizonStatus >= 500) {
+      return Response.json(
+        { error: 'Bad Gateway', message: 'Horizon service unavailable' },
+        { status: 502 }
+      );
+    }
 
-    const history = await fetchTransactionHistory(session.address, {
-      limit: Math.min(limit, 200),
-      cursor,
-      status: status || undefined,
-    });
-
-    return NextResponse.json({
-      ...history,
-      userAddress: session.address,
-    });
-  } catch (error: any) {
     console.error('Error fetching remittance history:', error);
-    return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message },
+    return Response.json(
+      { error: 'Internal Server Error', message: error?.message ?? 'Unexpected error' },
       { status: 500 }
     );
   }

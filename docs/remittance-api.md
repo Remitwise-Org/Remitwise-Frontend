@@ -28,9 +28,17 @@ Fetch transaction history for the logged-in wallet.
       "memo": "Rent payment"
     }
   ],
-  "nextCursor": "paging_token_here"
+  "nextCursor": "paging_token_here",
+  "hasMore": true,
+  "userAddress": "G..."
 }
 ```
+
+`nextCursor` is the opaque Horizon `paging_token` for the final returned
+record. Pass it unchanged as `cursor` for the next page. Results are always
+scoped to the authenticated session wallet; an `address` query parameter is
+ignored. An unfunded account returns an empty page. Horizon server errors
+return HTTP 502.
 
 ### 2. GET /api/remittance/status/[txHash]
 Fetch the current status of a single transaction.
