@@ -15,7 +15,10 @@
  */
 
 import { SorobanRpc } from "@stellar/stellar-sdk";
-import { getSorobanNetworkPassphrase } from "@/lib/contracts/network-resolution";
+import {
+  getSorobanNetwork,
+  getSorobanNetworkPassphrase,
+} from "@/lib/contracts/network-resolution";
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 
@@ -28,15 +31,18 @@ import { getSorobanNetworkPassphrase } from "@/lib/contracts/network-resolution"
  * `NEXT_PUBLIC_SOROBAN_RPC_URL` and shipped transactions built against
  * whatever RPC URL happened to be baked into that particular build's client
  * bundle, rather than the deployment's actual configured endpoint -- see
- * `lib/soroban-client.ts`'s deprecation notice for the incident this fixed.
+ * the deprecated client incident this fixed.
  */
 export function getRpcUrl(): string {
   const url = process.env.SOROBAN_RPC_URL;
   if (!url) {
+    const network = getSorobanNetwork();
     if (process.env.NODE_ENV === "production") {
-      console.warn("SOROBAN_RPC_URL is not set; falling back to testnet URL.");
+      console.warn(`SOROBAN_RPC_URL is not set; falling back to ${network} URL.`);
     }
-    return "https://soroban-testnet.stellar.org";
+    return network === "mainnet"
+      ? "https://soroban.stellar.org"
+      : "https://soroban-testnet.stellar.org";
   }
   return url;
 }

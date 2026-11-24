@@ -86,9 +86,9 @@ represents — the primary trend/change text.
 
 ---
 
-### `lib/soroban-client.ts`
+### Deprecated Soroban client
 
-- **Deprecated file:** `lib/soroban-client.ts`
+- **Deprecated file:** `lib/soroban-client.ts` (removed)
 - **Replacement:** `lib/soroban/client.ts`
 
 The old module used `NEXT_PUBLIC_SOROBAN_RPC_URL` (browser-exposed) and
@@ -107,7 +107,7 @@ continues to compile. It will be removed in a future cleanup commit.
 
 ```ts
 // ❌ Browser-exposed URL, hardcoded TESTNET
-import { getSorobanClient } from "@/lib/soroban-client";
+import { getServer, getNetworkPassphrase } from "@/lib/soroban/client";
 ```
 
 **After:**

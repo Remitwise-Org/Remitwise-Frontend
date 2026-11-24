@@ -395,7 +395,7 @@ See also: [docs/CONTRACT_INTEGRATION.md](./CONTRACT_INTEGRATION.md),
 **Soroban** is Stellar's smart-contract platform. In the RemitWise frontend,
 "the Soroban client" is the server-only `SorobanRpc.Server` instance
 returned by `getServer()` from `lib/soroban/client.ts` — that is the canonical
-client. `lib/soroban-client.ts` still exists but is deprecated and bundled
+client. The deprecated `lib/soroban-client.ts` wrapper was removed and bundled
 into the browser via `NEXT_PUBLIC_SOROBAN_RPC_URL`; never import it in new
 server code. RPC URL and network passphrase resolve from
 `SOROBAN_RPC_URL` and `getSorobanNetworkPassphrase()` respectively; contract

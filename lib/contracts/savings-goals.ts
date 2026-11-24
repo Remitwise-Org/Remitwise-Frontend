@@ -3,9 +3,9 @@
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { BuildTxResult } from '@/lib/types/savings-goals';
 import { parseContractError } from '@/lib/errors/contract-errors';
+import { getServer, getNetworkPassphrase } from '@/lib/soroban/client';
 import {
   getSorobanNetwork,
-  getSorobanNetworkPassphrase,
   resolveContractId,
 } from '@/lib/contracts/network-resolution';
 
@@ -14,19 +14,153 @@ const getContractId = (): string => resolveContractId('SAVINGS_GOALS');
 // Get network configuration
 const getNetworkConfig = () => {
   const network = getSorobanNetwork();
-  const rpcUrl =
-    process.env.SOROBAN_RPC_URL ||
-    process.env.NEXT_PUBLIC_STELLAR_RPC_URL ||
-    (network === 'mainnet'
-      ? 'https://soroban.stellar.org'
-      : 'https://soroban-testnet.stellar.org');
-  
   return {
     network,
-    rpcUrl,
-    networkPassphrase: getSorobanNetworkPassphrase(),
+    networkPassphrase: getNetworkPassphrase(),
   };
 };
+
+export class ContractReadError extends Error {
+  constructor(
+    public readonly contractId: string,
+    public readonly method: string,
+    public readonly cause: unknown
+  ) {
+    super(
+      `Contract read failed - ${contractId}::${method}: ${
+        cause instanceof Error ? cause.message : String(cause)
+      }`
+    );
+    this.name = 'ContractReadError';
+  }
+}
+
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate: number;
+  locked: boolean;
+}
+
+const RPC_TIMEOUT_MS = 10_000;
+const MAX_READ_RETRIES = 1;
+
+async function withReadRetry<T>(
+  label: string,
+  promiseFactory: () => Promise<T>
+): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= MAX_READ_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), RPC_TIMEOUT_MS);
+
+    try {
+      return await Promise.race([
+        promiseFactory(),
+        new Promise<never>((_, reject) =>
+          controller.signal.addEventListener('abort', () =>
+            reject(new Error(
+              `RPC call "${label}" timed out after ${RPC_TIMEOUT_MS} ms`
+            ))
+          )
+        ),
+      ]);
+    } catch (error) {
+      lastError = error;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  throw lastError;
+}
+
+function mapToGoal(id: string, rawData: any): SavingsGoal {
+  return {
+    id,
+    name: rawData.name?.toString() || 'Unnamed Goal',
+    targetAmount: Number(rawData.target_amount) || 0,
+    currentAmount: Number(rawData.current_amount) || 0,
+    targetDate: Number(rawData.target_date) || 0,
+    locked: !!rawData.locked,
+  };
+}
+
+export async function getGoal(goalId: string): Promise<SavingsGoal | null> {
+  const contractId = getContractId();
+
+  try {
+    const result = await withReadRetry('getGoal', () =>
+      getServer().getContractData(
+        contractId,
+        StellarSdk.nativeToScVal(goalId),
+        StellarSdk.SorobanRpc.Durability.Persistent
+      )
+    );
+
+    if (!result) return null;
+
+    const scVal = result.val.contractData().val();
+    return mapToGoal(goalId, StellarSdk.scValToNative(scVal));
+  } catch (error) {
+    if (error instanceof ContractReadError) throw error;
+    throw new ContractReadError(contractId, 'getGoal', error);
+  }
+}
+
+export async function getAllGoals(owner: string): Promise<SavingsGoal[]> {
+  const contractId = getContractId();
+
+  try {
+    const contract = new StellarSdk.Contract(contractId);
+    const operation = contract.call('get_all_goals', StellarSdk.nativeToScVal(owner));
+    const response = await withReadRetry('getAllGoals', () =>
+      getServer().simulateTransaction(operation as any)
+    );
+
+    if (!('result' in response)) {
+      throw new ContractReadError(
+        contractId,
+        'getAllGoals',
+        (response as any).error ?? 'Simulation failed'
+      );
+    }
+
+    const result = response.result;
+    if (!result || !result.retval) {
+      throw new ContractReadError(
+        contractId,
+        'getAllGoals',
+        'No return value in simulation'
+      );
+    }
+
+    const rawGoals = StellarSdk.scValToNative(result.retval);
+    if (typeof rawGoals !== 'object' || rawGoals === null) {
+      throw new ContractReadError(
+        contractId,
+        'getAllGoals',
+        `Unexpected return type: ${typeof rawGoals}`
+      );
+    }
+
+    return Object.entries(rawGoals).map(([id, data]) =>
+      mapToGoal(id, data)
+    );
+  } catch (error) {
+    if (error instanceof ContractReadError) throw error;
+    throw new ContractReadError(contractId, 'getAllGoals', error);
+  }
+}
+
+export async function isGoalCompleted(goalId: string): Promise<boolean> {
+  const goal = await getGoal(goalId);
+  if (!goal) return false;
+  return goal.currentAmount >= goal.targetAmount;
+}
 
 /**
  * Build a transaction to create a new savings goal
@@ -69,7 +203,7 @@ export async function buildCreateGoalTx(
     );
     
     // Create source account
-    const sourceAccount = await loadAccount(owner, config.rpcUrl);
+    const sourceAccount = await loadAccount(owner);
     
     // Build transaction
     const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
@@ -122,7 +256,7 @@ export async function buildAddToGoalTx(
     amountScVal
   );
   
-  const sourceAccount = await loadAccount(caller, config.rpcUrl);
+  const sourceAccount = await loadAccount(caller);
   
   const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
     fee: StellarSdk.BASE_FEE,
@@ -168,7 +302,7 @@ export async function buildWithdrawFromGoalTx(
     amountScVal
   );
   
-  const sourceAccount = await loadAccount(caller, config.rpcUrl);
+  const sourceAccount = await loadAccount(caller);
   
   const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
     fee: StellarSdk.BASE_FEE,
@@ -210,7 +344,7 @@ export async function buildLockGoalTx(
     goalIdScVal
   );
   
-  const sourceAccount = await loadAccount(caller, config.rpcUrl);
+  const sourceAccount = await loadAccount(caller);
   
   const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
     fee: StellarSdk.BASE_FEE,
@@ -252,7 +386,7 @@ export async function buildUnlockGoalTx(
     goalIdScVal
   );
   
-  const sourceAccount = await loadAccount(caller, config.rpcUrl);
+  const sourceAccount = await loadAccount(caller);
   
   const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
     fee: StellarSdk.BASE_FEE,
@@ -270,8 +404,8 @@ export async function buildUnlockGoalTx(
 /**
  * Helper function to load account from Stellar network
  */
-async function loadAccount(publicKey: string, rpcUrl: string): Promise<StellarSdk.Account> {
-  const server = new StellarSdk.SorobanRpc.Server(rpcUrl);
+async function loadAccount(publicKey: string): Promise<StellarSdk.Account> {
+  const server = getServer();
   
   try {
     const account = await server.getAccount(publicKey);
