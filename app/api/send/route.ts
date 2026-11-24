@@ -6,6 +6,7 @@ import type {
   SendTransactionResponse,
   SendTransactionErrorResponse,
 } from '@/lib/types/api';
+import { withIdempotency } from '@/lib/idempotency';
 
 /**
  * POST /api/send
@@ -23,18 +24,8 @@ import type {
 async function handler(
   request: NextRequest,
   _session: string,
+  body: Partial<SendTransactionRequest>,
 ): Promise<NextResponse<SendTransactionResponse | SendTransactionErrorResponse>> {
-  let body: Partial<SendTransactionRequest>;
-
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json<SendTransactionErrorResponse>(
-      { success: false, error: 'Invalid JSON body.' },
-      { status: 400 },
-    );
-  }
-
   const { recipient, amount, currency } = body;
 
   if (!recipient || typeof recipient !== 'string' || recipient.trim() === '') {
@@ -78,4 +69,6 @@ async function handler(
   });
 }
 
-export const POST = withAuth(handler);
+export const POST = withAuth((request, session) =>
+  withIdempotency(request, (body) => handler(request, session, body))
+);

@@ -131,11 +131,13 @@ function SpendingVsSavingsChartInner({
     // Use the canonical hook — reactive, SSR-safe, shared across the codebase.
     const reducedMotion = usePrefersReducedMotion()
     const saveData = useSaveData()
+    const hasData = data.length > 0
 
     const savingsRate = useMemo(() => {
         const spending = data.reduce((s, d) => s + d.spending, 0)
         const savings  = data.reduce((s, d) => s + d.savings,  0)
-        return Math.round((savings / (spending + savings)) * 100)
+        const total = spending + savings
+        return total > 0 ? Math.round((savings / total) * 100) : 0
     }, [data])
 
     const totalSpending = useMemo(() => data.reduce((s, d) => s + d.spending, 0), [data])
@@ -169,14 +171,20 @@ function SpendingVsSavingsChartInner({
                 </div>
 
                 {/* Savings rate badge */}
-                <div className="text-right shrink-0">
-                    <p className="text-[#0ea5e9] font-bold text-lg sm:text-xl">{savingsRate}%</p>
-                    <p className="text-gray-500 text-xs">savings rate</p>
-                </div>
+                {hasData && (
+                    <div className="text-right shrink-0">
+                        <p className="text-[#0ea5e9] font-bold text-lg sm:text-xl">{savingsRate}%</p>
+                        <p className="text-gray-500 text-xs">savings rate</p>
+                    </div>
+                )}
             </div>
 
             {/* Chart — or plain table when Save-Data is active */}
-            {saveData ? (
+            {!hasData ? (
+                <p role="status" className="py-16 text-center text-sm text-gray-400">
+                    Historical savings activity is unavailable. The current goal balance is shown above.
+                </p>
+            ) : saveData ? (
                 /* Save-Data fallback: plain data table, no BarChart bundle cost */
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-white/80 border-collapse">
@@ -261,7 +269,9 @@ function SpendingVsSavingsChartInner({
             </p>
 
             {/* Legend shown in both modes */}
-            <CustomLegend spending={totalSpending} savings={totalSavings} />
+            {hasData && (
+                <CustomLegend spending={totalSpending} savings={totalSavings} />
+            )}
         </div>
     )
 }

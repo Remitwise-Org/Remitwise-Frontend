@@ -56,6 +56,12 @@ export default function InsightsPage() {
               onRetry={refetch}
             />
           )}
+          {status === "success" && data?.partial && (
+            <p role="status" className="text-sm text-amber-300">
+              Some financial data sources are unavailable ({data.failedSources.join(", ")}).
+              The displayed totals may be incomplete.
+            </p>
+          )}
 
           {/* Charts grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -65,9 +71,7 @@ export default function InsightsPage() {
             ) : (
               <CategoryDonutChart
                 data={
-                  status === "success" && data && data.categories.length > 0
-                    ? data.categories
-                    : undefined
+                  status === "success" && data ? data.categories : []
                 }
               />
             )}
@@ -78,9 +82,7 @@ export default function InsightsPage() {
             ) : (
               <RemittanceTrendChart
                 data={
-                  status === "success" && data && data.trend.length > 0
-                    ? data.trend
-                    : undefined
+                  status === "success" && data ? data.trend : []
                 }
               />
             )}
@@ -91,13 +93,7 @@ export default function InsightsPage() {
             <ChartSkeleton />
           ) : (
             <SpendingVsSavingsChart
-              data={
-                status === "success" &&
-                data &&
-                data.spendingVsSavings.length > 0
-                  ? data.spendingVsSavings
-                  : undefined
-              }
+              data={status === "success" && data ? data.spendingVsSavings : []}
             />
           )}
         </div>

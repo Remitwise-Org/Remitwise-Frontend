@@ -8,6 +8,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { getSorobanBreaker } from "@/lib/soroban/circuit-breaker";
 import {
   getLatestLedger,
   getNetworkPassphrase,
@@ -49,6 +50,7 @@ export async function GET() {
     networkPassphrase?: string;
     network?: string;
     error?: string;
+    circuit?: ReturnType<ReturnType<typeof getSorobanBreaker>["getState"]>;
   };
   try {
     const ledger = await getLatestLedger();
@@ -58,6 +60,7 @@ export async function GET() {
       protocolVersion: Number(ledger.protocolVersion),
       networkPassphrase: getNetworkPassphrase(),
       network,
+      circuit: getSorobanBreaker().getState(),
     };
   } catch (err) {
     rpc = {
@@ -67,6 +70,7 @@ export async function GET() {
         err instanceof SorobanClientError
           ? err.message
           : "Unexpected error contacting Soroban RPC",
+      circuit: getSorobanBreaker().getState(),
     };
   }
 

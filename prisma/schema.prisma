@@ -10,6 +10,7 @@ generator client {
 model User {
   id              String          @id @default(cuid())
   stellar_address String          @unique
+  sessionVersion  Int             @default(0)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   preferences     UserPreference?
@@ -60,7 +61,7 @@ model RecurringRemittance {
   id               String    @id @default(cuid())
   userAddress      String
   recipientAddress String
-  amount           Float
+  amountStroops    BigInt
   currency         String
   frequency        String    // weekly | biweekly | monthly
   nextRunAt        DateTime
@@ -97,6 +98,7 @@ model AnchorFlow {
   anchorTransactionId String? @unique
   anchorUrl           String?
   status              String
+  reconcileAttempts   Int      @default(0)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
@@ -107,5 +109,14 @@ model AuditEvent {
   event     String
   identity  String
   details   String
+}
+
+model IdempotencyRecord {
+  key          String   @id
+  requestHash  String
+  responseBody String
+  statusCode   Int
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
 }
 

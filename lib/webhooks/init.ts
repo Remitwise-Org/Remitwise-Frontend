@@ -2,6 +2,7 @@ import {
   registerWebhookHandler,
   startWebhookProcessingLoop,
 } from '@/lib/webhooks/retry';
+import { startAnchorReconcileLoop } from '@/lib/anchor/reconcile';
 import { updateAnchorFlowStatusByTransactionId } from '@/lib/anchor/flow-store';
 import { recordAuditEvent } from '@/lib/admin/audit';
 import { startRecurringRemittanceLoop } from '@/lib/remittance/recurring-runner';
@@ -67,6 +68,8 @@ export function initializeWebhookHandlers() {
     const intervalMs = parseInt(process.env.WEBHOOK_PROCESSING_INTERVAL_MS || '30000', 10);
     startWebhookProcessingLoop(intervalMs);
 
+    const reconcileIntervalMs = parseInt(process.env.ANCHOR_RECONCILE_INTERVAL_MS || '60000', 10);
+    startAnchorReconcileLoop(reconcileIntervalMs);
     const recurringIntervalValue =
       process.env.RECURRING_REMITTANCE_PROCESSING_INTERVAL_MS ?? '30000';
     const recurringIntervalMs = Number(recurringIntervalValue);

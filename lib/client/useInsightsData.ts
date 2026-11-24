@@ -12,16 +12,34 @@ interface InsightsApiResponse {
   spendingTotal: number;
   savingsTotal: number;
   billsTotal: number;
+  unpaidBillsTotal: number;
   insuranceTotal: number;
+  counts: {
+    payments: number;
+    paidBills: number;
+    unpaidBills: number;
+    activePolicies: number;
+    savingsGoals: number;
+  };
   breakdown: Record<string, number>;
   trend: Record<string, number>;
-  note?: string;
+  trendCounts: Record<string, number>;
+  partial: boolean;
+  failedSources: string[];
 }
 
 export interface InsightsData {
   categories: CategoryDataPoint[];
   trend: TrendDataPoint[];
   spendingVsSavings: SpendingVsSavingsDataPoint[];
+  spendingTotal: number;
+  savingsTotal: number;
+  billsTotal: number;
+  unpaidBillsTotal: number;
+  insuranceTotal: number;
+  counts: InsightsApiResponse['counts'];
+  partial: boolean;
+  failedSources: string[];
 }
 
 export type InsightsStatus = 'idle' | 'loading' | 'success' | 'error';
@@ -57,13 +75,17 @@ export function mapBreakdownToCategories(
 }
 
 /**
- * Maps the raw /api/insights trend (keyed by "YYYY-M") into TrendDataPoint[].
- * Fills in placeholder transaction counts since the API only returns totals.
+ * Maps the raw /api/insights trend (keyed by "YYYY-MM") into TrendDataPoint[].
+ * Uses the per-month transaction counts returned by the API.
  *
- * @param trend - Record<"YYYY-M", totalAmount> from the API.
+ * @param trend - Record<"YYYY-MM", totalAmount> from the API.
+ * @param counts - Record<"YYYY-MM", transactionCount> from the API.
  * @returns Chronologically sorted TrendDataPoint[].
  */
-export function mapTrendData(trend: Record<string, number>): TrendDataPoint[] {
+export function mapTrendData(
+  trend: Record<string, number>,
+  counts: Record<string, number> = {},
+): TrendDataPoint[] {
   return Object.entries(trend)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([monthKey, amount]) => {
@@ -72,43 +94,13 @@ export function mapTrendData(trend: Record<string, number>): TrendDataPoint[] {
       return {
         date: date.toLocaleString('default', { month: 'short', year: '2-digit' }),
         amount,
-        transactions: 1,
+        transactions: counts[monthKey] ?? 0,
       };
     });
 }
 
 /**
- * Maps the raw /api/insights response into SpendingVsSavingsDataPoint[].
- *
- * @param raw - Full API response.
- * @returns Array of per-month spending/savings data points.
- */
-export function mapSpendingVsSavings(
-  raw: InsightsApiResponse,
-): SpendingVsSavingsDataPoint[] {
-  const now = new Date();
-  const month = now.toLocaleString('default', { month: 'short' });
-
-  const trendEntries = Object.entries(raw.trend).sort(([a], [b]) =>
-    a.localeCompare(b),
-  );
-
-  if (trendEntries.length > 0) {
-    return trendEntries.map(([monthKey, spending]) => {
-      const [year, m] = monthKey.split('-');
-      const label = new Date(Number(year), Number(m) - 1, 1).toLocaleString(
-        'default',
-        { month: 'short' },
-      );
-      return { month: label, spending, savings: raw.savingsTotal };
-    });
-  }
-
-  return [{ month, spending: raw.spendingTotal, savings: raw.savingsTotal }];
-}
-
-/**
- * Fetches live data from /api/insights and maps it into the three chart shapes.
+ * Fetches live data from /api/insights and maps it into the chart data shapes.
  * Falls back to empty arrays (which trigger each chart's empty state) on error.
  */
 export function useInsightsData(period = 'current_month'): UseInsightsDataResult {
@@ -119,6 +111,7 @@ export function useInsightsData(period = 'current_month'): UseInsightsDataResult
   const fetchData = useCallback(async () => {
     setStatus('loading');
     setError(null);
+    setData(null);
 
     try {
       const raw = await apiClient.getJson<InsightsApiResponse>(
@@ -126,13 +119,25 @@ export function useInsightsData(period = 'current_month'): UseInsightsDataResult
       );
 
       if (raw === null) {
+        setData(null);
+        setStatus('success');
         return;
       }
 
       setData({
         categories: mapBreakdownToCategories(raw.breakdown ?? {}),
-        trend: mapTrendData(raw.trend ?? {}),
-        spendingVsSavings: mapSpendingVsSavings(raw),
+        trend: mapTrendData(raw.trend ?? {}, raw.trendCounts ?? {}),
+        // Goal balances have no dated contribution history, so a savings
+        // trend cannot be represented without inventing monthly activity.
+        spendingVsSavings: [],
+        spendingTotal: raw.spendingTotal,
+        savingsTotal: raw.savingsTotal,
+        billsTotal: raw.billsTotal,
+        unpaidBillsTotal: raw.unpaidBillsTotal,
+        insuranceTotal: raw.insuranceTotal,
+        counts: raw.counts,
+        partial: raw.partial,
+        failedSources: raw.failedSources,
       });
       setStatus('success');
     } catch (err) {

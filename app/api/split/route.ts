@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, ApiError } from '@/lib/auth';
 import { getSplit } from '@/lib/contracts/remittance-split-cached';
+import { POST as updatePost } from '@/app/api/split/update/route';
 
 async function getHandler(request: NextRequest, session: string) {
   try {
     const env = (process.env.STELLAR_NETWORK as 'testnet' | 'mainnet') || 'testnet';
     const config = await getSplit(env);
-    
+
     if (!config) {
       throw new ApiError(404, 'Split configuration not found');
     }
-    
+
     return NextResponse.json({
       percentages: {
         savings: config.savings_percent,
@@ -25,11 +26,11 @@ async function getHandler(request: NextRequest, session: string) {
   }
 }
 
-async function postHandler(request: NextRequest, session: string) {
-  const body = await request.json();
-  // TODO: Call Soroban remittance_split contract to update config
-  return NextResponse.json({ success: true });
-}
-
+/**
+ * POST /api/split builds an unsigned split update transaction.
+ *
+ * Request percentages use spending/savings/bills/insurance. GET /api/split
+ * is a read view that exposes the contract categories as savings/bills/insurance/family.
+ */
 export const GET = withAuth(getHandler);
-export const POST = withAuth(postHandler);
+export const POST = updatePost;

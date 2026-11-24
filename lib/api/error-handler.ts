@@ -17,7 +17,47 @@ export class ApiRouteError extends Error {
   }
 }
 
-export function mapError(error: unknown, requestId?: string): { status: number; body: ErrorEnvelope } {
+/**
+ * Breaker state shape accepted by the error handler. Structurally compatible
+ * with the circuit breaker's state object (which may carry extra fields).
+ */
+export interface BreakerStateLike {
+  state: 'closed' | 'open' | 'half_open';
+  retryAfterMs?: number;
+}
+
+/**
+ * Error thrown when the Soroban RPC circuit breaker is open.
+ * Mapped to HTTP 503 with a Retry-After header.
+ */
+export class CircuitOpenError extends Error {
+  readonly status = 503;
+  readonly code = 'CIRCUIT_OPEN';
+  constructor(public retryAfterSeconds: number, message = 'Soroban RPC is temporarily unavailable') {
+    super(message);
+    this.name = 'CircuitOpenError';
+  }
+
+  /** Build a CircuitOpenError from a breaker state object. */
+  static fromBreakerState(breaker: BreakerStateLike): CircuitOpenError {
+    const ms = breaker.retryAfterMs ?? 0;
+    return new CircuitOpenError(Math.max(1, Math.ceil(ms / 1000)));
+  }
+}
+
+export function mapError(error: unknown, requestId?: string): { status: number; body: ErrorEnvelope; retryAfter?: number } {
+  if (error instanceof CircuitOpenError) {
+    return {
+      status: 503,
+      body: {
+        success: false,
+        error: { code: error.code, message: error.message },
+        requestId,
+      },
+      retryAfter: error.retryAfterSeconds,
+    };
+  }
+
   if (error instanceof ContractError) {
     return {
       status: error.httpStatus,
@@ -75,9 +115,12 @@ export function withApiErrorHandler<R extends Request = Request>(
       }
       return response;
     } catch (error) {
-      const { status, body } = mapError(error, requestId);
+      const { status, body, retryAfter } = mapError(error, requestId);
       const response = NextResponse.json(body, { status });
       response.headers.set('x-request-id', requestId);
+      if (retryAfter !== undefined) {
+        response.headers.set('Retry-After', String(retryAfter));
+      }
       return response;
     }
   };

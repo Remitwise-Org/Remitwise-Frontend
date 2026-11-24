@@ -1,6 +1,7 @@
 import { RecurringRemittance } from '@/utils/types/recurringRemittance.types';
 import { StrKey } from '@stellar/stellar-sdk';
 import { PrismaClient } from '@prisma/client';
+import { toStroops, fromStroops } from '@/lib/utils/i128';
 import prisma from '@/lib/db';
 import { computeNextRunAt } from '@/lib/remittance/recurring-frequency';
 
@@ -15,9 +16,6 @@ export interface PendingRecurringRun {
   createdAt: Date;
 }
 
-/**
- * Interface representing a database-swap-ready contract for recurring remittance schedules.
- */
 export interface IRecurringRemittanceStore {
   create(data: {
     userAddress: string;
@@ -28,19 +26,8 @@ export interface IRecurringRemittanceStore {
   }): Promise<RecurringRemittance>;
 
   list(userAddress: string): Promise<RecurringRemittance[]>;
-
   get(id: string): Promise<RecurringRemittance | null>;
-
-  update(
-    id: string,
-    updates: {
-      recipientAddress?: string;
-      amount?: number;
-      currency?: string;
-      frequency?: 'weekly' | 'biweekly' | 'monthly';
-    }
-  ): Promise<RecurringRemittance | null>;
-
+  update(id: string, updates: { recipientAddress?: string; amount?: number; currency?: string; frequency?: 'weekly' | 'biweekly' | 'monthly'; }): Promise<RecurringRemittance | null>;
   delete(id: string): Promise<boolean>;
 
   findDue(now: Date, limit: number): Promise<RecurringRemittance[]>;
@@ -59,27 +46,11 @@ export interface IRecurringRemittanceStore {
   clear(): Promise<void>;
 }
 
-/**
- * Centralized input validation for recurring remittance schedules.
- */
-export function validateRecurringRemittanceInput(data: {
-  recipientAddress?: string;
-  amount?: number;
-  currency?: string;
-  frequency?: string;
-}) {
-  if (data.recipientAddress !== undefined && !StrKey.isValidEd25519PublicKey(data.recipientAddress)) {
-    throw new Error('Invalid recipientAddress');
-  }
-  if (data.amount !== undefined && (typeof data.amount !== 'number' || data.amount <= 0)) {
-    throw new Error('Invalid amount');
-  }
-  if (data.currency !== undefined && (!data.currency || typeof data.currency !== 'string')) {
-    throw new Error('Invalid currency');
-  }
-  if (data.frequency !== undefined && !['weekly', 'biweekly', 'monthly'].includes(data.frequency)) {
-    throw new Error('Invalid frequency');
-  }
+export function validateRecurringRemittanceInput(data: { recipientAddress?: string; amount?: number; currency?: string; frequency?: string; }) {
+  if (data.recipientAddress !== undefined && !StrKey.isValidEd25519PublicKey(data.recipientAddress)) throw new Error('Invalid recipientAddress');
+  if (data.amount !== undefined && (typeof data.amount !== 'number' || data.amount <= 0)) throw new Error('Invalid amount');
+  if (data.currency !== undefined && (!data.currency || typeof data.currency !== 'string')) throw new Error('Invalid currency');
+  if (data.frequency !== undefined && !['weekly', 'biweekly', 'monthly'].includes(data.frequency)) throw new Error('Invalid frequency');
 }
 
 /**
@@ -101,11 +72,15 @@ export class InMemoryRecurringRemittanceStore implements IRecurringRemittanceSto
 
     const id = crypto.randomUUID();
     const createdAt = new Date();
+    const nextRunAt = computeNextRunAt(createdAt, data.frequency);
+    const amountStroops = toStroops(String(data.amount));
     const nextRunAt = computeNextRunAt(data.frequency, createdAt);
 
     const schedule: RecurringRemittance = {
       ...data,
       id,
+      amountStroops,
+      amount: fromStroops(amountStroops),
       createdAt,
       nextRunAt,
     };
@@ -137,9 +112,11 @@ export class InMemoryRecurringRemittanceStore implements IRecurringRemittanceSto
     const idx = this.schedules.findIndex(s => s.id === id);
     if (idx === -1) return null;
 
-    const updated = {
+    const updated: RecurringRemittance = {
       ...this.schedules[idx],
       ...updates,
+      amountStroops: updates.amount != null ? toStroops(String(updates.amount)) : this.schedules[idx].amountStroops,
+      amount: updates.amount != null ? fromStroops(toStroops(String(updates.amount))) : this.schedules[idx].amount,
     };
 
     if (updates.frequency) {

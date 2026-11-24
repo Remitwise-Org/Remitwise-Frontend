@@ -63,6 +63,18 @@ export async function handleRequest(req, res) {
     return;
   }
 
+  if (req.method === "GET" && (url.pathname === "/transaction" || url.pathname.startsWith("/transactions/"))) {
+    const id = url.searchParams.get("id") || url.pathname.split("/").pop();
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      transaction: {
+        id,
+        status: "completed",
+      },
+    }));
+    return;
+  }
+
   res.writeHead(404);
   res.end(JSON.stringify({ error: "not found" }));
 }
