@@ -2,6 +2,7 @@ import {
   registerWebhookHandler,
   startWebhookProcessingLoop,
 } from '@/lib/webhooks/retry';
+import { startAnchorReconcileLoop } from '@/lib/anchor/reconcile';
 import { updateAnchorFlowStatusByTransactionId } from '@/lib/anchor/flow-store';
 import { recordAuditEvent } from '@/lib/admin/audit';
 
@@ -65,6 +66,9 @@ export function initializeWebhookHandlers() {
   if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'test') {
     const intervalMs = parseInt(process.env.WEBHOOK_PROCESSING_INTERVAL_MS || '30000', 10);
     startWebhookProcessingLoop(intervalMs);
+
+    const reconcileIntervalMs = parseInt(process.env.ANCHOR_RECONCILE_INTERVAL_MS || '60000', 10);
+    startAnchorReconcileLoop(reconcileIntervalMs);
   }
 
   console.log('[WebhookInit] Webhook handlers initialized');
