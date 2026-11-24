@@ -1,30 +1,45 @@
 import ChapterView from "../../../../../components/tutorials/ChapterView";
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getTutorialById } from "@/lib/tutorials";
 
 type Props = {
   params: Promise<{ tutorialId: string; chapterId: string }>;
 };
 
+function getTutorialChapter(tutorialId: string, chapterId: string) {
+  const tutorial = getTutorialById(tutorialId);
+  const chapterIndex = Number(chapterId);
+
+  if (
+    !tutorial ||
+    !Number.isInteger(chapterIndex) ||
+    chapterIndex < 0 ||
+    chapterIndex >= tutorial.chaptersCount
+  ) {
+    notFound();
+  }
+
+  return { tutorial, chapterIndex };
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { tutorialId, chapterId } = await params;
-  const chapterIndex = parseInt(chapterId, 10) || 0;
-  const formattedTutorial = tutorialId
-    .replace(/-/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  const { tutorial, chapterIndex } = getTutorialChapter(tutorialId, chapterId);
   return {
-    title: `Chapter ${chapterIndex + 1} – ${formattedTutorial} | RemitWise`,
-    description: `Watch Chapter ${chapterIndex + 1} of the ${formattedTutorial} tutorial on RemitWise.`,
+    title: `Chapter ${chapterIndex + 1} – ${tutorial.title} | RemitWise`,
+    description: `Watch Chapter ${chapterIndex + 1} of the ${tutorial.title} tutorial on RemitWise.`,
   };
 }
 
 
 export default async function TutorialChapterPage({ params }: Props) {
   const { tutorialId, chapterId } = await params;
-  const chapterIndex = parseInt(chapterId, 10) || 0;
+  const { tutorial, chapterIndex } = getTutorialChapter(tutorialId, chapterId);
 
   // In a full implementation you'd fetch chapter data here.
   const chapterTitle = `Chapter ${chapterIndex + 1}`;
-  const chaptersCount = 5; // placeholder; replace with real length
+  const chaptersCount = tutorial.chaptersCount;
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-bg1 py-7 sm:py-8">
