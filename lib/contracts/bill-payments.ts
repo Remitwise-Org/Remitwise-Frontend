@@ -5,6 +5,7 @@ import {
   Networks,
   Operation,
 } from "@stellar/stellar-sdk";
+import { cachedContractCall, CACHE_TTL, CONTRACT_IDS } from "@/lib/cache/contract-cache";
 
 export interface Bill {
   id: string;
@@ -233,7 +234,13 @@ export async function buildCancelBillTx(
 }
 
 export async function getAllBills(owner: string): Promise<Bill[]> {
-  return getMockBills(owner);
+  return cachedContractCall(
+    CONTRACT_IDS.BILL_PAYMENTS,
+    "getAllBills",
+    { owner },
+    CACHE_TTL.getBills,
+    async () => getMockBills(owner)
+  );
 }
 
 export async function getBill(id: string, owner: string): Promise<Bill> {
