@@ -7,11 +7,12 @@
 export interface IdempotencyRecord {
     key: string;
     requestHash: string;
-    response: {
+    response?: {
         status: number;
         body: any;
         headers?: Record<string, string>;
     };
+    inFlight?: boolean;
     createdAt: number;
     expiresAt: number;
 }
@@ -20,4 +21,5 @@ export interface IdempotencyCheckResult {
     exists: boolean;
     record?: IdempotencyRecord;
     conflict: boolean;
+    inFlight?: boolean;
 }

@@ -35,9 +35,6 @@ vi.mock('@/lib/contracts/savings-goals', () => ({
   buildWithdrawFromGoalTx: vi.fn(),
   buildLockGoalTx: vi.fn(),
   buildUnlockGoalTx: vi.fn(),
-}));
-
-vi.mock('@/lib/contracts/savings-goal', () => ({
   getGoal: vi.fn(),
   isGoalCompleted: vi.fn(),
 }));
@@ -53,8 +50,9 @@ import {
   buildWithdrawFromGoalTx,
   buildLockGoalTx,
   buildUnlockGoalTx,
+  getGoal,
+  isGoalCompleted,
 } from '@/lib/contracts/savings-goals';
-import { getGoal, isGoalCompleted } from '@/lib/contracts/savings-goal';
 
 import { POST as createGoal, GET as listGoals } from '@/app/api/goals/route';
 import { POST as addToGoal } from '@/app/api/goals/[id]/add/route';

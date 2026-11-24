@@ -26,11 +26,6 @@ import { useDensity } from "@/lib/context/DensityContext";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import WidgetEmptyState from "@/components/ui/WidgetEmptyState";
-import {
-  serializeToCsv,
-  serializeToJson,
-  getExportFilename,
-} from "@/lib/utils/export-serializer";
 import { useSeo } from "@/lib/hooks/useSeo";
 import {
   getTransactionDateGroupKey,
@@ -447,6 +442,7 @@ export default function TransactionsPage() {
   };
 
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const [exportError, setExportError] = useState("");
   const exportButtonRef = useRef<HTMLButtonElement>(null);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -481,40 +477,42 @@ export default function TransactionsPage() {
     };
   }, [isExportDropdownOpen]);
 
-  const handleExport = (format: "csv" | "json") => {
-    if (filteredTransactions.length === 0) return;
+  const handleExport = async (format: "csv" | "json") => {
+    setExportError("");
+    try {
+      const params = new URLSearchParams({ format });
+      if (dateFrom) params.set("from", dateFrom);
+      if (dateTo) params.set("to", dateTo);
 
-    const rows = filteredTransactions.map((transaction) => ({
-      id: transaction.id,
-      type: transaction.type,
-      status: transaction.status,
-      amount: transaction.amount,
-      currency: transaction.currency,
-      counterparty: transaction.counterpartyName,
-      date: transaction.date,
-      fee: transaction.fee,
-    }));
+      const response = await fetch(
+        "/api/v1/remittance/history/export?" + params.toString()
+      );
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Unable to export transaction history.");
+      }
 
-    let dataString = "";
-    let mimeType = "";
-    if (format === "csv") {
-      dataString = serializeToCsv(rows);
-      mimeType = "text/csv;charset=utf-8;";
-    } else {
-      dataString = serializeToJson(rows);
-      mimeType = "application/json;charset=utf-8;";
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition") || "";
+      const filenameMatch = disposition.match(/filename="([^"]+)"/i);
+      const filename = filenameMatch?.[1] || "remitwise-transactions." + format;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      if (response.headers.get("X-Export-Truncated") === "true") {
+        setExportError("Export limited to the first 10,000 matching transactions.");
+      }
+    } catch (error) {
+      setExportError(
+        error instanceof Error ? error.message : "Unable to export transaction history."
+      );
     }
-
-    const filename = getExportFilename(format, dateFrom, dateTo);
-    const blob = new Blob([dataString], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   return (
@@ -544,18 +542,17 @@ export default function TransactionsPage() {
                 ref={exportButtonRef}
                 type="button"
                 onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
-                disabled={filteredTransactions.length === 0}
                 aria-expanded={isExportDropdownOpen}
                 aria-haspopup="true"
-                aria-label="Export filtered transactions"
-                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-red-400/30 bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101] disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-gray-500"
+                aria-label="Export transaction history"
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-red-400/30 bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010101]"
               >
                 <Download className="h-4 w-4" />
                 {t("transactionHistory.export")}
                 <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isExportDropdownOpen ? "rotate-180" : ""}`} />
               </button>
               
-              {isExportDropdownOpen && filteredTransactions.length > 0 && (
+              {isExportDropdownOpen && (
                 <div
                   ref={exportDropdownRef}
                   className="absolute right-0 mt-2 w-64 rounded-xl border border-white/10 bg-[#121212] p-2 shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150"
@@ -593,6 +590,11 @@ export default function TransactionsPage() {
                     </div>
                   </button>
                 </div>
+              )}
+              {exportError && (
+                <p className="mt-2 max-w-64 text-xs text-amber-300" role="status">
+                  {exportError}
+                </p>
               )}
             </div>
           </div>

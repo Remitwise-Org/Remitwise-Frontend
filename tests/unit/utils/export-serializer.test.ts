@@ -27,6 +27,19 @@ describe("export-serializer", () => {
       expect(escapeCsvField('John "Jack" Smith')).toBe('"John ""Jack"" Smith"');
     });
 
+    it("prefixes spreadsheet formula-leading characters with a single quote", () => {
+      expect(escapeCsvField("=1+1")).toBe("'=1+1");
+      expect(escapeCsvField("+SUM(A1:A2)")).toBe("'+SUM(A1:A2)");
+      expect(escapeCsvField("-1+2")).toBe("'-1+2");
+      expect(escapeCsvField("@SUM(A1:A2)")).toBe("'@SUM(A1:A2)");
+    });
+
+    it("escapes formula-leading values and RFC 4180 characters together", () => {
+      expect(escapeCsvField('=HYPERLINK("https://example.com", "open")')).toBe(
+        "\"'=HYPERLINK(\"\"https://example.com\"\", \"\"open\"\")\""
+      );
+    });
+
     it("encloses values containing newlines in double quotes", () => {
       expect(escapeCsvField("Line 1\nLine 2")).toBe('"Line 1\nLine 2"');
       expect(escapeCsvField("Line 1\rLine 2")).toBe('"Line 1\rLine 2"');
@@ -75,13 +88,13 @@ describe("export-serializer", () => {
       expect(lines[0]).toBe("id,type,status,amount,currency,counterparty,date,fee");
 
       // Verify row 1
-      expect(lines[1]).toBe("TX001,Send Money,Completed,-500,USDC,Maria Santos (Philippines),2026-06-02 14:32:15,0.5");
+      expect(lines[1]).toBe("TX001,Send Money,Completed,'-500,USDC,Maria Santos (Philippines),2026-06-02 14:32:15,0.5");
 
       // Verify row 2 (contains quotes in counterparty)
-      expect(lines[2]).toBe('TX002,Smart Split,Completed,-1200,USDC,"Smart Split: ""4 allocations""",2026-06-02 09:15:42,0.3');
+      expect(lines[2]).toBe("TX002,Smart Split,Completed,'-1200,USDC,\"Smart Split: \"\"4 allocations\"\"\",2026-06-02 09:15:42,0.3");
 
       // Verify row 3 (contains comma in counterparty)
-      expect(lines[3]).toBe('TX003,Bill Payment,Failed,-85.5,USDC,"Water & Power, Inc.",2026-05-31 16:45:23,0.1');
+      expect(lines[3]).toBe("TX003,Bill Payment,Failed,'-85.5,USDC,\"Water & Power, Inc.\",2026-05-31 16:45:23,0.1");
     });
 
     it("handles empty lists gracefully", () => {

@@ -92,6 +92,26 @@ function applySecurityHeaders(response: NextResponse, nonce: string, isApiRoute:
   }
 
   response.headers.set("Content-Security-Policy", csp);
+  if (!isApiRoute) {
+    response.headers.set(
+      "Content-Security-Policy-Report-Only",
+      buildReportOnlyCSP(nonce),
+    );
+    response.headers.set(
+      "Reporting-Endpoints",
+      'csp-endpoint="/api/csp-report"',
+    );
+  }
+}
+
+/**
+ * Builds the report-only CSP used during rollout. This policy never replaces
+ * the enforced CSP and is safe to tighten independently.
+ */
+export function buildReportOnlyCSP(nonce: string): string {
+  return `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'; style-src 'self' 'nonce-${nonce}'; img-src 'self' blob: data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; block-all-mixed-content; upgrade-insecure-requests; report-uri /api/csp-report; report-to csp-endpoint;`
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 /**
@@ -273,6 +293,12 @@ export async function middleware(request: NextRequest) {
     if (url.startsWith("/api/auth/") && !(url === "/api/auth/me" && method === "GET")) {
       limit = RATE_LIMITS.auth;
       limitType = "auth";
+    } else if (
+      url === "/api/csp-report" &&
+      method === "POST"
+    ) {
+      limit = RATE_LIMITS.general;
+      limitType = "general";
     } else if (["POST", "PUT", "DELETE", "PATCH"].includes(method)) {
       limit = RATE_LIMITS.write;
       limitType = "write";

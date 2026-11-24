@@ -11,9 +11,24 @@ export async function POST(request: NextRequest) {
   return withIdempotency(request, async (body) => {
     // Your logic here
     return NextResponse.json({ success: true });
-  });
+  }, { required: true });
 }
 ```
+
+`Idempotency-Key` headers are optional by default and can be made required with
+`{ required: true }`. A 24-hour TTL is used unless `ttlMs` is supplied.
+
+Money-moving routes:
+- `/api/send`
+- `/api/remittance/build`
+- `/api/v1/remittance/emergency/build`
+- `/api/v1/anchor/deposit`
+- `/api/v1/anchor/withdraw`
+
+The browser API client generates an `Idempotency-Key` for POST, PUT, PATCH, and
+DELETE requests. The key remains stable across session-refresh replay and other
+retries for the same logical request. Callers may supply `idempotencyKey` in
+`ApiClientOptions` to reuse a key explicitly.
 
 ## Files
 
@@ -28,7 +43,8 @@ export async function POST(request: NextRequest) {
 - ✅ Request body hashing for conflict detection
 - ✅ Configurable TTL (default 24 hours)
 - ✅ Automatic cleanup of expired records
-- ✅ 409 Conflict responses for mismatched bodies
+- ✅ 422 Conflict responses for mismatched bodies
+- ✅ 409 Conflict responses for duplicate requests still in flight
 - ✅ `X-Idempotent-Replay` header for cached responses
 
 ## Documentation

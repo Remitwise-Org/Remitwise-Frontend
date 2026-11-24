@@ -139,6 +139,7 @@ All protected routes return `401 Unauthorized` if no valid session exists.
 | GET | `/api/family` | List family members |
 | POST | `/api/family` | Add family member |
 | POST | `/api/send` | Send money transaction |
+| GET | `/api/v1/remittance/history/export?format=csv\|json&from=&to=` | Stream the authenticated wallet transaction history as CSV or JSON (maximum 10,000 rows) |
 | POST | `/api/anchor/deposit` | Start anchor deposit flow (fiat -> USDC) |
 | POST | `/api/anchor/withdraw` | Start anchor withdrawal flow (USDC -> fiat) |
 
@@ -155,6 +156,17 @@ Authentication:
 | POST | `/api/admin/cache/clear` | Clear in-memory caches |
 | GET | `/api/admin/users?limit=20` | List recent users (support/ops) |
 | GET | `/api/admin/audit?limit=50` | List latest audit events |
+
+### Transaction History Export
+
+`GET /api/v1/remittance/history/export?format=csv|json&from=YYYY-MM-DD&to=YYYY-MM-DD`
+
+- Requires a valid wallet session.
+- Exports the authenticated wallet's complete Horizon payment history, not only the currently loaded page.
+- `from` and `to` are optional inclusive UTC calendar dates.
+- CSV output protects spreadsheet formula-leading cells; both formats are streamed in chunks.
+- Exports are capped at 10,000 matching rows. `X-Export-Truncated: true` indicates additional matching history was omitted.
+- Responses use `Content-Disposition: attachment` and `Cache-Control: no-store`.
 
 ---
 
@@ -260,3 +272,38 @@ Anchor routes return `501 Not Implemented` when `ANCHOR_API_BASE_URL` is not con
   - `walletChain`: Active connected wallet Stellar chain or configured network (`testnet` / `mainnet`).
   - `lastRequestId`: Last tracked API request ID.
 
+
+
+## Stellar Swap API
+
+Both swap endpoints require a valid wallet session cookie. The session wallet is used as the source account and destination account; the API never signs or submits the returned transaction.
+
+### GET /api/swap/quote
+
+Returns the best available Horizon strict-send path for the requested source asset and amount.
+
+Query parameters:
+- `sourceCode` / `sourceIssuer`: source asset code and issuer (omit issuer for native XLM).
+- `destinationCode` / `destinationIssuer`: destination asset code and issuer (omit issuer for native XLM).
+- `amount`: positive source amount with no more than 7 decimal places.
+- `slippage`: optional percentage from 0 to 5 (defaults to 1).
+
+A successful response includes the source amount, estimated destination amount, exchange rate, intermediary path, and slippage-protected minimum received amount. Invalid assets or amounts return `400`; no available path returns `404`; an upstream Horizon failure returns `502`.
+
+### POST /api/swap/build
+
+Builds an unsigned Stellar `pathPaymentStrictSend` transaction for the authenticated wallet.
+
+JSON body:
+```json
+{
+  "sourceAsset": { "code": "XLM" },
+  "destinationAsset": { "code": "USDC", "issuer": "G..." },
+  "amount": "10",
+  "slippage": 1
+}
+```
+
+Slippage is optional (defaults to 1%) and must be between 0 and 5. The response includes the unsigned transaction XDR, network, quote, and calculated minimum received amount. The client must review and sign the XDR with the wallet; this endpoint does not submit it to Stellar.
+
+The Swap page remains gated by `NEXT_PUBLIC_SWAP_PAGE_ENABLED=true`.

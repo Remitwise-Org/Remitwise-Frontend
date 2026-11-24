@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 
 export type AnchorFlowType = 'deposit' | 'withdraw';
-export type AnchorFlowStatus = 'pending' | 'completed' | 'failed';
+export type AnchorFlowStatus = 'pending' | 'completed' | 'failed' | 'stale';
 
 export interface AnchorFlowRecord {
   id: string;
@@ -13,6 +13,7 @@ export interface AnchorFlowRecord {
   anchorTransactionId?: string;
   anchorUrl?: string;
   status: AnchorFlowStatus;
+  reconcileAttempts?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -27,6 +28,7 @@ interface AnchorFlowRow {
   anchorTransactionId: string | null;
   anchorUrl: string | null;
   status: string;
+  reconcileAttempts?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +44,7 @@ interface AnchorFlowDelegate {
       anchorTransactionId: string | null;
       anchorUrl: string | null;
       status: string;
+      reconcileAttempts?: number;
     };
   }): Promise<AnchorFlowRow>;
   findUnique(args: {
@@ -54,15 +57,21 @@ interface AnchorFlowDelegate {
       anchorTransactionId: string;
     };
     data: {
-      status: string;
+      status?: string;
+      reconcileAttempts?: number;
     };
   }): Promise<AnchorFlowRow>;
   findMany(args: {
-    where: {
-      userAddress: string;
+    where?: {
+      userAddress?: string;
+      status?: string;
+      createdAt?: {
+        lte?: Date;
+      };
     };
-    orderBy: {
-      createdAt: 'desc';
+    take?: number;
+    orderBy?: {
+      createdAt: 'asc' | 'desc';
     };
   }): Promise<AnchorFlowRow[]>;
 }
@@ -81,10 +90,11 @@ function mapAnchorFlow(record: {
   anchorTransactionId: string | null;
   anchorUrl: string | null;
   status: string;
+  reconcileAttempts?: number;
   createdAt: Date;
   updatedAt: Date;
 }): AnchorFlowRecord {
-  return {
+  const result: AnchorFlowRecord = {
     id: record.id,
     type: record.type as AnchorFlowType,
     userAddress: record.userAddress,
@@ -97,6 +107,12 @@ function mapAnchorFlow(record: {
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
   };
+
+  if (record.reconcileAttempts !== undefined) {
+    result.reconcileAttempts = record.reconcileAttempts;
+  }
+
+  return result;
 }
 
 export async function createPendingAnchorFlow(
@@ -125,7 +141,42 @@ export async function createPendingAnchorFlow(
 
 export async function updateAnchorFlowStatusByTransactionId(
   anchorTransactionId: string,
-  status: AnchorFlowStatus
+  status: AnchorFlowStatus,
+  options?: { reconcileAttempts?: number }
+): Promise<AnchorFlowRecord | null> {
+  if (!anchorTransactionId) {
+    return null;
+  }
+
+  const anchorFlowClient = (prisma as any).anchorFlow;
+  if (!anchorFlowClient?.findUnique || !anchorFlowClient?.update) {
+    return null;
+  }
+
+  const existing = await anchorFlowClient.findUnique({
+    where: { anchorTransactionId },
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  const updateData: { status: string; reconcileAttempts?: number } = { status };
+  if (options?.reconcileAttempts !== undefined) {
+    updateData.reconcileAttempts = options.reconcileAttempts;
+  }
+
+  const updated = await anchorFlowClient.update({
+    where: { anchorTransactionId },
+    data: updateData,
+  });
+
+  return mapAnchorFlow(updated);
+}
+
+export async function updateAnchorFlowReconcileAttempts(
+  anchorTransactionId: string,
+  reconcileAttempts: number
 ): Promise<AnchorFlowRecord | null> {
   if (!anchorTransactionId) {
     return null;
@@ -146,10 +197,37 @@ export async function updateAnchorFlowStatusByTransactionId(
 
   const updated = await anchorFlowClient.update({
     where: { anchorTransactionId },
-    data: { status },
+    data: { reconcileAttempts },
   });
 
   return mapAnchorFlow(updated);
+}
+
+export async function listStalePendingFlows(
+  olderThan: Date | number,
+  limit: number = 50
+): Promise<AnchorFlowRecord[]> {
+  const anchorFlowClient = (prisma as any).anchorFlow;
+  if (!anchorFlowClient?.findMany) {
+    return [];
+  }
+
+  const olderThanDate = olderThan instanceof Date ? olderThan : new Date(olderThan);
+
+  const flows = await anchorFlowClient.findMany({
+    where: {
+      status: 'pending',
+      createdAt: {
+        lte: olderThanDate,
+      },
+    },
+    take: limit,
+    orderBy: {
+      createdAt: 'asc',
+    },
+  });
+
+  return flows.map(mapAnchorFlow);
 }
 
 export async function getAnchorFlowsForUser(

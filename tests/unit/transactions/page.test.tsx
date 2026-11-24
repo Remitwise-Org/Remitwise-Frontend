@@ -11,6 +11,17 @@ const revokeObjectURLMock = vi.fn();
 
 describe("TransactionsPage Export Component Integration", () => {
   beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      headers: {
+        get: (name: string) => {
+          if (name.toLowerCase() === "content-disposition") return 'attachment; filename="remitwise-transactions.csv"';
+          if (name.toLowerCase() === "x-export-truncated") return "false";
+          return null;
+        },
+      },
+      blob: vi.fn().mockResolvedValue(new Blob(["exported"])),
+    }));
     createObjectURLMock.mockClear();
     revokeObjectURLMock.mockClear();
     vi.spyOn(URL, "createObjectURL").mockImplementation(createObjectURLMock);
@@ -24,6 +35,7 @@ describe("TransactionsPage Export Component Integration", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     vi.useRealTimers();
   });
 
@@ -40,16 +52,16 @@ describe("TransactionsPage Export Component Integration", () => {
   it("should render the export button enabled when there are transactions", () => {
     renderComponent();
     const exportButton = screen.getByRole("button", {
-      name: /export filtered transactions/i,
+      name: /export transaction history/i,
     });
     expect(exportButton).toBeInTheDocument();
     expect(exportButton).not.toBeDisabled();
   });
 
-  it("should open export dropdown on click and trigger download on clicking CSV", () => {
+  it("should open export dropdown on click and trigger server-side CSV download", async () => {
     renderComponent();
     const exportButton = screen.getByRole("button", {
-      name: /export filtered transactions/i,
+      name: /export transaction history/i,
     });
 
     // Dropdown should not be visible initially
@@ -63,48 +75,63 @@ describe("TransactionsPage Export Component Integration", () => {
     const csvButton = screen.getByRole("menuitem", { name: /export as csv/i });
     fireEvent.click(csvButton);
 
-    // Verify it triggered URL.createObjectURL
+    // Dropdown closes immediately while the server export is fetched.
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(fetch).toHaveBeenCalledWith("/api/v1/remittance/history/export?format=csv");
     expect(createObjectURLMock).toHaveBeenCalled();
     expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
-
-    // Dropdown should close after click
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
-  it("should trigger JSON download on clicking JSON export option", () => {
+  it("should trigger server-side JSON download on clicking JSON export option", async () => {
     renderComponent();
     const exportButton = screen.getByRole("button", {
-      name: /export filtered transactions/i,
+      name: /export transaction history/i,
     });
 
     fireEvent.click(exportButton);
     const jsonButton = screen.getByRole("menuitem", { name: /export as json/i });
     fireEvent.click(jsonButton);
 
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(fetch).toHaveBeenCalledWith("/api/v1/remittance/history/export?format=json");
     expect(createObjectURLMock).toHaveBeenCalled();
     expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
   });
 
-  it("should disable export button when filtered results are empty", () => {
+  it("keeps full-history export available when local filters have no matches", async () => {
     renderComponent();
-    
-    // Type query that matches nothing in the search input
+
     const searchInput = screen.getByPlaceholderText(/search id, recipient, type, status, amount/i);
     fireEvent.change(searchInput, { target: { value: "NonExistentTransactionXYZ" } });
-
-    // Advance timer to trigger debounced filter update
     act(() => {
       vi.advanceTimersByTime(300);
     });
 
     const exportButton = screen.getByRole("button", {
-      name: /export filtered transactions/i,
+      name: /export transaction history/i,
     });
-    expect(exportButton).toBeDisabled();
+    expect(exportButton).not.toBeDisabled();
 
-    // Dropdown should not be opened if clicked while disabled
     fireEvent.click(exportButton);
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: /export as csv/i }));
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(fetch).toHaveBeenCalledWith("/api/v1/remittance/history/export?format=csv");
+    expect(createObjectURLMock).toHaveBeenCalled();
   });
 
   it("keeps ascending date sort when a type filter changes", () => {
@@ -145,7 +172,7 @@ describe("TransactionsPage Export Component Integration", () => {
   it("closes dropdown when Escape key is pressed", () => {
     renderComponent();
     const exportButton = screen.getByRole("button", {
-      name: /export filtered transactions/i,
+      name: /export transaction history/i,
     });
 
     fireEvent.click(exportButton);
@@ -159,7 +186,7 @@ describe("TransactionsPage Export Component Integration", () => {
   it("closes dropdown when clicking outside", () => {
     renderComponent();
     const exportButton = screen.getByRole("button", {
-      name: /export filtered transactions/i,
+      name: /export transaction history/i,
     });
 
     fireEvent.click(exportButton);

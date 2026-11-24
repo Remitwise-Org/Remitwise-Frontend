@@ -17,6 +17,8 @@ import {
   createPendingAnchorFlow,
   updateAnchorFlowStatusByTransactionId,
   getAnchorFlowsForUser,
+  listStalePendingFlows,
+  updateAnchorFlowReconcileAttempts,
   AnchorFlowStatus,
 } from '@/lib/anchor/flow-store';
 
@@ -188,5 +190,95 @@ describe('Anchor flow persistence store', () => {
         updatedAt: '2026-06-23T10:05:00.000Z',
       },
     ]);
+  });
+
+  it('lists stale pending flows older than a given date with limit', async () => {
+    const olderThan = new Date('2026-06-23T12:00:00.000Z');
+    mockPrisma.anchorFlow.findMany.mockResolvedValue([
+      {
+        id: 'flow-stale-1',
+        type: 'deposit',
+        userAddress: 'GABC123',
+        amount: '100',
+        currency: 'USD',
+        destination: null,
+        anchorTransactionId: 'tx-stale-1',
+        anchorUrl: null,
+        status: 'pending',
+        reconcileAttempts: 1,
+        createdAt: new Date('2026-06-23T11:00:00.000Z'),
+        updatedAt: new Date('2026-06-23T11:00:00.000Z'),
+      },
+    ]);
+
+    const result = await listStalePendingFlows(olderThan, 10);
+
+    expect(mockPrisma.anchorFlow.findMany).toHaveBeenCalledWith({
+      where: {
+        status: 'pending',
+        createdAt: {
+          lte: olderThan,
+        },
+      },
+      take: 10,
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+    expect(result).toEqual([
+      {
+        id: 'flow-stale-1',
+        type: 'deposit',
+        userAddress: 'GABC123',
+        amount: '100',
+        currency: 'USD',
+        destination: undefined,
+        anchorTransactionId: 'tx-stale-1',
+        anchorUrl: undefined,
+        status: 'pending',
+        reconcileAttempts: 1,
+        createdAt: '2026-06-23T11:00:00.000Z',
+        updatedAt: '2026-06-23T11:00:00.000Z',
+      },
+    ]);
+  });
+
+  it('updates reconcileAttempts for an existing flow', async () => {
+    mockPrisma.anchorFlow.findUnique.mockResolvedValue({
+      id: 'flow-1',
+      type: 'deposit',
+      userAddress: 'GABC123',
+      amount: '50',
+      currency: 'USD',
+      destination: null,
+      anchorTransactionId: 'tx-attempt-1',
+      anchorUrl: null,
+      status: 'pending',
+      reconcileAttempts: 0,
+      createdAt: new Date('2026-06-23T10:00:00.000Z'),
+      updatedAt: new Date('2026-06-23T10:00:00.000Z'),
+    });
+    mockPrisma.anchorFlow.update.mockResolvedValue({
+      id: 'flow-1',
+      type: 'deposit',
+      userAddress: 'GABC123',
+      amount: '50',
+      currency: 'USD',
+      destination: null,
+      anchorTransactionId: 'tx-attempt-1',
+      anchorUrl: null,
+      status: 'pending',
+      reconcileAttempts: 1,
+      createdAt: new Date('2026-06-23T10:00:00.000Z'),
+      updatedAt: new Date('2026-06-23T10:05:00.000Z'),
+    });
+
+    const result = await updateAnchorFlowReconcileAttempts('tx-attempt-1', 1);
+
+    expect(mockPrisma.anchorFlow.update).toHaveBeenCalledWith({
+      where: { anchorTransactionId: 'tx-attempt-1' },
+      data: { reconcileAttempts: 1 },
+    });
+    expect(result?.reconcileAttempts).toBe(1);
   });
 });

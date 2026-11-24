@@ -172,6 +172,40 @@ export async function clearIdempotencyStore(): Promise<void> {
   await (db as any).idempotencyRecord.deleteMany({});
 }
 
+export function reserveIdempotencyKey(
+    key: string,
+    requestHash: string,
+    ttlMs: number = DEFAULT_TTL_MS
+): { reserved: boolean; conflict: boolean; inFlight: boolean } {
+    const existing = store.get(key);
+    const now = Date.now();
+
+    if (existing) {
+        if (existing.expiresAt < now) {
+            store.delete(key);
+        } else if (existing.requestHash !== requestHash) {
+            return { reserved: false, conflict: true, inFlight: false };
+        } else if (existing.inFlight) {
+            return { reserved: false, conflict: false, inFlight: true };
+        } else {
+            return { reserved: false, conflict: false, inFlight: false };
+        }
+    }
+
+    store.set(key, {
+        key,
+        requestHash,
+        inFlight: true,
+        createdAt: now,
+        expiresAt: now + ttlMs,
+    });
+    return { reserved: true, conflict: false, inFlight: false };
+}
+
+export function releaseIdempotencyKey(key: string): void {
+    store.delete(key);
+}
+
 /**
  * Purge expired records. Called by the background runtime on a schedule.
  */
@@ -204,6 +238,12 @@ export async function getStoreSize(): Promise<number> {
 // only and log a warning in non-test environments.
 // ---------------------------------------------------------------------------
 
+    return {
+        exists: true,
+        record,
+        conflict: false,
+        inFlight: record.inFlight === true,
+    };
 /** @deprecated use the async storeIdempotencyRecord */
 export function storeIdempotencyRecordSync(
   key: string,
