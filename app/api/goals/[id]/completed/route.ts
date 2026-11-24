@@ -1,4 +1,4 @@
-import { getGoal, isGoalCompleted, ContractReadError } from "@/lib/contracts/savings-goal";
+import { getGoal, isGoalCompleted, ContractReadError } from "@/lib/contracts/savings-goals";
 import { NextResponse, NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
