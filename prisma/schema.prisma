@@ -96,3 +96,12 @@ model AuditEvent {
   details   String
 }
 
+model IdempotencyRecord {
+  key          String   @id
+  requestHash  String
+  responseBody String
+  statusCode   Int
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+}
+
