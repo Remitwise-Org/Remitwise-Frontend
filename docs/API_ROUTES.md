@@ -139,6 +139,7 @@ All protected routes return `401 Unauthorized` if no valid session exists.
 | GET | `/api/family` | List family members |
 | POST | `/api/family` | Add family member |
 | POST | `/api/send` | Send money transaction |
+| GET | `/api/v1/remittance/history/export?format=csv\|json&from=&to=` | Stream the authenticated wallet transaction history as CSV or JSON (maximum 10,000 rows) |
 | POST | `/api/anchor/deposit` | Start anchor deposit flow (fiat -> USDC) |
 | POST | `/api/anchor/withdraw` | Start anchor withdrawal flow (USDC -> fiat) |
 
@@ -155,6 +156,17 @@ Authentication:
 | POST | `/api/admin/cache/clear` | Clear in-memory caches |
 | GET | `/api/admin/users?limit=20` | List recent users (support/ops) |
 | GET | `/api/admin/audit?limit=50` | List latest audit events |
+
+### Transaction History Export
+
+`GET /api/v1/remittance/history/export?format=csv|json&from=YYYY-MM-DD&to=YYYY-MM-DD`
+
+- Requires a valid wallet session.
+- Exports the authenticated wallet's complete Horizon payment history, not only the currently loaded page.
+- `from` and `to` are optional inclusive UTC calendar dates.
+- CSV output protects spreadsheet formula-leading cells; both formats are streamed in chunks.
+- Exports are capped at 10,000 matching rows. `X-Export-Truncated: true` indicates additional matching history was omitted.
+- Responses use `Content-Disposition: attachment` and `Cache-Control: no-store`.
 
 ---
 
