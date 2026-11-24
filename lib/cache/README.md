@@ -90,6 +90,14 @@ Get cache statistics.
 curl http://localhost:3000/api/cache/invalidate
 ```
 
+## Health Probe Cache
+
+`GET /api/health` caches database, Soroban RPC, and Anchor probe results for
+5 seconds and coalesces concurrent requests. The response includes
+`cachedAgeMs`; its `timestamp` is generated per response. An authorized admin
+can bypass the cache with `GET /api/health?fresh=1`. The cache is registered as
+`health_probes` for central cache clearing.
+
 ## Adding Cache to New Contracts
 
 1. **Create cached wrapper** (`lib/contracts/your-contract-cached.ts`):
