@@ -71,3 +71,30 @@ export default function MyComponent() {
 - **Never weaken the CSP.** Do not add `unsafe-inline` to `script-src` under any circumstances.
 - **Third-party scripts:** Avoid them if possible. If required, use Next.js `<Script>` components which will automatically inherit the nonce from the request headers.
 - **Client Components:** The `headers()` API is only available in Server Components. If a Client Component requires the nonce, it must be passed down as a prop from a Server Component parent.
+
+## CSP Rollout and Enforcement
+
+Page responses include a `Content-Security-Policy-Report-Only` policy in
+addition to the enforced `Content-Security-Policy`. The report-only policy uses
+the same per-request nonce for scripts and styles, omits `unsafe-inline` for
+styles, and sends violations to `POST /api/csp-report`.
+
+### Maintainer rollout
+
+1. Deploy the report-only header and collect violations from
+   `/api/csp-report`.
+2. Review violations in structured application logs. Investigate
+   `effectiveDirective`, `blockedURL`, and `documentURL`; do not suppress
+   unknown directives.
+3. Fix application inline styles and third-party resources to use the nonce or
+   supported external assets.
+4. Confirm there are no new violations for a stable observation window.
+5. Promote the policy into `Content-Security-Policy` by replacing the enforced
+   `style-src 'unsafe-inline'` with the report-only nonce-based style policy,
+   keeping the same nonce and other source restrictions.
+6. Remove or retain reporting fields according to ongoing monitoring needs;
+   retain report-only monitoring for at least one release if possible.
+
+The reporting route accepts `application/csp-report` and
+`application/reports+json`, limits bodies to 8 KB, ignores unknown directives,
+and de-duplicates identical reports for one minute.

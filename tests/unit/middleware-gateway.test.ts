@@ -112,6 +112,7 @@ describe('global middleware gateway', () => {
 
   it.each([
     { method: 'GET', path: '/api/auth/session', limit: '10', remaining: '9' },
+    { method: 'POST', path: '/api/csp-report', limit: '100', remaining: '99' },
     { method: 'POST', path: '/api/transfers', limit: '50', remaining: '49' },
     { method: 'GET', path: '/api/transfers', limit: '100', remaining: '99' },
   ])(
@@ -232,6 +233,17 @@ describe('global middleware gateway', () => {
     expect(csp).toContain("'strict-dynamic'");
     expect(csp).not.toMatch(/script-src[^;]*'unsafe-inline'/); // No unsafe-inline in script-src
     expect(csp).toMatch(/script-src 'self' 'nonce-[a-zA-Z0-9+/=]+' 'strict-dynamic'/);
+    const reportOnly = response.headers.get(
+      'Content-Security-Policy-Report-Only',
+    );
+    expect(reportOnly).toContain("script-src 'self' 'nonce-");
+    expect(reportOnly).toContain("style-src 'self' 'nonce-");
+    expect(reportOnly).not.toContain("style-src 'self' 'unsafe-inline'");
+    expect(reportOnly).toContain('report-uri /api/csp-report');
+    expect(reportOnly).toContain('report-to csp-endpoint');
+    expect(response.headers.get('Reporting-Endpoints')).toBe(
+      'csp-endpoint="/api/csp-report"',
+    );
     
     // API headers should not be applied to pages
     expect(response.headers.get('X-RateLimit-Limit')).toBeNull();
