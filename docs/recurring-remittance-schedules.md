@@ -1,41 +1,52 @@
-# Recurring Remittance Schedules (CRUD) - API & Semantics
+# Recurring Remittance Schedules
 
 ## Overview
-This feature allows users to create and manage recurring remittance schedules (e.g. monthly $300 to recipient X). Schedules are stored in the DB and can be used for reminders or future automation.
 
-## DB Schema: `recurring_remittances`
-- `id`: string (UUID)
-- `userAddress`: string (user’s public key/address)
-- `recipientAddress`: string (recipient’s public key/address)
-- `amount`: number
-- `currency`: string
-- `frequency`: enum ('weekly', 'biweekly', 'monthly')
-- `nextRunAt`: Date (timestamp for next scheduled run)
-- `lastRunAt`: Date? (timestamp for last run, optional)
-- `createdAt`: Date
+Recurring schedules create pending remittance runs when `nextRunAt` is due.
+The runner never signs or submits a Stellar transaction; the user must build
+and sign each remittance with their wallet.
 
-## API Endpoints
-- `POST /api/remittance/recurring` — Create schedule
-- `GET /api/remittance/recurring` — List schedules for authenticated user
-- `PATCH /api/remittance/recurring/[id]` — Update schedule
-- `DELETE /api/remittance/recurring/[id]` — Delete schedule
+## Schedule API
 
-## Validation
-- `amount > 0`
-- `frequency` in allowed values
-- `recipientAddress` is a valid Stellar address
-- `nextRunAt` is computed from frequency
+- `POST /api/remittance/recurring` — create an authenticated user's schedule
+- `GET /api/remittance/recurring` — list the authenticated user's schedules
+- `PATCH /api/remittance/recurring/[id]` — update an owned schedule
+- `DELETE /api/remittance/recurring/[id]` — delete an owned schedule
+- `GET /api/remittance/recurring/[id]/runs` — list pending runs for an owned
+  schedule, including the unsigned remittance details
 
-## Authentication
-- User must be authenticated; `userAddress` is taken from session/auth
+The client can pass `unsignedRemittance` from a pending run to
+`POST /api/remittance/build`, then have the wallet sign and submit the returned
+XDR.
 
-## Optional Cron/Reminders
-- A background job (not implemented here) could check for due schedules, build transactions, and notify users to sign or remind them of due sends.
+## Run ledger and idempotency
 
-## Example Schedule Semantics
-- If frequency is `monthly`, `nextRunAt` is set to one month from creation or last run.
-- If frequency is `weekly`, `nextRunAt` is set to 7 days from creation or last run.
-- If frequency is `biweekly`, `nextRunAt` is set to 14 days from creation or last run.
+The background runner checks for schedules with `nextRunAt <= now`. Each
+successful run records a `RecurringRun` with status `pending`, the schedule's
+recipient, amount and currency at the time it became due, and its `dueAt`.
+The unique `(scheduleId, dueAt)` constraint prevents duplicate ledger entries.
+Creating the run and advancing the schedule happen in one database transaction;
+concurrent runner invocations cannot advance a schedule without recording its
+run.
 
----
-This document covers the requirements and semantics for #188.
+Only one occurrence per due schedule is processed in a pass. If a schedule is
+overdue by multiple periods, later occurrences are picked up by subsequent
+passes.
+
+## Frequency semantics
+
+- `weekly`: seven days after the due date
+- `biweekly`: fourteen days after the due date
+- `monthly`: one calendar month after the due date, clamped to the last valid
+  day of the target month (for example, January 31 to February 28 or 29)
+
+The due time is preserved in UTC. `lastRunAt` is set to the occurrence's
+`dueAt`, and `nextRunAt` advances from that due date.
+
+## Background lifecycle
+
+The Node.js server starts the runner from application instrumentation. Its
+interval is configured by `RECURRING_REMITTANCE_PROCESSING_INTERVAL_MS`
+(default: 30000 ms). The loop runs once at startup and registers a graceful
+shutdown hook that stops the interval; in-flight work is tracked by the
+background runtime.

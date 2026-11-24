@@ -5,6 +5,7 @@ import {
 import { startAnchorReconcileLoop } from '@/lib/anchor/reconcile';
 import { updateAnchorFlowStatusByTransactionId } from '@/lib/anchor/flow-store';
 import { recordAuditEvent } from '@/lib/admin/audit';
+import { startRecurringRemittanceLoop } from '@/lib/remittance/recurring-runner';
 
 /**
  * Initialize webhook handlers on application startup.
@@ -69,6 +70,16 @@ export function initializeWebhookHandlers() {
 
     const reconcileIntervalMs = parseInt(process.env.ANCHOR_RECONCILE_INTERVAL_MS || '60000', 10);
     startAnchorReconcileLoop(reconcileIntervalMs);
+    const recurringIntervalValue =
+      process.env.RECURRING_REMITTANCE_PROCESSING_INTERVAL_MS ?? '30000';
+    const recurringIntervalMs = Number(recurringIntervalValue);
+    if (Number.isFinite(recurringIntervalMs) && recurringIntervalMs > 0) {
+      startRecurringRemittanceLoop(recurringIntervalMs);
+    } else {
+      console.error(
+        '[WebhookInit] Invalid RECURRING_REMITTANCE_PROCESSING_INTERVAL_MS; recurring schedules will not be processed',
+      );
+    }
   }
 
   console.log('[WebhookInit] Webhook handlers initialized');
