@@ -109,4 +109,27 @@ describe("Remittance quote API", () => {
       message: "Unable to resolve quote",
     });
   });
+
+  it("adds Deprecation, Sunset, and Link headers on /qoute with identical status and body", async () => {
+    const canonicalReq = new NextRequest(
+      "http://localhost/api/remittance/quote?amount=100&currency=USD&toCurrency=PHP",
+      { method: "GET" }
+    );
+    const aliasReq = new NextRequest(
+      "http://localhost/api/remittance/qoute?amount=100&currency=USD&toCurrency=PHP",
+      { method: "GET" }
+    );
+
+    const canonicalRes = await quoteGET(canonicalReq);
+    const aliasRes = await qouteGET(aliasReq);
+
+    expect(aliasRes.headers.get("Deprecation")).toBe("true");
+    expect(aliasRes.headers.get("Sunset")).toBeTruthy();
+    expect(aliasRes.headers.get("Link")).toBe(
+      '</api/remittance/quote>; rel="successor-version"'
+    );
+
+    expect(aliasRes.status).toBe(canonicalRes.status);
+    expect(await aliasRes.json()).toEqual(await canonicalRes.json());
+  });
 });
