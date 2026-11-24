@@ -41,7 +41,7 @@ export async function checkIdempotency(
     }
 
     const requestHash = hashRequestBody(body);
-    const result = checkIdempotencyKey(idempotencyKey, requestHash);
+    const result = await checkIdempotencyKey(idempotencyKey, requestHash);
 
     if (!result.exists) {
         return null; // First time seeing this key
