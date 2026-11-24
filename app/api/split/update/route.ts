@@ -1,77 +1,79 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
 import { buildUpdateSplitTx } from '@/lib/contracts/remittance-split';
-import { PercentagesSchema, StellarAddressSchema } from '@/lib/validation/percentages';
-import { createValidationError } from '@/lib/errors/api-errors';
+import { validateStellarAddress, validatePercentages, ValidationError } from '@/lib/validation/percentages';
+import { withApiErrorHandler, ApiRouteError } from '@/lib/api/error-handler';
 
-export async function POST(request: NextRequest) {
-  try {
-    // 1. Verify authentication
-    const session = await getSession(request);
-    
-    if (!session || !session.authenticated || !session.address) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Validate session address
-    const sessionValidation = StellarAddressSchema.safeParse(session.address);
-    if (!sessionValidation.success) {
-      return createValidationError('Invalid session address', sessionValidation.error.flatten().fieldErrors);
-    }
-
-    // 2. Parse request body
-    let body: any;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json(
-        { success: false, error: 'Invalid JSON in request body' },
-        { status: 400 }
-      );
-    }
-
-    // Validate body using Zod schema
-    const result = PercentagesSchema.safeParse(body);
-    if (!result.success) {
-      const errors = {
-        form: result.error.flatten().formErrors,
-        field: result.error.flatten().fieldErrors,
-      };
-      return createValidationError('Validation Error', errors);
-    }
-
-    // 3. Extract percentages
-    const { spending, savings, bills, insurance } = result.data;
-
-    // 4. Build transaction using session address as caller
-    const txResult = await buildUpdateSplitTx(
-      session.address,
-      { spending, savings, bills, insurance },
-      { simulate: true } // Include simulation for cost estimation
-    );
-
-    // 5. Return success response
-    return NextResponse.json({
-      success: true,
-      xdr: txResult.xdr,
-      simulate: txResult.simulate,
-      message: 'Transaction built successfully. Please sign with your wallet and submit to the network.',
-    });
-
-  } catch (error) {
-    // Handle other errors
-    console.error('Update split error:', error);
-    
-    const errorMessage = error instanceof Error 
-      ? error.message 
-      : 'An unexpected error occurred';
-
-    return NextResponse.json(
-      { success: false, error: errorMessage },
-      { status: 500 }
-    );
+/**
+ * POST split configuration.
+ *
+ * The POST contract is the four-way split: spending/savings/bills/insurance.
+ * GET /api/split is a read view: savings/bills/insurance/family.
+ */
+export async function postHandler(request: NextRequest) {
+  const session = await getSession(request);
+  if (!session || !session.authenticated || !session.address) {
+    throw new ApiRouteError(401, 'UNAUTHORIZED', 'Unauthorized');
   }
+
+  try {
+    validateStellarAddress(session.address);
+  } catch (error) {
+    throw new ApiRouteError(400, 'VALIDATION_ERROR', error instanceof Error ? error.message : 'Invalid session address');
+  }
+
+  const contentType = request.headers.get('content-type');
+  if (contentType && !contentType.toLowerCase().includes('application/json')) {
+    throw new ApiRouteError(400, 'BAD_REQUEST', 'Request body must use application/json');
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    throw new ApiRouteError(400, 'BAD_REQUEST', 'Invalid JSON in request body');
+  }
+
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new ApiRouteError(400, 'VALIDATION_ERROR', 'Request body must be a JSON object');
+  }
+
+  const data = body as Record<string, unknown>;
+  const allowed = ['spending', 'savings', 'bills', 'insurance'];
+  const extraFields = Object.keys(data).filter((key) => !allowed.includes(key));
+  const missingFields = allowed.filter((key) => !(key in data));
+  if (extraFields.length > 0) {
+    throw new ApiRouteError(400, 'VALIDATION_ERROR', `Unexpected fields: ${extraFields.join(', ')}`);
+  }
+  if (missingFields.length > 0) {
+    throw new ApiRouteError(400, 'VALIDATION_ERROR', `Missing required fields: ${missingFields.join(', ')}`);
+  }
+
+  const percentages = {
+    spending: data.spending,
+    savings: data.savings,
+    bills: data.bills,
+    insurance: data.insurance,
+  } as Record<string, unknown>;
+
+  if (Object.values(percentages).some((value) => typeof value !== 'number' || !Number.isFinite(value))) {
+    throw new ApiRouteError(400, 'VALIDATION_ERROR', 'All percentages must be finite numbers');
+  }
+
+  const split = percentages as unknown as { spending: number; savings: number; bills: number; insurance: number };
+
+  try {
+    validatePercentages(split);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      const status = error.message.startsWith('Percentages must sum to 100') ? 422 : 400;
+      throw new ApiRouteError(status, status === 422 ? 'INVALID_PERCENTAGE_SUM' : 'VALIDATION_ERROR', error.message);
+    }
+    throw error;
+  }
+
+  const txResult = await buildUpdateSplitTx(session.address, split, { simulate: true });
+  return NextResponse.json({ xdr: txResult.xdr });
 }
+
+export const POST = withApiErrorHandler(postHandler);

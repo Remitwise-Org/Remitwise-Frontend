@@ -1,6 +1,7 @@
 import { vi, expect, describe, it, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { cookies as cookiesImport } from 'next/headers';
+import { POST as SPLIT_POST } from '@/app/api/split/route';
 import { GET as CALCULATE_GET } from '@/app/api/split/calculate/route';
 import { POST as INITIALIZE_POST } from '@/app/api/split/initialize/route';
 import { POST as UPDATE_POST } from '@/app/api/split/update/route';
@@ -62,6 +63,67 @@ describe('Split Routes API Integration Tests', () => {
       }),
     });
   };
+
+  describe('POST /api/split', () => {
+    it('returns an unsigned transaction XDR for valid percentages', async () => {
+      const req = new NextRequest('http://localhost/api/split', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-stellar-public-key': validPublicKey,
+        },
+        body: JSON.stringify({ spending: 40, savings: 35, bills: 15, insurance: 10 }),
+      });
+
+      const res = await SPLIT_POST(req);
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body).toEqual({ xdr: 'mock-update-xdr' });
+      expect(buildUpdateSplitTx).toHaveBeenCalledWith(
+        validPublicKey,
+        { spending: 40, savings: 35, bills: 15, insurance: 10 },
+        { simulate: true },
+      );
+    });
+
+    it('returns 422 when percentages do not sum to 100', async () => {
+      const req = new NextRequest('http://localhost/api/split', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-stellar-public-key': validPublicKey },
+        body: JSON.stringify({ spending: 40, savings: 35, bills: 15, insurance: 11 }),
+      });
+
+      const res = await SPLIT_POST(req);
+      expect(res.status).toBe(422);
+      const body = await res.json();
+      expect(body.error.message).toContain('sum to 100');
+      expect(buildUpdateSplitTx).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for malformed JSON', async () => {
+      const req = new NextRequest('http://localhost/api/split', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-stellar-public-key': validPublicKey },
+        body: '{"spending":',
+      });
+
+      const res = await SPLIT_POST(req);
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error.message).toContain('Invalid JSON');
+    });
+
+    it('returns 401 for unauthenticated requests', async () => {
+      const req = new NextRequest('http://localhost/api/split', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ spending: 40, savings: 35, bills: 15, insurance: 10 }),
+      });
+
+      const res = await SPLIT_POST(req);
+      expect(res.status).toBe(401);
+    });
+  });
 
   describe('GET /api/split/calculate', () => {
     it('returns 401 for unauthenticated request', async () => {
@@ -248,6 +310,7 @@ describe('Split Routes API Integration Tests', () => {
       const req = new NextRequest('http://localhost/api/split/update', {
         method: 'POST',
         headers: {
+          'content-type': 'application/json',
           'x-stellar-public-key': validPublicKey,
         },
         body: JSON.stringify({ spending: 40, savings: 40, bills: 15, insurance: 5 }),
@@ -255,8 +318,7 @@ describe('Split Routes API Integration Tests', () => {
       const res = await UPDATE_POST(req);
       expect(res.status).toBe(200);
       const body = await res.json();
-      expect(body.success).toBe(true);
-      expect(body.xdr).toBeDefined();
+      expect(body).toEqual({ xdr: 'mock-update-xdr' });
     });
 
     it('returns 400 when percentages do not sum to 100', async () => {
