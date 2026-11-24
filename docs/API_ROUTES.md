@@ -230,6 +230,32 @@ Anchor routes return `501 Not Implemented` when `ANCHOR_API_BASE_URL` is not con
 }
 ```
 
+**POST /api/split**
+
+Builds an unsigned Soroban remittance split update transaction. The POST body uses
+`spending`, `savings`, `bills`, and `insurance`; the four percentages must be
+non-negative and total 100.
+
+```json
+{
+  "spending": 40,
+  "savings": 35,
+  "bills": 15,
+  "insurance": 10
+}
+```
+
+Response:
+```json
+{
+  "xdr": "unsigned-transaction-xdr"
+}
+```
+
+Returns `400` for malformed or invalid requests, `401` when unauthenticated, and
+`422` when percentages do not sum to 100. `POST` deliberately uses `spending`,
+while `GET /api/split` is a read view that returns `savings/bills/insurance/family`.
+
 **GET /api/split/calculate?amount=1000**
 ```json
 {
@@ -248,7 +274,6 @@ Anchor routes return `501 Not Implemented` when `ANCHOR_API_BASE_URL` is not con
 - `404 Not Found`: Contract not deployed or split not configured
 - `500 Internal Server Error`: RPC connection error or contract read failure
 - `400 Bad Request`: Invalid parameters (calculate endpoint)
-```
 
 ## Diagnostics Page (/debug)
 
