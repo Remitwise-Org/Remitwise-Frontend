@@ -19,6 +19,111 @@ servers:
   - url: /api
     description: legacy base path (rewrites to v1)
 paths:
+  /insights:
+    get:
+      summary: Get authenticated financial insights
+      tags:
+        - Insights
+      description: |
+        Aggregates payment, bill, savings-goal, and active-policy data for the
+        authenticated wallet. `savingsTotal` is the current goal balance and
+        `insuranceTotal` is the current monthly premium total; neither has
+        historical activity timestamps. Paid bills are grouped by their due
+        date because the bill model does not expose a paid-at timestamp.
+        When one or more data sources fail, the response remains successful
+        with `partial: true` and identifies the failed sources.
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: period
+          required: false
+          schema:
+            type: string
+            enum: [current_month, last_3_months, last_year]
+            default: current_month
+      responses:
+        '200':
+          description: Aggregated insights; may contain partial data.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - period
+                  - spendingTotal
+                  - savingsTotal
+                  - billsTotal
+                  - unpaidBillsTotal
+                  - insuranceTotal
+                  - counts
+                  - breakdown
+                  - trend
+                  - trendCounts
+                  - partial
+                  - failedSources
+                properties:
+                  period:
+                    type: string
+                    enum: [current_month, last_3_months, last_year]
+                  spendingTotal:
+                    type: number
+                  savingsTotal:
+                    type: number
+                  billsTotal:
+                    type: number
+                  unpaidBillsTotal:
+                    type: number
+                  insuranceTotal:
+                    type: number
+                  counts:
+                    type: object
+                    required:
+                      - payments
+                      - paidBills
+                      - unpaidBills
+                      - activePolicies
+                      - savingsGoals
+                    properties:
+                      payments:
+                        type: integer
+                      paidBills:
+                        type: integer
+                      unpaidBills:
+                        type: integer
+                      activePolicies:
+                        type: integer
+                      savingsGoals:
+                        type: integer
+                  breakdown:
+                    type: object
+                    additionalProperties:
+                      type: number
+                  trend:
+                    type: object
+                    additionalProperties:
+                      type: number
+                    description: Payment totals keyed by YYYY-MM.
+                  trendCounts:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                    description: Payment counts keyed by YYYY-MM.
+                  partial:
+                    type: boolean
+                  failedSources:
+                    type: array
+                    items:
+                      type: string
+                      enum: [payments, bills, policies, goals]
+        '400':
+          description: Unsupported period.
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
   /anchor/deposit:
     post:
       summary: Start anchor deposit flow

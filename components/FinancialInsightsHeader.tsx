@@ -8,27 +8,23 @@ import { useEffect, useRef, useState } from 'react'
 import PageHeadingLink from '@/components/PageHeadingLink'
 import { CTA_TEST_IDS } from '@/lib/cta-testids'
 
-type DateRangePreset = 'This Month' | 'Last Month' | 'Last 3 Months' | 'Last 6 Months' | 'This Year'
-export type DateRangeOption = DateRangePreset | 'Custom Range'
+type DateRangePreset = 'This Month' | 'Last 3 Months' | 'Last Year'
+export type DateRangeOption = DateRangePreset
 export type ExportFormat = 'csv' | 'pdf'
 
 type FinancialInsightsHeaderProps = {
   onExport?: (format: ExportFormat) => void
   onDateRangeChange?: (range: DateRangeOption) => void
-  onCustomDateChange?: (start: string, end: string) => void
 }
 
 export default function FinancialInsightsHeader({
   onExport,
   onDateRangeChange,
-  onCustomDateChange,
 }: FinancialInsightsHeaderProps) {
   const router = useRouter()
   const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false)
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false)
   const [selectedDateRange, setSelectedDateRange] = useState<DateRangeOption>('This Month')
-  const [customStart, setCustomStart] = useState('')
-  const [customEnd, setCustomEnd] = useState('')
   const dateDropdownRef = useRef<HTMLDivElement>(null)
   const exportDropdownRef = useRef<HTMLDivElement>(null)
   const [focusedDateIndex, setFocusedDateIndex] = useState(-1)
@@ -40,11 +36,8 @@ export default function FinancialInsightsHeader({
 
   const dateRangeOptions: DateRangeOption[] = [
     'This Month',
-    'Last Month',
     'Last 3 Months',
-    'Last 6 Months',
-    'This Year',
-    'Custom Range',
+    'Last Year',
   ]
 
   const exportOptions: { format: ExportFormat; label: string; icon: typeof FileText }[] = [
@@ -55,13 +48,7 @@ export default function FinancialInsightsHeader({
   const handleDateRangeSelect = (range: DateRangeOption) => {
     setSelectedDateRange(range)
     setFocusedDateIndex(-1)
-    if (range === 'Custom Range') {
-      // Keep dropdown open so user can fill in date inputs
-      return
-    }
     setIsDateDropdownOpen(false)
-    setCustomStart('')
-    setCustomEnd('')
     onDateRangeChange?.(range)
   }
 
@@ -224,33 +211,6 @@ export default function FinancialInsightsHeader({
                         {range}
                       </button>
                     ))}
-                    {/* Custom range date inputs */}
-                    {selectedDateRange === 'Custom Range' && (
-                      <div className="px-4 py-3 border-t border-gray-800 space-y-2">
-                        <label className="text-xs text-gray-400 block">From</label>
-                        <input
-                          type="date"
-                          value={customStart}
-                          onChange={(e) => {
-                            const val = e.target.value
-                            setCustomStart(val)
-                            if (val && customEnd) onCustomDateChange?.(val, customEnd)
-                          }}
-                          className="w-full px-3 py-2 rounded-lg bg-[#0A0A0A] border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#D72323]"
-                        />
-                        <label className="text-xs text-gray-400 block">To</label>
-                        <input
-                          type="date"
-                          value={customEnd}
-                          onChange={(e) => {
-                            const val = e.target.value
-                            setCustomEnd(val)
-                            if (customStart && val) onCustomDateChange?.(customStart, val)
-                          }}
-                          className="w-full px-3 py-2 rounded-lg bg-[#0A0A0A] border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#D72323]"
-                        />
-                      </div>
-                    )}
                   </div>
                 </>
               )}
@@ -365,9 +325,7 @@ export default function FinancialInsightsHeader({
               >
                 <Calendar className="w-4 h-4 xl:w-5 xl:h-5 text-[#D72323]" />
                 <span className="text-sm xl:text-base text-white whitespace-nowrap font-medium">
-                  {selectedDateRange === 'Custom Range' && customStart && customEnd
-                    ? `${customStart} – ${customEnd}`
-                    : `${selectedDateRange} (${currentMonth})`}
+                  {`${selectedDateRange} (${currentMonth})`}
                 </span>
                 <ChevronDown className={`w-4 h-4 xl:w-5 xl:h-5 text-gray-400 transition-transform duration-200 ${isDateDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -404,33 +362,6 @@ export default function FinancialInsightsHeader({
                         {range}
                       </button>
                     ))}
-                    {/* Custom range date inputs */}
-                    {selectedDateRange === 'Custom Range' && (
-                      <div className="px-4 py-3 border-t border-gray-800 space-y-2">
-                        <label className="text-xs text-gray-400 block">From</label>
-                        <input
-                          type="date"
-                          value={customStart}
-                          onChange={(e) => {
-                            const val = e.target.value
-                            setCustomStart(val)
-                            if (val && customEnd) onCustomDateChange?.(val, customEnd)
-                          }}
-                          className="w-full px-3 py-2 rounded-lg bg-[#0A0A0A] border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#D72323]"
-                        />
-                        <label className="text-xs text-gray-400 block">To</label>
-                        <input
-                          type="date"
-                          value={customEnd}
-                          onChange={(e) => {
-                            const val = e.target.value
-                            setCustomEnd(val)
-                            if (customStart && val) onCustomDateChange?.(customStart, val)
-                          }}
-                          className="w-full px-3 py-2 rounded-lg bg-[#0A0A0A] border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#D72323]"
-                        />
-                      </div>
-                    )}
                   </div>
                 </>
               )}
