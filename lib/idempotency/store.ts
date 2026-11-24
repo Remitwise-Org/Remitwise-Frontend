@@ -105,6 +105,40 @@ export function storeIdempotencyRecord(
     store.set(key, record);
 }
 
+export function reserveIdempotencyKey(
+    key: string,
+    requestHash: string,
+    ttlMs: number = DEFAULT_TTL_MS
+): { reserved: boolean; conflict: boolean; inFlight: boolean } {
+    const existing = store.get(key);
+    const now = Date.now();
+
+    if (existing) {
+        if (existing.expiresAt < now) {
+            store.delete(key);
+        } else if (existing.requestHash !== requestHash) {
+            return { reserved: false, conflict: true, inFlight: false };
+        } else if (existing.inFlight) {
+            return { reserved: false, conflict: false, inFlight: true };
+        } else {
+            return { reserved: false, conflict: false, inFlight: false };
+        }
+    }
+
+    store.set(key, {
+        key,
+        requestHash,
+        inFlight: true,
+        createdAt: now,
+        expiresAt: now + ttlMs,
+    });
+    return { reserved: true, conflict: false, inFlight: false };
+}
+
+export function releaseIdempotencyKey(key: string): void {
+    store.delete(key);
+}
+
 /**
  * Check if an idempotency key exists and validate request
  */
@@ -129,7 +163,12 @@ export function checkIdempotencyKey(
         return { exists: true, record, conflict: true };
     }
 
-    return { exists: true, record, conflict: false };
+    return {
+        exists: true,
+        record,
+        conflict: false,
+        inFlight: record.inFlight === true,
+    };
 }
 
 /**

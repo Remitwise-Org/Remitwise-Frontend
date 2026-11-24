@@ -51,10 +51,13 @@ import { createApiRequestHeaders, setApiClientAuthToken } from './apiHeaders';
 export {
   API_AUTHORIZATION_HEADER,
   API_REQUEST_ID_HEADER,
+  API_IDEMPOTENCY_KEY_HEADER,
   setApiClientAuthToken,
 } from './apiHeaders';
 
 export interface ApiClientOptions extends RequestInit {
+  /** Optional stable key for mutation retries and replay. Generated automatically for POST/PUT/PATCH/DELETE. */
+  idempotencyKey?: string;
   /** Max retry attempts for idempotent (GET/HEAD) requests. Ignored for writes. Default 3. */
   retries?: number;
   /** Base backoff in ms; doubles each attempt and is jittered. Default 1000. */
@@ -173,6 +176,7 @@ async function fetchWithRetry(url: string, options: ApiClientOptions): Promise<R
     backoff = DEFAULT_BACKOFF,
     timeout = DEFAULT_TIMEOUT,
     signal: callerSignal,
+    idempotencyKey: _ignoredIdempotencyKey,
     // Stripped so they never reach `fetch`.
     _isRetry: _ignoredIsRetry,
     ...fetchOptions
@@ -273,9 +277,14 @@ async function fetchWithRetry(url: string, options: ApiClientOptions): Promise<R
 async function request(url: string, options?: ApiClientOptions): Promise<Response | null> {
   // Create these once per logical request. Retries and the one-time session
   // refresh replay therefore carry the same correlation ID.
+  const method = (options?.method ?? 'GET').toUpperCase();
+  const existingHeaders = new Headers(options?.headers);
+  if (options?.idempotencyKey && !existingHeaders.has('idempotency-key')) {
+    existingHeaders.set('idempotency-key', options.idempotencyKey);
+  }
   const requestOptions: ApiClientOptions = {
     ...(options ?? {}),
-    headers: createApiRequestHeaders(options?.headers),
+    headers: createApiRequestHeaders(existingHeaders, method),
   };
   const response = await fetchWithRetry(url, requestOptions);
 

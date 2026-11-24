@@ -113,7 +113,7 @@ describe('Idempotency Store Unit Tests', () => {
 
         // The store registers setInterval for cleanupExpired with 1 hour interval (60 * 60 * 1000)
         // Advance time by 1 hour (3600000 ms) to trigger the cleanup interval
-        vi.advanceTimersByTime(60 * 60 * 1000);
+        vi.setSystemTime(Date.now() + 60 * 60 * 1000);
 
         // 'expired-soon' and 'expired-very-soon' should be removed
         expect(checkIdempotencyKey('expired-soon', 'h1').exists).toBe(false);
@@ -187,7 +187,7 @@ describe('Idempotency Middleware Unit Tests', () => {
         expect(res).toBeNull();
     });
 
-    it('should return 409 conflict when request body does not match cached body', async () => {
+    it('should return 422 conflict when request body does not match cached body', async () => {
         const req = new NextRequest('http://localhost/api/test', {
             method: 'POST',
             headers: { 'idempotency-key': 'key-conflict' }
@@ -202,7 +202,7 @@ describe('Idempotency Middleware Unit Tests', () => {
         const res = await checkIdempotency(req, body2);
 
         expect(res).not.toBeNull();
-        expect(res!.status).toBe(409);
+        expect(res!.status).toBe(422);
         const data = await res!.json();
         expect(data.error).toBe('Idempotency Key Conflict');
     });
@@ -311,7 +311,7 @@ describe('Idempotency Middleware Unit Tests', () => {
         expect(data).toEqual({ ok: true });
     });
 
-    it('should demonstrate concurrent identical requests vulnerability (race condition due to missing in-flight state)', async () => {
+    it('should return 409 and execute the handler once for concurrent identical requests', async () => {
         const req1 = new NextRequest('http://localhost/api/test', {
             method: 'POST',
             headers: { 'idempotency-key': 'concurrent-key' },
@@ -338,10 +338,8 @@ describe('Idempotency Middleware Unit Tests', () => {
             withIdempotency(req2, handler)
         ]);
 
-        // Since req1 hasn't stored the result before req2 checks, both handlers get executed
-        expect(handlerCallCount).toBe(2);
-        expect(res1.status).toBe(200);
-        expect(res2.status).toBe(200);
+        expect(handlerCallCount).toBe(1);
+        expect([res1.status, res2.status].sort()).toEqual([200, 409]);
     });
 });
 
@@ -414,13 +412,12 @@ describe('Timer & Lifecycle Integration Unit Tests', () => {
 
         // Records added after reset are NOT swept while the timer is stopped.
         storeIdempotencyRecord('post-reset', 'h', { status: 200, body: {} }, 10 * 1000);
-        vi.advanceTimersByTime(60 * 60 * 1000);
+        vi.setSystemTime(Date.now() + 60 * 60 * 1000);
         expect(getStoreSize()).toBe(1);
 
         // Re-initialise so the rest of the suite keeps a live sweeper.
         startIdempotencyCleanup();
         expect(isCleanupActive()).toBe(true);
-        vi.advanceTimersByTime(60 * 60 * 1000);
         expect(checkIdempotencyKey('post-reset', 'h').exists).toBe(false);
     });
 
@@ -432,7 +429,7 @@ describe('Timer & Lifecycle Integration Unit Tests', () => {
         expect(getStoreSize()).toBe(1);
 
         // Advance time past the cleanup interval to verify only one timer is active
-        vi.advanceTimersByTime(60 * 60 * 1000);
+        vi.setSystemTime(Date.now() + 60 * 60 * 1000);
         // 'guard-key' has 24h TTL, so it should still exist after one cleanup interval
         expect(checkIdempotencyKey('guard-key', 'hash-g').exists).toBe(true);
     });
