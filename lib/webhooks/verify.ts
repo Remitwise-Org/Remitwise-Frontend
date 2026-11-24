@@ -2,6 +2,13 @@ import crypto from 'crypto';
 
 export type WebhookSignatureAlgorithm = 'hmac-sha256' | 'stripe-v1' | 'ed25519';
 
+export type WebhookVerifyOptions = {
+  toleranceSeconds?: number;
+  now?: () => number;
+};
+
+const DEFAULT_TIMESTAMP_TOLERANCE_SECONDS = 300;
+
 function toBuffer(payload: string | Buffer): Buffer {
   return typeof payload === 'string' ? Buffer.from(payload) : payload;
 }
@@ -70,9 +77,49 @@ function parseStripeSignature(signature: string): { timestamp: string; signature
   return { timestamp, signatures };
 }
 
-function verifyStripeV1(payload: Buffer, signature: string, secret: string): boolean {
+function getTimestampToleranceSeconds(options?: WebhookVerifyOptions): number {
+  if (options?.toleranceSeconds !== undefined) {
+    return Number.isInteger(options.toleranceSeconds) && options.toleranceSeconds >= 0
+      ? options.toleranceSeconds
+      : DEFAULT_TIMESTAMP_TOLERANCE_SECONDS;
+  }
+
+  if (typeof process !== 'undefined') {
+    const configuredText = process.env.WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS;
+    if (configuredText !== undefined && /^\d+$/.test(configuredText)) {
+      const configured = Number(configuredText);
+      if (Number.isSafeInteger(configured)) {
+        return configured;
+      }
+    }
+  }
+
+  return DEFAULT_TIMESTAMP_TOLERANCE_SECONDS;
+}
+
+function verifyStripeV1(
+  payload: Buffer,
+  signature: string,
+  secret: string,
+  options?: WebhookVerifyOptions
+): boolean {
   const parsed = parseStripeSignature(signature);
   if (!parsed) return false;
+
+  if (!/^\d+$/.test(parsed.timestamp)) return false;
+
+  const timestamp = Number(parsed.timestamp);
+  if (!Number.isSafeInteger(timestamp)) return false;
+
+  const toleranceSeconds = getTimestampToleranceSeconds(options);
+  const nowSeconds = options?.now
+    ? options.now()
+    : Math.floor(Date.now() / 1000);
+
+  if (!Number.isFinite(nowSeconds)) return false;
+
+  const clockSkewSeconds = Math.abs(Math.floor(nowSeconds) - timestamp);
+  if (clockSkewSeconds > toleranceSeconds) return false;
 
   const signedPayload = `${parsed.timestamp}.${payload.toString()}`;
   const expected = crypto
@@ -113,7 +160,8 @@ export function verifySignature(
   payload: string | Buffer,
   signature: string,
   secret: string,
-  algorithm: WebhookSignatureAlgorithm = 'hmac-sha256'
+  algorithm: WebhookSignatureAlgorithm = 'hmac-sha256',
+  options?: WebhookVerifyOptions
 ): boolean {
   if (!payload || !signature || !secret) return false;
 
@@ -123,7 +171,7 @@ export function verifySignature(
     case 'hmac-sha256':
       return verifyHmacSha256(body, signature, secret);
     case 'stripe-v1':
-      return verifyStripeV1(body, signature, secret);
+      return verifyStripeV1(body, signature, secret, options);
     case 'ed25519':
       return verifyEd25519(body, signature, secret);
     default:
