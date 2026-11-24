@@ -8,6 +8,7 @@
 # IDE
 .vscode/
 .idea/
+.vs/
 *.swp
 *.swo
 *~
@@ -24,6 +25,9 @@ Thumbs.db
 # Logs
 *.log
 logs/
+cargo_err.txt
+test_output.txt
+report.json
 
 # Environment
 .env
