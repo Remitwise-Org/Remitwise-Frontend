@@ -18,6 +18,10 @@ export const HORIZON_TEST_ACCOUNT = 'GABCDEFGHIJKLMNOPQRSTUVWXYZ234567ABCDEFGHIJ
 export const HORIZON_TEST_TX_HASH =
   'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2';
 export const HORIZON_NOT_FOUND_TX_HASH = '0'.repeat(64);
+export const HORIZON_UNFUNDED_ACCOUNT =
+  'GUNFUNDEDACCOUNT23456789ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+export const HORIZON_OUTAGE_ACCOUNT =
+  'GOUTAGEACCOUNT23456789ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
 const paymentRecord = {
   id: 'op_1',
@@ -32,8 +36,38 @@ const paymentRecord = {
   amount: '25.0000000',
 };
 
+const secondPaymentRecord = {
+  ...paymentRecord,
+  id: 'op_2',
+  paging_token: 'op_2',
+  transaction_hash: 'b'.repeat(64),
+  amount: '10.0000000',
+};
+
 export const horizonHandlers = [
-  http.get(`${HORIZON_BASE}/accounts/:address/payments`, () => {
+  http.get(`${HORIZON_BASE}/accounts/:address/payments`, ({ params, request }) => {
+    const address = params.address;
+    if (address === HORIZON_UNFUNDED_ACCOUNT) {
+      return HttpResponse.json({ status: 404, title: 'Resource Missing' }, { status: 404 });
+    }
+    if (address === HORIZON_OUTAGE_ACCOUNT) {
+      return HttpResponse.json({ status: 503, title: 'Service Unavailable' }, { status: 503 });
+    }
+
+    const cursor = new URL(request.url).searchParams.get('cursor');
+    const limit = new URL(request.url).searchParams.get('limit');
+    if (cursor === 'op_1') {
+      return HttpResponse.json({
+        _embedded: { records: [secondPaymentRecord] },
+      });
+    }
+
+    if (limit === '1') {
+      return HttpResponse.json({
+        _embedded: { records: [paymentRecord] },
+      });
+    }
+
     return HttpResponse.json({
       _embedded: { records: [paymentRecord] },
     });
