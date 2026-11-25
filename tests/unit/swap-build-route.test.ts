@@ -61,7 +61,7 @@ describe('POST /api/swap/build', () => {
     const decoded = TransactionBuilder.fromXDR(data.xdr, STELLAR_CONFIG.networkPassphrase);
     expect(decoded.operations).toHaveLength(1);
     expect(decoded.operations[0].type).toBe('pathPaymentStrictSend');
-    expect(decoded.operations[0].destMin).toBe('1.98');
+    expect(decoded.operations[0].destMin).toBe('1.9800000');
   });
 
   it('rejects unauthenticated requests', async () => {

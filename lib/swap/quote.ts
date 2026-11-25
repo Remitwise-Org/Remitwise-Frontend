@@ -92,7 +92,8 @@ export function calculateMinimumReceived(amount: string, slippagePercent: number
   const retainedBasisPoints = BigInt(Math.round((100 - slippagePercent) * 100));
   const minimumUnits = (units * retainedBasisPoints) / 10_000n;
   const integer = minimumUnits / STROOP_SCALE;
-  const decimals = (minimumUnits % STROOP_SCALE).toString().padStart(7, '0').replace(/0+$/, '');
+  const rawDecimals = (minimumUnits % STROOP_SCALE).toString().padStart(7, '0');
+  const decimals = rawDecimals.replace(/0+$/, '');
   return decimals ? `${integer}.${decimals}` : integer.toString();
 }
 

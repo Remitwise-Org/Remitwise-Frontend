@@ -238,12 +238,6 @@ export async function getStoreSize(): Promise<number> {
 // only and log a warning in non-test environments.
 // ---------------------------------------------------------------------------
 
-    return {
-        exists: true,
-        record,
-        conflict: false,
-        inFlight: record.inFlight === true,
-    };
 /** @deprecated use the async storeIdempotencyRecord */
 export function storeIdempotencyRecordSync(
   key: string,
