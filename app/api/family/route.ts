@@ -1,10 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
-import { buildAddMemberTx } from "@/lib/contracts/family-wallet";
+import { buildAddMemberTx, getAllMembers } from "@/lib/contracts/family-wallet";
+import { resolveContractId } from "@/lib/contracts/network-resolution";
 import type { AddMemberRequest } from "@/utils/types/family-wallet.types";
 
-async function getHandler(_request: NextRequest, _address: string) {
-  return NextResponse.json({ members: [] });
+async function getHandler(_request: NextRequest, address: string) {
+  try {
+    resolveContractId("FAMILY_WALLET");
+  } catch {
+    return NextResponse.json(
+      {
+        error: "Service Unavailable",
+        message: "Family wallet contract ID is not configured for this network.",
+      },
+      { status: 503 },
+    );
+  }
+
+  const members = await getAllMembers(address);
+  return NextResponse.json({ members });
 }
 
 async function postHandler(request: NextRequest, address: string) {
