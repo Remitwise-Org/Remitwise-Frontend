@@ -4,6 +4,17 @@
 
 Implemented CORS, security headers, and request body size validation for all `/api` routes in the Next.js application. The implementation follows best practices with modular helper functions, proper header ordering, and comprehensive test coverage.
 
+API rate limiting uses a 60-second sliding window with separate auth, write,
+and general limits. By default counters are held in a bounded in-memory store,
+so they are local to the current process. Set `RATE_LIMIT_STORE_URL` to use an
+HTTP endpoint backed by a shared store (for example, a Redis-backed service).
+The endpoint must atomically accept a JSON `POST` body containing
+`{ key, now, limit, windowMs }` and return
+`{ allowed, remaining, resetAt }`, where `resetAt` is an epoch timestamp in
+milliseconds. Requests fail open, with an error logged, if the configured
+store is unavailable. Both `X-RateLimit-*` and standard `RateLimit-*` response
+headers are returned when the store is available.
+
 For the per-route handler decorators (`withAuth`, `validatedRoute`, `withApiErrorHandler`) that individual routes opt into on top of this global middleware, see [docs/api-route-decorators.md](./api-route-decorators.md).
 
 ## Implementation Details
