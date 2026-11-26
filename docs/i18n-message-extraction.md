@@ -16,10 +16,10 @@ three-step process. This doc is that process.
    new one for a single string.
 
 2. **Add the string to every locale file, in the same place.**
-   `lib/i18n/locales/en.json` and `lib/i18n/locales/es.json` must stay
-   structurally identical — same keys, same nesting, same order. Add the
-   English string and its Spanish translation in the same PR; do not land
-   an English-only key and leave Spanish for later; see
+   Add new keys at the same path in `lib/i18n/locales/en.json` and each
+   supported locale (`es.json`, `fr.json`, etc.). Add the English string
+   and its translations in the same PR; do not land an English-only key and
+   leave other locales for later; see
    [`docs/i18n-string-expansion-handoff.md`](i18n-string-expansion-handoff.md)
    for the coverage this is meant to protect.
 
@@ -67,3 +67,17 @@ just look like a missing translation with no signal that it's missing.
 `SupportedLocale` cookie, then the request's `Accept-Language` header /
 `navigator.language`, then the `en` default. See `lib/i18n/cookie.ts` for
 the full `SUPPORTED_LOCALES` list.
+
+## Adding a locale
+
+1. Add its complete, translated catalog to `lib/i18n/locales/<code>.json`,
+   matching every key, interpolation token, and plural suffix in `en.json`.
+2. Add the code to `SUPPORTED_LOCALES` in `lib/i18n/cookie.ts`. The resolver
+   then accepts both the base language and regional tags (for example,
+   `fr-CA` resolves to `fr`).
+3. Import the catalog in `lib/i18n/index.ts` and `lib/i18n/client.ts`, and
+   add it to the client resource map.
+4. Add its display name and flag to `components/LocaleSwitcher.tsx`, and
+   map the language to a regional BCP-47 tag in `lib/i18n/formatters.ts`.
+5. Run `node scripts/i18n-coverage.js` and keep coverage at 100%; run the
+   locale resolver, switcher, and client fallback tests.

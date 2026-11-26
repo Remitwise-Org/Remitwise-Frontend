@@ -20,7 +20,7 @@ import type { SupportedLocale } from "@/lib/i18n/cookie";
  * without causing spurious re-renders.
  */
 export interface FormatterHelpers {
-  /** Active locale tag (`"en"` or `"es"`) used for downstream formatting. */
+  /** Active locale tag (`"en"`, `"es"`, or `"fr"`) used for downstream formatting. */
   locale: SupportedLocale;
   /** BCP-47 locale tag (e.g. `"en-US"`) used for `Intl.NumberFormat`. */
   bcp47Locale: string;

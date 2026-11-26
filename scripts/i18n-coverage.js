@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * Computes i18n translation coverage: the share of lib/i18n/locales/en.json
- * keys that also exist in es.json (see docs/i18n-message-extraction.md for
- * why a key missing from es.json matters -- it silently falls back to
- * English for a Spanish user).
+ * Computes i18n translation coverage for every locale against en.json
+ * (see docs/i18n-message-extraction.md for why missing keys matter -- they
+ * silently fall back to English for that locale's users).
  *
  * Usage:
  *   node scripts/i18n-coverage.js          Print the coverage and badge URL
@@ -21,10 +20,10 @@ function flattenKeys(tree, prefix = '') {
   );
 }
 
-function computeCoverage(enTree, esTree) {
+function computeCoverage(enTree, localeTree) {
   const enKeys = flattenKeys(enTree);
-  const esKeys = new Set(flattenKeys(esTree));
-  const translated = enKeys.filter((key) => esKeys.has(key)).length;
+  const localeKeys = new Set(flattenKeys(localeTree));
+  const translated = enKeys.filter((key) => localeKeys.has(key)).length;
   const total = enKeys.length;
   const percentage = total === 0 ? 100 : Math.round((translated / total) * 100);
   return { total, translated, percentage };
@@ -60,12 +59,21 @@ function main() {
   const en = JSON.parse(
     fs.readFileSync(path.join(__dirname, '..', 'lib/i18n/locales/en.json'), 'utf8')
   );
-  const es = JSON.parse(
-    fs.readFileSync(path.join(__dirname, '..', 'lib/i18n/locales/es.json'), 'utf8')
-  );
-  const { total, translated, percentage } = computeCoverage(en, es);
+  const localeDir = path.join(__dirname, '..', 'lib/i18n/locales');
+  const localeFiles = fs.readdirSync(localeDir)
+    .filter((file) => file.endsWith('.json') && file !== 'en.json')
+    .sort();
+  const coverages = localeFiles.map((file) => {
+    const locale = path.basename(file, '.json');
+    const tree = JSON.parse(fs.readFileSync(path.join(localeDir, file), 'utf8'));
+    const coverage = computeCoverage(en, tree);
+    console.log(`${locale} coverage: ${coverage.translated}/${coverage.total} keys translated (${coverage.percentage}%)`);
+    return coverage;
+  });
+  const percentage = coverages.length
+    ? Math.min(...coverages.map(({ percentage }) => percentage))
+    : 100;
 
-  console.log(`i18n coverage: ${translated}/${total} keys translated (${percentage}%)`);
   console.log(buildBadgeUrl(percentage));
 
   if (process.argv.includes('--write')) {

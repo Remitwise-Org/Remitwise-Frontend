@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import en from "./locales/en.json";
 import es from "./locales/es.json";
+import fr from "./locales/fr.json";
 import { getLocaleCookieClient, type SupportedLocale } from "./cookie";
 import { resolveLocale } from "./resolve-locale";
 
@@ -12,6 +13,7 @@ type TranslationTree = Record<string, TranslationValue>;
 const resources: Record<SupportedLocale, TranslationTree> = {
 	en: en as TranslationTree,
 	es: es as TranslationTree,
+	fr: fr as TranslationTree,
 };
 
 function readPath(tree: TranslationTree, path: string): string | undefined {

@@ -800,7 +800,8 @@
   },
   "localeSwitcher": {
     "english": "English",
-    "spanish": "Español",
+    "spanish": "Spanish",
+    "french": "French",
     "label": "Change language"
   },
   "quickRefresh": {

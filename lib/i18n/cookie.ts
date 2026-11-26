@@ -8,7 +8,7 @@
  */
 
 export const COOKIE_NAME = "remitwise_locale";
-export const SUPPORTED_LOCALES = ["en", "es"] as const;
+export const SUPPORTED_LOCALES = ["en", "es", "fr"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1 year
 

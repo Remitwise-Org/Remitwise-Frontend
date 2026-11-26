@@ -2,6 +2,7 @@ import i18next from 'i18next';
 import { NextRequest } from 'next/server';
 import en from './locales/en.json';
 import es from './locales/es.json';
+import fr from './locales/fr.json';
 import { COOKIE_NAME } from './cookie';
 import { resolveLocale } from './resolve-locale';
 
@@ -13,6 +14,7 @@ i18nInstance.init({
   resources: {
     en: { translation: en },
     es: { translation: es },
+    fr: { translation: fr },
   },
   interpolation: {
     escapeValue: false,
