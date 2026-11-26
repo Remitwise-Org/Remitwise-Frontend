@@ -4,8 +4,8 @@
  */
 
 import React from 'react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, act, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen, act, waitFor, cleanup } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import { ToastProvider, useToast } from '@/lib/context/ToastContext';
 import ToastRegion from './ToastRegion';
@@ -16,6 +16,10 @@ expect.extend(toHaveNoViolations);
 describe('ToastRegion', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   const renderWithProvider = (component: React.ReactNode) => {
