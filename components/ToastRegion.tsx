@@ -24,7 +24,7 @@ export default function ToastRegion() {
         bottom-0 left-0 right-0 items-center
         sm:bottom-auto sm:top-4 sm:right-4 sm:left-auto sm:items-end sm:w-auto"
     >
-      {toasts.slice(0, 3).map((t) => (
+      {toasts.slice(0, 3).reverse().map((t) => (
         <Toast key={t.id} toast={t} onDismiss={dismiss} />
       ))}
 

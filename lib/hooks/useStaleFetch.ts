@@ -104,19 +104,42 @@ type FetchResult<T> =
  */
 const inFlightFetches = new Map<string, Promise<FetchResult<unknown>>>();
 
+/** Test-only: clear the in-flight deduplication map between tests. */
+export function clearInFlightFetches(): void {
+  inFlightFetches.clear();
+}
+
+/** Delay helper driven by setTimeout so fake timers can control it. */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Retry delays in ms: 500 ms, 1 000 ms, 2 000 ms (3 retries total). */
+const RETRY_DELAYS = [500, 1_000, 2_000];
+
 function fetchJsonOnce<T>(url: string): Promise<FetchResult<T>> {
   const existing = inFlightFetches.get(url);
   if (existing) return existing as Promise<FetchResult<T>>;
 
   const request = (async (): Promise<FetchResult<T>> => {
-    const response = await apiClient.get(url);
-    if (response === null) return { status: 'session-expired' };
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    return {
-      status: 'success',
-      data: (await response.json()) as T,
-    };
+    let lastError: unknown;
+    for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+      if (attempt > 0) {
+        await delay(RETRY_DELAYS[attempt - 1]);
+      }
+      try {
+        const response = await apiClient.get(url);
+        if (response === null) return { status: 'session-expired' };
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return {
+          status: 'success',
+          data: (await response.json()) as T,
+        };
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    throw lastError;
   })();
 
   inFlightFetches.set(url, request as Promise<FetchResult<unknown>>);

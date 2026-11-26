@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { LRUCache } from "lru-cache";
 import { logRequest, logResponse, logError, normalizeRequestId } from "@/lib/logger";
 import { generateRequestId, isValidRequestId } from "@/lib/requestId";
 import { API_REQUEST_ID_HEADER } from "@/lib/api/headers";
+import {
+  createRateLimitStore,
+  type RateLimitDecision,
+} from "@/lib/rate-limit";
 
 // In-memory metrics store
 const metrics: Record<string, { count: number; errorCount: number }> = {};
@@ -180,13 +183,8 @@ const RATE_LIMITS = {
   write: 50,
   general: 100,
 };
-const rateLimitCache = new LRUCache<
-  string,
-  { count: number; expiresAt: number }
->({
-  max: 10000,
-  ttl: 60 * 1000,
-});
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const rateLimitStore = createRateLimitStore();
 
 // ---------------------------------------------------------------------------
 // Middleware
@@ -305,20 +303,23 @@ export async function middleware(request: NextRequest) {
     }
     const cacheKey = `${ip}:${limitType}`;
     const now = Date.now();
-    const tokenRecord = rateLimitCache.get(cacheKey) || {
-      count: 0,
-      expiresAt: now + 60000,
-    };
-    if (now > tokenRecord.expiresAt) {
-      tokenRecord.count = 0;
-      tokenRecord.expiresAt = now + 60000;
+    let decision: RateLimitDecision | undefined;
+    try {
+      decision = await rateLimitStore.consume(
+        cacheKey,
+        now,
+        limit,
+        RATE_LIMIT_WINDOW_MS,
+      );
+    } catch (error) {
+      console.error("[rate-limit] shared store unavailable; failing open", error);
     }
-    tokenRecord.count += 1;
-    rateLimitCache.set(cacheKey, tokenRecord);
-    if (tokenRecord.count > limit) {
-      const retryAfter = Math.ceil(
-        (tokenRecord.expiresAt - now) / 1000,
+    if (decision && !decision.allowed) {
+      const retryAfter = Math.max(
+        0,
+        Math.ceil((decision.resetAt - now) / 1000),
       ).toString();
+      const rateLimitPolicy = `${limit};w=${RATE_LIMIT_WINDOW_MS / 1000}`;
       const rateLimitError = new NextResponse(
         JSON.stringify({
           error: "Too Many Requests",
@@ -331,7 +332,10 @@ export async function middleware(request: NextRequest) {
             "Retry-After": retryAfter,
             "X-RateLimit-Limit": limit.toString(),
             "X-RateLimit-Remaining": "0",
-            "X-RateLimit-Reset": tokenRecord.expiresAt.toString(),
+            "X-RateLimit-Reset": decision.resetAt.toString(),
+            "RateLimit-Limit": rateLimitPolicy,
+            "RateLimit-Remaining": "0",
+            "RateLimit-Reset": retryAfter,
           },
         },
       );
@@ -347,16 +351,25 @@ export async function middleware(request: NextRequest) {
       return rateLimitError;
     }
 
-    // Add rate limit headers to response
-    apiResponse.headers.set("X-RateLimit-Limit", limit.toString());
-    apiResponse.headers.set(
-      "X-RateLimit-Remaining",
-      (limit - tokenRecord.count).toString(),
-    );
-    apiResponse.headers.set(
-      "X-RateLimit-Reset",
-      tokenRecord.expiresAt.toString(),
-    );
+    if (decision) {
+      const resetAfter = Math.max(
+        0,
+        Math.ceil((decision.resetAt - now) / 1000),
+      ).toString();
+      const rateLimitPolicy = `${limit};w=${RATE_LIMIT_WINDOW_MS / 1000}`;
+      apiResponse.headers.set("X-RateLimit-Limit", limit.toString());
+      apiResponse.headers.set(
+        "X-RateLimit-Remaining",
+        decision.remaining.toString(),
+      );
+      apiResponse.headers.set("X-RateLimit-Reset", decision.resetAt.toString());
+      apiResponse.headers.set("RateLimit-Limit", rateLimitPolicy);
+      apiResponse.headers.set(
+        "RateLimit-Remaining",
+        decision.remaining.toString(),
+      );
+      apiResponse.headers.set("RateLimit-Reset", resetAfter);
+    }
 
     // Log response
     const durationMs = Date.now() - start;

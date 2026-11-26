@@ -1,6 +1,5 @@
-import { randomBytes } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { setNonce } from '@/lib/auth-cache';
+import { issueNonce } from '@/lib/auth/nonces';
 import { StrKey } from '@stellar/stellar-sdk';
 
 // Force dynamic rendering to ensure fresh nonces
@@ -45,17 +44,9 @@ async function handleNonceRequest(request: NextRequest) {
       );
     }
 
-    // Generate a 32-byte random nonce and convert to hex
-    const nonce = randomBytes(32).toString('hex');
+    const { nonce, expiresAt } = await issueNonce(address);
 
-    // Store nonce in the same cache used by login verification.
-    setNonce(address, nonce);
-
-    return NextResponse.json({
-      nonce,
-      address,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-    });
+    return NextResponse.json({ nonce, address, expiresAt });
   } catch (error) {
     console.error('Error generating nonce:', error);
     return NextResponse.json(

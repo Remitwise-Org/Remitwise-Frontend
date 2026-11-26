@@ -8,13 +8,18 @@ export interface SendTransactionRequest {
   amount: number;
   /** Token/asset symbol, e.g. "USDC" */
   currency: string;
+  /** Optional Stellar text memo (maximum 28 UTF-8 bytes). */
+  memo?: string;
 }
 
 /** POST /api/send — successful response */
 export interface SendTransactionResponse {
   success: true;
-  /** XDR hash / placeholder until Stellar broadcasting is wired */
-  transactionId: string;
+  /** Base64-encoded unsigned Stellar transaction XDR. */
+  xdr: string;
+  networkPassphrase: string;
+  /** Transaction fee in stroops. */
+  fee: string;
 }
 
 /** POST /api/send — error response */

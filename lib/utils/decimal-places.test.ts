@@ -23,5 +23,7 @@ describe("hasAtMostDecimals", () => {
 
   it("rejects scientific-notation values rather than mis-parsing them", () => {
     expect(hasAtMostDecimals(1e-9, 2)).toBe(false);
+    expect(hasAtMostDecimals(1e-7, 7)).toBe(true);
+    expect(hasAtMostDecimals(1e-7, 6)).toBe(false);
   });
 });

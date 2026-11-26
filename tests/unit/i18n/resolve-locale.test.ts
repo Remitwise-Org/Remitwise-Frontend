@@ -28,12 +28,19 @@ describe("parseLanguageTag", () => {
     assert.strictEqual(parseLanguageTag("es-ES"), "es");
   });
 
-  it("returns null for unsupported language 'fr'", () => {
-    assert.strictEqual(parseLanguageTag("fr"), null);
+  it("parses 'fr-CA' → 'fr'", () => {
+    assert.strictEqual(parseLanguageTag("fr-CA"), "fr");
   });
 
   it("parses first language from Accept-Language header 'es,en;q=0.9'", () => {
     assert.strictEqual(parseLanguageTag("es,en;q=0.9"), "es");
+  });
+
+  it("resolves French from an Accept-Language regional tag", () => {
+    assert.deepStrictEqual(resolveLocale({ headerLocale: "fr-CA,fr;q=0.9" }), {
+      locale: "fr",
+      source: "header",
+    });
   });
 
   it("returns null for null input", () => {
@@ -84,7 +91,7 @@ describe("resolveLocale — precedence", () => {
     const result = resolveLocale({
       cookieLocale: null,
       preferenceLocale: null,
-      headerLocale: "fr-FR",
+      headerLocale: "de-DE",
       navigatorLocale: "es",
     });
     assert.deepStrictEqual(result, { locale: "es", source: "navigator" });
@@ -94,7 +101,7 @@ describe("resolveLocale — precedence", () => {
     const result = resolveLocale({
       cookieLocale: null,
       preferenceLocale: null,
-      headerLocale: "fr-FR",
+      headerLocale: "de-DE",
       navigatorLocale: "de-DE",
     });
     assert.deepStrictEqual(result, { locale: "en", source: "default" });
@@ -118,7 +125,7 @@ describe("resolveLocale — precedence", () => {
 describe("resolveLocale — edge cases", () => {
   it("unsupported cookie value → falls back to preference", () => {
     const result = resolveLocale({
-      cookieLocale: "fr",
+      cookieLocale: "pt",
       preferenceLocale: "es",
       headerLocale: "en-US",
       navigatorLocale: "en",
@@ -128,7 +135,7 @@ describe("resolveLocale — edge cases", () => {
 
   it("unsupported cookie + unsupported preference → header", () => {
     const result = resolveLocale({
-      cookieLocale: "fr",
+      cookieLocale: "pt",
       preferenceLocale: "de",
       headerLocale: "es-ES",
       navigatorLocale: "en",

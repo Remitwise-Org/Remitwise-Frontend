@@ -21,7 +21,7 @@ import { IdempotencyRecord, IdempotencyCheckResult } from './types';
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** True when the in-memory store should be used (tests or no DB). */
-function useMemoryStore(): boolean {
+function shouldUseMemoryStore(): boolean {
   return process.env.IDEMPOTENCY_USE_MEMORY === '1' || process.env.NODE_ENV === 'test';
 }
 
@@ -75,7 +75,7 @@ export async function storeIdempotencyRecord(
   const now = Date.now();
   const expiresAt = new Date(now + ttlMs);
 
-  if (useMemoryStore()) {
+  if (shouldUseMemoryStore()) {
     memStore.set(key, {
       key,
       requestHash,
@@ -113,7 +113,7 @@ export async function checkIdempotencyKey(
   key: string,
   requestHash: string,
 ): Promise<IdempotencyCheckResult> {
-  if (useMemoryStore()) {
+  if (shouldUseMemoryStore()) {
     const record = memStore.get(key);
     if (!record) return { exists: false, conflict: false };
     if (record.expiresAt < Date.now()) {
@@ -148,7 +148,7 @@ export async function checkIdempotencyKey(
  * Delete an idempotency record.
  */
 export async function deleteIdempotencyRecord(key: string): Promise<boolean> {
-  if (useMemoryStore()) {
+  if (shouldUseMemoryStore()) {
     return memStore.delete(key);
   }
   const db = await getPrisma();
@@ -164,7 +164,7 @@ export async function deleteIdempotencyRecord(key: string): Promise<boolean> {
  * Clear all idempotency records (tests / admin).
  */
 export async function clearIdempotencyStore(): Promise<void> {
-  if (useMemoryStore()) {
+  if (shouldUseMemoryStore()) {
     memStore.clear();
     return;
   }
@@ -177,12 +177,12 @@ export function reserveIdempotencyKey(
     requestHash: string,
     ttlMs: number = DEFAULT_TTL_MS
 ): { reserved: boolean; conflict: boolean; inFlight: boolean } {
-    const existing = store.get(key);
+    const existing = memStore.get(key);
     const now = Date.now();
 
     if (existing) {
         if (existing.expiresAt < now) {
-            store.delete(key);
+            memStore.delete(key);
         } else if (existing.requestHash !== requestHash) {
             return { reserved: false, conflict: true, inFlight: false };
         } else if (existing.inFlight) {
@@ -192,7 +192,7 @@ export function reserveIdempotencyKey(
         }
     }
 
-    store.set(key, {
+    memStore.set(key, {
         key,
         requestHash,
         inFlight: true,
@@ -203,14 +203,14 @@ export function reserveIdempotencyKey(
 }
 
 export function releaseIdempotencyKey(key: string): void {
-    store.delete(key);
+    memStore.delete(key);
 }
 
 /**
  * Purge expired records. Called by the background runtime on a schedule.
  */
 export async function purgeExpiredIdempotencyRecords(): Promise<void> {
-  if (useMemoryStore()) {
+  if (shouldUseMemoryStore()) {
     const now = Date.now();
     for (const [k, r] of memStore.entries()) {
       if (r.expiresAt < now) memStore.delete(k);
@@ -227,7 +227,7 @@ export async function purgeExpiredIdempotencyRecords(): Promise<void> {
  * Return current store size (monitoring / tests).
  */
 export async function getStoreSize(): Promise<number> {
-  if (useMemoryStore()) return memStore.size;
+  if (shouldUseMemoryStore()) return memStore.size;
   const db = await getPrisma();
   return (db as any).idempotencyRecord.count();
 }
@@ -238,12 +238,6 @@ export async function getStoreSize(): Promise<number> {
 // only and log a warning in non-test environments.
 // ---------------------------------------------------------------------------
 
-    return {
-        exists: true,
-        record,
-        conflict: false,
-        inFlight: record.inFlight === true,
-    };
 /** @deprecated use the async storeIdempotencyRecord */
 export function storeIdempotencyRecordSync(
   key: string,

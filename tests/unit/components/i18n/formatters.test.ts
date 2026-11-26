@@ -21,6 +21,10 @@ describe("toBcp47Locale", () => {
     expect(toBcp47Locale("es")).toBe("es-ES");
   });
 
+  it("maps 'fr' to 'fr-FR'", () => {
+    expect(toBcp47Locale("fr")).toBe("fr-FR");
+  });
+
   it("passes any non-empty BCP-47 tag through to Intl (no silent fallback)", () => {
     // Non-RemitWise BCG-47 tags (e.g. "fr-FR") are passed through so the
     // caller can rely on `Intl.NumberFormat`'s own resolution rather than
@@ -57,6 +61,14 @@ describe("formatNumericValue — decimal style", () => {
     const out = formatNumericValue(1234567.89, {
       locale: "es",
       maximumFractionDigits: 2,
+    });
+
+    it("uses French number separators", () => {
+      const out = formatNumericValue(1234567.89, {
+        locale: "fr",
+        maximumFractionDigits: 2,
+      });
+      expect(out).toMatch(/1[\s.\u202F]234[\s.\u202F]567,89/);
     });
     expect(out).toMatch(/1[\s.\u202F]234[\s.\u202F]567[,.]89/);
   });

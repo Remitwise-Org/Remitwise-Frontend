@@ -22,7 +22,7 @@
 import type { SupportedLocale } from "./cookie";
 
 /**
- * Mapping from a two-letter RemitWise supported locale (`en`, `es`) to the
+ * Mapping from a two-letter RemitWise supported locale (`en`, `es`, `fr`) to the
  * BCP-47 locale tag that `Intl.NumberFormat` expects. We always expand to a
  * regional subtag so number formatting uses the canonical symbols
  * (e.g. `"$"` for `en-US`, narrow-no-break-space thousands for `es-ES`).
@@ -33,6 +33,7 @@ import type { SupportedLocale } from "./cookie";
 const SUPPORTED_LOCALE_TAGS: Record<SupportedLocale, string> = {
   en: "en-US",
   es: "es-ES",
+  fr: "fr-FR",
 };
 
 /**
@@ -68,7 +69,8 @@ export type NumericStyle = "decimal" | "currency" | "percent" | "unit";
 export interface NumericFormatOptions {
   /**
    * Locale to format with. Accepts either a RemitWise supported locale code
-   * (`"en"`, `"es"`) or a full BCP-47 tag (`"en-US"`, `"es-ES"`). Unknown
+   * (`"en"`, `"es"`, `"fr"`) or a full BCP-47 tag (`"en-US"`, `"es-ES"`,
+   * `"fr-FR"`). Unknown
    * values fall back to `"en-US"`.
    */
   locale?: string | null;

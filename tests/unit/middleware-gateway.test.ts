@@ -134,6 +134,9 @@ describe('global middleware gateway', () => {
       expect(response.headers.get('X-RateLimit-Reset')).toBe(
         String(Date.now() + 60000),
       );
+      expect(response.headers.get('RateLimit-Limit')).toBe(`${limit};w=60`);
+      expect(response.headers.get('RateLimit-Remaining')).toBe(remaining);
+      expect(response.headers.get('RateLimit-Reset')).toBe('60');
     },
   );
 
@@ -160,6 +163,9 @@ describe('global middleware gateway', () => {
     expect(response?.headers.get('X-RateLimit-Reset')).toBe(
       String(Date.now() + 60000),
     );
+    expect(response?.headers.get('RateLimit-Limit')).toBe('10;w=60');
+    expect(response?.headers.get('RateLimit-Remaining')).toBe('0');
+    expect(response?.headers.get('RateLimit-Reset')).toBe('60');
     expect(response?.headers.get('Access-Control-Allow-Origin')).toBe(
       ALLOWED_ORIGIN,
     );

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAdminAuthorized, getAdminIdentity } from '@/lib/admin/auth';
 import { clearRegisteredCaches, listRegisteredCaches } from '@/lib/cache/registry';
 import { recordAuditEvent } from '@/lib/admin/audit';
-import '@/lib/auth-cache';
 import '@/lib/anchor/rates-cache';
 
 export async function POST(request: NextRequest) {

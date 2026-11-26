@@ -8,9 +8,13 @@
 export function hasAtMostDecimals(value: number | string, maxDecimals: number): boolean {
   if (typeof value === 'number' && !Number.isFinite(value)) return false;
 
-  // Values in scientific notation (e.g. 1e-9) have no literal "." to count
-  // digits after -- treat as failing the check rather than mis-parsing.
   const str = typeof value === 'string' ? value : value.toString();
+  const scientific = /^([+-]?\d+)(?:\.(\d*))?[eE]([+-]?\d+)$/.exec(str);
+  if (scientific) {
+    const exponent = Number(scientific[3]);
+    if (!Number.isSafeInteger(exponent)) return false;
+    return Math.max(0, (scientific[2]?.length ?? 0) - exponent) <= maxDecimals;
+  }
   if (str.includes("e") || str.includes("E")) return false;
 
   const decimalPart = str.split(".")[1];

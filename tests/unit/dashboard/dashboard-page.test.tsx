@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { DashboardResponse } from '@/lib/types/dashboard';
+import { clearInFlightFetches } from '@/lib/hooks/useStaleFetch';
 
 // Mock the session-aware API client so the page never touches the network.
 const get = vi.fn();
@@ -49,6 +50,7 @@ function primeCache(data: DashboardResponse, cachedAt = Date.now()) {
 
 beforeEach(() => {
   get.mockReset();
+  clearInFlightFetches();
   sessionStorage.clear();
   // Deterministic locale for currency formatting.
   Object.defineProperty(navigator, 'language', { value: 'en-US', configurable: true });
