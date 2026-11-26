@@ -4,42 +4,21 @@ import { useState } from "react";
 import { useToast } from "@/lib/context/ToastContext";
 import { useClientTranslator } from "@/lib/i18n/client";
 import { apiClient } from "@/lib/client/apiClient";
-import { computeAllocation, getSplitConfig } from "@/lib/remittance/split";
 import type { SendTransactionResult } from "@/lib/types/api";
 import EmergencyTransferModal from "./components/EmergencyTransferModal";
 import SendHeader from "./components/SendHeader";
 import RecipientAddressInput from "./components/RecipientAddressInput";
 import AmountCurrencySection from "./components/AmountCurrencySection";
 import ReviewStep from "./components/ReviewStep";
-import TransactionSuccessReceipt from "@/components/TransactionSuccessReceipt";
 import { useClientLocale } from "@/lib/i18n/client";
 import { formatCurrency } from "@/lib/utils/format-currency";
 
 type Step = "recipient" | "amount" | "review";
 
-/** Stellar base reserve fee in the asset being sent (0.00001 XLM equivalent). */
-const STELLAR_BASE_FEE = 0.00001;
-
-/**
- * Typed shape matching TransactionSuccessReceiptProps (minus onClose).
- * Built from the /api/send response combined with client-side derived fields.
- */
-interface ReceiptData {
-  hash: string;
-  amount: number;
-  currency: string;
-  /** Displayed name — falls back to truncated address until a contacts DB exists. */
-  recipientName: string;
-  recipientAddress: string;
-  date: string;
-  fee: number;
-  splits: {
-    spending: number;
-    savings: number;
-    bills: number;
-    insurance: number;
-  };
-}
+type PreparedPayment = Pick<
+  Extract<SendTransactionResult, { success: true }>,
+  "xdr" | "networkPassphrase" | "fee"
+>;
 
 import { useSeo } from "@/lib/hooks/useSeo";
 import Stepper from "@/components/ui/Stepper";
@@ -62,13 +41,13 @@ export default function SendMoney() {
   const [currency, setCurrency] = useState<string>("USDC");
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
 
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [sendAnnouncement, setSendAnnouncement] = useState("");
-  const [transactionData, setTransactionData] = useState<ReceiptData | null>(null);
+  const [preparedPayment, setPreparedPayment] = useState<PreparedPayment | null>(null);
 
   const { toast } = useToast();
   const { t } = useClientTranslator();
+  const locale = useClientLocale();
 
   const handleRecipientContinue = () => {
     if (recipient) {
@@ -86,13 +65,11 @@ export default function SendMoney() {
    * Submits the remittance to POST /api/send.
    *
    * Request  — {@link SendTransactionRequest}: `{ recipient, amount, currency }`
-   * Response — {@link SendTransactionResult}: `{ success, transactionId }` on 200,
+   * Response — {@link SendTransactionResult}: unsigned transaction XDR on 200,
    *            or `{ success: false, error }` on 4xx/5xx.
    *
-   * On success:
-   *  - Derives split breakdown via `computeAllocation()` (no inline math).
-   *  - Populates `transactionData` with the real `transactionId` as the receipt hash.
-   *  - Fires a success toast, then shows `TransactionSuccessReceipt`.
+   * On success, expose the unsigned payload for the user to sign and submit
+   * with a compatible Stellar wallet. Building the transaction does not send it.
    *
    * On failure:
    *  - Session expiry  → `apiClient` redirects automatically; we do nothing.
@@ -146,36 +123,16 @@ export default function SendMoney() {
         return;
       }
 
-      // --- Build receipt from real response + derived fields ---
-      const splits = computeAllocation(amount, getSplitConfig(recipient));
-
-      const truncate = (addr: string) =>
-        addr.length > 12
-          ? `${addr.substring(0, 6)}…${addr.substring(addr.length - 6)}`
-          : addr;
-
-      const receipt: ReceiptData = {
-        hash: data.transactionId,
-        amount,
-        currency,
-        recipientName: truncate(recipient),
-        recipientAddress: recipient,
-        date: new Date().toLocaleString(),
-        fee: STELLAR_BASE_FEE,
-        splits,
-      };
-
-      setTransactionData(receipt);
-      setIsSubmitted(true);
-      setSendAnnouncement("Sent");
-
+      setPreparedPayment({
+        xdr: data.xdr,
+        networkPassphrase: data.networkPassphrase,
+        fee: data.fee,
+      });
+      setSendAnnouncement("Unsigned transaction ready to sign");
       toast({
-        variant: "success",
-        title: t("send.success_title"),
-        description: t("send.success_description")
-          .replace("{{amount}}", String(amount))
-          .replace("{{currency}}", currency)
-          .replace("{{address}}", truncate(recipient)),
+        variant: "info",
+        title: "Transaction ready to sign",
+        description: "Copy the unsigned transaction XDR into a compatible Stellar wallet to sign and submit it.",
       });
     } catch {
       // Network-level failure (fetch rejected)
@@ -257,11 +214,67 @@ export default function SendMoney() {
         onClose={() => setShowEmergencyModal(false)}
       />
 
-      {isSubmitted && transactionData && (
-        <TransactionSuccessReceipt
-          {...transactionData}
-          onClose={() => setIsSubmitted(false)}
-        />
+      {preparedPayment && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="prepared-payment-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+        >
+          <section className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0A0A0A] p-6 text-white">
+            <h2 id="prepared-payment-title" className="text-xl font-semibold">
+              Unsigned transaction ready to sign
+            </h2>
+            <p className="mt-2 text-sm text-gray-400">
+              This payment has not been submitted. Copy the XDR into a compatible Stellar wallet to review, sign, and submit it.
+            </p>
+            <p className="mt-3 text-sm text-gray-300">
+              Network fee:{" "}
+              {formatCurrency(
+                Number(preparedPayment.fee) / 10_000_000,
+                "XLM",
+                locale,
+                { minimumFractionDigits: 0, maximumFractionDigits: 7 },
+              )}
+            </p>
+            <p className="mt-1 break-all text-xs text-gray-500">
+              Network: {preparedPayment.networkPassphrase}
+            </p>
+            <textarea
+              aria-label="Unsigned transaction XDR"
+              readOnly
+              value={preparedPayment.xdr}
+              className="mt-4 h-32 w-full resize-y rounded-lg border border-white/10 bg-black p-3 font-mono text-xs text-gray-300"
+            />
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setPreparedPayment(null)}
+                className="rounded-lg border border-white/10 px-4 py-2 text-sm text-gray-300"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(preparedPayment.xdr);
+                    toast({ variant: "success", title: "Transaction XDR copied" });
+                  } catch {
+                    toast({
+                      variant: "error",
+                      title: t("send.error_title"),
+                      description: "Unable to copy the transaction XDR.",
+                    });
+                  }
+                }}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white"
+              >
+                Copy XDR
+              </button>
+            </div>
+          </section>
+        </div>
       )}
     </div>
   );

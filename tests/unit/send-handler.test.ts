@@ -83,9 +83,10 @@ interface HandleConfirmDeps {
   currency: string;
   fetchFn: typeof fetch;
   onSuccess: (data: {
-    hash: string;
+    xdr: string;
+    networkPassphrase: string;
+    fee: string;
     recipientName: string;
-    splits: ReturnType<typeof computeAllocation>;
   }) => void;
   onToast: (opts: ToastOptions) => void;
   t: (key: string) => string;
@@ -130,16 +131,20 @@ async function handleConfirmLogic({
       return { isConfirming: false };
     }
 
-    const splits = computeAllocation(amount, getSplitConfig(recipient));
     const truncate = (addr: string) =>
       addr.length > 12 ? `${addr.substring(0, 6)}…${addr.substring(addr.length - 6)}` : addr;
 
-    onSuccess({ hash: data.transactionId, recipientName: truncate(recipient), splits });
+    onSuccess({
+      xdr: data.xdr,
+      networkPassphrase: data.networkPassphrase,
+      fee: data.fee,
+      recipientName: truncate(recipient),
+    });
 
     onToast({
-      variant: "success",
-      title: t("send.success_title"),
-      description: t("send.success_description"),
+      variant: "info",
+      title: t("send.prepared_title"),
+      description: t("send.prepared_description"),
     });
 
     return { isConfirming: false };
@@ -162,6 +167,8 @@ function makeMockTranslator() {
     "send.error_api": "The server returned an error.",
     "send.success_title": "Transfer submitted",
     "send.success_description": "Successfully sent {{amount}} {{currency}} to {{address}}.",
+    "send.prepared_title": "Transaction ready to sign",
+    "send.prepared_description": "Unsigned transaction prepared.",
   };
   return (key: string) => keys[key] ?? key;
 }
@@ -254,10 +261,17 @@ describe("handleConfirmLogic – input validation", () => {
 });
 
 describe("handleConfirmLogic – happy path", () => {
-  it("calls /api/send with correct body and invokes onSuccess with real splits", async () => {
+  const unsignedPayment = {
+    success: true,
+    xdr: "AAAA_UNSIGNED_XDR",
+    networkPassphrase: "Test SDF Network ; September 2015",
+    fee: "100",
+  };
+
+  it("calls /api/send with correct body and exposes the unsigned XDR", async () => {
     const onToast = vi.fn();
     const onSuccess = vi.fn();
-    const fetchFn = makeOkFetch({ success: true, transactionId: "TX_REAL_HASH_123" });
+    const fetchFn = makeOkFetch(unsignedPayment);
 
     await handleConfirmLogic({
       recipient: "GABCDEFGHIJKLMNOPQRSTUVWXYZ123456",
@@ -278,20 +292,18 @@ describe("handleConfirmLogic – happy path", () => {
       })
     );
 
-    // onSuccess received the real hash (not a mock string)
+    // The response contains an unsigned transaction, not a transaction ID.
     expect(onSuccess).toHaveBeenCalledWith(
-      expect.objectContaining({ hash: "TX_REAL_HASH_123" })
+      expect.objectContaining({
+        xdr: unsignedPayment.xdr,
+        networkPassphrase: unsignedPayment.networkPassphrase,
+        fee: unsignedPayment.fee,
+      })
     );
 
-    // splits are computed via computeAllocation, not inline math
-    const { splits } = onSuccess.mock.calls[0][0];
-    expect(splits.spending + splits.savings + splits.bills + splits.insurance).toBe(100);
-    expect(splits.spending).toBe(50);
-    expect(splits.savings).toBe(30);
-
-    // Success toast fired
+    // The UI must not claim the unsigned payment has already been sent.
     expect(onToast).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: "success" })
+      expect.objectContaining({ variant: "info", title: "Transaction ready to sign" })
     );
   });
 
@@ -301,7 +313,7 @@ describe("handleConfirmLogic – happy path", () => {
       recipient: "GABCDE1234567890",
       amount: 50,
       currency: "USDC",
-      fetchFn: makeOkFetch({ success: true, transactionId: "TX_XYZ" }),
+      fetchFn: makeOkFetch(unsignedPayment),
       onSuccess,
       onToast: vi.fn(),
       t: makeMockTranslator(),
