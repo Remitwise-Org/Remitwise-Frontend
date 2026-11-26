@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Keypair, StrKey } from '@stellar/stellar-sdk';
-import { getAndClearNonce } from '@/lib/auth-cache';
+import { consumeNonce } from '@/lib/auth/nonces';
 import { createSession, getSessionCookieHeader } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 
@@ -32,10 +32,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify nonce exists and matches (atomic read + delete)
-    // Note: getAndClearNonce usually handles the deletion internally
-    const storedNonce = getAndClearNonce(address);
-    if (!storedNonce || storedNonce !== message) {
+    // Verify nonce exists and matches (atomic read + delete via Prisma transaction)
+    const nonceValid = await consumeNonce(address, message);
+    if (!nonceValid) {
       return NextResponse.json(
         { error: 'Invalid or expired nonce' },
         { status: 401 }
