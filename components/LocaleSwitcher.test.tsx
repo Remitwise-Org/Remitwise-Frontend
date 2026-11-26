@@ -34,12 +34,8 @@ describe("LocaleSwitcher", () => {
   it("emits a structured breadcrumb with the from/to locale on switch", async () => {
     render(<LocaleSwitcher />);
 
-    // `t()` falls back to the raw key string when a translation is missing
-    // (see lib/i18n/client.ts), which this app's en.json currently does for
-    // the whole `localeSwitcher` namespace -- so the trigger's accessible
-    // name and the dropdown item text are the literal key paths, not copy.
-    fireEvent.click(screen.getByRole("button", { name: "localeSwitcher.label" }));
-    fireEvent.click(await screen.findByText("localeSwitcher.spanish"));
+    fireEvent.click(screen.getByRole("button", { name: "Change language" }));
+    fireEvent.click(await screen.findByText("Spanish"));
 
     await waitFor(() => expect(addBreadcrumb).toHaveBeenCalledTimes(1));
     expect(addBreadcrumb).toHaveBeenCalledWith({
@@ -52,11 +48,24 @@ describe("LocaleSwitcher", () => {
   it("does not log the locale change as a free-form message", async () => {
     render(<LocaleSwitcher />);
 
-    fireEvent.click(screen.getByRole("button", { name: "localeSwitcher.label" }));
-    fireEvent.click(await screen.findByText("localeSwitcher.spanish"));
+    fireEvent.click(screen.getByRole("button", { name: "Change language" }));
+    fireEvent.click(await screen.findByText("Spanish"));
 
     await waitFor(() => expect(addBreadcrumb).toHaveBeenCalledTimes(1));
     const call = addBreadcrumb.mock.calls[0][0];
     expect(call.message).toBeUndefined();
+  });
+
+  it("switches to French when selected", async () => {
+    render(<LocaleSwitcher />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Change language" }));
+    fireEvent.click(await screen.findByText("French"));
+
+    await waitFor(() =>
+      expect(addBreadcrumb).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { from: "en", to: "fr" } }),
+      ),
+    );
   });
 });

@@ -687,5 +687,11 @@
     "accept": "Aceptar Analíticas",
     "decline": "Rechazar",
     "ariaLabel": "Consentimiento de analíticas"
+  },
+  "localeSwitcher": {
+    "english": "Inglés",
+    "spanish": "Español",
+    "french": "Francés",
+    "label": "Cambiar idioma"
   }
 }

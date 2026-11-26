@@ -54,4 +54,11 @@ describe('useClientTranslator fallback', () => {
     expect(typeof esValue).toBe('string');
     expect(esValue.length).toBeGreaterThan(0);
   });
+
+  it('resolves French translations from the "fr" locale tree', () => {
+    document.cookie = 'remitwise_locale=fr; path=/';
+    const { result } = renderHook(() => useClientTranslator('fr'));
+    expect(result.current.t('localeSwitcher.french')).toBe('Français');
+    document.cookie = 'remitwise_locale=; max-age=0; path=/';
+  });
 });

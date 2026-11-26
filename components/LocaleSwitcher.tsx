@@ -14,6 +14,7 @@ export default function LocaleSwitcher() {
   const locales: { code: SupportedLocale; name: string; flag: string }[] = [
     { code: "en", name: t("localeSwitcher.english"), flag: "🇺🇸" },
     { code: "es", name: t("localeSwitcher.spanish"), flag: "🇪🇸" },
+    { code: "fr", name: t("localeSwitcher.french"), flag: "🇫🇷" },
   ];
 
   const currentLocale = locales.find((l) => l.code === locale) || locales[0];
