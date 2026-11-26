@@ -3,6 +3,8 @@ import { Keypair, StrKey } from '@stellar/stellar-sdk';
 import { consumeNonce } from '@/lib/auth/nonces';
 import { createSession, getSessionCookieHeader } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { verifyWalletSignature } from '@/lib/auth/verify-signature';
+import { getSessionCookieHeader } from '@/lib/session';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -40,60 +42,27 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+    const result = await verifyWalletSignature({ address, message, signature });
 
-    // Verify signature
-    let isValid = false;
-    try {
-      const keypair = Keypair.fromPublicKey(address);
-      // Most Stellar wallets sign the UTF-8 representation of the string
-      const messageBuffer = Buffer.from(message, 'utf8');
-      const signatureBuffer = Buffer.from(signature, 'base64');
-      
-      isValid = keypair.verify(messageBuffer, signatureBuffer);
-    } catch (verifyError) {
-      console.error('Signature verification technical error:', verifyError);
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'Malformed signature or address' },
-        { status: 400 }
+        { error: result.error },
+        { status: result.status }
       );
     }
-
-    if (!isValid) {
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 401 }
-      );
-    }
-
-    // Upsert user in database (best-effort — don't fail login if DB is unavailable)
-    try {
-      await prisma.user.upsert({
-        where: { stellar_address: address },
-        update: {},
-        create: {
-          stellar_address: address,
-          preferences: {
-            create: {},
-          },
-        },
-      });
-    } catch (dbErr) {
-      console.warn('DB upsert skipped (non-fatal):', dbErr);
-    }
-
-    // Create encrypted session (production logic from main)
-    const { sealed, session } = await createSession(address);
 
     const response = NextResponse.json({
       success: true,
-      address,
-      expiresAt: session.expiresAt,
+      address: result.address,
+      expiresAt: result.expiresAt,
     });
 
-    response.headers.set(
-      'Set-Cookie',
-      getSessionCookieHeader(sealed)
-    );
+    if (result.sealedSession) {
+      response.headers.set(
+        'Set-Cookie',
+        getSessionCookieHeader(result.sealedSession)
+      );
+    }
 
     return response;
 
