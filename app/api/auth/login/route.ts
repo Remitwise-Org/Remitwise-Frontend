@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Keypair, StrKey } from '@stellar/stellar-sdk';
-import { getAndClearNonce } from '@/lib/auth-cache';
-import { createSession, getSessionCookieHeader } from '@/lib/session';
-import { prisma } from '@/lib/prisma';
+import { verifyWalletSignature } from '@/lib/auth/verify-signature';
+import { getSessionCookieHeader } from '@/lib/session';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -17,84 +15,27 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { address, message, signature } = body;
 
-    if (!address || !message || !signature) {
+    const result = await verifyWalletSignature({ address, message, signature });
+
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'Missing required fields: address, message, signature' },
-        { status: 400 }
+        { error: result.error },
+        { status: result.status }
       );
     }
-
-    // Validate Stellar address format
-    if (!StrKey.isValidEd25519PublicKey(address)) {
-      return NextResponse.json(
-        { error: 'Invalid Stellar address format' },
-        { status: 400 }
-      );
-    }
-
-    // Verify nonce exists and matches (atomic read + delete)
-    // Note: getAndClearNonce usually handles the deletion internally
-    const storedNonce = getAndClearNonce(address);
-    if (!storedNonce || storedNonce !== message) {
-      return NextResponse.json(
-        { error: 'Invalid or expired nonce' },
-        { status: 401 }
-      );
-    }
-
-    // Verify signature
-    let isValid = false;
-    try {
-      const keypair = Keypair.fromPublicKey(address);
-      // Most Stellar wallets sign the UTF-8 representation of the string
-      const messageBuffer = Buffer.from(message, 'utf8');
-      const signatureBuffer = Buffer.from(signature, 'base64');
-      
-      isValid = keypair.verify(messageBuffer, signatureBuffer);
-    } catch (verifyError) {
-      console.error('Signature verification technical error:', verifyError);
-      return NextResponse.json(
-        { error: 'Malformed signature or address' },
-        { status: 400 }
-      );
-    }
-
-    if (!isValid) {
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 401 }
-      );
-    }
-
-    // Upsert user in database (best-effort — don't fail login if DB is unavailable)
-    try {
-      await prisma.user.upsert({
-        where: { stellar_address: address },
-        update: {},
-        create: {
-          stellar_address: address,
-          preferences: {
-            create: {},
-          },
-        },
-      });
-    } catch (dbErr) {
-      console.warn('DB upsert skipped (non-fatal):', dbErr);
-    }
-
-    // Create encrypted session (production logic from main)
-    const { sealed, session } = await createSession(address);
 
     const response = NextResponse.json({
       success: true,
-      address,
-      expiresAt: session.expiresAt,
+      address: result.address,
+      expiresAt: result.expiresAt,
     });
 
-    response.headers.set(
-      'Set-Cookie',
-      getSessionCookieHeader(sealed)
-    );
+    if (result.sealedSession) {
+      response.headers.set(
+        'Set-Cookie',
+        getSessionCookieHeader(result.sealedSession)
+      );
+    }
 
     return response;
 

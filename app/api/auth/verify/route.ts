@@ -1,38 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyWalletSignature } from '@/lib/auth/verify-signature';
+import { getSessionCookieHeader } from '@/lib/session';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 /**
  * POST /api/auth/verify
- * Verify a signature for authentication
+ * Verify a signature for authentication using Stellar SDK and establish a session.
  * 
  * Request Body:
  * - address: Stellar address
- * - signature: Signed nonce
- * - nonce: Original nonce
+ * - signature: Signed nonce (base64)
+ * - nonce: Original nonce (message)
  */
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
         const { address, signature, nonce } = body;
 
-        if (!address || !signature || !nonce) {
+        // Map nonce to message for the shared verification routine
+        const result = await verifyWalletSignature({
+            address,
+            message: nonce,
+            signature,
+        });
+
+        if (!result.success) {
             return NextResponse.json(
-                { error: 'Missing required fields: address, signature, nonce' },
-                { status: 400 }
+                { error: result.error },
+                { status: result.status }
             );
         }
 
-        // TODO: Implement signature verification using Stellar SDK
-        // 1. Retrieve stored nonce for this address
-        // 2. Verify nonce hasn't expired
-        // 3. Verify signature using Stellar public key
-        // 4. Create session/JWT token
-
-        // For now, return a mock response
-        return NextResponse.json({
+        const response = NextResponse.json({
             success: true,
-            message: 'Authentication endpoint - signature verification not yet implemented',
-            token: 'mock-jwt-token',
+            address: result.address,
+            expiresAt: result.expiresAt,
         });
+
+        if (result.sealedSession) {
+            response.headers.set(
+                'Set-Cookie',
+                getSessionCookieHeader(result.sealedSession)
+            );
+        }
+
+        return response;
     } catch (error) {
         console.error('Error verifying signature:', error);
         return NextResponse.json(
