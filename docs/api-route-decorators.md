@@ -118,3 +118,24 @@ still get a request ID.
 | `withAuth` | `lib/auth.ts:47` | Require a signed-in caller | `401` |
 | `validatedRoute` | `lib/auth/middleware.ts:84` | Validate body/query with Zod | `400` |
 | `withApiErrorHandler` | `lib/api/error-handler.ts:66` | Normalize thrown errors | Mapped status via `mapError` |
+
+
+## OpenAPI route drift check
+
+The unit test `tests/unit/openapi-drift.test.ts` walks every `app/api/**/route.ts`
+file, detects its exported HTTP methods, converts Next.js dynamic segments such
+as `[id]` to OpenAPI parameters such as `{id}`, and checks that each operation
+exists in `openapi.yaml`.
+
+Run the focused check with:
+
+```bash
+node node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader runner tests/unit/openapi-drift.test.ts
+```
+
+When adding an API route, document every exported method in `openapi.yaml`.
+Intentional exceptions must be recorded in the test's `ROUTE_ALLOWLIST` with
+a concrete reason; deprecated aliases should point to their canonical route.
+The `yaml` package already used by the project parses the specification, so
+the check does not need a second parser dependency. Keep `docs/openapi.json`
+aligned with the same route surface when changing the API contract.
