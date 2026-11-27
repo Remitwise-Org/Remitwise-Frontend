@@ -110,6 +110,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiError'
+    put:
+      summary: "Remittance Quote (PUT)"
+      description: Route contract for /remittance/quote. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    delete:
+      summary: "Remittance Quote (DELETE)"
+      description: Route contract for /remittance/quote. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
   /remittance/build:
     post:
       summary: Build Remittance Transaction
@@ -132,6 +173,30 @@ paths:
                 $ref: '#/components/schemas/BuildRemittanceResponse'
         default:
           description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    put:
+      summary: "Remittance Build (PUT)"
+      description: Route contract for /remittance/build. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
           content:
             application/json:
               schema:
@@ -284,6 +349,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiError'
+    get:
+      summary: "Split Update (GET)"
+      description: Route contract for /split/update. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
   /v1/bills:
     post:
       summary: Create a new Bill
@@ -307,6 +389,23 @@ paths:
                 $ref: '#/components/schemas/XdrResponse'
         default:
           description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      summary: "V1 Bills (GET)"
+      description: Route contract for /v1/bills. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
           content:
             application/json:
               schema:
@@ -335,6 +434,29 @@ paths:
                 $ref: '#/components/schemas/XdrResponse'
         default:
           description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      summary: "V1 Bills Id Pay (GET)"
+      description: Route contract for /v1/bills/{id}/pay. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
           content:
             application/json:
               schema:
@@ -373,6 +495,29 @@ paths:
                 $ref: '#/components/schemas/XdrResponse'
         default:
           description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      summary: "V1 Bills Id Cancel (GET)"
+      description: Route contract for /v1/bills/{id}/cancel. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
           content:
             application/json:
               schema:
@@ -427,6 +572,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiError'
+    get:
+      summary: "V1 Insurance (GET)"
+      description: Route contract for /v1/insurance. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
   /v1/insurance/{id}/pay:
     post:
       summary: Pay Insurance Premium
@@ -451,6 +613,29 @@ paths:
                 $ref: '#/components/schemas/XdrResponse'
         default:
           description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      summary: "V1 Insurance Id Pay (GET)"
+      description: Route contract for /v1/insurance/{id}/pay. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
           content:
             application/json:
               schema:
@@ -589,6 +774,1919 @@ paths:
                 $ref: '#/components/schemas/WebhookDlqResponse'
         default:
           description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /.well-known/openapi:
+    get:
+      summary: ".well known Openapi (GET)"
+      description: Route contract for /.well-known/openapi. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /admin/audit:
+    get:
+      summary: "Admin Audit (GET)"
+      description: Route contract for /admin/audit. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /admin/users:
+    get:
+      summary: "Admin Users (GET)"
+      description: Route contract for /admin/users. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /anchor/rates:
+    get:
+      summary: "Anchor Rates (GET)"
+      description: Route contract for /anchor/rates. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /auth/login:
+    post:
+      summary: "Auth Login (POST)"
+      description: Route contract for /auth/login. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    delete:
+      summary: "Auth Login (DELETE)"
+      description: Route contract for /auth/login. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /auth/logout-all:
+    post:
+      summary: "Auth Logout all (POST)"
+      description: Route contract for /auth/logout-all. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /auth/logout:
+    post:
+      summary: "Auth Logout (POST)"
+      description: Route contract for /auth/logout. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /auth/me:
+    get:
+      summary: "Auth Me (GET)"
+      description: Route contract for /auth/me. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /auth/nonce:
+    get:
+      summary: "Auth Nonce (GET)"
+      description: Route contract for /auth/nonce. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    post:
+      summary: "Auth Nonce (POST)"
+      description: Route contract for /auth/nonce. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /auth/refresh:
+    post:
+      summary: "Auth Refresh (POST)"
+      description: Route contract for /auth/refresh. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      summary: "Auth Refresh (GET)"
+      description: Route contract for /auth/refresh. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /auth/verify:
+    post:
+      summary: "Auth Verify (POST)"
+      description: Route contract for /auth/verify. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      summary: "Auth Verify (GET)"
+      description: Route contract for /auth/verify. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /bills/{id}:
+    get:
+      summary: "Bills Id (GET)"
+      description: Route contract for /bills/{id}. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /bills:
+    post:
+      summary: "Bills (POST)"
+      description: Route contract for /bills. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      summary: "Bills (GET)"
+      description: Route contract for /bills. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /bills/total-unpaid:
+    get:
+      summary: "Bills Total unpaid (GET)"
+      description: Route contract for /bills/total-unpaid. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /cache/invalidate:
+    get:
+      summary: "Cache Invalidate (GET)"
+      description: Route contract for /cache/invalidate. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    post:
+      summary: "Cache Invalidate (POST)"
+      description: Route contract for /cache/invalidate. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /csp-report:
+    get:
+      summary: "Csp report (GET)"
+      description: Route contract for /csp-report. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    post:
+      summary: "Csp report (POST)"
+      description: Route contract for /csp-report. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /dashboard:
+    get:
+      summary: "Dashboard (GET)"
+      description: Route contract for /dashboard. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /docs/spec:
+    get:
+      summary: "Docs Spec (GET)"
+      description: Route contract for /docs/spec. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /family/members/{id}/check:
+    get:
+      summary: "Family Members Id Check (GET)"
+      description: Route contract for /family/members/{id}/check. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /family/members/{id}/limit:
+    post:
+      summary: "Family Members Id Limit (POST)"
+      description: Route contract for /family/members/{id}/limit. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    put:
+      summary: "Family Members Id Limit (PUT)"
+      description: Route contract for /family/members/{id}/limit. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /family/members/{id}:
+    get:
+      summary: "Family Members Id (GET)"
+      description: Route contract for /family/members/{id}. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /family/members:
+    post:
+      summary: "Family Members (POST)"
+      description: Route contract for /family/members. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      summary: "Family Members (GET)"
+      description: Route contract for /family/members. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /family:
+    post:
+      summary: "Family (POST)"
+      description: Route contract for /family. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      summary: "Family (GET)"
+      description: Route contract for /family. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /goals/{id}/add:
+    post:
+      summary: "Goals Id Add (POST)"
+      description: Route contract for /goals/{id}/add. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /goals/{id}/completed:
+    get:
+      summary: "Goals Id Completed (GET)"
+      description: Route contract for /goals/{id}/completed. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /goals/{id}/lock:
+    post:
+      summary: "Goals Id Lock (POST)"
+      description: Route contract for /goals/{id}/lock. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /goals/{id}:
+    get:
+      summary: "Goals Id (GET)"
+      description: Route contract for /goals/{id}. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /goals/{id}/unlock:
+    post:
+      summary: "Goals Id Unlock (POST)"
+      description: Route contract for /goals/{id}/unlock. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /goals/{id}/withdraw:
+    post:
+      summary: "Goals Id Withdraw (POST)"
+      description: Route contract for /goals/{id}/withdraw. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /goals:
+    post:
+      summary: "Goals (POST)"
+      description: Route contract for /goals. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      summary: "Goals (GET)"
+      description: Route contract for /goals. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /insights:
+    get:
+      summary: "Insights (GET)"
+      description: Route contract for /insights. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    put:
+      summary: "Insights (PUT)"
+      description: Route contract for /insights. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /insurance/{id}:
+    get:
+      summary: "Insurance Id (GET)"
+      description: Route contract for /insurance/{id}. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /insurance/reminders:
+    get:
+      summary: "Insurance Reminders (GET)"
+      description: Route contract for /insurance/reminders. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /insurance:
+    get:
+      summary: "Insurance (GET)"
+      description: Route contract for /insurance. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    post:
+      summary: "Insurance (POST)"
+      description: Route contract for /insurance. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /insurance/total-premium:
+    get:
+      summary: "Insurance Total premium (GET)"
+      description: Route contract for /insurance/total-premium. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /metrics:
+    get:
+      summary: "Metrics (GET)"
+      description: Route contract for /metrics. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /protected/example-refresh:
+    get:
+      summary: "Protected Example refresh (GET)"
+      description: Route contract for /protected/example-refresh. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /protected/example-require-auth:
+    get:
+      summary: "Protected Example require auth (GET)"
+      description: Route contract for /protected/example-require-auth. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /remittance/history:
+    get:
+      summary: "Remittance History (GET)"
+      description: Route contract for /remittance/history. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /remittance/recurring/{id}:
+    put:
+      summary: "Remittance Recurring Id (PUT)"
+      description: Route contract for /remittance/recurring/{id}. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    patch:
+      summary: "Remittance Recurring Id (PATCH)"
+      description: Route contract for /remittance/recurring/{id}. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    delete:
+      summary: "Remittance Recurring Id (DELETE)"
+      description: Route contract for /remittance/recurring/{id}. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /remittance/recurring/{id}/runs:
+    get:
+      summary: "Remittance Recurring Id Runs (GET)"
+      description: Route contract for /remittance/recurring/{id}/runs. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /remittance/recurring:
+    get:
+      summary: "Remittance Recurring (GET)"
+      description: Route contract for /remittance/recurring. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    post:
+      summary: "Remittance Recurring (POST)"
+      description: Route contract for /remittance/recurring. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    put:
+      summary: "Remittance Recurring (PUT)"
+      description: Route contract for /remittance/recurring. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /send:
+    post:
+      summary: "Send (POST)"
+      description: Route contract for /send. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    put:
+      summary: "Send (PUT)"
+      description: Route contract for /send. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /split:
+    post:
+      summary: "Split (POST)"
+      description: Route contract for /split. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      summary: "Split (GET)"
+      description: Route contract for /split. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /swap/build:
+    post:
+      summary: "Swap Build (POST)"
+      description: Route contract for /swap/build. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    put:
+      summary: "Swap Build (PUT)"
+      description: Route contract for /swap/build. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /swap/quote:
+    get:
+      summary: "Swap Quote (GET)"
+      description: Route contract for /swap/quote. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    put:
+      summary: "Swap Quote (PUT)"
+      description: Route contract for /swap/quote. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /user/preferences:
+    get:
+      summary: "User Preferences (GET)"
+      description: Route contract for /user/preferences. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    patch:
+      summary: "User Preferences (PATCH)"
+      description: Route contract for /user/preferences. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /user/profile:
+    get:
+      summary: "User Profile (GET)"
+      description: Route contract for /user/profile. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/admin/anchor/reconcile:
+    post:
+      summary: "V1 Admin Anchor Reconcile (POST)"
+      description: Route contract for /v1/admin/anchor/reconcile. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/admin/cache/clear:
+    post:
+      summary: "V1 Admin Cache Clear (POST)"
+      description: Route contract for /v1/admin/cache/clear. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/admin/webhooks/dlq/{id}/replay:
+    post:
+      summary: "V1 Admin Webhooks Dlq Id Replay (POST)"
+      description: Route contract for /v1/admin/webhooks/dlq/{id}/replay. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/admin/webhooks/process:
+    post:
+      summary: "V1 Admin Webhooks Process (POST)"
+      description: Route contract for /v1/admin/webhooks/process. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/anchor/deposit:
+    post:
+      summary: "V1 Anchor Deposit (POST)"
+      description: Route contract for /v1/anchor/deposit. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    put:
+      summary: "V1 Anchor Deposit (PUT)"
+      description: Route contract for /v1/anchor/deposit. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/anchor/rates:
+    get:
+      summary: "V1 Anchor Rates (GET)"
+      description: Route contract for /v1/anchor/rates. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/anchor/withdraw:
+    post:
+      summary: "V1 Anchor Withdraw (POST)"
+      description: Route contract for /v1/anchor/withdraw. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    put:
+      summary: "V1 Anchor Withdraw (PUT)"
+      description: Route contract for /v1/anchor/withdraw. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/health:
+    get:
+      summary: "V1 Health (GET)"
+      description: Route contract for /v1/health. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/remittance/emergency/build:
+    post:
+      summary: "V1 Remittance Emergency Build (POST)"
+      description: Route contract for /v1/remittance/emergency/build. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/remittance/history/export:
+    get:
+      summary: "V1 Remittance History Export (GET)"
+      description: Route contract for /v1/remittance/history/export. See the corresponding app/api route handler for request and response details.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /v1/tutorials/{tutorialId}/progress:
+    get:
+      summary: "V1 Tutorials TutorialId Progress (GET)"
+      description: Route contract for /v1/tutorials/{tutorialId}/progress. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: tutorialId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    put:
+      summary: "V1 Tutorials TutorialId Progress (PUT)"
+      description: Route contract for /v1/tutorials/{tutorialId}/progress. See the corresponding app/api route handler for request and response details.
+      parameters:
+        - in: path
+          name: tutorialId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /webhooks/anchor:
+    post:
+      summary: "Webhooks Anchor (POST)"
+      description: Route contract for /webhooks/anchor. See the corresponding app/api route handler for request and response details.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        default:
+          description: Error response
           content:
             application/json:
               schema:
