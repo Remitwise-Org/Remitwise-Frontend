@@ -1,4 +1,14 @@
 // Stellar network configuration
+//
+// Environment variables read by this module (see .env.example):
+//   STELLAR_NETWORK             - 'testnet' | 'mainnet'. Default: 'testnet'. Optional.
+//   STELLAR_NETWORK_PASSPHRASE  - Network passphrase. Default: 'Test SDF Network ; September 2015'. Optional.
+//   STELLAR_HORIZON_URL         - Horizon API base URL. Default: 'https://horizon-testnet.stellar.org'. Optional.
+//   CUSTODIAL_MODE              - Set to 'true' to enable custodial mode. Default: disabled. Optional.
+//   SERVER_SECRET_KEY           - Server Stellar secret key. Default: ''. Required when CUSTODIAL_MODE=true. Secret: never commit.
+//   STELLAR_EXPLORER_TX_URL     - Block explorer transaction URL prefix. Default: 'https://stellar.expert/explorer/public/tx/'. Optional.
+//   REMITTANCE_SPLIT contract ID is resolved via resolveContractId (see lib/contracts/network-resolution.ts).
+
 import { resolveContractId } from '../contracts/network-resolution';
 
 export const STELLAR_CONFIG = {

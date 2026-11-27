@@ -35,7 +35,6 @@ yarn-error.log*
 
 # local env files
 .env*.local
-.env
 
 # vercel
 .vercel
@@ -48,3 +47,4 @@ next-env.d.ts
 prisma/dev.db
 prisma/dev.db-journal
 *.db
+config.bat

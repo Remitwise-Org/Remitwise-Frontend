@@ -1,6 +1,9 @@
 /**
  * Wallet-based session: encrypted cookie (iron-session) tying the session to a Stellar address.
- * Env: SESSION_PASSWORD — must be at least 32 characters (e.g. `openssl rand -base64 32`).
+ * Env: SESSION_PASSWORD — required, must be at least 32 characters (e.g. `openssl rand -base64 32`).
+ * Env: SESSION_MAX_AGE — optional, session lifetime in seconds (default 604800 = 7 days).
+ * Env: SESSION_REFRESH_ENABLED — optional, set to `true` to enable sliding-window refresh (default disabled).
+ * Env: NODE_ENV — framework-provided; `Secure` cookie flag is applied when set to `production`.
  * 
  * @example Protected Route with requireAuth
  * ```typescript

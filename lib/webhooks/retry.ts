@@ -7,6 +7,9 @@ import { runBackgroundJob } from '@/lib/background/runtime';
 
 // Tracks event IDs currently being processed in this runtime to prevent
 // duplicate concurrent handling of the same webhook event.
+// Note: the webhook retry policy (WEBHOOK_MAX_RETRIES, WEBHOOK_LEASE_TIMEOUT_MS)
+// is configured in lib/webhooks/processor.ts; see .env.example for documented
+// environment variables.
 const inFlightEvents = new Set<string>();
 
 // Map of webhook source to handler functions

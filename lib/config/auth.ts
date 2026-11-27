@@ -9,6 +9,14 @@
  * toml route) can reference the same value without re-deriving it.
  * `STELLAR_WEB_AUTH_ENDPOINT` is kept as a server-only fallback for existing
  * deployments that only set that name.
+ *
+ * Environment variables:
+ * - NEXT_PUBLIC_AUTH_ISSUER_URL (optional) Public SEP-10 issuer URL.
+ *   Default: `${NEXT_PUBLIC_APP_URL}/api/auth`.
+ * - STELLAR_WEB_AUTH_ENDPOINT (optional) Server-only fallback issuer URL,
+ *   used when NEXT_PUBLIC_AUTH_ISSUER_URL is unset.
+ * - NEXT_PUBLIC_APP_URL (optional) Public base URL of the app.
+ *   Default: `http://localhost:3000`.
  */
 export function getAuthIssuerUrl(): string {
   const explicit =

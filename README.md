@@ -158,6 +158,8 @@ npm run dev
 
 **Required environment variables:** Stellar network config, Soroban RPC URL, Supabase URL + anon key, deployed contract addresses, WalletConnect project ID.
 
+All environment variables read by the application (defaults, required vs. optional, and purpose) are documented with comments in `.env.example` and `.env.local.example`. Framework-provided variables such as `NODE_ENV`, `NEXT_RUNTIME`, and `VERCEL_GIT_COMMIT_SHA` are not required and are noted in those files.
+
 ---
 
 ## Use Cases
