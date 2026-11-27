@@ -379,33 +379,6 @@
             }
           }
         }
-      },
-      "delete": {
-        "summary": "auth login (DELETE)",
-        "description": "Route contract for /auth/login. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/auth/logout-all": {
@@ -622,33 +595,6 @@
             }
           }
         }
-      },
-      "get": {
-        "summary": "auth refresh (GET)",
-        "description": "Route contract for /auth/refresh. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/auth/verify": {
@@ -685,33 +631,6 @@
               "schema": {
                 "type": "object",
                 "additionalProperties": true
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "summary": "auth verify (GET)",
-        "description": "Route contract for /auth/verify. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
               }
             }
           }
@@ -854,33 +773,6 @@
       }
     },
     "/csp-report": {
-      "get": {
-        "summary": "csp report (GET)",
-        "description": "Route contract for /csp-report. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      },
       "post": {
         "summary": "csp report (POST)",
         "description": "Route contract for /csp-report. See the corresponding app/api route handler for request and response details.",
@@ -1622,44 +1514,6 @@
             }
           }
         }
-      },
-      "put": {
-        "summary": "insights (PUT)",
-        "description": "Route contract for /insights. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
       }
     },
     "/insurance/{id}": {
@@ -1951,44 +1805,6 @@
             }
           }
         }
-      },
-      "put": {
-        "summary": "remittance build (PUT)",
-        "description": "Route contract for /remittance/build. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
       }
     },
     "/remittance/quote": {
@@ -2018,122 +1834,9 @@
             }
           }
         }
-      },
-      "put": {
-        "summary": "remittance quote (PUT)",
-        "description": "Route contract for /remittance/quote. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "remittance quote (DELETE)",
-        "description": "Route contract for /remittance/quote. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/remittance/recurring/{id}": {
-      "put": {
-        "summary": "remittance recurring id (PUT)",
-        "description": "Route contract for /remittance/recurring/{id}. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
-      },
       "patch": {
         "summary": "remittance recurring id (PATCH)",
         "description": "Route contract for /remittance/recurring/{id}. See the corresponding app/api route handler for request and response details.",
@@ -2324,87 +2027,11 @@
             }
           }
         }
-      },
-      "put": {
-        "summary": "remittance recurring (PUT)",
-        "description": "Route contract for /remittance/recurring. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
       }
     },
     "/send": {
       "post": {
         "summary": "send (POST)",
-        "description": "Route contract for /send. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "summary": "send (PUT)",
         "description": "Route contract for /send. See the corresponding app/api route handler for request and response details.",
         "responses": {
           "200": {
@@ -2619,33 +2246,6 @@
       }
     },
     "/split/update": {
-      "get": {
-        "summary": "split update (GET)",
-        "description": "Route contract for /split/update. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      },
       "post": {
         "summary": "split update (POST)",
         "description": "Route contract for /split/update. See the corresponding app/api route handler for request and response details.",
@@ -2723,44 +2323,6 @@
             }
           }
         }
-      },
-      "put": {
-        "summary": "swap build (PUT)",
-        "description": "Route contract for /swap/build. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
       }
     },
     "/swap/quote": {
@@ -2786,44 +2348,6 @@
                 "schema": {
                   "$ref": "#/components/schemas/ApiError"
                 }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "summary": "swap quote (PUT)",
-        "description": "Route contract for /swap/quote. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
               }
             }
           }
@@ -3221,44 +2745,6 @@
             }
           }
         }
-      },
-      "put": {
-        "summary": "v1 anchor deposit (PUT)",
-        "description": "Route contract for /v1/anchor/deposit. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
       }
     },
     "/v1/anchor/rates": {
@@ -3328,84 +2814,9 @@
             }
           }
         }
-      },
-      "put": {
-        "summary": "v1 anchor withdraw (PUT)",
-        "description": "Route contract for /v1/anchor/withdraw. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
       }
     },
     "/v1/bills/{id}/cancel": {
-      "get": {
-        "summary": "v1 bills id cancel (GET)",
-        "description": "Route contract for /v1/bills/{id}/cancel. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      },
       "post": {
         "summary": "v1 bills id cancel (POST)",
         "description": "Route contract for /v1/bills/{id}/cancel. See the corresponding app/api route handler for request and response details.",
@@ -3456,43 +2867,6 @@
       }
     },
     "/v1/bills/{id}/pay": {
-      "get": {
-        "summary": "v1 bills id pay (GET)",
-        "description": "Route contract for /v1/bills/{id}/pay. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      },
       "post": {
         "summary": "v1 bills id pay (POST)",
         "description": "Route contract for /v1/bills/{id}/pay. See the corresponding app/api route handler for request and response details.",
@@ -3718,43 +3092,6 @@
       }
     },
     "/v1/insurance/{id}/pay": {
-      "get": {
-        "summary": "v1 insurance id pay (GET)",
-        "description": "Route contract for /v1/insurance/{id}/pay. See the corresponding app/api route handler for request and response details.",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      },
       "post": {
         "summary": "v1 insurance id pay (POST)",
         "description": "Route contract for /v1/insurance/{id}/pay. See the corresponding app/api route handler for request and response details.",
@@ -4396,6 +3733,15 @@
             }
           }
         ]
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Human-readable error message."
+          }
+        }
       }
     }
   }
