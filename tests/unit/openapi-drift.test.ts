@@ -64,6 +64,9 @@ describe("OpenAPI route drift", () => {
   const spec = parseYaml(
     readFileSync(path.join(ROOT, "openapi.yaml"), "utf8"),
   ) as { paths?: Record<string, Record<string, unknown>> };
+  const docsSpec = JSON.parse(
+    readFileSync(path.join(ROOT, "docs", "openapi.json"), "utf8"),
+  ) as { paths?: Record<string, Record<string, unknown>> };
 
   it("documents every exported HTTP method or gives an explicit reason", () => {
     const missing: string[] = [];
@@ -83,7 +86,10 @@ describe("OpenAPI route drift", () => {
 
       for (const method of methods) {
         if (!spec.paths?.[routePath]?.[method.toLowerCase()]) {
-          missing.push(`${relativeFile}: ${method} ${routePath}`);
+          missing.push(`${relativeFile}: ${method} ${routePath} is missing from openapi.yaml`);
+        }
+        if (!docsSpec.paths?.[routePath]?.[method.toLowerCase()]) {
+          missing.push(`${relativeFile}: ${method} ${routePath} is missing from docs/openapi.json`);
         }
       }
     }
